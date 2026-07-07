@@ -4,7 +4,13 @@ import {
   validateMetricDefinitionImport,
   type MetricDefinitionFormData,
 } from "@repo/metrics-engine/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "../../data-models/json/JsonImportErrors.js";
 import type { MetricDefinitionFormJsonLabels } from "./metric-definition-json-labels.js";
@@ -15,7 +21,7 @@ interface MetricDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: MetricDefinitionFormJsonLabels;
   readonly onApply: (data: MetricDefinitionFormData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -26,7 +32,7 @@ export function MetricDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: MetricDefinitionJsonImportDialogProps) {
@@ -155,14 +161,10 @@ export function MetricDefinitionJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

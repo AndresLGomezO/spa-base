@@ -78,7 +78,9 @@ describe("CustomViewsView", () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.click(screen.getByText("customViews.json.importTrigger"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: {
         value: JSON.stringify({

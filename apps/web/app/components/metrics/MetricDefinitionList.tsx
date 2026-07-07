@@ -17,6 +17,7 @@ import {
   type DataViewColumnDescriptor,
 } from "../data-view";
 import { formatAggregationLabel } from "./metric-field-utils";
+import { useJsonActionTriggerLabels } from "../json/json-action-trigger-labels";
 import { metricDefinitionsCatalogJsonLabels } from "./json/metric-definition-json-labels";
 import { MetricDefinitionsCatalogJsonImportDialog } from "./json/MetricDefinitionsCatalogJsonImportDialog";
 import { MetricDefinitionsCatalogJsonViewDialog } from "./json/MetricDefinitionsCatalogJsonViewDialog";
@@ -61,6 +62,7 @@ export function MetricDefinitionList({
     () => metricDefinitionsCatalogJsonLabels(t),
     [t],
   );
+  const triggerLabels = useJsonActionTriggerLabels();
   const canReplaceCatalog = canCreate && canUpdate && canBackfill;
   const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
@@ -142,12 +144,14 @@ export function MetricDefinitionList({
         <MetricDefinitionsCatalogJsonViewDialog
           items={items}
           labels={catalogLabels}
+          triggerLabels={triggerLabels}
         />
         <MetricDefinitionsCatalogJsonImportDialog
           existingItems={items}
           canApply={canReplaceCatalog}
           importDisabled={!isEnvironmentReady}
           labels={catalogLabels}
+          triggerLabels={triggerLabels}
           onApply={(catalog) => void handleCatalogImport(catalog)}
         />
         {canCreate ? (

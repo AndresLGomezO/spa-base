@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import {
   designerPreviewColumnClassName,
   designerTreeTabRootClassName,
-  designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import {
   EntityQueryBuilderProvider,
@@ -12,6 +11,7 @@ import {
 } from "./entity-query-builder-context";
 import { EntityQueryListTreePanel } from "./EntityQueryListTreePanel";
 import { EntityQueryMetadataModal } from "./EntityQueryMetadataModal";
+import { EntityQueryPreviewPanel } from "./preview/EntityQueryPreviewPanel";
 import { EntityQuerySettingsPanel } from "./EntityQuerySettingsPanel";
 
 function EntityQueryBuilderWorkbench() {
@@ -58,8 +58,13 @@ function EntityQueryBuilderWorkbench() {
   return (
     <>
       <div className={designerTreeTabRootClassName}>
-        <div className={designerTreeWorkbenchClassName}>
-          <EntityQueryListTreePanel />
+        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+          <div className="shrink-0 min-w-0">
+            <EntityQueryListTreePanel />
+          </div>
+          <div className="shrink-0 min-w-0">
+            <EntityQueryPreviewPanel />
+          </div>
           <div className={designerPreviewColumnClassName}>
             <EntityQuerySettingsPanel />
           </div>

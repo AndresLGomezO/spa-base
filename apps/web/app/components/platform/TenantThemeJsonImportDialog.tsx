@@ -5,14 +5,20 @@ import {
   EXAMPLE_VIOLET_DASHBOARD_THEME_JSON,
   validateTenantThemeImport,
 } from "@repo/theme/theme-import-export";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { TenantThemeJsonLabels } from "./tenant-theme-json-labels";
 
 interface TenantThemeJsonImportDialogProps {
   readonly labels: TenantThemeJsonLabels;
   readonly onApply: (appearance: TenantAppearance) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -20,7 +26,7 @@ interface TenantThemeJsonImportDialogProps {
 export function TenantThemeJsonImportDialog({
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: TenantThemeJsonImportDialogProps) {
@@ -66,14 +72,10 @@ export function TenantThemeJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

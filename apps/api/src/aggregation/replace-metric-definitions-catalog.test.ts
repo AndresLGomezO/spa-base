@@ -32,6 +32,14 @@ describe("rates metric catalog", () => {
 
     expect(paymentProgress.computation.numerator.type).toBe("metricRef");
     expect(paymentProgress.computation.denominator.type).toBe("metricRef");
+
+    if (
+      paymentProgress.computation.numerator.type !== "metricRef" ||
+      paymentProgress.computation.denominator.type !== "metricRef"
+    ) {
+      return;
+    }
+
     expect(paymentProgress.computation.numerator.metricDefinitionId).toBe(
       "Paid Amount by Due Month",
     );

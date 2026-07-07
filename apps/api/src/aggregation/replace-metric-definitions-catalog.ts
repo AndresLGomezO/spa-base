@@ -65,7 +65,9 @@ function createPatchFromCreateInput(
     ...(imported.computationMode === "computed"
       ? {
           parameters: imported.parameters ?? [],
-          ...(imported.computation ? { computation: imported.computation } : {}),
+          ...(imported.computation
+            ? { computation: imported.computation }
+            : {}),
         }
       : { parameters: [] }),
     version: options?.version ?? imported.version,

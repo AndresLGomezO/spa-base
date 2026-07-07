@@ -83,10 +83,53 @@ function parseDateBucket(
   }
 }
 
+function parseMonthBucketParts(
+  bucket: string,
+): { readonly year: number; readonly month: number } | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(bucket.trim());
+  if (!match) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isFinite(year) || month < 1 || month > 12) {
+    return null;
+  }
+  return { year, month };
+}
+
+/** Day-of-month cap for month-to-date windows (matches chart MTD alignment). */
+export function resolveMonthToDateReferenceDay(
+  bucket: string,
+  now: Date = new Date(),
+): number {
+  const parts = parseMonthBucketParts(bucket);
+  if (!parts) {
+    return 0;
+  }
+
+  const { year, month } = parts;
+  const todayYear = now.getUTCFullYear();
+  const todayMonth = now.getUTCMonth() + 1;
+  const anchorKey = year * 12 + month;
+  const todayKey = todayYear * 12 + todayMonth;
+
+  if (anchorKey > todayKey) {
+    return 0;
+  }
+
+  if (anchorKey === todayKey) {
+    return now.getUTCDate();
+  }
+
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
 export function resolveDateBucketParameterBound(
   bucket: string,
   granularity: MetricDateGranularity,
   bound: EntityQueryParameterBound,
+  now: Date = new Date(),
 ): string | null {
   const date = parseDateBucket(bucket, granularity);
   if (!date) {
@@ -110,6 +153,31 @@ export function resolveDateBucketParameterBound(
       switch (granularity) {
         case "month":
           return endOfUtcMonth(date).toISOString();
+        case "year":
+          return endOfUtcYear(date).toISOString();
+        case "day":
+          return endOfUtcDay(date).toISOString();
+      }
+      break;
+    case "endToDate":
+      switch (granularity) {
+        case "month": {
+          const parts = parseMonthBucketParts(bucket);
+          if (!parts) {
+            return null;
+          }
+          const referenceDay = resolveMonthToDateReferenceDay(bucket, now);
+          if (referenceDay <= 0) {
+            return endOfUtcMonth(date).toISOString();
+          }
+          const lastDay = new Date(
+            Date.UTC(parts.year, parts.month, 0),
+          ).getUTCDate();
+          const cappedDay = Math.min(referenceDay, lastDay);
+          return endOfUtcDay(
+            new Date(Date.UTC(parts.year, parts.month - 1, cappedDay)),
+          ).toISOString();
+        }
         case "year":
           return endOfUtcYear(date).toISOString();
         case "day":
@@ -153,6 +221,7 @@ export function resolveQueryParameterFilterValue(
   value: Extract<EntityQueryFilterValue, { type: "parameter" }>,
   parameters: readonly EntityQueryParameter[],
   parameterValues: Readonly<Record<string, unknown>>,
+  options: { readonly now?: Date } = {},
 ): unknown {
   const parameter = parameters.find((entry) => entry.name === value.name);
   if (!parameter) {
@@ -177,7 +246,12 @@ export function resolveQueryParameterFilterValue(
     if (bucket === null) {
       return undefined;
     }
-    return resolveDateBucketParameterBound(bucket, granularity, bound);
+    return resolveDateBucketParameterBound(
+      bucket,
+      granularity,
+      bound,
+      options.now ?? new Date(),
+    );
   }
 
   if (parameter.valueType === "stringList") {

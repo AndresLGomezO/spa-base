@@ -4,8 +4,11 @@
 export {
   ENTITY_QUERY_DEFINITION_STATUSES,
   ENTITY_QUERY_LIMIT_MODES,
+  ENTITY_QUERY_MODES,
+  ENTITY_QUERY_AGGREGATION_OPERATIONS,
   ENTITY_QUERY_FILTER_OPERATORS,
   ENTITY_QUERY_TEMPORAL_PRESETS,
+  ENTITY_QUERY_PARAMETER_BOUNDS,
   EMPTY_ENTITY_QUERY_FILTER,
   entityQueryFilterValueSchema,
   entityQueryFilterSchema,
@@ -13,20 +16,26 @@ export {
   entityQueryFilterNodeSchema,
   entityQueryFilterGroupSchema,
   entityQuerySortSchema,
+  entityQueryAggregationSpecSchema,
   createEntityQueryDefinitionInputSchema,
   patchEntityQueryDefinitionInputSchema,
 } from "./types.js";
 export type {
   EntityQueryDefinitionStatus,
   EntityQueryLimitMode,
+  EntityQueryMode,
+  EntityQueryAggregationOperation,
   EntityQueryFilterOperator,
   EntityQueryTemporalPreset,
+  EntityQueryParameter,
+  EntityQueryParameterBound,
   EntityQueryFilterValue,
   EntityQueryFilter,
   EntityQueryFilterCondition,
   EntityQueryFilterNode,
   EntityQueryDefinitionFilterRoot,
   EntityQuerySort,
+  EntityQueryAggregationSpec,
   EntityQueryDefinitionRecord,
   CreateEntityQueryDefinitionInput,
   PatchEntityQueryDefinitionInput,
@@ -59,6 +68,16 @@ export type {
   ExpandRelationFiltersInTreeInput,
   ExpandedRelationFiltersInTreeResult,
 } from "./expand-relation-filters.js";
+export {
+  aggregateEntityQueryResults,
+  getRecordFieldValue,
+  listEntityQueryAggregationOutputFields,
+} from "./aggregate-entity-query-results.js";
+export type { AggregateEntityQueryResultsSpec } from "./aggregate-entity-query-results.js";
+export {
+  outputKeyForAggregation,
+  sumKeyForField,
+} from "./aggregation-field-keys.js";
 export {
   listQueryableFieldPaths,
   parseQueryableRelationPath,

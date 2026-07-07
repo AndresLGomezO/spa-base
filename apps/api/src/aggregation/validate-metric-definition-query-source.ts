@@ -30,6 +30,10 @@ export function validateMetricQuerySourceEligibility(
     return `Query "${query.name}" must use limit mode "all" to use as a metric source.`;
   }
 
+  if (query.queryMode === "aggregated") {
+    return `Query "${query.name}" cannot use aggregated query mode as a metric source.`;
+  }
+
   if (query.sourceEntity !== sourceModel) {
     return `sourceModel "${sourceModel}" must match query source entity "${query.sourceEntity}".`;
   }

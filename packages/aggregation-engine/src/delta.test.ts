@@ -443,9 +443,7 @@ describe("runSnapshotBackfillForMetric", () => {
     });
 
     expect(result.processedDocuments).toBe(2);
-    expect(
-      [...metricValueRepository.store.values()][0]?.values.count,
-    ).toBe(2);
+    expect([...metricValueRepository.store.values()][0]?.values.count).toBe(2);
   });
 });
 

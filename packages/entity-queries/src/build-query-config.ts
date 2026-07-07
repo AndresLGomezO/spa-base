@@ -42,6 +42,7 @@ export function resolveEntityQueryFilterValue(
       value,
       options.parameters ?? [],
       options.parameterValues ?? {},
+      { now: options.now },
     );
   }
 

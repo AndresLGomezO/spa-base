@@ -156,12 +156,14 @@ export function MetricListTreePanel() {
       <MetricDefinitionsCatalogJsonViewDialog
         items={editor.definitions}
         labels={catalogLabels}
+        triggerLabels={triggerLabels}
       />
       {canReplaceCatalog ? (
         <MetricDefinitionsCatalogJsonImportDialog
           existingItems={editor.definitions}
           canApply={canReplaceCatalog}
           labels={catalogLabels}
+          triggerLabels={triggerLabels}
           onApply={(catalog) => void handleCatalogImport(catalog)}
         />
       ) : null}

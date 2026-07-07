@@ -6,15 +6,18 @@
       "inputs": [
         {
           "name": "principal",
-          "required": true
+          "required": true,
+          "description": "Loan principal amount"
         },
         {
           "name": "ratePerPeriod",
-          "required": true
+          "required": true,
+          "description": "Interest rate per payment period (decimal)"
         },
         {
           "name": "periods",
-          "required": true
+          "required": true,
+          "description": "Number of payment periods"
         }
       ],
       "body": {
@@ -98,11 +101,13 @@
       "inputs": [
         {
           "name": "amount",
-          "required": true
+          "required": true,
+          "description": "Base amount for interest calculation"
         },
         {
           "name": "rate",
-          "required": true
+          "required": true,
+          "description": "Interest rate (decimal)"
         }
       ],
       "body": {

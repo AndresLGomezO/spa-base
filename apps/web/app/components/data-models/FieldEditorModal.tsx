@@ -10,6 +10,7 @@ import { FormModal } from "../forms/FormModal";
 import { createEmptyField, resolveFieldDefinitionName } from "./field-types";
 import { FieldEditorForm } from "./FieldEditorForm";
 import { FieldTypePicker } from "./FieldTypePicker";
+import { useJsonActionTriggerLabels } from "../json/json-action-trigger-labels";
 import { fieldDefinitionJsonLabels } from "./json/entity-definition-json-labels";
 import { FieldDefinitionJsonImportDialog } from "./json/FieldDefinitionJsonImportDialog";
 import { FieldDefinitionJsonViewDialog } from "./json/FieldDefinitionJsonViewDialog";
@@ -46,6 +47,7 @@ export function FieldEditorModal({
 }: FieldEditorModalProps) {
   const { t } = useTranslation("common");
   const jsonLabels = useMemo(() => fieldDefinitionJsonLabels(t), [t]);
+  const triggerLabels = useJsonActionTriggerLabels();
   const [step, setStep] = useState<"type" | "details">(
     mode === "add" ? "type" : "details",
   );
@@ -108,10 +110,12 @@ export function FieldEditorModal({
         <FieldDefinitionJsonViewDialog
           data={draft as FieldDefinitionRecord}
           labels={jsonLabels}
+          triggerLabels={triggerLabels}
         />
         <FieldDefinitionJsonImportDialog
           canApply={canEdit}
           labels={jsonLabels}
+          triggerLabels={triggerLabels}
           onApply={(imported) => setDraft(imported)}
         />
         {mode === "edit" && canRemove && onRemove ? (

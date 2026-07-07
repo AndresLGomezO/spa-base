@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { createCustomViewsCatalogEnvelope } from "@repo/custom-views/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { CustomViewRecord } from "../../../lib/api-client";
 import {
@@ -13,7 +19,7 @@ interface CustomViewsCatalogJsonViewDialogProps {
   readonly items: readonly CustomViewRecord[];
   readonly queries: readonly { readonly id: string; readonly name: string }[];
   readonly labels: CustomViewsCatalogJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -22,7 +28,7 @@ export function CustomViewsCatalogJsonViewDialog({
   items,
   queries,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: CustomViewsCatalogJsonViewDialogProps) {
@@ -61,14 +67,10 @@ export function CustomViewsCatalogJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

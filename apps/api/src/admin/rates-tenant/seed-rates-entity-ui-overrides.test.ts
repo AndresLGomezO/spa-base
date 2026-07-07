@@ -17,9 +17,14 @@ describe("rates entity UI overrides catalog", () => {
       readFileSync(catalogPath, "utf8"),
     );
 
-    expect(catalog.overrides).toHaveLength(1);
+    expect(catalog.overrides).toHaveLength(2);
     expect(catalog.overrides[0]?.entityName).toBe("account");
     expect(catalog.overrides[0]?.metricWidgets).toHaveLength(4);
+    expect(catalog.overrides[1]?.entityName).toBe("transaction");
+    expect(catalog.overrides[1]?.metricWidgets).toHaveLength(1);
+    expect(catalog.overrides[1]?.metricWidgets?.[0]?.id).toBe(
+      "top-expense-category-snapshot",
+    );
 
     for (const widget of catalog.overrides[0]?.metricWidgets ?? []) {
       expect(widget.layout).toBeDefined();

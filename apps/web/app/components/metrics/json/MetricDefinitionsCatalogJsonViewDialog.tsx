@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { createMetricDefinitionsCatalogEnvelope } from "@repo/metrics-engine/browser";
 import type { MetricDefinitionRecord } from "@repo/metrics-engine/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { MetricDefinitionRecord as ApiMetricDefinitionRecord } from "../../../lib/api-client";
 import type { MetricDefinitionsCatalogJsonLabels } from "./metric-definition-json-labels.js";
@@ -9,7 +15,7 @@ import type { MetricDefinitionsCatalogJsonLabels } from "./metric-definition-jso
 interface MetricDefinitionsCatalogJsonViewDialogProps {
   readonly items: readonly ApiMetricDefinitionRecord[];
   readonly labels: MetricDefinitionsCatalogJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -17,7 +23,7 @@ interface MetricDefinitionsCatalogJsonViewDialogProps {
 export function MetricDefinitionsCatalogJsonViewDialog({
   items,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: MetricDefinitionsCatalogJsonViewDialogProps) {
@@ -51,14 +57,10 @@ export function MetricDefinitionsCatalogJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

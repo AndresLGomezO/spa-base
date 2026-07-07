@@ -3,14 +3,20 @@ import {
   createDataHookDefinitionEnvelope,
   type DataHookDefinitionFormData,
 } from "@repo/hooks/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { DataHookDefinitionFormJsonLabels } from "./data-hook-definition-json-labels.js";
 
 interface DataHookDefinitionJsonViewDialogProps {
   readonly data: DataHookDefinitionFormData;
   readonly labels: DataHookDefinitionFormJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -18,7 +24,7 @@ interface DataHookDefinitionJsonViewDialogProps {
 export function DataHookDefinitionJsonViewDialog({
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: DataHookDefinitionJsonViewDialogProps) {
@@ -45,14 +51,10 @@ export function DataHookDefinitionJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

@@ -36,6 +36,7 @@ import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { LucideIconField } from "../shared/LucideIconField";
 import { EntityFieldsManager } from "./EntityFieldsManager";
 import { ModelReview } from "./ModelReview";
+import { useJsonActionTriggerLabels } from "../json/json-action-trigger-labels";
 import { entityDefinitionFormJsonLabels } from "./json/entity-definition-json-labels";
 import { EntityDefinitionJsonToolbar } from "./json/EntityDefinitionJsonToolbar";
 import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
@@ -56,6 +57,7 @@ export function EntityDefinitionWizard({
   const { t } = useTranslation("common");
   const { refresh } = useEntityCatalog();
   const jsonLabels = useMemo(() => entityDefinitionFormJsonLabels(t), [t]);
+  const triggerLabels = useJsonActionTriggerLabels();
   const [relationTargetDefinitions, setRelationTargetDefinitions] = useState<
     readonly { readonly name: string; readonly label: string }[]
   >([]);
@@ -323,6 +325,7 @@ export function EntityDefinitionWizard({
           canApply
           formState={entityFormState}
           labels={jsonLabels}
+          triggerLabels={triggerLabels}
           onImport={(imported) => {
             setName(imported.name);
             setLabel(imported.label);

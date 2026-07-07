@@ -7,6 +7,7 @@ import {
   type UiLayoutDocument,
   resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
+import { listEntityQueryAggregationOutputFields } from "@repo/entity-queries/browser";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
@@ -107,6 +108,34 @@ export function isInsideQueryViewerTemplate(
   return findEnclosingQueryViewerConfig(layout, targetRowId) !== null;
 }
 
+function buildAggregatedQueryViewerSourceDefinition(
+  sourceDefinition: EntityCatalogEntry,
+  queryDefinition: EntityQueryDefinitionRecord,
+): EntityCatalogEntry {
+  const outputFields = listEntityQueryAggregationOutputFields({
+    groupBy: queryDefinition.groupBy ?? [],
+    aggregations: queryDefinition.aggregations ?? [],
+  });
+
+  const mergedFields = { ...sourceDefinition.fields };
+  for (const field of outputFields) {
+    if (mergedFields[field]) {
+      continue;
+    }
+
+    mergedFields[field] = {
+      type: "number",
+      required: false,
+      optional: true,
+    };
+  }
+
+  return {
+    ...sourceDefinition,
+    fields: mergedFields,
+  };
+}
+
 export function resolveQueryViewerSourceDefinition(
   layout: UiLayoutDocument,
   targetRowId: string,
@@ -133,7 +162,20 @@ export function resolveQueryViewerSourceDefinition(
     return null;
   }
 
-  return (
-    tryGetEntityDefinition(queryDefinition.sourceEntity, catalogItems) ?? null
+  const sourceDefinition = tryGetEntityDefinition(
+    queryDefinition.sourceEntity,
+    catalogItems,
   );
+  if (!sourceDefinition) {
+    return null;
+  }
+
+  if (queryDefinition.queryMode === "aggregated") {
+    return buildAggregatedQueryViewerSourceDefinition(
+      sourceDefinition,
+      queryDefinition,
+    );
+  }
+
+  return sourceDefinition;
 }

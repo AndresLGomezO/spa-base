@@ -6,7 +6,13 @@ import {
   type CustomViewRecord,
   type CustomViewsCatalogEnvelope,
 } from "@repo/custom-views/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { CustomViewRecord as ApiCustomViewRecord } from "../../../lib/api-client";
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
@@ -17,7 +23,7 @@ interface CustomViewsCatalogJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: CustomViewsCatalogJsonLabels;
   readonly onApply: (catalog: CustomViewsCatalogEnvelope) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
   readonly importDisabled?: boolean;
@@ -28,7 +34,7 @@ export function CustomViewsCatalogJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
   importDisabled = false,
@@ -134,15 +140,11 @@ export function CustomViewsCatalogJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           disabled={importDisabled}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

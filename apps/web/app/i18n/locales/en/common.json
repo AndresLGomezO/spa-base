@@ -2212,13 +2212,18 @@
       }
     },
     "preview": {
-      "title": "Expression structure"
+      "title": "Expression structure",
+      "panelTitle": "How it works",
+      "empty": "Select a formula to see how it works.",
+      "expandPanel": "Expand how it works panel",
+      "collapsePanel": "Collapse how it works panel"
     },
     "summaryModal": {
       "viewFormula": "View formula {{name}}",
       "close": "Close",
       "notFound": "Formula \"{{name}}\" was not found in the catalog.",
       "loading": "Loading formula…",
+      "noInputs": "This formula has no declared inputs — it reads from hook context fields.",
       "sections": {
         "summary": "Summary",
         "inputs": "Inputs",
@@ -2586,6 +2591,56 @@
         "computedHint": "Configure parameters and computation after creating the metric."
       }
     },
+    "preview": {
+      "panelTitle": "How it works",
+      "empty": "Select a metric to see how it works.",
+      "expandPanel": "Expand how it works panel",
+      "collapsePanel": "Collapse how it works panel",
+      "displayFormat": "Display as {{format}}",
+      "outputSummary": "Returns a single {{format}} value",
+      "steps": {
+        "source": "Data source",
+        "filters": "Filters",
+        "aggregation": "Aggregation",
+        "parameters": "Parameters",
+        "computation": "Computation",
+        "output": "Output"
+      },
+      "filters": {
+        "eq": "{{field}} = {{value}}",
+        "in": "{{field}} in [{{values}}]"
+      },
+      "aggregated": {
+        "sourceEntity": "Reads records from {{entity}}",
+        "sourceQuery": "Reads rows from query {{query}}",
+        "filtersSummary": "Applies {{count}} filter(s) before aggregating",
+        "records": "records",
+        "aggregation": {
+          "SUM": "Sums {{field}} across matching records",
+          "COUNT": "Counts matching records",
+          "AVG": "Averages {{field}} across matching records"
+        },
+        "groupBy": "Groups by {{fields}}",
+        "dimensions": "Breaks down by {{fields}}"
+      },
+      "computed": {
+        "parametersSummary": "Accepts {{count}} runtime parameter(s)",
+        "noParameters": "No runtime parameters — uses fixed input references",
+        "computation": {
+          "percentChange": "Calculates percent change between current and baseline inputs",
+          "difference": "Calculates the difference between current and baseline inputs",
+          "ratio": "Calculates the ratio of numerator to denominator inputs",
+          "expression": "Evaluates a custom expression from named inputs"
+        }
+      },
+      "details": {
+        "matchWhere": "Match records where",
+        "fieldsDependency": "Depends on fields"
+      },
+      "advanced": {
+        "title": "Structure"
+      }
+    },
     "multiselect": {
       "placeholder": "Select fields…",
       "selectedCount": "{{count}} selected",
@@ -2794,10 +2849,26 @@
       "title": "Queries",
       "add": "Add query",
       "empty": "No queries yet.",
+      "emptyFiltered": "No queries match the current filters.",
       "edit": "Edit query",
       "delete": "Delete query",
       "expandPanel": "Expand panel",
-      "collapsePanel": "Collapse panel"
+      "collapsePanel": "Collapse panel",
+      "filter": "Filter",
+      "sort": "Sort",
+      "clearFilters": "Clear filters",
+      "removeBadge": "Remove filter: {{label}}",
+      "filterByStatus": "Status",
+      "filterByQueryMode": "Query mode",
+      "filterByEntity": "Source entity",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
+      "sortNameAsc": "Name (A–Z)",
+      "sortNameDesc": "Name (Z–A)",
+      "sortSourceEntity": "Source entity",
+      "sortQueryMode": "Query mode",
+      "sortUpdatedDesc": "Recently updated",
+      "searchPlaceholder": "Search queries…",
+      "searchClear": "Clear search"
     },
     "metadata": {
       "createTitle": "Create query",
@@ -2881,7 +2952,65 @@
       "label": "Result limit",
       "topN": "Top N",
       "all": "All (up to 500)",
-      "allHint": "Fetches up to 500 matching records using pagination."
+      "allHint": "Fetches up to 500 matching records using pagination.",
+      "aggregatedHint": "Aggregated queries always fetch all matching records before grouping."
+    },
+    "queryMode": {
+      "label": "Query mode",
+      "records": "Records",
+      "aggregated": "Aggregated",
+      "aggregatedHint": "Returns grouped rows with computed aggregation columns instead of individual records."
+    },
+    "parameters": {
+      "label": "Parameters",
+      "empty": "No parameters declared.",
+      "add": "Add parameter",
+      "remove": "Remove",
+      "rowLabel": "Parameter {{index}}",
+      "namePlaceholder": "period",
+      "fieldPlaceholder": "date",
+      "valueTypes": {
+        "dateBucket": "Date bucket",
+        "scalar": "Scalar",
+        "stringList": "String list"
+      },
+      "granularity": {
+        "day": "Day",
+        "month": "Month",
+        "year": "Year"
+      }
+    },
+    "groupBy": {
+      "label": "Group by",
+      "placeholder": "Select group fields",
+      "selectedCount": "{{count}} selected",
+      "searchPlaceholder": "Search fields…",
+      "noResults": "No matching fields",
+      "removeBadge": "Remove {{label}}"
+    },
+    "aggregations": {
+      "label": "Aggregations",
+      "empty": "No aggregations configured.",
+      "add": "Add aggregation",
+      "remove": "Remove",
+      "rowLabel": "Aggregation {{index}}",
+      "countDocuments": "Count all records",
+      "operations": {
+        "SUM": "Sum",
+        "COUNT": "Count",
+        "AVG": "Average"
+      }
+    },
+    "groupSort": {
+      "label": "Group sort",
+      "empty": "No group sort order.",
+      "add": "Add group sort field",
+      "remove": "Remove",
+      "rowLabel": "Group sort {{index}}"
+    },
+    "groupLimit": {
+      "label": "Group limit",
+      "placeholder": "Optional max groups (1–100)"
     },
     "preview": {
       "title": "Preview results",
@@ -2889,6 +3018,69 @@
       "run": "Run query",
       "failed": "Unable to run query.",
       "resultCount": "{{count}} results"
+    },
+    "howItWorks": {
+      "panelTitle": "How it works",
+      "empty": "Select a query to see how it works.",
+      "expandPanel": "Expand how it works panel",
+      "collapsePanel": "Collapse how it works panel",
+      "steps": {
+        "source": "Data source",
+        "filters": "Filters",
+        "parameters": "Parameters",
+        "sort": "Sort",
+        "select": "Select fields",
+        "limit": "Result limit",
+        "groupBy": "Group by",
+        "aggregations": "Aggregations",
+        "groupSort": "Group sort",
+        "groupLimit": "Group limit",
+        "output": "Output"
+      },
+      "meta": {
+        "parameters": "{{count}} parameter(s)",
+        "filters": "{{count}} filter(s)"
+      },
+      "filters": {
+        "summary": "Applies {{count}} filter rule(s) before querying",
+        "condition": "{{field}} {{operator}} {{value}}",
+        "group": "{{combinator}}:"
+      },
+      "parameters": {
+        "summary": "Accepts {{count}} runtime parameter(s)",
+        "row": "{{name}} ({{type}}) bound to {{field}}",
+        "noField": "no field binding"
+      },
+      "records": {
+        "source": "Reads records from {{entity}}",
+        "sortSummary": "Sorts by {{count}} field(s)",
+        "sortRow": "{{field}} ({{direction}})",
+        "selectSummary": "Returns {{count}} selected field(s)",
+        "limitTopN": "Returns top {{limit}} matching records",
+        "limitAll": "Returns all matching records (up to 500)"
+      },
+      "aggregated": {
+        "records": "records",
+        "groupBySummary": "Groups by {{fields}}",
+        "aggregationsSummary": "Computes {{count}} aggregation column(s)",
+        "aggregation": {
+          "SUM": "Sum of {{field}} → {{outputKey}}",
+          "COUNT": "Count of {{field}} → {{outputKey}}",
+          "AVG": "Average of {{field}} → {{outputKey}}"
+        },
+        "groupSortSummary": "Sorts groups by {{count}} field(s)",
+        "groupLimitSummary": "Returns at most {{limit}} groups"
+      },
+      "output": {
+        "records": "Returns matching entity records as rows",
+        "aggregated": "Returns grouped rows with aggregation columns"
+      },
+      "details": {
+        "matchWhere": "Match records where"
+      },
+      "advanced": {
+        "title": "Structure"
+      }
     },
     "delete": {
       "title": "Delete query",
@@ -2903,6 +3095,7 @@
       "skeletonTitle": "Example format",
       "skeletonShow": "Show example",
       "skeletonHide": "Hide example",
+      "fillExample": "Use example",
       "valid": "JSON is valid.",
       "invalid": "JSON validation errors",
       "apply": "Apply",
@@ -2914,7 +3107,8 @@
       "query": {
         "viewTitle": "Current query JSON",
         "importTitle": "Import query JSON",
-        "importDescriptionEdit": "Replace the query settings with the imported definition. Query name and source entity must not change. Save to persist.",
+        "importDescriptionEdit": "Replace the query settings with the imported definition. The current query name and source entity are always kept. Save to persist.",
+        "identityPreservedNotice": "Imported name and source entity were ignored; the current query identity was kept.",
         "nameChangeError": "Query name cannot be changed via JSON import.",
         "sourceEntityChangeError": "Source entity cannot be changed via JSON import."
       },
@@ -3345,22 +3539,83 @@
         "planRevision": "plan revision"
       },
       "formulas": {
+        "annuityPayment": "Fixed payment for equal installments (French amortization)",
+        "annuityPaymentDetail1": "Uses principal, rate per period, and number of periods",
+        "annuityPaymentDetail2": "Standard annuity formula: P × r × (1+r)^n / ((1+r)^n − 1)",
+        "simpleInterest": "Simple interest for one period (amount × rate)",
+        "simpleInterestDetail1": "No compounding — interest is calculated on the original amount only",
+        "monthlyRateFromQuote": "Convert quoted bank rate (EA/NA/NMV) to monthly decimal",
+        "monthlyRateFromQuoteDetail1": "EA (effective annual) is converted using compound monthly formula",
+        "monthlyRateFromQuoteDetail2": "NA and NMV use their respective conversion rules",
+        "scheduleAnchorDate": "Pick the schedule start date from origination or next due",
+        "scheduleAnchorDateDetail1": "Uses originationDate when set, otherwise falls back to nextDueDate",
+        "loanOriginationDate": "Resolve the loan origination date from terms or current record",
+        "loanOriginationDateDetail1": "Coalesces loanDetails.originationDate with parent terms",
+        "loanScheduleAnchorDate": "Resolve the loan schedule anchor date",
+        "loanScheduleAnchorDateDetail1": "Uses origination date or parent next due date as anchor",
+        "loanCoalescePrincipal": "Resolve opening principal from original or parent balance",
+        "loanCoalescePrincipalDetail1": "Coalesces originalPrincipal with parent.currentBalance",
+        "loanBasePrincipal": "Resolve opening principal from origination anchor",
+        "loanBasePrincipalDetail1": "Uses loanCoalescePrincipal when origination date is set",
+        "loanPeriodBalance": "Opening balance for the current payment period",
+        "loanPeriodBalanceDetail1": "Uses loop state remaining balance, or falls back to base principal",
+        "loanTermMonths": "Loan term length in months",
+        "loanTermMonthsDetail1": "Read from loanDetails.termMonths on the current record",
+        "loanIsLastPeriod": "True when the current loop is on the final payment period",
+        "loanIsLastPeriodDetail1": "Compares loopIndex against loanTermMonths − 1",
+        "loanMonthlyRate": "Monthly decimal rate from current quote fields",
+        "loanMonthlyRateDetail1": "Calls monthlyRateFromQuote with current rate and quote",
+        "loanMonthlyRateDetail2": "Used by all loan payment calculations",
+        "loanAnnuityPayment": "Fixed French annuity payment amount for the loan",
+        "loanAnnuityPaymentDetail1": "Calls platform annuityPayment with principal, rate, and term",
+        "loanAnnuityPaymentDetail2": "Used when amortization type is FRENCH",
+        "loanInterestPayment": "Interest portion for the current period",
+        "loanInterestPaymentDetail1": "Strategy varies by amortization type (French, German, flat)",
+        "loanPrincipalPayment": "Principal portion for the current period",
+        "loanPrincipalPaymentDetail1": "On the last period, pays off remaining balance",
+        "loanPrincipalPaymentDetail2": "Otherwise annuity payment minus interest portion",
+        "schedulePrincipalPortion": "Principal portion written to the payment schedule row",
+        "schedulePrincipalPortionDetail1": "Delegates to loanPrincipalPayment",
+        "scheduleInterestPortion": "Interest portion written to the payment schedule row",
+        "scheduleInterestPortionDetail1": "Delegates to loanInterestPayment",
+        "scheduleExpectedAmount": "Expected payment amount for the schedule row",
+        "scheduleExpectedAmountDetail1": "Sum of principal and interest portions",
+        "amortizationLoopState": "Carry remaining balance to the next payment row",
+        "amortizationLoopStateDetail1": "Subtracts principal portion from period opening balance",
+        "paymentScheduleFrenchRowCount": "Row count for French amortization schedules",
+        "paymentScheduleFrenchRowCountDetail1": "Equals loan term in months when annuity payment is valid",
+        "paymentScheduleAmortizedRowCount": "Row count based on amortization type",
+        "paymentScheduleAmortizedRowCountDetail1": "Routes to French row count or term-based count",
+        "paymentScheduleRowCount": "Total payment rows for a loan schedule",
+        "paymentScheduleRowCountDetail1": "Considers amortization type, principal, and term",
+        "paymentScheduleDueDate": "Due date for a loan payment schedule row",
+        "paymentScheduleDueDateDetail1": "Anchor date plus loopIndex months",
+        "frequencyStepMultiplier": "Period step multiplier for a payment frequency",
+        "frequencyStepMultiplierDetail1": "Weekly=1, biweekly=2, monthly=1, quarterly=3, annual=12",
+        "frequencyUnit": "Date-add unit for a payment frequency",
+        "frequencyUnitDetail1": "Maps frequency code to weeks or months",
+        "frequencyDueDate": "Due date from base date, frequency, and period index",
+        "frequencyDueDateDetail1": "Adds periodIndex × step multiplier to base date",
+        "frequencyDueDateDetail2": "Uses frequencyUnit to determine weeks vs months",
         "frequencyScheduleDueDate": "Due dates follow the payment frequency",
         "frequencyScheduleDueDateDetail1": "Starts from the first payment date",
         "frequencyScheduleDueDateDetail2": "Each row steps forward by frequency",
         "frequencyAdvanceDueDate": "Advance due date by one payment period",
+        "frequencyAdvanceDueDateDetail1": "Rolls baseDate forward by one frequency step",
+        "scheduleHorizonOrDefault": "Schedule horizon in months with a default fallback",
+        "scheduleHorizonOrDefaultDetail1": "Uses scheduleHorizonMonths when set, otherwise 12",
         "recurringScheduleInitialRowCount": "One row if one-time; otherwise up to the schedule horizon (max 1000)",
+        "recurringScheduleInitialRowCountDetail1": "ONE_TIME frequency creates exactly one row",
         "recurringScheduleExtensionRowCount": "Top up rows toward the horizon (max 100 per run)",
+        "recurringScheduleExtensionRowCountDetail1": "Calculates gap between existing count and horizon",
         "balanceSheetRoleFromItemType": "Set balance sheet role from item type",
+        "balanceSheetRoleFromItemTypeDetail1": "Maps LOAN, CARD, etc. to asset/liability roles",
         "cardHostCurrentBalance": "Card balance = revolving balance + installment children",
+        "cardHostCurrentBalanceDetail1": "Sums revolvingBalance and installmentSum",
         "incrementPlanRevision": "Bump loan plan revision by one",
+        "incrementPlanRevisionDetail1": "Increments planRevision field on the current record",
         "inferFlatLoanOriginationDate": "Infer loan origination date from balance trail",
-        "paymentScheduleRowCount": "Calculate number of loan payment rows",
-        "paymentScheduleDueDate": "Calculate loan payment due date",
-        "scheduleExpectedAmount": "Calculate expected payment amount",
-        "schedulePrincipalPortion": "Calculate principal portion",
-        "scheduleInterestPortion": "Calculate interest portion",
-        "amortizationLoopState": "Carry remaining balance to next row"
+        "inferFlatLoanOriginationDateDetail1": "Used for flat/NONE amortization when origination is missing"
       },
       "frequencyTable": {
         "title": "How dates are calculated",

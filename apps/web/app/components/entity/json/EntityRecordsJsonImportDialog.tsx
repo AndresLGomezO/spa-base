@@ -4,7 +4,13 @@ import {
   validateEntityRecordsImport,
   type SerializableEntityDefinition,
 } from "@repo/entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { JsonImportErrors } from "../../data-models/json/JsonImportErrors.js";
@@ -20,7 +26,7 @@ interface EntityRecordsJsonImportDialogProps {
   readonly definition: SerializableEntityDefinition;
   readonly labels: EntityRecordsJsonLabels;
   readonly onApply: (body: unknown) => Promise<void>;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly applying?: boolean;
   readonly importDisabled?: boolean;
 }
@@ -29,7 +35,7 @@ export function EntityRecordsJsonImportDialog({
   definition,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   applying = false,
   importDisabled = false,
 }: EntityRecordsJsonImportDialogProps) {
@@ -111,15 +117,11 @@ export function EntityRecordsJsonImportDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonImportTriggerButton
+        labels={triggerLabels}
         disabled={importDisabled}
         onClick={() => setOpen(true)}
-      >
-        {labels.importTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   computeCatalogReplacePlan,
-  createEntityQueryDefinitionsCatalogEnvelope,
   validateEntityQueryDefinitionsCatalogImport,
   type EntityQueryDefinitionRecord,
   type EntityQueryDefinitionsCatalogEnvelope,
@@ -17,6 +16,7 @@ import {
 import type { EntityQueryDefinitionRecord as ApiEntityQueryDefinitionRecord } from "../../../lib/api-client";
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
 import type { EntityQueryDefinitionsCatalogJsonLabels } from "./entity-query-definition-json-labels.js";
+import { createEntityQueryDefinitionsCatalogImportExampleEnvelope } from "./entity-query-definition-json-examples.js";
 
 interface EntityQueryDefinitionsCatalogJsonImportDialogProps {
   readonly existingItems: readonly ApiEntityQueryDefinitionRecord[];
@@ -50,34 +50,7 @@ export function EntityQueryDefinitionsCatalogJsonImportDialog({
   const skeleton = useMemo(
     () =>
       JSON.stringify(
-        createEntityQueryDefinitionsCatalogEnvelope([
-          {
-            id: "entity_query_example",
-            tenantId: "tenant",
-            queryId: "upcoming_payments",
-            name: "Upcoming payments",
-            sourceEntity: "transaction",
-            parameters: [],
-            filter: {
-              type: "group",
-              combinator: "and",
-              children: [
-                {
-                  type: "condition",
-                  field: "type",
-                  operator: "==",
-                  value: { type: "static", value: "EXPENSE" },
-                },
-              ],
-            },
-            sort: [{ field: "date", direction: "desc" }],
-            limitMode: "topN",
-            limit: 20,
-            status: "ACTIVE",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ]),
+        createEntityQueryDefinitionsCatalogImportExampleEnvelope(),
         null,
         2,
       ),

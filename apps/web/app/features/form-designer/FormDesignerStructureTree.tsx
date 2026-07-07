@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
@@ -54,7 +61,7 @@ interface BranchSharedProps {
   readonly layout: UiLayoutDocument;
   readonly labels: FormDesignerComponentsLabels;
   readonly treeFocus: TreeFocusProps;
-  readonly expandedIds: ReadonlySet<string>;
+  readonly collapsedIds: ReadonlySet<string>;
   readonly onToggle: (id: string) => void;
   readonly onInsert: (anchor: InsertAnchor) => void;
   readonly insertDisabled?: boolean;
@@ -186,7 +193,7 @@ function StructureColumnBody({
   depth,
   layout,
   labels,
-  expandedIds,
+  collapsedIds,
   onToggle,
   onInsert,
   insertDisabled = false,
@@ -211,7 +218,7 @@ function StructureColumnBody({
   return (
     <div
       className={cn(
-        "w-full min-w-max",
+        "w-full min-w-0",
         !plain && "border-border/60 ml-3 border-l pl-1.5",
       )}
     >
@@ -246,7 +253,7 @@ function StructureColumnBody({
               depth={depth + 1}
               layout={layout}
               labels={labels}
-              expandedIds={expandedIds}
+              collapsedIds={collapsedIds}
               onToggle={onToggle}
               insertDisabled={insertDisabled}
               lockRootScopeInserts={lockRootScopeInserts}
@@ -272,7 +279,7 @@ function StructureContainerBody({
   depth,
   layout,
   labels,
-  expandedIds,
+  collapsedIds,
   onToggle,
   onInsert,
   insertDisabled = false,
@@ -292,7 +299,7 @@ function StructureContainerBody({
   const childRows = row.childRows ?? [];
 
   return (
-    <div className="border-border/60 ml-3 w-full min-w-max border-l pl-1.5">
+    <div className="border-border/60 ml-3 w-full min-w-0 border-l pl-1.5">
       {childRows.length === 0 ? (
         <div className="flex flex-col px-2 py-1">
           <Text className="text-muted-foreground text-xs">
@@ -320,7 +327,7 @@ function StructureContainerBody({
               depth={depth + 1}
               layout={layout}
               labels={labels}
-              expandedIds={expandedIds}
+              collapsedIds={collapsedIds}
               onToggle={onToggle}
               insertDisabled={insertDisabled}
               lockRootScopeInserts={lockRootScopeInserts}
@@ -346,7 +353,7 @@ function StructureRowBranch({
   depth,
   layout,
   labels,
-  expandedIds,
+  collapsedIds,
   onToggle,
   onInsert,
   insertDisabled = false,
@@ -369,7 +376,7 @@ function StructureRowBranch({
   const isRowHolder =
     row.type === "component" &&
     (row.kind === "container" || row.kind === "query-viewer");
-  const expanded = expandedIds.has(row.id);
+  const expanded = !collapsedIds.has(row.id);
   const kind = row.kind;
   const expandable = isGrid || isRowHolder;
   const moveState = getRowMoveState(layout, row);
@@ -378,7 +385,7 @@ function StructureRowBranch({
   const rowActionsEnabled = areRowActionsEnabled(rowRef, treeFocus);
 
   return (
-    <div className="group/branch flex w-full min-w-max flex-col">
+    <div className="group/branch flex w-full min-w-0 flex-col">
       <FormDesignerStructureTreeNode
         id={row.id}
         label={row.label}
@@ -412,7 +419,7 @@ function StructureRowBranch({
             depth={depth}
             layout={layout}
             labels={labels}
-            expandedIds={expandedIds}
+            collapsedIds={collapsedIds}
             onToggle={onToggle}
             insertDisabled={insertDisabled}
             lockRootScopeInserts={lockRootScopeInserts}
@@ -429,7 +436,7 @@ function StructureRowBranch({
         </CollapsibleChildren>
       ) : isGrid && row.type === "component" ? (
         <CollapsibleChildren expanded={expanded}>
-          <div className="border-border/60 ml-3 w-full min-w-max border-l pl-1.5">
+          <div className="border-border/60 ml-3 w-full min-w-0 border-l pl-1.5">
             {row.tracks?.map((column) => (
               <StructureColumnBranch
                 key={column.id}
@@ -437,7 +444,7 @@ function StructureRowBranch({
                 depth={depth + 1}
                 layout={layout}
                 labels={labels}
-                expandedIds={expandedIds}
+                collapsedIds={collapsedIds}
                 onToggle={onToggle}
                 insertDisabled={insertDisabled}
                 lockRootScopeInserts={lockRootScopeInserts}
@@ -473,7 +480,7 @@ function StructureColumnBranch({
   depth,
   layout,
   labels,
-  expandedIds,
+  collapsedIds,
   onToggle,
   onInsert,
   insertDisabled = false,
@@ -490,12 +497,12 @@ function StructureColumnBranch({
   readonly column: StructureColumnNode;
   readonly depth: number;
 }) {
-  const expanded = expandedIds.has(column.id);
+  const expanded = !collapsedIds.has(column.id);
   const columnRef = toComponentColumnRef(column);
   const columnFocusState = resolveColumnFocusState(columnRef, treeFocus);
 
   return (
-    <div className="group/branch flex w-full min-w-max flex-col">
+    <div className="group/branch flex w-full min-w-0 flex-col">
       <FormDesignerStructureTreeNode
         id={column.id}
         label={column.label}
@@ -518,7 +525,7 @@ function StructureColumnBranch({
           depth={depth}
           layout={layout}
           labels={labels}
-          expandedIds={expandedIds}
+          collapsedIds={collapsedIds}
           onToggle={onToggle}
           insertDisabled={insertDisabled}
           lockRootScopeInserts={lockRootScopeInserts}
@@ -695,24 +702,39 @@ export function FormDesignerStructureTree({
     [fieldDescriptors, labels.tree, layout],
   );
 
-  const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(() => {
-    return new Set(
-      collectDefaultExpandedNodeIdsForLayout(columns, {
-        promoteSingleContainerRoot,
-      }),
-    );
-  });
+  const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
 
-  const promotedContainerRoot = useMemo(() => {
-    if (!promoteSingleContainerRoot) {
-      return null;
-    }
+  const knownNodeIds = useMemo(
+    () =>
+      new Set(
+        collectDefaultExpandedNodeIdsForLayout(columns, {
+          promoteSingleContainerRoot,
+        }),
+      ),
+    [columns, promoteSingleContainerRoot],
+  );
 
-    return resolvePromotedContainerRootRow(columns);
-  }, [columns, promoteSingleContainerRoot]);
+  useEffect(() => {
+    setCollapsedIds((current) => {
+      let changed = false;
+      const next = new Set<string>();
+
+      for (const id of current) {
+        if (knownNodeIds.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+  }, [knownNodeIds]);
 
   const handleToggle = useCallback((id: string) => {
-    setExpandedIds((current) => {
+    setCollapsedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) {
         next.delete(id);
@@ -723,11 +745,19 @@ export function FormDesignerStructureTree({
     });
   }, []);
 
+  const promotedContainerRoot = useMemo(() => {
+    if (!promoteSingleContainerRoot) {
+      return null;
+    }
+
+    return resolvePromotedContainerRootRow(columns);
+  }, [columns, promoteSingleContainerRoot]);
+
   const branchProps: BranchSharedProps = {
     layout,
     labels,
     treeFocus,
-    expandedIds,
+    collapsedIds,
     onToggle: handleToggle,
     insertDisabled,
     lockRootScopeInserts: promoteSingleContainerRoot,
@@ -761,7 +791,7 @@ export function FormDesignerStructureTree({
     <div
       role="tree"
       aria-label={labels.panelTitle}
-      className="flex w-max min-w-full flex-col gap-1 py-1"
+      className="flex w-full min-w-0 flex-col gap-1 py-1"
     >
       {promotedContainerRoot ? (
         <StructureRowBranch

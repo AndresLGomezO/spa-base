@@ -1,7 +1,8 @@
 import {
   createEntityQueryDefinitionInputSchema,
-  entityQueryDefinitionRecordSchema,
   patchEntityQueryDefinitionInputSchema,
+  buildEntityQueryDefinitionRecord,
+  mergeEntityQueryDefinitionPatch,
   type EntityQueryDefinitionRecord,
 } from "@repo/entity-queries";
 import { nanoid } from "nanoid";
@@ -44,22 +45,16 @@ export function createInMemoryEntityQueryDefinitionRepository(): EntityQueryDefi
       const parsed = createEntityQueryDefinitionInputSchema.parse(input);
       const now = new Date().toISOString();
       const id = `entity_query_${nanoid(12)}`;
-      const record = entityQueryDefinitionRecordSchema.parse({
-        id,
-        tenantId,
-        queryId: slugQueryId(parsed.name) || id,
-        name: parsed.name,
-        ...(parsed.description ? { description: parsed.description } : {}),
-        sourceEntity: parsed.sourceEntity,
-        filter: parsed.filter,
-        sort: parsed.sort,
-        ...(parsed.select ? { select: parsed.select } : {}),
-        limitMode: parsed.limitMode,
-        ...(parsed.limitMode === "topN" ? { limit: parsed.limit } : {}),
-        status: parsed.status,
-        createdAt: now,
-        updatedAt: now,
-      });
+      const record = buildEntityQueryDefinitionRecord(
+        {
+          id,
+          tenantId,
+          queryId: slugQueryId(parsed.name) || id,
+          createdAt: now,
+          updatedAt: now,
+        },
+        parsed,
+      );
       store.set(key(tenantId, id), record);
       return record;
     },
@@ -70,25 +65,11 @@ export function createInMemoryEntityQueryDefinitionRepository(): EntityQueryDefi
       }
 
       patchEntityQueryDefinitionInputSchema.parse(input);
-      const now = new Date().toISOString();
-      const limitMode = input.limitMode ?? current.limitMode;
-      const limit =
-        limitMode === "topN" ? (input.limit ?? current.limit ?? 20) : undefined;
-
-      const next = entityQueryDefinitionRecordSchema.parse({
-        ...current,
-        ...(input.name ? { name: input.name } : {}),
-        ...(input.description !== undefined
-          ? { description: input.description }
-          : {}),
-        ...(input.filter ? { filter: input.filter } : {}),
-        ...(input.sort ? { sort: input.sort } : {}),
-        ...(input.select !== undefined ? { select: input.select } : {}),
-        ...(input.limitMode ? { limitMode: input.limitMode } : {}),
-        ...(limitMode === "topN" ? { limit } : {}),
-        ...(input.status ? { status: input.status } : {}),
-        updatedAt: now,
-      });
+      const next = mergeEntityQueryDefinitionPatch(
+        current,
+        input,
+        new Date().toISOString(),
+      );
       store.set(key(tenantId, id), next);
       return next;
     },

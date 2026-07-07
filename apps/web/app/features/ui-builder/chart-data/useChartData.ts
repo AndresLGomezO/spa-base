@@ -117,12 +117,9 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
       }
 
       return (
-        (await fetchMetricValueDonutData(
-          metricDefinition,
-          config,
-          context,
-          { force: refreshKey > 0 },
-        )) ?? buildPreviewDonutData(config)
+        (await fetchMetricValueDonutData(metricDefinition, config, context, {
+          force: refreshKey > 0,
+        })) ?? buildPreviewDonutData(config)
       );
     },
     enabled:
@@ -299,7 +296,10 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
   });
 
   const refetch = useCallback(async () => {
-    if (config.chartType === "donut" && config.dataSource.type === "metricValue") {
+    if (
+      config.chartType === "donut" &&
+      config.dataSource.type === "metricValue"
+    ) {
       await metricValueQuery.refetch();
       return;
     }
@@ -331,8 +331,7 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
   ]);
 
   const previewDonutData = useMemo(
-    () =>
-      config.chartType === "donut" ? buildPreviewDonutData(config) : null,
+    () => (config.chartType === "donut" ? buildPreviewDonutData(config) : null),
     [config],
   );
 

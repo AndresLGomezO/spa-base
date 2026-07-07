@@ -49,12 +49,10 @@ describe("buildPreviewDonutData", () => {
 
 describe("resolveDonutProgressValue", () => {
   it("scales decimal ratio to arc points for percent metrics", () => {
-    expect(resolveDonutProgressValue(0.3361, percentDefinition, 100)).toBe(
-      33.61,
-    );
+    expect(resolveDonutProgressValue(0.3361, percentDefinition)).toBe(33.61);
   });
 
   it("leaves raw value unchanged for non-percent metrics", () => {
-    expect(resolveDonutProgressValue(42, numberDefinition, 100)).toBe(42);
+    expect(resolveDonutProgressValue(42, numberDefinition)).toBe(42);
   });
 });

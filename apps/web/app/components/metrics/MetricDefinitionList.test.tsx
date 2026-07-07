@@ -62,7 +62,9 @@ describe("MetricDefinitionList", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByText("metrics.json.importTrigger"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: {
         value: JSON.stringify({

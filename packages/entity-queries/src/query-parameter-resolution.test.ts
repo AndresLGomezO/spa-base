@@ -15,6 +15,20 @@ describe("resolveDateBucketParameterBound", () => {
       "2026-06-30T23:59:59.999Z",
     );
   });
+
+  it("returns month-to-date end for current month", () => {
+    const now = new Date(Date.UTC(2026, 6, 15, 12, 0, 0));
+    expect(
+      resolveDateBucketParameterBound("2026-07", "month", "endToDate", now),
+    ).toBe("2026-07-15T23:59:59.999Z");
+  });
+
+  it("returns full month end for historical month endToDate", () => {
+    const now = new Date(Date.UTC(2026, 6, 15, 12, 0, 0));
+    expect(
+      resolveDateBucketParameterBound("2026-06", "month", "endToDate", now),
+    ).toBe("2026-06-30T23:59:59.999Z");
+  });
 });
 
 describe("resolveQueryParameterFilterValue", () => {
@@ -35,6 +49,18 @@ describe("resolveQueryParameterFilterValue", () => {
         { period: "2026-06" },
       ),
     ).toBe("2026-06-01T00:00:00.000Z");
+  });
+
+  it("resolves endToDate bound from values map", () => {
+    const now = new Date(Date.UTC(2026, 6, 15, 12, 0, 0));
+    expect(
+      resolveQueryParameterFilterValue(
+        { type: "parameter", name: "period", bound: "endToDate" },
+        parameters,
+        { period: "2026-07" },
+        { now },
+      ),
+    ).toBe("2026-07-15T23:59:59.999Z");
   });
 
   it("applies offset before resolving date bucket bound", () => {

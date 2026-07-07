@@ -86,6 +86,35 @@ describe("updateEditorNode", () => {
 });
 
 describe("editorRootToEntityQueryFilter", () => {
+  it("round-trips parameter scalar values", () => {
+    const root = createEmptyEntityQueryFilterRoot();
+    const condition = createEmptyEntityQueryFilterCondition();
+    const withCondition = updateEditorNode(root, root.id, {
+      children: [
+        {
+          ...condition,
+          field: "date",
+          operator: "<=",
+          valueKind: "static",
+          scalarValue: "$period:endToDate",
+        },
+      ],
+    });
+
+    expect(editorRootToEntityQueryFilter(withCondition)).toEqual({
+      type: "group",
+      combinator: "and",
+      children: [
+        {
+          type: "condition",
+          field: "date",
+          operator: "<=",
+          value: { type: "parameter", name: "period", bound: "endToDate" },
+        },
+      ],
+    });
+  });
+
   it("preserves root combinator when there are no conditions", () => {
     const root = createEmptyEntityQueryFilterRoot();
     const withOr = updateEditorNode(root, root.id, { combinator: "or" });

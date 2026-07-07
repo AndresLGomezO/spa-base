@@ -21,6 +21,7 @@ import {
 import { DataModelsListSkeleton } from "../loading/DataModelsListSkeleton";
 import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
 import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
+import { useJsonActionTriggerLabels } from "../json/json-action-trigger-labels";
 import { entityDefinitionsCatalogJsonLabels } from "./json/entity-definition-json-labels";
 import { EntityDefinitionsCatalogJsonImportDialog } from "./json/EntityDefinitionsCatalogJsonImportDialog";
 import { EntityDefinitionsCatalogJsonViewDialog } from "./json/EntityDefinitionsCatalogJsonViewDialog";
@@ -52,6 +53,7 @@ export function EntityDefinitionList({
     () => entityDefinitionsCatalogJsonLabels(t),
     [t],
   );
+  const triggerLabels = useJsonActionTriggerLabels();
   const canReplaceCatalog = canCreate && canUpdate;
   const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
@@ -131,6 +133,7 @@ export function EntityDefinitionList({
             items={items}
             categories={categories}
             labels={catalogLabels}
+            triggerLabels={triggerLabels}
           />
           <EntityDefinitionsCatalogJsonImportDialog
             existingItems={items}
@@ -138,6 +141,7 @@ export function EntityDefinitionList({
             canApply={canReplaceCatalog}
             importDisabled={!isEnvironmentReady}
             labels={catalogLabels}
+            triggerLabels={triggerLabels}
             onApply={(catalog) => void handleCatalogImport(catalog)}
           />
           {canCreate ? (

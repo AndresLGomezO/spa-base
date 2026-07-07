@@ -161,11 +161,16 @@ Each item matches **`createEntityQueryDefinitionInput`** — the same shape as `
 | `name` | string | yes | Match key for catalog replace |
 | `description` | string | no | |
 | `sourceEntity` | string | yes | Entity **name**; immutable after create |
+| `queryMode` | `"records"` \| `"aggregated"` | no | Default `"records"`. Aggregated mode returns grouped rows instead of entity records. |
 | `parameters` | array | no | Declared runtime parameters (default `[]`) |
 | `filter` | filter tree root | yes | Nested `group` / `condition` nodes (not legacy flat `filters[]`) |
-| `sort` | array | no | `{ field, direction: "asc" \| "desc" }[]` |
+| `sort` | array | no | Record sort `{ field, direction: "asc" \| "desc" }[]`. Not allowed when `queryMode` is `"aggregated"`. |
 | `select` | string[] | no | Omit or empty for all fields |
-| `limitMode` | `"topN"` \| `"all"` | no | Default `"topN"` |
+| `groupBy` | string[] | no | Group key fields when `queryMode` is `"aggregated"` |
+| `aggregations` | array | no | `{ operation: "SUM" \| "COUNT" \| "AVG", field? }[]` when aggregated |
+| `groupSort` | array | no | Sort aggregated groups by group key or aggregation alias (e.g. `sum_amount`) |
+| `groupLimit` | integer | no | Max groups after aggregation (1–100) |
+| `limitMode` | `"topN"` \| `"all"` | no | Default `"topN"`. Aggregated queries require `"all"`. |
 | `limit` | integer | no | Required when `limitMode` is `"topN"` (1–100) |
 | `status` | `"ACTIVE"` \| `"PAUSED"` | no | Default `"ACTIVE"` |
 
@@ -201,7 +206,61 @@ At runtime, `query-viewer` and metric components bind parameter values via `para
 
 Supported temporal presets: `today`, `startOfDay`, `endOfDay`, `startOfWeek`, `endOfWeek`, `startOfMonth`, `endOfMonth`, `startOfYear`, `endOfYear`. Week presets use ISO weeks (Monday start, UTC).
 
+`dateBucket` parameter bounds: `start`, `end`, `endToDate`, `value`. Use `endToDate` for month-to-date windows (current month caps at today UTC; past months use the full bucket end).
+
 Groups nest with `combinator`: `"and"` or `"or"`. Depth and OR-branch limits are enforced by `refineEntityQueryDefinitionBody` in the shared package.
+
+---
+
+## 7.1 Aggregated query mode
+
+Set `"queryMode": "aggregated"` to return **group rows** instead of entity records. Filters still narrow the source population; aggregation runs in memory after fetch.
+
+Requirements:
+
+- `limitMode` must be `"all"`
+- At least one `groupBy` field and one `aggregations` entry
+- Use `groupSort` / `groupLimit` instead of record `sort` / `limit`
+- Aggregated queries **cannot** be used as metric `sourceQueryDefinitionId`
+
+Aggregation output keys follow metric naming: `sum_amount`, `count`, `avg_amount`, etc.
+
+Example (parameterized top category by amount):
+
+```json
+{
+  "name": "Top outflow category (period)",
+  "sourceEntity": "transaction",
+  "queryMode": "aggregated",
+  "parameters": [
+    { "name": "period", "valueType": "dateBucket", "granularity": "month", "field": "date" }
+  ],
+  "filter": {
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      {
+        "field": "date",
+        "operator": ">=",
+        "value": { "type": "parameter", "name": "period", "bound": "start" }
+      },
+      {
+        "field": "date",
+        "operator": "<=",
+        "value": { "type": "parameter", "name": "period", "bound": "end" }
+      }
+    ]
+  },
+  "groupBy": ["categoryId"],
+  "aggregations": [{ "operation": "SUM", "field": "amount" }],
+  "groupSort": [{ "field": "sum_amount", "direction": "desc" }],
+  "groupLimit": 1,
+  "limitMode": "all",
+  "status": "ACTIVE"
+}
+```
+
+Bind `parameterBindings.period` to `dashboardDateFilter` (or other sources) in `query-viewer` widgets at layout time.
 
 ---
 

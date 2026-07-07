@@ -1,6 +1,7 @@
 import {
   evaluateExpression,
   ExpressionEvaluationError,
+  type ExpressionScope,
   type ExpressionValue,
   type FormulaDefinitionForEval,
   type FormulaResolver,
@@ -43,15 +44,29 @@ const NAMED_EXAMPLE_INPUTS: Readonly<Record<string, ExpressionValue>> = {
   quote: "EA",
   amount: 1000,
   principal: 50_000,
+  ratePerPeriod: 0.01,
+  periods: 12,
   termMonths: 12,
-  balance: 2500,
+  balance: 25_000,
   count: 3,
   startIndex: 0,
   frequency: "MONTHLY",
   itemType: "LOAN",
+  originationDate: "2024-01-15",
+  nextDueDate: "2024-02-15",
+  baseDate: "2024-01-15",
+  periodIndex: 2,
+  existingCount: 6,
+  revolvingBalance: 1500,
+  installmentSum: 500,
+  loopIndex: 0,
+  loopState: 48_000,
 };
 
 export function exampleValueForFormulaInput(name: string): ExpressionValue {
+  if (name in NAMED_EXAMPLE_INPUTS) {
+    return NAMED_EXAMPLE_INPUTS[name]!;
+  }
   const lower = name.toLowerCase();
   if (lower in NAMED_EXAMPLE_INPUTS) {
     return NAMED_EXAMPLE_INPUTS[lower]!;
@@ -71,7 +86,8 @@ export function exampleValueForFormulaInput(name: string): ExpressionValue {
     lower.includes("rate") ||
     lower.includes("amount") ||
     lower.includes("balance") ||
-    lower.includes("portion")
+    lower.includes("portion") ||
+    lower.includes("sum")
   ) {
     return 100;
   }
@@ -89,6 +105,43 @@ export function buildFormulaExampleInputs(
     inputs[input.name] = exampleValueForFormulaInput(input.name);
   }
   return inputs;
+}
+
+function buildPreviewExpressionScope(
+  definition: Pick<FormulaDefinitionRecord, "inputs">,
+  catalog: readonly FormulaDefinitionRecord[],
+): ExpressionScope {
+  return {
+    current: {
+      amortizationType: "FRENCH",
+      interestRate: 0.12,
+      interestRateQuote: "EA",
+      originalPrincipal: 50_000,
+      originationDate: "2024-01-15",
+      planRevision: 1,
+      scheduleHorizonMonths: 12,
+      termMonths: 12,
+      itemType: "LOAN",
+      revolvingBalance: 1500,
+    },
+    loaded: {
+      parent: {
+        amount: 4500,
+        currentBalance: 48_000,
+        nextDueDate: "2024-02-15",
+      },
+      terms: {
+        originationDate: "2024-01-15",
+      },
+    },
+    loopIndex: 0,
+    loopState: 48_000,
+    inputs: buildFormulaExampleInputs(definition),
+    formulaResolver: createFormulaResolverFromCatalog(catalog),
+    tenantId: "preview",
+    now: new Date("2024-06-15T12:00:00.000Z"),
+    formulaResultCache: new Map<string, ExpressionValue>(),
+  };
 }
 
 export function formatFormulaExampleValue(value: ExpressionValue): string {
@@ -109,15 +162,8 @@ export function evaluateFormulaExampleOutput(
   catalog: readonly FormulaDefinitionRecord[],
 ): { readonly output?: string; readonly error?: string } {
   try {
-    const resolver = createFormulaResolverFromCatalog(catalog);
-    const inputs = buildFormulaExampleInputs(definition);
-    const result = evaluateExpression(definition.body, {
-      current: {},
-      inputs,
-      formulaResolver: resolver,
-      tenantId: "preview",
-      now: new Date("2024-06-15T12:00:00.000Z"),
-    });
+    const scope = buildPreviewExpressionScope(definition, catalog);
+    const result = evaluateExpression(definition.body, scope);
     return { output: formatFormulaExampleValue(result) };
   } catch (error) {
     return {

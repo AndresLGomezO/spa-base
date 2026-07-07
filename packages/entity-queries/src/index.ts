@@ -1,7 +1,13 @@
 export {
+  buildEntityQueryDefinitionRecord,
+  mergeEntityQueryDefinitionPatch,
+} from "./build-entity-query-definition-record.js";
+export {
   ENTITY_QUERY_DEFINITIONS_COLLECTION,
   ENTITY_QUERY_DEFINITION_STATUSES,
   ENTITY_QUERY_LIMIT_MODES,
+  ENTITY_QUERY_MODES,
+  ENTITY_QUERY_AGGREGATION_OPERATIONS,
   ENTITY_QUERY_FILTER_OPERATORS,
   ENTITY_QUERY_TEMPORAL_PRESETS,
   ENTITY_QUERY_PARAMETER_VALUE_TYPES,
@@ -13,6 +19,7 @@ export {
   entityQueryFilterNodeSchema,
   entityQueryFilterGroupSchema,
   entityQuerySortSchema,
+  entityQueryAggregationSpecSchema,
   entityQueryDefinitionRecordSchema,
   createEntityQueryDefinitionInputSchema,
   patchEntityQueryDefinitionInputSchema,
@@ -20,6 +27,8 @@ export {
 export type {
   EntityQueryDefinitionStatus,
   EntityQueryLimitMode,
+  EntityQueryMode,
+  EntityQueryAggregationOperation,
   EntityQueryFilterOperator,
   EntityQueryTemporalPreset,
   EntityQueryParameterValueType,
@@ -31,6 +40,7 @@ export type {
   EntityQueryFilterNode,
   EntityQueryDefinitionFilterRoot,
   EntityQuerySort,
+  EntityQueryAggregationSpec,
   EntityQueryDefinitionRecord,
   CreateEntityQueryDefinitionInput,
   PatchEntityQueryDefinitionInput,
@@ -46,6 +56,7 @@ export {
   buildIntrinsicQueryParameterMap,
   resolveQueryParameterFilterValue,
   resolveDateBucketParameterBound,
+  resolveMonthToDateReferenceDay,
   validateQueryParameterReferences,
 } from "./query-parameter-resolution.js";
 export {
@@ -127,3 +138,17 @@ export {
   recordMatchesEntityQueryDefinition,
 } from "./record-matches-entity-query-definition.js";
 export type { RecordMatchesEntityQueryDefinitionInput } from "./record-matches-entity-query-definition.js";
+export {
+  aggregateEntityQueryResults,
+  getRecordFieldValue,
+  listEntityQueryAggregationOutputFields,
+} from "./aggregate-entity-query-results.js";
+export type { AggregateEntityQueryResultsSpec } from "./aggregate-entity-query-results.js";
+export {
+  avgKeyForField,
+  countKeyForField,
+  internalKeysForAggregation,
+  normalizeAggregationFieldKey,
+  outputKeyForAggregation,
+  sumKeyForField,
+} from "./aggregation-field-keys.js";

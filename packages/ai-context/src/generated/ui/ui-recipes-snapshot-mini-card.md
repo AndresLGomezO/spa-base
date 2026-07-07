@@ -19,7 +19,7 @@ Build a **compact themed snapshot card** (header + body + action) for dashboard 
    - Right (optional): count `metric-kpi` with pill styles **on the KPI itself** (`backgroundColor: color-mix(… 20%)`, `borderRadius: 999`, `padding: var(--spacing-compact)`). Do **not** wrap the KPI in an extra pill `container`.
 4. **Body column** — `stackDirection: column`, `alignItems: center`, `justifyContent: center`, `width: 100%`, `gap: var(--spacing-tight)`:
    - **Icon + value variant:** `icon` + hero `metric-kpi` + caption `text`.
-   - **Donut variant:** `chart` component referencing a `donut` chart definition (`metricValue` source) sized `80×80` + caption `text`. Do **not** use a fake CSS ring `container` — the chart renderer draws the arc and center label.
+   - **Donut variant:** `chart` component referencing a `donut` chart definition (`metricValue` source, e.g. `Payment Progress %` bound to `dashboardDateFilter`) sized `80×80` + caption `text`. Do **not** use a fake CSS ring `container` — the chart renderer draws the arc and center label.
 5. **Action row** — put `clickAction` on the **row node** (not on a child). Inner `container` uses themed tinted `backgroundColor`, `borderRadius: 12`, horizontal padding, `justifyContent: between` with label `text` + `ChevronRight` `icon`.
 
 ## Layout sketch

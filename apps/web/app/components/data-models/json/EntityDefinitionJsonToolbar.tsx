@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { EntityDefinitionFormData } from "@repo/dynamic-entities";
+import type { JsonActionTriggerLabels } from "@repo/ui";
 
 import { EntityDefinitionJsonImportDialog } from "./EntityDefinitionJsonImportDialog.js";
 import { EntityDefinitionJsonViewDialog } from "./EntityDefinitionJsonViewDialog.js";
@@ -17,6 +18,7 @@ interface EntityDefinitionJsonToolbarProps {
   readonly canApply: boolean;
   readonly formState: EntityFormStateExportInput;
   readonly labels: EntityDefinitionFormJsonLabels;
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly onImport: (state: EntityFormStateImportResult) => void;
 }
 
@@ -26,6 +28,7 @@ export function EntityDefinitionJsonToolbar({
   canApply,
   formState,
   labels,
+  triggerLabels,
   onImport,
 }: EntityDefinitionJsonToolbarProps) {
   const exportData = useMemo(
@@ -35,12 +38,17 @@ export function EntityDefinitionJsonToolbar({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <EntityDefinitionJsonViewDialog data={exportData} labels={labels} />
+      <EntityDefinitionJsonViewDialog
+        data={exportData}
+        labels={labels}
+        triggerLabels={triggerLabels}
+      />
       <EntityDefinitionJsonImportDialog
         mode={mode}
         existingName={existingName}
         canApply={canApply}
         labels={labels}
+        triggerLabels={triggerLabels}
         onApply={(data: EntityDefinitionFormData) => {
           onImport(importEntityFormState(data));
         }}

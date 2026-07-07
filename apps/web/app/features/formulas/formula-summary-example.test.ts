@@ -1,11 +1,50 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
+import type { FormulaDefinitionRecord } from "../../lib/api-client";
 import {
   buildFormulaExampleInputs,
   evaluateFormulaExampleOutput,
   exampleValueForFormulaInput,
   formatFormulaExampleValue,
 } from "./formula-summary-example";
+
+const repoRoot = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../../../",
+);
+
+function loadCatalogRecords(): FormulaDefinitionRecord[] {
+  const platform = JSON.parse(
+    readFileSync(
+      join(repoRoot, "packages/formula-definitions/src/platform-formulas.json"),
+      "utf8",
+    ),
+  ) as { formulaDefinitions: Array<Omit<FormulaDefinitionRecord, "id">> };
+  const rates = JSON.parse(
+    readFileSync(
+      join(
+        repoRoot,
+        "apps/api/src/admin/rates-tenant/catalogs/rates-formula-definitions.json",
+      ),
+      "utf8",
+    ),
+  ) as { formulaDefinitions: Array<Omit<FormulaDefinitionRecord, "id">> };
+
+  const timestamp = "2026-01-01T00:00:00.000Z";
+  return [...platform.formulaDefinitions, ...rates.formulaDefinitions].map(
+    (entry, index) => ({
+      ...entry,
+      id: `formula_${index}`,
+      tenantId: "tenant_preview",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }),
+  );
+}
 
 describe("formula-summary-example", () => {
   it("builds named example inputs", () => {
@@ -48,5 +87,33 @@ describe("formula-summary-example", () => {
     expect(evaluateFormulaExampleOutput(definition, [definition])).toEqual({
       output: "0.24",
     });
+  });
+
+  it("evaluates composite rates formulas from the catalog", () => {
+    const catalog = loadCatalogRecords();
+    const monthlyRate = catalog.find(
+      (entry) => entry.name === "monthlyRateFromQuote",
+    );
+    const loanMonthlyRate = catalog.find(
+      (entry) => entry.name === "loanMonthlyRate",
+    );
+    const scheduleExpectedAmount = catalog.find(
+      (entry) => entry.name === "scheduleExpectedAmount",
+    );
+
+    expect(monthlyRate).toBeDefined();
+    expect(
+      evaluateFormulaExampleOutput(monthlyRate!, catalog).output,
+    ).toBeTruthy();
+
+    expect(loanMonthlyRate).toBeDefined();
+    expect(
+      evaluateFormulaExampleOutput(loanMonthlyRate!, catalog).output,
+    ).toBeTruthy();
+
+    expect(scheduleExpectedAmount).toBeDefined();
+    expect(
+      evaluateFormulaExampleOutput(scheduleExpectedAmount!, catalog).output,
+    ).toBeTruthy();
   });
 });

@@ -155,7 +155,7 @@ describe("metric-definition-json", () => {
       );
     }
 
-    expect(parsed.data.metricDefinitions.length).toBe(35);
+    expect(parsed.data.metricDefinitions.length).toBe(36);
     expect(
       parsed.data.metricDefinitions.some(
         (metric) => metric.sourceModel === "financialItem",

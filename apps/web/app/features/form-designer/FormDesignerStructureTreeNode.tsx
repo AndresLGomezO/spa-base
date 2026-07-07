@@ -67,7 +67,7 @@ export function FormDesignerStructureTreeNode({
       aria-labelledby={`${id}-label`}
       data-tree-node-id={id}
       className={cn(
-        "group/node flex w-full min-w-max items-center gap-1 rounded-md py-1.5 pr-2 transition-all duration-150",
+        "group/node flex w-full min-w-0 items-center gap-1 rounded-md py-1.5 pr-2 transition-all duration-150",
         (rowFocusState === "focused" || rowFocusState === "selected") &&
           "bg-primary/10 ring-primary ring-2 ring-inset",
         rowFocusState === "dimmed" && "opacity-30 saturate-0",
@@ -111,7 +111,7 @@ export function FormDesignerStructureTreeNode({
 
       <span
         id={`${id}-label`}
-        className="text-foreground min-w-0 flex-1 cursor-default whitespace-nowrap text-sm font-medium"
+        className="text-foreground min-w-0 flex-1 cursor-default truncate text-sm font-medium"
       >
         {label}
       </span>

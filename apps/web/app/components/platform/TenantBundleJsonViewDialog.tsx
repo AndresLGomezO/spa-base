@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { serializeTenantBundle } from "@repo/tenant-bundle/browser";
-import { Alert, Button, Modal, Text } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { exportAdminTenantBundle } from "../../lib/admin-client";
 import type { TenantBundleJsonLabels } from "./tenant-bundle-json-labels";
@@ -8,7 +15,7 @@ import type { TenantBundleJsonLabels } from "./tenant-bundle-json-labels";
 interface TenantBundleJsonViewDialogProps {
   readonly tenantId: string;
   readonly labels: TenantBundleJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -16,7 +23,7 @@ interface TenantBundleJsonViewDialogProps {
 export function TenantBundleJsonViewDialog({
   tenantId,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: TenantBundleJsonViewDialogProps) {
@@ -84,14 +91,10 @@ export function TenantBundleJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

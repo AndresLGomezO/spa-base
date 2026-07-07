@@ -4,7 +4,13 @@ import {
   validateEntityDefinitionImport,
   type EntityDefinitionFormData,
 } from "@repo/dynamic-entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "./JsonImportErrors.js";
 import type { EntityDefinitionFormJsonLabels } from "./entity-definition-json-labels.js";
@@ -15,7 +21,7 @@ interface EntityDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: EntityDefinitionFormJsonLabels;
   readonly onApply: (data: EntityDefinitionFormData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -26,7 +32,7 @@ export function EntityDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: EntityDefinitionJsonImportDialogProps) {
@@ -115,14 +121,10 @@ export function EntityDefinitionJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

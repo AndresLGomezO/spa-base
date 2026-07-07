@@ -6,7 +6,13 @@ import {
   type DataHookDefinition,
   type DataHooksCatalogEnvelope,
 } from "@repo/hooks/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { DataHookDefinitionRecord } from "../../../lib/api-client";
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
@@ -17,7 +23,7 @@ interface DataHooksCatalogJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: DataHooksCatalogJsonLabels;
   readonly onApply: (catalog: DataHooksCatalogEnvelope) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly importDisabled?: boolean;
 }
 
@@ -26,7 +32,7 @@ export function DataHooksCatalogJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   importDisabled = false,
 }: DataHooksCatalogJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
@@ -134,15 +140,11 @@ export function DataHooksCatalogJsonImportDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonImportTriggerButton
+        labels={triggerLabels}
         disabled={importDisabled}
         onClick={() => setOpen(true)}
-      >
-        {labels.importTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}

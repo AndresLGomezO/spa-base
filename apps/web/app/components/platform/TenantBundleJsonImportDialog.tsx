@@ -3,14 +3,20 @@ import {
   validateTenantBundleImport,
   type TenantBundleExportDocument,
 } from "@repo/tenant-bundle/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { TenantBundleJsonLabels } from "./tenant-bundle-json-labels";
 
 interface TenantBundleJsonImportDialogProps {
   readonly labels: TenantBundleJsonLabels;
   readonly onApply: (bundle: TenantBundleExportDocument) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -18,7 +24,7 @@ interface TenantBundleJsonImportDialogProps {
 export function TenantBundleJsonImportDialog({
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: TenantBundleJsonImportDialogProps) {
@@ -60,14 +66,10 @@ export function TenantBundleJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

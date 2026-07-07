@@ -3,6 +3,8 @@ import {
   ENTITY_QUERY_DEFINITIONS_COLLECTION,
   entityQueryDefinitionRecordSchema,
   patchEntityQueryDefinitionInputSchema,
+  buildEntityQueryDefinitionRecord,
+  mergeEntityQueryDefinitionPatch,
   type CreateEntityQueryDefinitionInput,
   type EntityQueryDefinitionRecord,
   type PatchEntityQueryDefinitionInput,
@@ -64,23 +66,16 @@ export function createFirestoreAdminEntityQueryDefinitionRepository(
       const parsed = createEntityQueryDefinitionInputSchema.parse(input);
       const now = new Date().toISOString();
       const id = `entity_query_${nanoid(12)}`;
-      const record = entityQueryDefinitionRecordSchema.parse({
-        id,
-        tenantId,
-        queryId: slugQueryId(parsed.name) || id,
-        name: parsed.name,
-        ...(parsed.description ? { description: parsed.description } : {}),
-        sourceEntity: parsed.sourceEntity,
-        parameters: parsed.parameters,
-        filter: parsed.filter,
-        sort: parsed.sort,
-        ...(parsed.select ? { select: parsed.select } : {}),
-        limitMode: parsed.limitMode,
-        ...(parsed.limitMode === "topN" ? { limit: parsed.limit } : {}),
-        status: parsed.status,
-        createdAt: now,
-        updatedAt: now,
-      });
+      const record = buildEntityQueryDefinitionRecord(
+        {
+          id,
+          tenantId,
+          queryId: slugQueryId(parsed.name) || id,
+          createdAt: now,
+          updatedAt: now,
+        },
+        parsed,
+      );
 
       await collection(tenantId).doc(id).set(record);
       return record;
@@ -92,28 +87,11 @@ export function createFirestoreAdminEntityQueryDefinitionRepository(
       }
 
       patchEntityQueryDefinitionInputSchema.parse(input);
-      const now = new Date().toISOString();
-      const limitMode = input.limitMode ?? current.limitMode;
-      const limit =
-        limitMode === "topN" ? (input.limit ?? current.limit ?? 20) : undefined;
-
-      const next = entityQueryDefinitionRecordSchema.parse({
-        ...current,
-        ...(input.name ? { name: input.name } : {}),
-        ...(input.description !== undefined
-          ? { description: input.description }
-          : {}),
-        ...(input.parameters !== undefined
-          ? { parameters: input.parameters }
-          : {}),
-        ...(input.filter ? { filter: input.filter } : {}),
-        ...(input.sort ? { sort: input.sort } : {}),
-        ...(input.select !== undefined ? { select: input.select } : {}),
-        ...(input.limitMode ? { limitMode: input.limitMode } : {}),
-        ...(limitMode === "topN" ? { limit } : {}),
-        ...(input.status ? { status: input.status } : {}),
-        updatedAt: now,
-      });
+      const next = mergeEntityQueryDefinitionPatch(
+        current,
+        input,
+        new Date().toISOString(),
+      );
 
       await collection(tenantId).doc(id).set(next);
       return next;

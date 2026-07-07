@@ -17,10 +17,15 @@ export function DesignLayoutEntityTransitionShell({
   const { t } = useTranslation("common");
 
   return (
-    <div className={cn("relative min-h-0 flex-1", className)}>
+    <div
+      className={cn(
+        "relative flex min-h-0 flex-1 flex-col overflow-hidden",
+        className,
+      )}
+    >
       <div
         className={cn(
-          "min-h-0 flex-1",
+          "flex min-h-0 flex-1 flex-col overflow-hidden",
           loading && "pointer-events-none opacity-50",
         )}
       >

@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import {
   designerPreviewColumnClassName,
   designerTreeTabRootClassName,
-  designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import { MetricListTreePanel } from "./MetricListTreePanel";
+import { MetricPreviewPanel } from "./preview/MetricPreviewPanel";
 import { MetricSettingsPanel } from "./MetricSettingsPanel";
 import { MetricsProvider, useMetrics } from "./metrics-context";
 
@@ -28,8 +28,13 @@ function MetricsWorkbench() {
 
   return (
     <div className={designerTreeTabRootClassName}>
-      <div className={designerTreeWorkbenchClassName}>
-        <MetricListTreePanel />
+      <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+        <div className="shrink-0 min-w-0">
+          <MetricListTreePanel />
+        </div>
+        <div className="shrink-0 min-w-0">
+          <MetricPreviewPanel />
+        </div>
         <div className={designerPreviewColumnClassName}>
           <MetricSettingsPanel />
         </div>

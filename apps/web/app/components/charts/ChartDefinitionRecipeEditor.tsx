@@ -624,7 +624,13 @@ export function ChartDefinitionRecipeEditor({
             }
           />
         </Field>
-        <Field label={t("chartComponent.seriesColor")}>
+        <Field
+          label={t(
+            isDonutChart
+              ? "chartComponent.fillColor"
+              : "chartComponent.seriesColor",
+          )}
+        >
           <input
             className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
             value={
@@ -707,243 +713,243 @@ export function ChartDefinitionRecipeEditor({
           </>
         ) : (
           <>
-        <Field label={t("chartComponent.strokeWidth")}>
-          <input
-            type="number"
-            min={0.5}
-            max={12}
-            step={0.5}
-            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
-            value={recipe.series?.[0]?.strokeWidth ?? 2}
-            onChange={(event) =>
-              onChange(
-                updatePrimarySeries(recipe, {
-                  strokeWidth: Number(event.target.value) || 2,
-                }),
-              )
-            }
-          />
-        </Field>
-        {recipe.chartType === "line" ? (
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={recipe.series?.[0]?.showAreaFill ?? false}
-              onChange={(event) =>
-                onChange(
-                  updatePrimarySeries(recipe, {
-                    showAreaFill: event.target.checked,
-                  }),
-                )
-              }
-            />
-            {t("chartComponent.showAreaFill")}
-          </label>
-        ) : null}
-        <Field label={t("chartComponent.areaFillOpacity")}>
-          <input
-            type="number"
-            min={0}
-            max={1}
-            step={0.05}
-            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
-            value={recipe.series?.[0]?.areaFillOpacity ?? 0.25}
-            onChange={(event) =>
-              onChange(
-                updatePrimarySeries(recipe, {
-                  areaFillOpacity: Number(event.target.value),
-                }),
-              )
-            }
-          />
-        </Field>
+            <Field label={t("chartComponent.strokeWidth")}>
+              <input
+                type="number"
+                min={0.5}
+                max={12}
+                step={0.5}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                value={recipe.series?.[0]?.strokeWidth ?? 2}
+                onChange={(event) =>
+                  onChange(
+                    updatePrimarySeries(recipe, {
+                      strokeWidth: Number(event.target.value) || 2,
+                    }),
+                  )
+                }
+              />
+            </Field>
+            {recipe.chartType === "line" ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={recipe.series?.[0]?.showAreaFill ?? false}
+                  onChange={(event) =>
+                    onChange(
+                      updatePrimarySeries(recipe, {
+                        showAreaFill: event.target.checked,
+                      }),
+                    )
+                  }
+                />
+                {t("chartComponent.showAreaFill")}
+              </label>
+            ) : null}
+            <Field label={t("chartComponent.areaFillOpacity")}>
+              <input
+                type="number"
+                min={0}
+                max={1}
+                step={0.05}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                value={recipe.series?.[0]?.areaFillOpacity ?? 0.25}
+                onChange={(event) =>
+                  onChange(
+                    updatePrimarySeries(recipe, {
+                      areaFillOpacity: Number(event.target.value),
+                    }),
+                  )
+                }
+              />
+            </Field>
           </>
         )}
       </div>
 
       {!isDonutChart ? (
-      <>
-      <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
-        <Text className="text-sm font-medium">
-          {t("chartComponent.legend")}
-        </Text>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={recipe.legend?.visible ?? false}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                legend: { ...recipe.legend, visible: event.target.checked },
-              })
-            }
-          />
-          {t("chartComponent.legendVisible")}
-        </label>
-        <Field label={t("chartComponent.legendPosition")}>
-          <Select
-            value={recipe.legend?.position ?? "none"}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                legend: {
-                  ...recipe.legend,
-                  position: event.target.value as NonNullable<
-                    ChartDefinitionRecipe["legend"]
-                  >["position"],
-                },
-              })
-            }
-          >
-            <option value="none">
-              {t("chartComponent.legendPositions.none")}
-            </option>
-            <option value="top">
-              {t("chartComponent.legendPositions.top")}
-            </option>
-            <option value="bottom">
-              {t("chartComponent.legendPositions.bottom")}
-            </option>
-            <option value="left">
-              {t("chartComponent.legendPositions.left")}
-            </option>
-            <option value="right">
-              {t("chartComponent.legendPositions.right")}
-            </option>
-          </Select>
-        </Field>
-        <Field label={t("chartComponent.legendAlign")}>
-          <Select
-            value={recipe.legend?.align ?? "start"}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                legend: {
-                  ...recipe.legend,
-                  align: event.target.value as NonNullable<
-                    ChartDefinitionRecipe["legend"]
-                  >["align"],
-                },
-              })
-            }
-          >
-            <option value="start">
-              {t("chartComponent.legendAlignments.start")}
-            </option>
-            <option value="center">
-              {t("chartComponent.legendAlignments.center")}
-            </option>
-            <option value="end">
-              {t("chartComponent.legendAlignments.end")}
-            </option>
-          </Select>
-        </Field>
-        <Field label={t("chartComponent.legendFontSize")}>
-          <input
-            type="number"
-            min={8}
-            max={32}
-            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
-            value={recipe.legend?.fontSize ?? 11}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                legend: {
-                  ...recipe.legend,
-                  fontSize: Number(event.target.value) || 11,
-                },
-              })
-            }
-          />
-        </Field>
-      </div>
+        <>
+          <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
+            <Text className="text-sm font-medium">
+              {t("chartComponent.legend")}
+            </Text>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recipe.legend?.visible ?? false}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    legend: { ...recipe.legend, visible: event.target.checked },
+                  })
+                }
+              />
+              {t("chartComponent.legendVisible")}
+            </label>
+            <Field label={t("chartComponent.legendPosition")}>
+              <Select
+                value={recipe.legend?.position ?? "none"}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    legend: {
+                      ...recipe.legend,
+                      position: event.target.value as NonNullable<
+                        ChartDefinitionRecipe["legend"]
+                      >["position"],
+                    },
+                  })
+                }
+              >
+                <option value="none">
+                  {t("chartComponent.legendPositions.none")}
+                </option>
+                <option value="top">
+                  {t("chartComponent.legendPositions.top")}
+                </option>
+                <option value="bottom">
+                  {t("chartComponent.legendPositions.bottom")}
+                </option>
+                <option value="left">
+                  {t("chartComponent.legendPositions.left")}
+                </option>
+                <option value="right">
+                  {t("chartComponent.legendPositions.right")}
+                </option>
+              </Select>
+            </Field>
+            <Field label={t("chartComponent.legendAlign")}>
+              <Select
+                value={recipe.legend?.align ?? "start"}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    legend: {
+                      ...recipe.legend,
+                      align: event.target.value as NonNullable<
+                        ChartDefinitionRecipe["legend"]
+                      >["align"],
+                    },
+                  })
+                }
+              >
+                <option value="start">
+                  {t("chartComponent.legendAlignments.start")}
+                </option>
+                <option value="center">
+                  {t("chartComponent.legendAlignments.center")}
+                </option>
+                <option value="end">
+                  {t("chartComponent.legendAlignments.end")}
+                </option>
+              </Select>
+            </Field>
+            <Field label={t("chartComponent.legendFontSize")}>
+              <input
+                type="number"
+                min={8}
+                max={32}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                value={recipe.legend?.fontSize ?? 11}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    legend: {
+                      ...recipe.legend,
+                      fontSize: Number(event.target.value) || 11,
+                    },
+                  })
+                }
+              />
+            </Field>
+          </div>
 
-      <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
-        <Text className="text-sm font-medium">
-          {t("chartComponent.axesAndGrid")}
-        </Text>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={recipe.xAxis?.visible ?? false}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                xAxis: { ...recipe.xAxis, visible: event.target.checked },
-              })
-            }
-          />
-          {t("chartComponent.showXAxis")}
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={recipe.yAxis?.visible ?? false}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                yAxis: { ...recipe.yAxis, visible: event.target.checked },
-              })
-            }
-          />
-          {t("chartComponent.showYAxis")}
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={recipe.grid?.visible ?? false}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                grid: { visible: event.target.checked },
-              })
-            }
-          />
-          {t("chartComponent.showGrid")}
-        </label>
-      </div>
+          <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
+            <Text className="text-sm font-medium">
+              {t("chartComponent.axesAndGrid")}
+            </Text>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recipe.xAxis?.visible ?? false}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    xAxis: { ...recipe.xAxis, visible: event.target.checked },
+                  })
+                }
+              />
+              {t("chartComponent.showXAxis")}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recipe.yAxis?.visible ?? false}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    yAxis: { ...recipe.yAxis, visible: event.target.checked },
+                  })
+                }
+              />
+              {t("chartComponent.showYAxis")}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recipe.grid?.visible ?? false}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    grid: { visible: event.target.checked },
+                  })
+                }
+              />
+              {t("chartComponent.showGrid")}
+            </label>
+          </div>
 
-      <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
-        <Text className="text-sm font-medium">
-          {t("chartComponent.animation")}
-        </Text>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={recipe.animation?.enabled ?? true}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                animation: {
-                  ...recipe.animation,
-                  enabled: event.target.checked,
-                },
-              })
-            }
-          />
-          {t("chartComponent.animationEnabled")}
-        </label>
-        <Field label={t("chartComponent.animationDuration")}>
-          <input
-            type="number"
-            min={0}
-            max={5000}
-            step={50}
-            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
-            value={recipe.animation?.durationMs ?? 600}
-            onChange={(event) =>
-              onChange({
-                ...recipe,
-                animation: {
-                  ...recipe.animation,
-                  durationMs: Number(event.target.value) || 600,
-                },
-              })
-            }
-          />
-        </Field>
-      </div>
-      </>
+          <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
+            <Text className="text-sm font-medium">
+              {t("chartComponent.animation")}
+            </Text>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recipe.animation?.enabled ?? true}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    animation: {
+                      ...recipe.animation,
+                      enabled: event.target.checked,
+                    },
+                  })
+                }
+              />
+              {t("chartComponent.animationEnabled")}
+            </label>
+            <Field label={t("chartComponent.animationDuration")}>
+              <input
+                type="number"
+                min={0}
+                max={5000}
+                step={50}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                value={recipe.animation?.durationMs ?? 600}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    animation: {
+                      ...recipe.animation,
+                      durationMs: Number(event.target.value) || 600,
+                    },
+                  })
+                }
+              />
+            </Field>
+          </div>
+        </>
       ) : null}
     </div>
   );

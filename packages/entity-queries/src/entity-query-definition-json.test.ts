@@ -20,6 +20,7 @@ const baseRecord: EntityQueryDefinitionRecord = {
   queryId: "upcoming_payments",
   name: "Upcoming payments",
   sourceEntity: "transaction",
+  queryMode: "records",
   parameters: [],
   filter: {
     type: "group",
@@ -34,6 +35,9 @@ const baseRecord: EntityQueryDefinitionRecord = {
     ],
   },
   sort: [{ field: "date", direction: "desc" }],
+  groupBy: [],
+  aggregations: [],
+  groupSort: [],
   limitMode: "topN",
   limit: 20,
   status: "ACTIVE",
@@ -180,9 +184,11 @@ describe("entity-query-definition-json", () => {
       );
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(40);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(44);
     const names = parsed.data.entityQueryDefinitions.map((query) => query.name);
     expect(names).toContain("Upcoming payments");
+    expect(names).toContain("Category outflows (period to date)");
+    expect(names).toContain("Category transaction trend");
     expect(names).toContain("Active commitments");
     expect(names).toContain("Income by category");
     expect(names).toContain("Transaction trend");

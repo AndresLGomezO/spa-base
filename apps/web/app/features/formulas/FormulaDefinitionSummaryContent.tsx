@@ -18,6 +18,8 @@ import {
 import { FormulaDefinitionSummaryNavigation } from "./FormulaDefinitionSummaryNavigation";
 import { FormulaExpressionInteractivePreview } from "./FormulaExpressionInteractivePreview";
 
+export type FormulaSummaryMode = "overview" | "details" | "advanced";
+
 interface FormulaDefinitionSummaryContentProps {
   readonly formulaName: string;
   readonly definition?: FormulaDefinitionRecord | null;
@@ -26,6 +28,8 @@ interface FormulaDefinitionSummaryContentProps {
   readonly navigationStack: readonly string[];
   readonly onNavigateToFormula: (formulaName: string) => void;
   readonly onNavigateToStackIndex: (index: number) => void;
+  readonly mode?: FormulaSummaryMode;
+  readonly showNavigation?: boolean;
 }
 
 export function FormulaDefinitionSummaryContent({
@@ -36,6 +40,8 @@ export function FormulaDefinitionSummaryContent({
   navigationStack,
   onNavigateToFormula,
   onNavigateToStackIndex,
+  mode = "overview",
+  showNavigation = true,
 }: FormulaDefinitionSummaryContentProps) {
   const { t } = useTranslation("common");
 
@@ -97,10 +103,12 @@ export function FormulaDefinitionSummaryContent({
   if (!definition) {
     return (
       <div className="space-y-5">
-        <FormulaDefinitionSummaryNavigation
-          navigationStack={navigationStack}
-          onNavigateToStackIndex={onNavigateToStackIndex}
-        />
+        {showNavigation ? (
+          <FormulaDefinitionSummaryNavigation
+            navigationStack={navigationStack}
+            onNavigateToStackIndex={onNavigateToStackIndex}
+          />
+        ) : null}
         <Text className="text-muted-foreground text-sm">
           {t("formulas.summaryModal.notFound", { name: formulaName })}
         </Text>
@@ -110,115 +118,140 @@ export function FormulaDefinitionSummaryContent({
 
   return (
     <div className="space-y-5">
-      <FormulaDefinitionSummaryNavigation
-        navigationStack={navigationStack}
-        onNavigateToStackIndex={onNavigateToStackIndex}
-      />
-
-      <div className="space-y-1">
-        {definition.description ? (
-          <Text className="text-muted-foreground text-sm">
-            {definition.description}
-          </Text>
-        ) : null}
-        <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
-          <span>
-            {t("formulas.summaryModal.source")}:{" "}
-            {definition.source === "platform"
-              ? t("formulas.summaryModal.sourcePlatform")
-              : t("formulas.summaryModal.sourceTenant")}
-          </span>
-          <span>
-            {t("formulas.summaryModal.status")}:{" "}
-            {definition.enabled
-              ? t("formulas.settings.enabled")
-              : t("formulas.settings.disabled")}
-          </span>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          {t("formulas.summaryModal.sections.summary")}
-        </Text>
-        <Text className="text-foreground text-sm">{summaryText}</Text>
-        {detailBullets.length > 0 ? (
-          <ul className="text-muted-foreground list-disc space-y-1 pl-4 text-sm">
-            {detailBullets.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        ) : null}
-        {descriptor?.widgets ? (
-          <HookPreviewWidgets widgets={descriptor.widgets} mode="details" />
-        ) : null}
-      </div>
-
-      {definition.inputs.length > 0 ? (
-        <div className="space-y-2">
-          <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            {t("formulas.summaryModal.sections.inputs")}
-          </Text>
-          <ul className="space-y-2">
-            {definition.inputs.map((input) => (
-              <li
-                key={input.name}
-                className="border-border rounded-md border px-3 py-2 text-sm"
-              >
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="font-medium">{input.name}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {input.required
-                      ? t("formulas.summaryModal.required")
-                      : t("formulas.summaryModal.optional")}
-                  </span>
-                </div>
-                {input.description ? (
-                  <Text className="text-muted-foreground mt-1 text-xs">
-                    {input.description}
-                  </Text>
-                ) : null}
-                <Text className="text-muted-foreground mt-1 font-mono text-xs">
-                  {t("formulas.summaryModal.example")}:{" "}
-                  {formatFormulaExampleValue(exampleInputs[input.name] ?? null)}
-                </Text>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {showNavigation ? (
+        <FormulaDefinitionSummaryNavigation
+          navigationStack={navigationStack}
+          onNavigateToStackIndex={onNavigateToStackIndex}
+        />
       ) : null}
 
-      <div className="space-y-2">
-        <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          {t("formulas.summaryModal.sections.output")}
-        </Text>
-        <div className="border-border rounded-md border px-3 py-2 text-sm">
-          {exampleOutput?.output ? (
-            <pre className="bg-muted overflow-auto rounded-md p-2 font-mono text-xs whitespace-pre-wrap">
-              {exampleOutput.output}
-            </pre>
+      {mode === "overview" ? (
+        <>
+          <div className="space-y-1">
+            {definition.description ? (
+              <Text className="text-muted-foreground text-sm">
+                {definition.description}
+              </Text>
+            ) : null}
+            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
+              <span>
+                {t("formulas.summaryModal.source")}:{" "}
+                {definition.source === "platform"
+                  ? t("formulas.summaryModal.sourcePlatform")
+                  : t("formulas.summaryModal.sourceTenant")}
+              </span>
+              <span>
+                {t("formulas.summaryModal.status")}:{" "}
+                {definition.enabled
+                  ? t("formulas.settings.enabled")
+                  : t("formulas.settings.disabled")}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              {t("formulas.summaryModal.sections.summary")}
+            </Text>
+            <Text className="text-foreground text-sm">{summaryText}</Text>
+            {detailBullets.length > 0 ? (
+              <ul className="text-muted-foreground list-disc space-y-1 pl-4 text-sm">
+                {detailBullets.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            ) : null}
+            {descriptor?.widgets ? (
+              <HookPreviewWidgets
+                widgets={descriptor.widgets}
+                mode="overview"
+              />
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
+      {mode === "details" ? (
+        <>
+          {definition.inputs.length > 0 ? (
+            <div className="space-y-2">
+              <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {t("formulas.summaryModal.sections.inputs")}
+              </Text>
+              <ul className="space-y-2">
+                {definition.inputs.map((input) => (
+                  <li
+                    key={input.name}
+                    className="border-border rounded-md border px-3 py-2 text-sm"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <span className="font-medium">{input.name}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {input.required
+                          ? t("formulas.summaryModal.required")
+                          : t("formulas.summaryModal.optional")}
+                      </span>
+                    </div>
+                    {input.description ? (
+                      <Text className="text-muted-foreground mt-1 text-xs">
+                        {input.description}
+                      </Text>
+                    ) : null}
+                    <Text className="text-muted-foreground mt-1 font-mono text-xs">
+                      {t("formulas.summaryModal.example")}:{" "}
+                      {formatFormulaExampleValue(
+                        exampleInputs[input.name] ?? null,
+                      )}
+                    </Text>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
-            <Text className="text-muted-foreground text-xs">
-              {exampleOutput?.error ??
-                t("formulas.summaryModal.outputUnavailable")}
+            <Text className="text-muted-foreground text-sm">
+              {t("formulas.summaryModal.noInputs")}
             </Text>
           )}
-        </div>
-      </div>
 
-      <div className="space-y-2">
-        <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          {t("formulas.summaryModal.sections.expression")}
-        </Text>
-        <Text className="text-muted-foreground text-xs">
-          {t("formulas.summaryModal.nestedFormulaHint")}
-        </Text>
-        <FormulaExpressionInteractivePreview
-          value={definition.body}
-          catalogNames={catalogNames}
-          onFormulaClick={onNavigateToFormula}
-        />
-      </div>
+          <div className="space-y-2">
+            <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              {t("formulas.summaryModal.sections.output")}
+            </Text>
+            <div className="border-border rounded-md border px-3 py-2 text-sm">
+              {exampleOutput?.output ? (
+                <pre className="bg-muted overflow-auto rounded-md p-2 font-mono text-xs whitespace-pre-wrap">
+                  {exampleOutput.output}
+                </pre>
+              ) : (
+                <Text className="text-muted-foreground text-xs">
+                  {exampleOutput?.error ??
+                    t("formulas.summaryModal.outputUnavailable")}
+                </Text>
+              )}
+            </div>
+          </div>
+
+          {descriptor?.widgets ? (
+            <HookPreviewWidgets widgets={descriptor.widgets} mode="details" />
+          ) : null}
+        </>
+      ) : null}
+
+      {mode === "advanced" ? (
+        <div className="space-y-2">
+          <Text className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            {t("formulas.summaryModal.sections.expression")}
+          </Text>
+          <Text className="text-muted-foreground text-xs">
+            {t("formulas.summaryModal.nestedFormulaHint")}
+          </Text>
+          <FormulaExpressionInteractivePreview
+            value={definition.body}
+            catalogNames={catalogNames}
+            onFormulaClick={onNavigateToFormula}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

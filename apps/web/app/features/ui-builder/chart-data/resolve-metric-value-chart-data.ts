@@ -68,9 +68,7 @@ function resolveDonutStyle(config: ResolvedChartComponentConfig): {
   const seriesColor = config.series?.[0]?.color;
   return {
     fillColor:
-      config.donut?.fillColor ??
-      seriesColor ??
-      "var(--color-primary, #6366f1)",
+      config.donut?.fillColor ?? seriesColor ?? "var(--color-primary, #6366f1)",
     trackColor:
       config.donut?.trackColor ??
       "color-mix(in oklch, var(--color-primary, #6366f1) 20%, transparent)",
@@ -83,7 +81,6 @@ function resolveDonutStyle(config: ResolvedChartComponentConfig): {
 export function resolveDonutProgressValue(
   numericValue: number,
   definition: MetricDefinitionRecord,
-  maxValue: number,
 ): number {
   if (definition.valueDisplayFormat === "percent") {
     // Percent metrics store decimal ratios (e.g. 0.3361); arc scale uses 0–maxValue points.
@@ -171,7 +168,7 @@ export async function fetchMetricValueDonutData(
     ) ?? String(numericValue);
 
   return {
-    value: resolveDonutProgressValue(numericValue, definition, maxValue),
+    value: resolveDonutProgressValue(numericValue, definition),
     maxValue,
     centerLabel,
     ...style,

@@ -151,6 +151,7 @@ export function CustomViewListTreePanel() {
         items={editor.views}
         queries={queries}
         labels={catalogLabels}
+        triggerLabels={triggerLabels}
       />
       {canReplaceCatalog ? (
         <CustomViewsCatalogJsonImportDialog
@@ -158,6 +159,7 @@ export function CustomViewListTreePanel() {
           canApply={canReplaceCatalog}
           importDisabled={!isEnvironmentReady}
           labels={catalogLabels}
+          triggerLabels={triggerLabels}
           onApply={(catalog) => void handleCatalogImport(catalog)}
         />
       ) : null}

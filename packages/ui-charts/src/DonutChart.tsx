@@ -92,12 +92,11 @@ export function DonutChart({
                     pie.arcs.map((arc) => (
                       <g key={arc.data.id}>
                         <path
-                          d={
-                            pie.path(arc) ??
-                            undefined
-                          }
+                          d={pie.path(arc) ?? undefined}
                           fill={arc.data.color}
-                          stroke={strokeWidth > 0 ? "var(--color-card)" : "none"}
+                          stroke={
+                            strokeWidth > 0 ? "var(--color-card)" : "none"
+                          }
                           strokeWidth={strokeWidth}
                         />
                       </g>

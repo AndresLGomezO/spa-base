@@ -883,6 +883,7 @@ export interface EntityQueryDefinitionRecord {
   readonly name: string;
   readonly description?: string;
   readonly sourceEntity: string;
+  readonly queryMode?: "records" | "aggregated";
   readonly parameters?: readonly {
     readonly name: string;
     readonly valueType: "dateBucket" | "scalar" | "stringList";
@@ -895,6 +896,16 @@ export interface EntityQueryDefinitionRecord {
     readonly direction: "asc" | "desc";
   }[];
   readonly select?: readonly string[];
+  readonly groupBy?: readonly string[];
+  readonly aggregations?: readonly {
+    readonly operation: "SUM" | "COUNT" | "AVG";
+    readonly field?: string;
+  }[];
+  readonly groupSort?: readonly {
+    readonly field: string;
+    readonly direction: "asc" | "desc";
+  }[];
+  readonly groupLimit?: number;
   readonly limitMode: "topN" | "all";
   readonly limit?: number;
   readonly status: "ACTIVE" | "PAUSED";

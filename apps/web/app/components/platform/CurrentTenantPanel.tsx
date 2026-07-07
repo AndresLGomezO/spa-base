@@ -2,7 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TenantBundleExportDocument } from "@repo/tenant-bundle/browser";
 
-import { Alert, Button, Modal, Text, toast } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  JsonImportTriggerButton,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  toast,
+} from "@repo/ui";
 
 import {
   getAdminTenant,
@@ -10,6 +18,7 @@ import {
   updateAdminTenant,
   type AdminTenant,
 } from "../../lib/admin-client";
+import { useJsonActionTriggerLabels } from "../json/json-action-trigger-labels";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
 import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
@@ -39,6 +48,7 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const [tenantDeleted, setTenantDeleted] = useState(false);
 
   const bundleLabels = useMemo(() => tenantBundleJsonLabels(t), [t]);
+  const triggerLabels = useJsonActionTriggerLabels();
   const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
   const loadTenant = useCallback(async () => {
@@ -177,23 +187,15 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
           </Text>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
+          <JsonViewTriggerButton
+            labels={triggerLabels}
             onClick={() => setViewDialogOpen(true)}
-          >
-            {bundleLabels.viewTrigger}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
+          />
+          <JsonImportTriggerButton
+            labels={triggerLabels}
             disabled={!isEnvironmentReady}
             onClick={() => setImportDialogOpen(true)}
-          >
-            {bundleLabels.importTrigger}
-          </Button>
+          />
         </div>
         {!isEnvironmentReady ? (
           <IndexEnvironmentBlockedNotice

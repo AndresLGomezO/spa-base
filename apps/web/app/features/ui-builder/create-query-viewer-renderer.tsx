@@ -26,9 +26,25 @@ import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
 import { useManyToOneRelationSubfieldValues } from "../../hooks/useManyToOneRelationSubfieldValues";
 import { useOneToManyRelationSubfieldValues } from "../../hooks/useOneToManyRelationSubfieldValues";
-import type { PageFilterContext } from "../../lib/metric-binding-resolution";
+import {
+  resolveFilterBindingMap,
+  type PageFilterContext,
+} from "../../lib/metric-binding-resolution";
 import { entityQueryResultsQueryKey } from "../../query/query-client";
 import { loadQueryViewerResults } from "./load-query-viewer-results";
+import { isAggregatedEntityQueryDefinition } from "./execute-entity-query-definition";
+
+function buildQueryViewerItemKey(
+  item: Record<string, unknown>,
+  groupBy: readonly string[],
+  index: number,
+): string {
+  if (groupBy.length === 0) {
+    return `query-item-${index}`;
+  }
+
+  return groupBy.map((field) => String(item[field] ?? "")).join("\u0000");
+}
 
 interface CreateQueryViewerRendererOptions {
   readonly catalogItems: readonly EntityCatalogEntry[];
@@ -124,6 +140,15 @@ function QueryViewerRuntime({
     [config, pageFilterContext],
   );
 
+  const parameterBindingsResolved = useMemo(() => {
+    const bindings = config.parameterBindings;
+    if (!bindings || Object.keys(bindings).length === 0) {
+      return true;
+    }
+
+    return resolveFilterBindingMap(bindings, pageFilterContext, {}) !== null;
+  }, [config.parameterBindings, pageFilterContext]);
+
   const itemLayout = useMemo(
     () => rowsToLayout(config.rows, "query-viewer-item-root"),
     [config.rows],
@@ -153,7 +178,7 @@ function QueryViewerRuntime({
         parameterBindings: config.parameterBindings,
         context: pageFilterContext,
       }),
-    enabled: queryId.length > 0,
+    enabled: queryId.length > 0 && parameterBindingsResolved,
   });
 
   const definition = queryResults.data?.definition ?? null;
@@ -161,6 +186,8 @@ function QueryViewerRuntime({
     () => queryResults.data?.items ?? [],
     [queryResults.data?.items],
   );
+  const isAggregated =
+    definition != null && isAggregatedEntityQueryDefinition(definition);
 
   const resolvedSourceDefinition = definition
     ? tryGetEntityDefinition(definition.sourceEntity, catalogItems)
@@ -169,13 +196,15 @@ function QueryViewerRuntime({
   const getDefinitionForRelations = (entityName: string) =>
     tryGetEntityDefinition(entityName, catalogItems)!;
 
-  const parentItems = useMemo(
-    () =>
-      items.map((item) => ({
-        id: String(item.id ?? ""),
-      })),
-    [items],
-  );
+  const parentItems = useMemo(() => {
+    if (isAggregated) {
+      return [];
+    }
+
+    return items.map((item) => ({
+      id: String(item.id ?? ""),
+    }));
+  }, [isAggregated, items]);
 
   const { getSubfieldValue: getOneToManySubfieldValue } =
     useOneToManyRelationSubfieldValues(
@@ -277,13 +306,18 @@ function QueryViewerRuntime({
     >
       {items.map((item, index) => {
         const enrichedItem = enrichItemWithLoadedRelations(item);
+        const itemKey = isAggregated
+          ? buildQueryViewerItemKey(item, definition?.groupBy ?? [], index)
+          : String(item.id ?? `query-item-${index}`);
 
         return (
           <EmbeddedLayoutRenderer
-            key={String(item.id ?? `query-item-${index}`)}
+            key={itemKey}
             layout={itemLayout}
             context={buildLayoutContext(sourceDefinition, enrichedItem, {
-              getOneToManyRelationSubfieldValue: getOneToManySubfieldValue,
+              getOneToManyRelationSubfieldValue: isAggregated
+                ? undefined
+                : getOneToManySubfieldValue,
               getManyToOneRelationSubfieldValue: getManyToOneSubfieldValue,
             })}
           />

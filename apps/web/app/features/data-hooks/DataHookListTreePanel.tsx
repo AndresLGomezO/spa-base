@@ -263,11 +263,13 @@ export function DataHookListTreePanel() {
       <DataHooksCatalogJsonViewDialog
         items={editor.definitions}
         labels={catalogLabels}
+        triggerLabels={triggerLabels}
       />
       <DataHooksCatalogJsonImportDialog
         existingItems={editor.definitions}
         canApply={canReplaceCatalog}
         labels={catalogLabels}
+        triggerLabels={triggerLabels}
         onApply={(catalog) => void handleCatalogImport(catalog)}
       />
     </>

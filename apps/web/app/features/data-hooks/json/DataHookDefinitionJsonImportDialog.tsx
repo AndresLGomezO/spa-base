@@ -4,7 +4,13 @@ import {
   validateDataHookDefinitionImport,
   type DataHookDefinitionFormData,
 } from "@repo/hooks/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
 import type { DataHookDefinitionFormJsonLabels } from "./data-hook-definition-json-labels.js";
@@ -15,7 +21,7 @@ interface DataHookDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: DataHookDefinitionFormJsonLabels;
   readonly onApply: (data: DataHookDefinitionFormData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -26,7 +32,7 @@ export function DataHookDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: DataHookDefinitionJsonImportDialogProps) {
@@ -135,14 +141,10 @@ export function DataHookDefinitionJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

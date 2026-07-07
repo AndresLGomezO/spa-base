@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  createEntityQueryDefinitionEnvelope,
   validateEntityQueryDefinitionImport,
   type EntityQueryDefinitionFormData,
 } from "@repo/entity-queries/browser";
@@ -14,6 +13,8 @@ import {
 
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
 import type { EntityQueryDefinitionFormJsonLabels } from "./entity-query-definition-json-labels.js";
+import { createEntityQueryDefinitionImportExampleEnvelope } from "./entity-query-definition-json-examples.js";
+import { normalizeImportedEntityQueryDefinitionForEdit } from "./normalize-imported-entity-query-definition.js";
 
 interface EntityQueryDefinitionJsonImportDialogProps {
   readonly existingName: string;
@@ -46,36 +47,23 @@ export function EntityQueryDefinitionJsonImportDialog({
   const skeleton = useMemo(
     () =>
       JSON.stringify(
-        createEntityQueryDefinitionEnvelope({
-          name: "Upcoming payments",
-          sourceEntity: "transaction",
-          parameters: [],
-          filter: {
-            type: "group",
-            combinator: "and",
-            children: [
-              {
-                type: "condition",
-                field: "type",
-                operator: "==",
-                value: { type: "static", value: "EXPENSE" },
-              },
-            ],
-          },
-          sort: [{ field: "date", direction: "desc" }],
-          limitMode: "topN",
-          limit: 20,
-          status: "ACTIVE",
+        createEntityQueryDefinitionImportExampleEnvelope({
+          name: existingName,
+          sourceEntity: existingSourceEntity,
         }),
         null,
         2,
       ),
-    [],
+    [existingName, existingSourceEntity],
   );
 
   const validation = useMemo(() => {
     if (jsonText.trim().length === 0) {
-      return { ok: false as const, errors: [] as const };
+      return {
+        ok: false as const,
+        errors: [] as const,
+        preservedIdentityFields: [] as const,
+      };
     }
 
     const parsed = validateEntityQueryDefinitionImport(jsonText);
@@ -83,38 +71,18 @@ export function EntityQueryDefinitionJsonImportDialog({
       return parsed;
     }
 
-    if (parsed.data.name.trim() !== existingName) {
-      return {
-        ok: false as const,
-        errors: [
-          {
-            path: "data.name",
-            message: labels.nameChangeError,
-          },
-        ],
-      };
-    }
+    const normalized = normalizeImportedEntityQueryDefinitionForEdit({
+      data: parsed.data,
+      existingName,
+      existingSourceEntity,
+    });
 
-    if (parsed.data.sourceEntity !== existingSourceEntity) {
-      return {
-        ok: false as const,
-        errors: [
-          {
-            path: "data.sourceEntity",
-            message: labels.sourceEntityChangeError,
-          },
-        ],
-      };
-    }
-
-    return parsed;
-  }, [
-    existingName,
-    existingSourceEntity,
-    jsonText,
-    labels.nameChangeError,
-    labels.sourceEntityChangeError,
-  ]);
+    return {
+      ok: true as const,
+      data: normalized.data,
+      preservedIdentityFields: normalized.preservedIdentityFields,
+    };
+  }, [existingName, existingSourceEntity, jsonText]);
 
   useEffect(() => {
     if (!open) {
@@ -221,14 +189,25 @@ export function EntityQueryDefinitionJsonImportDialog({
               <Text className="text-sm font-medium">
                 {labels.skeletonTitle}
               </Text>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSkeleton((current) => !current)}
-              >
-                {showSkeleton ? labels.skeletonHide : labels.skeletonShow}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!canApply}
+                  onClick={() => setJsonText(skeleton)}
+                >
+                  {labels.fillExample}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSkeleton((current) => !current)}
+                >
+                  {showSkeleton ? labels.skeletonHide : labels.skeletonShow}
+                </Button>
+              </div>
             </div>
             {showSkeleton ? (
               <pre className="bg-muted max-h-48 overflow-auto rounded-md p-3 font-mono text-xs">
@@ -240,9 +219,16 @@ export function EntityQueryDefinitionJsonImportDialog({
           {jsonText.trim().length > 0 ? (
             <div className="flex flex-col gap-2">
               {validation.ok ? (
-                <Text className="text-sm text-green-600 dark:text-green-400">
-                  {labels.valid}
-                </Text>
+                <>
+                  <Text className="text-sm text-green-600 dark:text-green-400">
+                    {labels.valid}
+                  </Text>
+                  {validation.preservedIdentityFields.length > 0 ? (
+                    <Text className="text-muted-foreground text-sm">
+                      {labels.identityPreservedNotice}
+                    </Text>
+                  ) : null}
+                </>
               ) : (
                 <JsonImportErrors
                   errors={validation.errors}

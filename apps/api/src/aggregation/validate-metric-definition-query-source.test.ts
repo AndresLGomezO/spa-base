@@ -9,9 +9,13 @@ const baseQuery: EntityQueryDefinitionRecord = {
   queryId: "all_transactions",
   name: "All transactions",
   sourceEntity: "transaction",
+  queryMode: "records",
   parameters: [],
   filter: { type: "group", combinator: "and", children: [] },
   sort: [],
+  groupBy: [],
+  aggregations: [],
+  groupSort: [],
   limitMode: "all",
   status: "ACTIVE",
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -41,6 +45,22 @@ describe("validateMetricQuerySourceEligibility", () => {
         "transaction",
       ),
     ).toContain("ACTIVE");
+  });
+
+  it("rejects aggregated queries", () => {
+    expect(
+      validateMetricQuerySourceEligibility(
+        {
+          ...baseQuery,
+          queryMode: "aggregated",
+          groupBy: ["categoryId"],
+          aggregations: [{ operation: "SUM", field: "amount" }],
+          groupSort: [{ field: "sum_amount", direction: "desc" }],
+          groupLimit: 1,
+        },
+        "transaction",
+      ),
+    ).toContain("aggregated query mode");
   });
 
   it("rejects mismatched source entities", () => {

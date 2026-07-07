@@ -47,9 +47,11 @@ describe("EntityDefinitionList", () => {
     expect(screen.getByText("Loans")).toBeInTheDocument();
     expect(screen.getByText("dataModels.createModel")).toBeInTheDocument();
     expect(screen.getByText("entity.edit")).toBeInTheDocument();
-    expect(screen.getByText("dataModels.json.viewTrigger")).toBeInTheDocument();
     expect(
-      screen.getByText("dataModels.json.importTrigger"),
+      screen.getByRole("button", { name: "jsonActions.viewAriaLabel" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
     ).toBeInTheDocument();
   });
 
@@ -85,7 +87,9 @@ describe("EntityDefinitionList", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByText("dataModels.json.importTrigger"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: {
         value: JSON.stringify({

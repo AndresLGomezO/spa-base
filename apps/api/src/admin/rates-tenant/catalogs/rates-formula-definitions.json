@@ -9,11 +9,13 @@
       "inputs": [
         {
           "name": "rate",
-          "required": true
+          "required": true,
+          "description": "Interest rate (decimal)"
         },
         {
           "name": "quote",
-          "required": true
+          "required": true,
+          "description": "Rate quote type: EA, NA, or NMV"
         }
       ],
       "body": {
@@ -156,11 +158,13 @@
       "inputs": [
         {
           "name": "originationDate",
-          "required": false
+          "required": false,
+          "description": "Loan origination date (ISO string)"
         },
         {
           "name": "nextDueDate",
-          "required": false
+          "required": false,
+          "description": "Next payment due date (ISO string)"
         }
       ],
       "body": {
@@ -1181,7 +1185,8 @@
       "inputs": [
         {
           "name": "frequency",
-          "required": true
+          "required": true,
+          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
         }
       ],
       "body": {
@@ -1256,7 +1261,8 @@
       "inputs": [
         {
           "name": "frequency",
-          "required": true
+          "required": true,
+          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
         }
       ],
       "body": {
@@ -1331,15 +1337,18 @@
       "inputs": [
         {
           "name": "baseDate",
-          "required": true
+          "required": true,
+          "description": "Starting date for schedule calculation (ISO string)"
         },
         {
           "name": "frequency",
-          "required": true
+          "required": true,
+          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
         },
         {
           "name": "periodIndex",
-          "required": true
+          "required": true,
+          "description": "Zero-based period index for due date calculation"
         }
       ],
       "body": {
@@ -1375,11 +1384,13 @@
       "inputs": [
         {
           "name": "baseDate",
-          "required": true
+          "required": true,
+          "description": "Starting date for schedule calculation (ISO string)"
         },
         {
           "name": "frequency",
-          "required": true
+          "required": true,
+          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
         }
       ],
       "body": {
@@ -1423,11 +1434,13 @@
       "inputs": [
         {
           "name": "baseDate",
-          "required": true
+          "required": true,
+          "description": "Starting date for schedule calculation (ISO string)"
         },
         {
           "name": "frequency",
-          "required": true
+          "required": true,
+          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
         }
       ],
       "body": {
@@ -1485,7 +1498,8 @@
       "inputs": [
         {
           "name": "frequency",
-          "required": true
+          "required": true,
+          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
         }
       ],
       "body": {
@@ -1534,7 +1548,8 @@
       "inputs": [
         {
           "name": "existingCount",
-          "required": true
+          "required": true,
+          "description": "Number of schedule rows already created"
         }
       ],
       "body": {
@@ -1569,7 +1584,8 @@
       "inputs": [
         {
           "name": "itemType",
-          "required": true
+          "required": true,
+          "description": "Financial item type code (LOAN, CARD, etc.)"
         }
       ],
       "body": {
@@ -1694,11 +1710,13 @@
       "inputs": [
         {
           "name": "revolvingBalance",
-          "required": false
+          "required": false,
+          "description": "Revolving balance on the credit card"
         },
         {
           "name": "installmentSum",
-          "required": true
+          "required": true,
+          "description": "Sum of installment child balances"
         }
       ],
       "body": {

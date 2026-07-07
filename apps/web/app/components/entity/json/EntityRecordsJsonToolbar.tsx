@@ -16,6 +16,7 @@ import {
 import { queryClient } from "../../../query/query-client";
 import { IndexEnvironmentBlockedNotice } from "../../index-provisioning/IndexEnvironmentBlockedNotice";
 import { useTenantIndexReadiness } from "../../../hooks/useTenantIndexReadiness";
+import { useJsonActionTriggerLabels } from "../../json/json-action-trigger-labels";
 import { EntityRecordsJsonImportDialog } from "./EntityRecordsJsonImportDialog.js";
 import { EntityRecordsJsonViewDialog } from "./EntityRecordsJsonViewDialog.js";
 import type { EntityRecordsJsonLabels } from "./entity-records-json-labels.js";
@@ -45,6 +46,7 @@ export function EntityRecordsJsonToolbar({
   onImportSuccess,
 }: EntityRecordsJsonToolbarProps) {
   const { t } = useTranslation("common");
+  const triggerLabels = useJsonActionTriggerLabels();
   const [exportOpen, setExportOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -168,7 +170,7 @@ export function EntityRecordsJsonToolbar({
         <EntityRecordsJsonImportDialog
           definition={definition}
           labels={labels}
-          triggerSize={triggerSize}
+          triggerLabels={triggerLabels}
           applying={importing}
           importDisabled={!isEnvironmentReady}
           onApply={handleImport}

@@ -1,6 +1,7 @@
 import { Text } from "@repo/ui";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
+  defaultDateFilterParam,
   resolvePreviewStrategy,
   toEditableLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -8,7 +9,9 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 import { createEntityLayoutRenderContext } from "../ui-builder/create-entity-layout-render-context";
+import { getCurrentDateBucket } from "../ui-builder/use-dashboard-date-filter-url-state";
 import { UnifiedDesignerPreviewPanel } from "../unified-builder/UnifiedDesignerPreviewPanel";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
 import { MetricsRowDesignerPreviewThemeSelect } from "./MetricsRowDesignerPreviewThemeSelect";
@@ -41,6 +44,15 @@ export function MetricsRowDesignerUnifiedPreviewPanel({
     [activeTabId],
   );
 
+  const dashboardDateFilter = useMemo((): DashboardDateFilterContextValue => {
+    const granularity = "month" as const;
+    return {
+      value: getCurrentDateBucket(granularity),
+      granularity,
+      param: defaultDateFilterParam(granularity),
+    };
+  }, []);
+
   const previewContext = useMemo(
     () =>
       createEntityLayoutRenderContext({
@@ -51,11 +63,19 @@ export function MetricsRowDesignerUnifiedPreviewPanel({
         usePreviewSamples: true,
         listFilters: {},
         routeParams: {},
+        dashboardDateFilter,
         catalogItems: items,
         getDefinition,
         t,
       }),
-    [editor.definition, getDefinition, i18n.language, items, t],
+    [
+      dashboardDateFilter,
+      editor.definition,
+      getDefinition,
+      i18n.language,
+      items,
+      t,
+    ],
   );
 
   const editableLayout = useMemo(

@@ -1,4 +1,8 @@
 import {
+  outputKeyForAggregation,
+  internalKeysForAggregation,
+} from "./aggregation-field-keys.js";
+import {
   createEmptyAndGroup,
   MAX_FILTER_TREE_DEPTH,
   MAX_OR_DISJUNCTIONS,
@@ -21,6 +25,17 @@ export type EntityQueryDefinitionStatus =
 
 export const ENTITY_QUERY_LIMIT_MODES = ["topN", "all"] as const;
 export type EntityQueryLimitMode = (typeof ENTITY_QUERY_LIMIT_MODES)[number];
+
+export const ENTITY_QUERY_MODES = ["records", "aggregated"] as const;
+export type EntityQueryMode = (typeof ENTITY_QUERY_MODES)[number];
+
+export const ENTITY_QUERY_AGGREGATION_OPERATIONS = [
+  "SUM",
+  "COUNT",
+  "AVG",
+] as const;
+export type EntityQueryAggregationOperation =
+  (typeof ENTITY_QUERY_AGGREGATION_OPERATIONS)[number];
 
 /** Firestore-native operators supported in entity query definitions. */
 export const ENTITY_QUERY_FILTER_OPERATORS = [
@@ -60,7 +75,12 @@ export const ENTITY_QUERY_PARAMETER_VALUE_TYPES = [
 export type EntityQueryParameterValueType =
   (typeof ENTITY_QUERY_PARAMETER_VALUE_TYPES)[number];
 
-export const ENTITY_QUERY_PARAMETER_BOUNDS = ["start", "end", "value"] as const;
+export const ENTITY_QUERY_PARAMETER_BOUNDS = [
+  "start",
+  "end",
+  "endToDate",
+  "value",
+] as const;
 
 export type EntityQueryParameterBound =
   (typeof ENTITY_QUERY_PARAMETER_BOUNDS)[number];
@@ -189,6 +209,29 @@ export const entityQuerySortSchema = z.object({
 });
 
 export type EntityQuerySort = z.infer<typeof entityQuerySortSchema>;
+
+export const entityQueryAggregationSpecSchema = z
+  .object({
+    operation: z.enum(ENTITY_QUERY_AGGREGATION_OPERATIONS),
+    field: z.string().trim().min(1).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      (value.operation === "SUM" || value.operation === "AVG") &&
+      !value.field
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${value.operation} aggregation requires a field.`,
+        path: ["field"],
+      });
+    }
+  });
+
+export type EntityQueryAggregationSpec = z.infer<
+  typeof entityQueryAggregationSpecSchema
+>;
 
 export const EMPTY_ENTITY_QUERY_FILTER: FilterGroup = createEmptyAndGroup();
 
@@ -394,6 +437,7 @@ const entityQueryDefinitionBodySchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   sourceEntity: z.string().trim().min(1),
+  queryMode: z.enum(ENTITY_QUERY_MODES).default("records"),
   parameters: z.array(entityQueryParameterSchema).default([]),
   filter: entityQueryFilterGroupSchema.optional().default({
     type: "group",
@@ -402,17 +446,39 @@ const entityQueryDefinitionBodySchema = z.object({
   }),
   sort: z.array(entityQuerySortSchema).default([]),
   select: z.array(z.string().trim().min(1)).optional(),
+  groupBy: z.array(z.string().trim().min(1)).default([]),
+  aggregations: z.array(entityQueryAggregationSpecSchema).default([]),
+  groupSort: z.array(entityQuerySortSchema).default([]),
+  groupLimit: z.number().int().positive().max(100).optional(),
   limitMode: z.enum(ENTITY_QUERY_LIMIT_MODES).default("topN"),
   limit: z.number().int().positive().max(100).optional(),
   status: z.enum(ENTITY_QUERY_DEFINITION_STATUSES).default("ACTIVE"),
 });
 
+function listAllowedGroupSortFields(input: {
+  readonly groupBy: readonly string[];
+  readonly aggregations: readonly EntityQueryAggregationSpec[];
+}): readonly string[] {
+  const aggregationKeys = input.aggregations.flatMap((entry) => [
+    outputKeyForAggregation(entry.operation, entry.field),
+    ...internalKeysForAggregation(entry.operation, entry.field),
+  ]);
+
+  return [...input.groupBy, ...aggregationKeys];
+}
+
 function refineEntityQueryDefinitionBody(
   value: {
+    readonly queryMode: EntityQueryMode;
     readonly limitMode: EntityQueryLimitMode;
     readonly limit?: number;
     readonly filter: EntityQueryFilterNode;
     readonly parameters: readonly EntityQueryParameter[];
+    readonly sort: readonly EntityQuerySort[];
+    readonly groupBy: readonly string[];
+    readonly aggregations: readonly EntityQueryAggregationSpec[];
+    readonly groupSort: readonly EntityQuerySort[];
+    readonly groupLimit?: number;
   },
   context: z.RefinementCtx,
 ): void {
@@ -422,6 +488,93 @@ function refineEntityQueryDefinitionBody(
       message: "limit is required when limitMode is topN.",
       path: ["limit"],
     });
+  }
+
+  if (value.queryMode === "aggregated") {
+    if (value.groupBy.length === 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Aggregated queries require at least one groupBy field.",
+        path: ["groupBy"],
+      });
+    }
+
+    if (value.aggregations.length === 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Aggregated queries require at least one aggregation.",
+        path: ["aggregations"],
+      });
+    }
+
+    if (value.limitMode !== "all") {
+      context.addIssue({
+        code: "custom",
+        message: 'Aggregated queries require limitMode "all".',
+        path: ["limitMode"],
+      });
+    }
+
+    if (value.sort.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Aggregated queries cannot use record sort; use groupSort.",
+        path: ["sort"],
+      });
+    }
+
+    if (value.limitMode === "topN") {
+      context.addIssue({
+        code: "custom",
+        message: "Aggregated queries cannot use record limit; use groupLimit.",
+        path: ["limit"],
+      });
+    }
+
+    const allowedGroupSortFields = listAllowedGroupSortFields(value);
+    for (let index = 0; index < value.groupSort.length; index += 1) {
+      const entry = value.groupSort[index]!;
+      if (!allowedGroupSortFields.includes(entry.field)) {
+        context.addIssue({
+          code: "custom",
+          message: `groupSort field "${entry.field}" must be a groupBy key or aggregation output key.`,
+          path: ["groupSort", String(index), "field"],
+        });
+      }
+    }
+  } else {
+    if (value.groupBy.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "groupBy is only supported when queryMode is aggregated.",
+        path: ["groupBy"],
+      });
+    }
+
+    if (value.aggregations.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "aggregations are only supported when queryMode is aggregated.",
+        path: ["aggregations"],
+      });
+    }
+
+    if (value.groupSort.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "groupSort is only supported when queryMode is aggregated.",
+        path: ["groupSort"],
+      });
+    }
+
+    if (value.groupLimit !== undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "groupLimit is only supported when queryMode is aggregated.",
+        path: ["groupLimit"],
+      });
+    }
   }
 
   refineEntityQueryFilterTree(value.filter, context);
@@ -440,10 +593,16 @@ const legacyEntityQueryDefinitionRecordSchema = entityQueryDefinitionBodySchema
   .superRefine((value, context) => {
     refineEntityQueryDefinitionBody(
       {
+        queryMode: value.queryMode,
         limitMode: value.limitMode,
         limit: value.limit,
         filter: value.filter,
         parameters: value.parameters ?? [],
+        sort: value.sort,
+        groupBy: value.groupBy,
+        aggregations: value.aggregations,
+        groupSort: value.groupSort,
+        groupLimit: value.groupLimit,
       },
       context,
     );
@@ -477,10 +636,15 @@ export const patchEntityQueryDefinitionInputSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     description: z.string().trim().optional(),
+    queryMode: z.enum(ENTITY_QUERY_MODES).optional(),
     parameters: z.array(entityQueryParameterSchema).optional(),
     filter: entityQueryFilterGroupSchema.optional(),
     sort: z.array(entityQuerySortSchema).optional(),
     select: z.array(z.string().trim().min(1)).optional(),
+    groupBy: z.array(z.string().trim().min(1)).optional(),
+    aggregations: z.array(entityQueryAggregationSpecSchema).optional(),
+    groupSort: z.array(entityQuerySortSchema).optional(),
+    groupLimit: z.number().int().positive().max(100).optional(),
     limitMode: z.enum(ENTITY_QUERY_LIMIT_MODES).optional(),
     limit: z.number().int().positive().max(100).optional(),
     status: z.enum(ENTITY_QUERY_DEFINITION_STATUSES).optional(),

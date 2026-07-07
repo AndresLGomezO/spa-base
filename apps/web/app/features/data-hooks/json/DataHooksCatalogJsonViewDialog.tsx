@@ -3,7 +3,13 @@ import {
   createDataHooksCatalogEnvelope,
   type DataHookDefinition,
 } from "@repo/hooks/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { DataHookDefinitionRecord } from "../../../lib/api-client";
 import type { DataHooksCatalogJsonLabels } from "./data-hook-definition-json-labels.js";
@@ -11,13 +17,13 @@ import type { DataHooksCatalogJsonLabels } from "./data-hook-definition-json-lab
 interface DataHooksCatalogJsonViewDialogProps {
   readonly items: readonly DataHookDefinitionRecord[];
   readonly labels: DataHooksCatalogJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
 }
 
 export function DataHooksCatalogJsonViewDialog({
   items,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
 }: DataHooksCatalogJsonViewDialogProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -46,14 +52,10 @@ export function DataHooksCatalogJsonViewDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonViewTriggerButton
+        labels={triggerLabels}
         onClick={() => setOpen(true)}
-      >
-        {labels.viewTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}

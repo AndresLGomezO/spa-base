@@ -1,6 +1,7 @@
 import { resolveFilterBindingMap } from "@repo/entity-queries";
 import type { FilterBindingSource } from "@repo/entities";
 import {
+  aggregateEntityQueryResults,
   buildExpandedQueryConfig,
   expandRelationFiltersInTree,
   applyRelationSortToItems,
@@ -22,6 +23,22 @@ import {
 import { resolveQueryExpansionCatalog } from "../../lib/resolve-query-expansion-catalog";
 import type { PageFilterContext } from "../../lib/metric-binding-resolution";
 
+export function isAggregatedEntityQueryDefinition(
+  definition: Pick<
+    EntityQueryDefinitionRecord,
+    "queryMode" | "groupBy" | "aggregations"
+  >,
+): boolean {
+  if (definition.queryMode === "aggregated") {
+    return true;
+  }
+
+  return (
+    (definition.groupBy?.length ?? 0) > 0 &&
+    (definition.aggregations?.length ?? 0) > 0
+  );
+}
+
 export async function executeEntityQueryDefinition(
   definition: EntityQueryDefinitionRecord,
   catalog: readonly EntityCatalogEntry[],
@@ -30,13 +47,34 @@ export async function executeEntityQueryDefinition(
     readonly context?: PageFilterContext;
   } = {},
 ): Promise<readonly Record<string, unknown>[]> {
-  const parameterValues =
-    options.parameterBindings && options.context
-      ? resolveFilterBindingMap(options.parameterBindings, options.context, {})
-      : null;
+  const hasParameterBindings =
+    options.parameterBindings !== undefined &&
+    Object.keys(options.parameterBindings).length > 0;
+
+  let parameterValues:
+    | Record<string, string | number | boolean | readonly string[]>
+    | undefined;
+
+  if (hasParameterBindings) {
+    if (!options.context) {
+      return [];
+    }
+
+    const resolved = resolveFilterBindingMap(
+      options.parameterBindings!,
+      options.context,
+      {},
+    );
+    if (resolved === null) {
+      return [];
+    }
+
+    parameterValues = resolved;
+  }
 
   const buildOptions = {
-    parameterValues: parameterValues ?? undefined,
+    now: new Date(),
+    parameterValues,
     parameters: definition.parameters ?? [],
   };
 
@@ -123,7 +161,7 @@ export async function executeEntityQueryDefinition(
         listRecords: listChildRecords,
       });
     }
-    return items;
+    return finalizeEntityQueryResults(definition, items);
   }
 
   const page = await listEntity<Record<string, unknown>>(
@@ -144,5 +182,29 @@ export async function executeEntityQueryDefinition(
       listRecords: listChildRecords,
     });
   }
-  return items;
+  return finalizeEntityQueryResults(definition, items);
+}
+
+function shouldAggregateEntityQueryResults(
+  definition: EntityQueryDefinitionRecord,
+): boolean {
+  return isAggregatedEntityQueryDefinition(definition);
+}
+
+function finalizeEntityQueryResults(
+  definition: EntityQueryDefinitionRecord,
+  items: readonly Record<string, unknown>[],
+): readonly Record<string, unknown>[] {
+  if (!shouldAggregateEntityQueryResults(definition)) {
+    return items;
+  }
+
+  return aggregateEntityQueryResults(items, {
+    groupBy: definition.groupBy ?? [],
+    aggregations: definition.aggregations ?? [],
+    groupSort: definition.groupSort ?? [],
+    ...(definition.groupLimit !== undefined
+      ? { groupLimit: definition.groupLimit }
+      : {}),
+  });
 }

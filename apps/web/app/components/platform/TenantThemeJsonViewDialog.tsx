@@ -1,14 +1,20 @@
 import { useMemo, useState } from "react";
 import type { TenantAppearance } from "@repo/shared-types";
 import { exportTenantTheme } from "@repo/theme/theme-import-export";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { TenantThemeJsonLabels } from "./tenant-theme-json-labels";
 
 interface TenantThemeJsonViewDialogProps {
   readonly appearance: TenantAppearance;
   readonly labels: TenantThemeJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -16,7 +22,7 @@ interface TenantThemeJsonViewDialogProps {
 export function TenantThemeJsonViewDialog({
   appearance,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: TenantThemeJsonViewDialogProps) {
@@ -40,14 +46,10 @@ export function TenantThemeJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

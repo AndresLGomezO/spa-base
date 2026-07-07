@@ -84,7 +84,7 @@ export function ItemListDesignerTreePanelShell({
   return (
     <aside
       className={cn(
-        "bg-card border-border flex w-fit max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
+        "bg-card border-border flex w-80 min-w-0 max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
         designerTreePanelShellClassName,
         "transition-[width,opacity] duration-300 ease-out",
         expandedClassName,
@@ -128,7 +128,7 @@ export function ItemListDesignerTreePanelShell({
       ) : null}
       <div
         className={cn(
-          "min-h-0 w-max max-w-full flex-1 overflow-y-auto overflow-x-auto px-2 pb-3",
+          "min-h-0 w-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-2 pb-3",
           expandedBodyClassName,
         )}
       >

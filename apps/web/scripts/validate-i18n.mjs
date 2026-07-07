@@ -677,6 +677,67 @@ function extractQueryBuilderFilterDynamicKeys(corpus) {
   return keys;
 }
 
+/** metrics.preview.aggregated.aggregation.${operation} and metrics.preview.computed.computation.${type} */
+function extractMetricPreviewDynamicKeys(corpus) {
+  const needsAggregation = corpus.includes(
+    "metrics.preview.aggregated.aggregation.${",
+  );
+  const needsComputation = corpus.includes(
+    "metrics.preview.computed.computation.${",
+  );
+  if (!needsAggregation && !needsComputation) return [];
+
+  const refPreview = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).metrics?.preview;
+
+  if (!refPreview || typeof refPreview !== "object") return [];
+
+  const keys = [];
+
+  if (needsAggregation) {
+    const aggregation = refPreview.aggregated?.aggregation;
+    if (aggregation && typeof aggregation === "object") {
+      for (const key of Object.keys(aggregation)) {
+        keys.push(
+          `${DEFAULT_NAMESPACE}:metrics.preview.aggregated.aggregation.${key}`,
+        );
+      }
+    }
+  }
+
+  if (needsComputation) {
+    const computation = refPreview.computed?.computation;
+    if (computation && typeof computation === "object") {
+      for (const key of Object.keys(computation)) {
+        keys.push(
+          `${DEFAULT_NAMESPACE}:metrics.preview.computed.computation.${key}`,
+        );
+      }
+    }
+  }
+
+  return keys;
+}
+
+/** queryBuilder.howItWorks.aggregated.aggregation.${operation} in query preview UI */
+function extractQueryBuilderPreviewDynamicKeys(corpus) {
+  if (!corpus.includes("queryBuilder.howItWorks.aggregated.aggregation.${")) {
+    return [];
+  }
+
+  const aggregation = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).queryBuilder?.howItWorks?.aggregated?.aggregation;
+
+  if (!aggregation || typeof aggregation !== "object") return [];
+
+  return Object.keys(aggregation).map(
+    (key) =>
+      `${DEFAULT_NAMESPACE}:queryBuilder.howItWorks.aggregated.aggregation.${key}`,
+  );
+}
+
 /** translationPrefix / key("suffix") in ui-builder-ai → keys under formDesigner.ai / itemListDesigner.ai */
 function extractUiBuilderAiDesignerKeys(corpus) {
   const needsFormDesigner =
@@ -1138,6 +1199,22 @@ mergeUsedKeys(
   usedKeys,
   extractQueryBuilderFilterDynamicKeys(corpus),
   entityQueryFilterGroupEditorFile,
+);
+mergeUsedKeys(
+  usedKeys,
+  extractQueryBuilderPreviewDynamicKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "features/entity-query-builder/preview/build-entity-query-preview-model.ts",
+  ),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractMetricPreviewDynamicKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "features/metrics-builder/preview/build-metric-preview-model.ts",
+  ),
 );
 const formDesignerLayoutEditorLabelsFile = path.join(
   SRC_DIR,

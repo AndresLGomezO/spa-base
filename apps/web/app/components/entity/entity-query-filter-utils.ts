@@ -1,4 +1,5 @@
 import {
+  ENTITY_QUERY_PARAMETER_BOUNDS,
   getAllowedOperatorsForFieldType,
   listQueryableFieldPaths,
   resolveQueryableFieldMeta,
@@ -7,10 +8,11 @@ import {
   type EntityQueryFilterNode,
   type EntityQueryFilterOperator,
   type EntityQueryFilterValue,
-  type EntityQueryParameter,
+  type EntityQueryParameterBound,
   type EntityCatalogEntry as QueryCatalogEntry,
   type QueryableFieldMeta,
 } from "@repo/entity-queries/browser";
+import type { EntityQueryParameter } from "@repo/entity-queries";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import type { EntityQueryDefinitionRecord } from "../../lib/api-client";
@@ -108,6 +110,38 @@ export function createEmptyEntityQuerySortRow(): EntityQuerySortEditorRow {
   };
 }
 
+function isEntityQueryParameterBound(
+  value: string,
+): value is EntityQueryParameterBound {
+  return (ENTITY_QUERY_PARAMETER_BOUNDS as readonly string[]).includes(value);
+}
+
+function parseParameterScalarValue(
+  scalarValue: string,
+): Extract<EntityQueryFilterValue, { type: "parameter" }> | null {
+  const match = /^\$(\w+)(?::(\w+))?$/.exec(scalarValue.trim());
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const bound = match[2];
+  if (bound !== undefined && !isEntityQueryParameterBound(bound)) {
+    return null;
+  }
+
+  return {
+    type: "parameter",
+    name: match[1],
+    ...(bound ? { bound } : {}),
+  };
+}
+
+export function isEntityQueryParameterScalarValue(
+  scalarValue: string,
+): boolean {
+  return parseParameterScalarValue(scalarValue) !== null;
+}
+
 function resolveParameterToTemporalPreset(
   value: Extract<EntityQueryFilterValue, { type: "parameter" }>,
   parameters: readonly EntityQueryParameter[] | undefined,
@@ -154,7 +188,7 @@ function conditionToEditorRow(
       field: filter.field,
       operator: filter.operator,
       valueKind: "temporal",
-      temporalPreset: filter.value.preset,
+      temporalPreset: filter.value.preset as EntityQueryTemporalPreset,
       scalarValue: "",
       listValues: [],
     };
@@ -260,6 +294,16 @@ function editorConditionToApi(
         type: "temporal",
         preset: row.temporalPreset,
       },
+    };
+  }
+
+  const parameterValue = parseParameterScalarValue(row.scalarValue);
+  if (parameterValue) {
+    return {
+      type: "condition",
+      field: row.field,
+      operator: row.operator,
+      value: parameterValue,
     };
   }
 

@@ -568,7 +568,7 @@
           {
             "type": "table",
             "name": "default",
-            "fields": ["name", "kind", "parentId"]
+            "fields": ["name", "kind", "iconName", "image", "parentId"]
           }
         ],
         "forms": {
@@ -602,6 +602,22 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "kind"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-cat-icon-name-create",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "iconName"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-cat-image-create",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "image"
                               }
                             },
                             {
@@ -664,6 +680,22 @@
                             },
                             {
                               "type": "component",
+                              "id": "row-cat-icon-name-edit",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "iconName"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-cat-image-edit",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "image"
+                              }
+                            },
+                            {
+                              "type": "component",
                               "id": "row-9e583efa-9eac-4ad8-9dcc-fd6d83bc86e2",
                               "component": {
                                 "kind": "form-field",
@@ -703,11 +735,21 @@
             "filterable": true,
             "order": 1
           },
+          "iconName": {
+            "label": "Icon",
+            "component": "input",
+            "order": 2
+          },
+          "image": {
+            "label": "Image",
+            "component": "image",
+            "order": 3
+          },
           "parentId": {
             "label": "Parent",
             "component": "relation",
             "filterable": true,
-            "order": 2
+            "order": 4
           }
         }
       },
@@ -736,6 +778,22 @@
           }
         },
         {
+          "name": "iconName",
+          "type": "string",
+          "ui": {
+            "label": "Icon",
+            "order": 2
+          }
+        },
+        {
+          "name": "image",
+          "type": "image",
+          "ui": {
+            "label": "Image",
+            "order": 3
+          }
+        },
+        {
           "name": "parentId",
           "type": "relation",
           "relation": {
@@ -745,7 +803,7 @@
           },
           "ui": {
             "label": "Parent",
-            "order": 2,
+            "order": 4,
             "filterable": true
           }
         }

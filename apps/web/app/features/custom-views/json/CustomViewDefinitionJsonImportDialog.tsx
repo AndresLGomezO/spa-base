@@ -4,7 +4,13 @@ import {
   validateCustomViewDefinitionImport,
   type CustomViewDefinitionFormData,
 } from "@repo/custom-views/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
 import type { CustomViewDefinitionFormJsonLabels } from "./custom-view-definition-json-labels.js";
@@ -16,7 +22,7 @@ interface CustomViewDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: CustomViewDefinitionFormJsonLabels;
   readonly onApply: (data: CustomViewDefinitionFormData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -28,7 +34,7 @@ export function CustomViewDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: CustomViewDefinitionJsonImportDialogProps) {
@@ -148,14 +154,10 @@ export function CustomViewDefinitionJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

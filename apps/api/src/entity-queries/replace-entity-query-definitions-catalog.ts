@@ -40,12 +40,23 @@ function createPatchFromCreateInput(
     ...(imported.description !== undefined
       ? { description: imported.description }
       : {}),
+    queryMode: imported.queryMode,
     ...(imported.parameters !== undefined
       ? { parameters: imported.parameters }
       : {}),
     filter: imported.filter,
     sort: imported.sort,
     ...(imported.select !== undefined ? { select: imported.select } : {}),
+    ...(imported.groupBy !== undefined ? { groupBy: imported.groupBy } : {}),
+    ...(imported.aggregations !== undefined
+      ? { aggregations: imported.aggregations }
+      : {}),
+    ...(imported.groupSort !== undefined
+      ? { groupSort: imported.groupSort }
+      : {}),
+    ...(imported.groupLimit !== undefined
+      ? { groupLimit: imported.groupLimit }
+      : {}),
     limitMode: imported.limitMode,
     ...(imported.limitMode === "topN" && imported.limit !== undefined
       ? { limit: imported.limit }

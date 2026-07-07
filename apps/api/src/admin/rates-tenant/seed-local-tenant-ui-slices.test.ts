@@ -39,7 +39,7 @@ describe("seed-local-tenant-ui-slices", () => {
       return;
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(3);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(4);
     expect(parsed.data.entityQueryDefinitions[0]?.name).toBe(
       "Upcoming payments (dashboard)",
     );
@@ -51,8 +51,16 @@ describe("seed-local-tenant-ui-slices", () => {
         "Upcoming payments (dashboard)",
         "Due today (metrics)",
         "Upcoming this week (metrics)",
+        "Top outflow category (period)",
       ]),
     );
+
+    const topOutflow = parsed.data.entityQueryDefinitions.find(
+      (query) => query.name === "Top outflow category (period)",
+    );
+    expect(topOutflow?.queryMode).toBe("aggregated");
+    expect(topOutflow?.groupBy).toEqual(["categoryId"]);
+    expect(topOutflow?.groupLimit).toBe(1);
   });
 
   it("parses local paymentSchedule widget override slice", () => {
@@ -150,7 +158,7 @@ describe("seed-local-tenant-ui-slices", () => {
     ).root.columns[0]?.rows[0]?.component;
 
     expect(gridRow?.kind).toBe("grid");
-    expect(gridRow?.rows).toHaveLength(3);
+    expect(gridRow?.rows).toHaveLength(2);
 
     const spendingTrack = gridRow?.rows[1] as {
       component?: {
@@ -168,7 +176,9 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(upperBand?.id).toBe("row-spending-snapshot-upper");
 
     const miniGrid = (
-      upperBand?.component as { rows?: Array<{ component?: { kind?: string; rows?: unknown[] } }> }
+      upperBand?.component as {
+        rows?: Array<{ component?: { kind?: string; rows?: unknown[] } }>;
+      }
     )?.rows?.[0]?.component;
     expect(miniGrid?.kind).toBe("grid");
     expect(miniGrid?.rows).toHaveLength(3);
@@ -184,6 +194,18 @@ describe("seed-local-tenant-ui-slices", () => {
       "upcoming-week-snapshot-mini",
       "budget-status-snapshot-mini",
     ]);
+
+    const lowerBand = spendingTrack?.component?.rows?.[1];
+    expect(lowerBand?.id).toBe("row-spending-snapshot-lower");
+    const lowerWidget = (
+      lowerBand?.component as {
+        rows?: Array<{
+          component?: { widgetId?: string; entityName?: string };
+        }>;
+      }
+    )?.rows?.[0]?.component;
+    expect(lowerWidget?.widgetId).toBe("top-expense-category-snapshot");
+    expect(lowerWidget?.entityName).toBe("transaction");
 
     const shellRow = slice.shellAppendRows[0];
     expect(shellRow?.id).toBe("track-financial-snapshot");

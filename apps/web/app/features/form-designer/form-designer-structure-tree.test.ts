@@ -13,12 +13,14 @@ import { describe, expect, it } from "vitest";
 import {
   buildStructureTree,
   collectDefaultExpandedNodeIds,
+  collectDefaultExpandedNodeIdsForLayout,
   createColumnTopInsertAnchor,
   createContainerTopInsertAnchor,
   createRowBottomInsertAnchor,
   getRowMoveState,
   resolveColumnNodeDisplayLabel,
   resolveComponentRowLabel,
+  resolvePromotedContainerRootRow,
   resolveRowNodeDisplayLabel,
   type StructureTreeLabels,
 } from "./form-designer-structure-tree";
@@ -305,5 +307,29 @@ describe("form-designer-structure-tree", () => {
     expect(
       expanded.some((id) => id.startsWith("col-") && id !== "col-root-0"),
     ).toBe(true);
+  });
+
+  it("collects default expanded ids for nested containers in promoted layouts", () => {
+    const { layout: beganLayout, containerLocator } =
+      beginContainerRootLayout();
+    const layout = addComponentRowAt(
+      beganLayout,
+      containerLocator,
+      createDefaultComponent("container"),
+    );
+
+    const tree = buildStructureTree(layout, labels, fieldDescriptors);
+    const promoted = resolvePromotedContainerRootRow(tree);
+    const nestedContainer = promoted?.childRows?.[0];
+
+    expect(promoted).not.toBeNull();
+    expect(nestedContainer).toMatchObject({ kind: "container" });
+
+    const expanded = collectDefaultExpandedNodeIdsForLayout(tree, {
+      promoteSingleContainerRoot: true,
+    });
+
+    expect(expanded).toContain(promoted?.id);
+    expect(expanded).toContain(nestedContainer?.id);
   });
 });

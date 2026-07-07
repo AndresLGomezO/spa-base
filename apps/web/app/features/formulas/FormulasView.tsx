@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 import {
   designerPreviewColumnClassName,
   designerTreeTabRootClassName,
-  designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import { FormulaListTreePanel } from "./FormulaListTreePanel";
 import { FormulaMetadataModal } from "./FormulaMetadataModal";
+import { FormulaPreviewPanel } from "./preview/FormulaPreviewPanel";
 import { FormulaSettingsPanel } from "./FormulaSettingsPanel";
 import { FormulasProvider, useFormulas } from "./formulas-context";
 
@@ -54,8 +54,13 @@ function FormulasWorkbench() {
   return (
     <>
       <div className={designerTreeTabRootClassName}>
-        <div className={designerTreeWorkbenchClassName}>
-          <FormulaListTreePanel />
+        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+          <div className="shrink-0 min-w-0">
+            <FormulaListTreePanel />
+          </div>
+          <div className="shrink-0 min-w-0">
+            <FormulaPreviewPanel />
+          </div>
           <div className={designerPreviewColumnClassName}>
             <FormulaSettingsPanel />
           </div>

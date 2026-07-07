@@ -6,7 +6,13 @@ import {
   type MetricDefinitionRecord,
   type MetricDefinitionsCatalogEnvelope,
 } from "@repo/metrics-engine/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { MetricDefinitionRecord as ApiMetricDefinitionRecord } from "../../../lib/api-client";
 import { JsonImportErrors } from "../../data-models/json/JsonImportErrors.js";
@@ -17,7 +23,7 @@ interface MetricDefinitionsCatalogJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: MetricDefinitionsCatalogJsonLabels;
   readonly onApply: (catalog: MetricDefinitionsCatalogEnvelope) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
   readonly importDisabled?: boolean;
@@ -28,7 +34,7 @@ export function MetricDefinitionsCatalogJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
   importDisabled = false,
@@ -196,15 +202,11 @@ export function MetricDefinitionsCatalogJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           disabled={importDisabled}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

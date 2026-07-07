@@ -3,14 +3,20 @@ import {
   createCustomViewDefinitionEnvelope,
   type CustomViewDefinitionFormData,
 } from "@repo/custom-views/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { CustomViewDefinitionFormJsonLabels } from "./custom-view-definition-json-labels.js";
 
 interface CustomViewDefinitionJsonViewDialogProps {
   readonly data: CustomViewDefinitionFormData;
   readonly labels: CustomViewDefinitionFormJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -18,7 +24,7 @@ interface CustomViewDefinitionJsonViewDialogProps {
 export function CustomViewDefinitionJsonViewDialog({
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: CustomViewDefinitionJsonViewDialogProps) {
@@ -45,14 +51,10 @@ export function CustomViewDefinitionJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

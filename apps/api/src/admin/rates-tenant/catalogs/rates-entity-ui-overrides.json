@@ -1557,6 +1557,474 @@
           ]
         }
       }
+    },
+    {
+      "entityName": "transaction",
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": ["date", "amount", "type", "categoryId"]
+        }
+      ],
+      "listViewType": "table",
+      "metricWidgets": [
+        {
+          "id": "top-expense-category-snapshot",
+          "name": "Top Expense Category",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "top-category-widget-root",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-top-category",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-top-category-query-viewer",
+                      "component": {
+                        "kind": "query-viewer",
+                        "entityQueryDefinitionId": "Top outflow category (period)",
+                        "parameterBindings": {
+                          "period": {
+                            "type": "dashboardDateFilter"
+                          }
+                        },
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-top-category-card",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "var(--color-card)"
+                                },
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "height",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "borderRadius",
+                                  "value": "16"
+                                },
+                                {
+                                  "property": "padding",
+                                  "value": "16"
+                                },
+                                {
+                                  "property": "borderWidth",
+                                  "value": "1"
+                                },
+                                {
+                                  "property": "borderColor",
+                                  "value": "var(--color-border)"
+                                },
+                                {
+                                  "property": "borderStyle",
+                                  "value": "solid"
+                                },
+                                {
+                                  "property": "boxShadow",
+                                  "value": "0 4px 16px rgba(0,0,0,0.06)"
+                                },
+                                {
+                                  "property": "overflowX",
+                                  "value": "hidden"
+                                },
+                                {
+                                  "property": "overflowY",
+                                  "value": "hidden"
+                                },
+                                {
+                                  "property": "position",
+                                  "value": "relative"
+                                }
+                              ],
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-top-category-header",
+                                  "component": {
+                                    "kind": "container",
+                                    "stackDirection": "row",
+                                    "styles": [
+                                      {
+                                        "property": "alignItems",
+                                        "value": "center"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "space-between"
+                                      },
+                                      {
+                                        "property": "width",
+                                        "value": "100%"
+                                      }
+                                    ],
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-top-category-title",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "Top Category"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "14"
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-card-foreground)"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-top-category-period",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "This month"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "11"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "#9ca3af"
+                                            },
+                                            {
+                                              "property": "padding",
+                                              "value": "4px 10px"
+                                            },
+                                            {
+                                              "property": "borderRadius",
+                                              "value": "999"
+                                            },
+                                            {
+                                              "property": "borderWidth",
+                                              "value": "1"
+                                            },
+                                            {
+                                              "property": "borderColor",
+                                              "value": "var(--color-border)"
+                                            },
+                                            {
+                                              "property": "borderStyle",
+                                              "value": "solid"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-top-category-body",
+                                  "component": {
+                                    "kind": "container",
+                                    "stackDirection": "row",
+                                    "styles": [
+                                      {
+                                        "property": "alignItems",
+                                        "value": "center"
+                                      },
+                                      {
+                                        "property": "gap",
+                                        "value": "12"
+                                      },
+                                      {
+                                        "property": "width",
+                                        "value": "100%"
+                                      },
+                                      {
+                                        "property": "flex",
+                                        "value": "1"
+                                      },
+                                      {
+                                        "property": "minHeight",
+                                        "value": "0"
+                                      },
+                                      {
+                                        "property": "marginTop",
+                                        "value": "12"
+                                      },
+                                      {
+                                        "property": "position",
+                                        "value": "relative"
+                                      }
+                                    ],
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-top-category-details",
+                                        "component": {
+                                          "kind": "container",
+                                          "stackDirection": "row",
+                                          "styles": [
+                                            {
+                                              "property": "alignItems",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "gap",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "width",
+                                              "value": "50%"
+                                            },
+                                            {
+                                              "property": "minWidth",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "zIndex",
+                                              "value": "1"
+                                            }
+                                          ],
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-top-category-icon-wrap",
+                                              "component": {
+                                                "kind": "container",
+                                                "styles": [
+                                                  {
+                                                    "property": "width",
+                                                    "value": "48"
+                                                  },
+                                                  {
+                                                    "property": "height",
+                                                    "value": "48"
+                                                  },
+                                                  {
+                                                    "property": "borderRadius",
+                                                    "value": "999"
+                                                  },
+                                                  {
+                                                    "property": "backgroundColor",
+                                                    "value": "rgba(34, 197, 94, 0.12)"
+                                                  },
+                                                  {
+                                                    "property": "overflowX",
+                                                    "value": "hidden"
+                                                  },
+                                                  {
+                                                    "property": "overflowY",
+                                                    "value": "hidden"
+                                                  }
+                                                ],
+                                                "rows": [
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-top-category-image",
+                                                    "component": {
+                                                      "kind": "image",
+                                                      "primary": {
+                                                        "type": "field",
+                                                        "path": "categoryId.image"
+                                                      },
+                                                      "imageSize": 32,
+                                                      "objectFit": "cover"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "type": "component",
+                                              "id": "row-top-category-text-block",
+                                              "component": {
+                                                "kind": "container",
+                                                "stackDirection": "column",
+                                                "styles": [
+                                                  {
+                                                    "property": "gap",
+                                                    "value": "4"
+                                                  },
+                                                  {
+                                                    "property": "minWidth",
+                                                    "value": "0"
+                                                  }
+                                                ],
+                                                "rows": [
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-top-category-name",
+                                                    "component": {
+                                                      "kind": "text",
+                                                      "primary": {
+                                                        "type": "field",
+                                                        "path": "categoryId.name"
+                                                      },
+                                                      "styles": [
+                                                        {
+                                                          "property": "fontSize",
+                                                          "value": "13"
+                                                        },
+                                                        {
+                                                          "property": "fontWeight",
+                                                          "value": "bold"
+                                                        },
+                                                        {
+                                                          "property": "color",
+                                                          "value": "var(--color-card-foreground)"
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-top-category-value",
+                                                    "component": {
+                                                      "kind": "numeric",
+                                                      "primary": {
+                                                        "type": "field",
+                                                        "path": "sum_amount"
+                                                      },
+                                                      "displayFormat": "currency",
+                                                      "showCurrency": true,
+                                                      "styles": [
+                                                        {
+                                                          "property": "fontSize",
+                                                          "value": "18"
+                                                        },
+                                                        {
+                                                          "property": "fontWeight",
+                                                          "value": "bold"
+                                                        },
+                                                        {
+                                                          "property": "letterSpacing",
+                                                          "value": "-0.025em"
+                                                        },
+                                                        {
+                                                          "property": "color",
+                                                          "value": "var(--color-card-foreground)"
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-top-category-mom",
+                                                    "component": {
+                                                      "kind": "metric-kpi",
+                                                      "metricDefinitionId": "Category Outflow Partial MoM %",
+                                                      "label": "",
+                                                      "groupBindings": {},
+                                                      "dimensionBindings": {},
+                                                      "parameterBindings": {
+                                                        "categoryId": {
+                                                          "type": "entityField",
+                                                          "fieldPath": "categoryId"
+                                                        },
+                                                        "currentPeriod": {
+                                                          "type": "dashboardDateFilter"
+                                                        }
+                                                      },
+                                                      "showToneColors": true,
+                                                      "tonePolarity": "inverted",
+                                                      "styles": [
+                                                        {
+                                                          "property": "fontSize",
+                                                          "value": "12"
+                                                        },
+                                                        {
+                                                          "property": "fontWeight",
+                                                          "value": "bold"
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-top-category-chart",
+                                        "component": {
+                                          "kind": "chart",
+                                          "chartDefinitionId": "Top category expense trend chart",
+                                          "parameterBindings": {
+                                            "categoryId": {
+                                              "type": "entityField",
+                                              "fieldPath": "categoryId"
+                                            }
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "position",
+                                              "value": "absolute"
+                                            },
+                                            {
+                                              "property": "top",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "right",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "bottom",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "left",
+                                              "value": "45%"
+                                            },
+                                            {
+                                              "property": "pointerEvents",
+                                              "value": "none"
+                                            },
+                                            {
+                                              "property": "zIndex",
+                                              "value": "0"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

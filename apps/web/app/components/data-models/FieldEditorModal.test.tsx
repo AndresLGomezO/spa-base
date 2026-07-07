@@ -82,7 +82,9 @@ describe("FieldEditorModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("dataModels.json.importTrigger"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
+    );
     const importDialog = screen.getAllByRole("dialog").at(-1)!;
     fireEvent.change(importDialog.querySelector("textarea")!, {
       target: {

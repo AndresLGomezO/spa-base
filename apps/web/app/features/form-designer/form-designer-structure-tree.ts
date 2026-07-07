@@ -483,6 +483,16 @@ function collectExpandedRowIds(
       continue;
     }
 
+    if (
+      row.type === "component" &&
+      row.kind === "query-viewer" &&
+      row.childRows
+    ) {
+      ids.push(row.id);
+      collectExpandedRowIds(row.childRows, ids);
+      continue;
+    }
+
     if (row.type === "component" && row.childRows) {
       ids.push(row.id);
       collectExpandedRowIds(row.childRows, ids);

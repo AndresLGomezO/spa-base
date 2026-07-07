@@ -6,7 +6,10 @@ import {
   listFormulaDefinitions,
   type FormulaDefinitionRecord,
 } from "../../lib/api-client";
-import { FormulaDefinitionSummaryContent } from "./FormulaDefinitionSummaryContent";
+import {
+  FormulaDefinitionSummaryContent,
+  type FormulaSummaryMode,
+} from "./FormulaDefinitionSummaryContent";
 
 interface FormulaDefinitionSummaryModalProps {
   readonly open: boolean;
@@ -22,6 +25,7 @@ export function FormulaDefinitionSummaryModal({
   onClose,
 }: FormulaDefinitionSummaryModalProps) {
   const { t } = useTranslation("common");
+  const [tab, setTab] = useState<FormulaSummaryMode>("overview");
   const [navigationStack, setNavigationStack] = useState<readonly string[]>([
     formulaName,
   ]);
@@ -35,6 +39,7 @@ export function FormulaDefinitionSummaryModal({
       return;
     }
     setNavigationStack([formulaName]);
+    setTab("overview");
   }, [open, formulaName]);
 
   useEffect(() => {
@@ -84,10 +89,12 @@ export function FormulaDefinitionSummaryModal({
       }
       return [...previous, name];
     });
+    setTab("overview");
   }
 
   function navigateToStackIndex(index: number) {
     setNavigationStack((previous) => previous.slice(0, index + 1));
+    setTab("overview");
   }
 
   return (
@@ -103,15 +110,32 @@ export function FormulaDefinitionSummaryModal({
         </Button>
       }
     >
-      <FormulaDefinitionSummaryContent
-        formulaName={currentFormulaName}
-        definition={preloadedDefinition}
-        catalog={catalog}
-        isLoadingCatalog={isLoadingCatalog}
-        navigationStack={navigationStack}
-        onNavigateToFormula={navigateToFormula}
-        onNavigateToStackIndex={navigateToStackIndex}
-      />
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-1">
+          {(["overview", "details", "advanced"] as const).map((entry) => (
+            <Button
+              key={entry}
+              type="button"
+              size="sm"
+              variant={tab === entry ? "primary" : "outline"}
+              onClick={() => setTab(entry)}
+            >
+              {t(`dataHooks.preview.tabs.${entry}`)}
+            </Button>
+          ))}
+        </div>
+
+        <FormulaDefinitionSummaryContent
+          formulaName={currentFormulaName}
+          definition={preloadedDefinition}
+          catalog={catalog}
+          isLoadingCatalog={isLoadingCatalog}
+          navigationStack={navigationStack}
+          onNavigateToFormula={navigateToFormula}
+          onNavigateToStackIndex={navigateToStackIndex}
+          mode={tab}
+        />
+      </div>
     </Modal>
   );
 }

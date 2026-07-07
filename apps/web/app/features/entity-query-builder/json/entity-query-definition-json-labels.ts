@@ -8,6 +8,7 @@ interface EntityQueryDefinitionJsonLabels {
   readonly skeletonTitle: string;
   readonly skeletonShow: string;
   readonly skeletonHide: string;
+  readonly fillExample: string;
   readonly valid: string;
   readonly invalid: string;
   readonly apply: string;
@@ -22,6 +23,7 @@ export interface EntityQueryDefinitionFormJsonLabels extends EntityQueryDefiniti
   readonly viewTitle: string;
   readonly importTitle: string;
   readonly importDescriptionEdit: string;
+  readonly identityPreservedNotice: string;
   readonly nameChangeError: string;
   readonly sourceEntityChangeError: string;
 }
@@ -47,6 +49,7 @@ function sharedLabels(t: TFunction): EntityQueryDefinitionJsonLabels {
     skeletonTitle: t("queryBuilder.json.skeletonTitle"),
     skeletonShow: t("queryBuilder.json.skeletonShow"),
     skeletonHide: t("queryBuilder.json.skeletonHide"),
+    fillExample: t("queryBuilder.json.fillExample"),
     valid: t("queryBuilder.json.valid"),
     invalid: t("queryBuilder.json.invalid"),
     apply: t("queryBuilder.json.apply"),
@@ -66,6 +69,9 @@ export function entityQueryDefinitionFormJsonLabels(
     viewTitle: t("queryBuilder.json.query.viewTitle"),
     importTitle: t("queryBuilder.json.query.importTitle"),
     importDescriptionEdit: t("queryBuilder.json.query.importDescriptionEdit"),
+    identityPreservedNotice: t(
+      "queryBuilder.json.query.identityPreservedNotice",
+    ),
     nameChangeError: t("queryBuilder.json.query.nameChangeError"),
     sourceEntityChangeError: t(
       "queryBuilder.json.query.sourceEntityChangeError",

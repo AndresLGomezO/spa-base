@@ -4,7 +4,10 @@ import {
   isCssGradientBackgroundValue,
 } from "./css-values.js";
 
-export { isCssColorMixValue, isCssGradientBackgroundValue } from "./css-values.js";
+export {
+  isCssColorMixValue,
+  isCssGradientBackgroundValue,
+} from "./css-values.js";
 
 const THEME_TOKENS = new Set<string>([
   "default",

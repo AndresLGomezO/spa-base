@@ -4,7 +4,13 @@ import {
   validateFieldDefinitionImport,
   type FieldDefinitionRecord,
 } from "@repo/dynamic-entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "./JsonImportErrors.js";
 import type { FieldDefinitionJsonLabels } from "./entity-definition-json-labels.js";
@@ -13,7 +19,7 @@ interface FieldDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: FieldDefinitionJsonLabels;
   readonly onApply: (field: FieldDefinitionRecord) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -22,7 +28,7 @@ export function FieldDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: FieldDefinitionJsonImportDialogProps) {
@@ -84,14 +90,10 @@ export function FieldDefinitionJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { EntityQueryListTreePanel } from "./EntityQueryListTreePanel";
@@ -58,7 +59,11 @@ describe("EntityQueryListTreePanel", () => {
       items: [],
     });
 
-    render(<EntityQueryListTreePanel />);
+    render(
+      <MemoryRouter>
+        <EntityQueryListTreePanel />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(
       screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),

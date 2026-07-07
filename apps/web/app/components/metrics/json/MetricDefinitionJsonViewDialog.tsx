@@ -3,14 +3,20 @@ import {
   createMetricDefinitionEnvelope,
   type MetricDefinitionFormData,
 } from "@repo/metrics-engine/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { MetricDefinitionFormJsonLabels } from "./metric-definition-json-labels.js";
 
 interface MetricDefinitionJsonViewDialogProps {
   readonly data: MetricDefinitionFormData;
   readonly labels: MetricDefinitionFormJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -18,7 +24,7 @@ interface MetricDefinitionJsonViewDialogProps {
 export function MetricDefinitionJsonViewDialog({
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: MetricDefinitionJsonViewDialogProps) {
@@ -45,14 +51,10 @@ export function MetricDefinitionJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

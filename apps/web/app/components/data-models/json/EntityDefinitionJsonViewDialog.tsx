@@ -3,14 +3,20 @@ import {
   createEntityDefinitionEnvelope,
   type EntityDefinitionFormData,
 } from "@repo/dynamic-entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { EntityDefinitionFormJsonLabels } from "./entity-definition-json-labels.js";
 
 interface EntityDefinitionJsonViewDialogProps {
   readonly data: EntityDefinitionFormData;
   readonly labels: EntityDefinitionFormJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -18,7 +24,7 @@ interface EntityDefinitionJsonViewDialogProps {
 export function EntityDefinitionJsonViewDialog({
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: EntityDefinitionJsonViewDialogProps) {
@@ -45,14 +51,10 @@ export function EntityDefinitionJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

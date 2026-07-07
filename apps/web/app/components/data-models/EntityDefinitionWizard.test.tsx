@@ -115,7 +115,9 @@ describe("EntityDefinitionWizard", () => {
 
     render(<EntityDefinitionWizard onCreated={vi.fn()} onCancel={vi.fn()} />);
 
-    fireEvent.click(screen.getByText("dataModels.json.importTrigger"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
+    );
     const importDialog = screen.getAllByRole("dialog").at(-1)!;
     fireEvent.change(importDialog.querySelector("textarea")!, {
       target: {

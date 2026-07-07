@@ -3,7 +3,13 @@ import {
   createEntityDefinitionsCatalogEnvelope,
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { EntityCategoryRecord as ApiEntityCategoryRecord } from "../../../lib/api-client";
 import type { EntityDefinitionRecord as ApiEntityDefinitionRecord } from "../../../lib/api-client";
@@ -13,7 +19,7 @@ interface EntityDefinitionsCatalogJsonViewDialogProps {
   readonly items: readonly ApiEntityDefinitionRecord[];
   readonly categories?: readonly ApiEntityCategoryRecord[];
   readonly labels: EntityDefinitionsCatalogJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -22,7 +28,7 @@ export function EntityDefinitionsCatalogJsonViewDialog({
   items,
   categories = [],
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: EntityDefinitionsCatalogJsonViewDialogProps) {
@@ -57,14 +63,10 @@ export function EntityDefinitionsCatalogJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

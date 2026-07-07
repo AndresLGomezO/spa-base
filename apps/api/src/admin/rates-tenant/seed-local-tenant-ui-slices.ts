@@ -145,12 +145,25 @@ async function seedLocalQueryDefinitionsSlice(
     if (match) {
       await repository.update(tenantId, match.id, {
         name: imported.name,
+        queryMode: imported.queryMode,
         filter: imported.filter,
         sort: imported.sort,
         limitMode: imported.limitMode,
         ...(imported.limitMode === "topN" ? { limit: imported.limit } : {}),
         status: imported.status,
         ...(imported.parameters ? { parameters: imported.parameters } : {}),
+        ...(imported.groupBy !== undefined
+          ? { groupBy: imported.groupBy }
+          : {}),
+        ...(imported.aggregations !== undefined
+          ? { aggregations: imported.aggregations }
+          : {}),
+        ...(imported.groupSort !== undefined
+          ? { groupSort: imported.groupSort }
+          : {}),
+        ...(imported.groupLimit !== undefined
+          ? { groupLimit: imported.groupLimit }
+          : {}),
       });
     } else {
       await repository.create(tenantId, imported);

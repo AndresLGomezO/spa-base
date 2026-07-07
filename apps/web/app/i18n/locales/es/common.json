@@ -2212,13 +2212,18 @@
       }
     },
     "preview": {
-      "title": "Estructura de la expresión"
+      "title": "Estructura de la expresión",
+      "panelTitle": "Cómo funciona",
+      "empty": "Selecciona una fórmula para ver cómo funciona.",
+      "expandPanel": "Expandir panel de cómo funciona",
+      "collapsePanel": "Contraer panel de cómo funciona"
     },
     "summaryModal": {
       "viewFormula": "Ver fórmula {{name}}",
       "close": "Cerrar",
       "notFound": "La fórmula \"{{name}}\" no se encontró en el catálogo.",
       "loading": "Cargando fórmula…",
+      "noInputs": "Esta fórmula no tiene entradas declaradas — lee campos del contexto del hook.",
       "sections": {
         "summary": "Resumen",
         "inputs": "Entradas",
@@ -2586,6 +2591,56 @@
         "computedHint": "Configura parámetros y cómputo después de crear la métrica."
       }
     },
+    "preview": {
+      "panelTitle": "Cómo funciona",
+      "empty": "Selecciona una métrica para ver cómo funciona.",
+      "expandPanel": "Expandir panel de cómo funciona",
+      "collapsePanel": "Contraer panel de cómo funciona",
+      "displayFormat": "Mostrar como {{format}}",
+      "outputSummary": "Devuelve un valor {{format}}",
+      "steps": {
+        "source": "Fuente de datos",
+        "filters": "Filtros",
+        "aggregation": "Agregación",
+        "parameters": "Parámetros",
+        "computation": "Cómputo",
+        "output": "Salida"
+      },
+      "filters": {
+        "eq": "{{field}} = {{value}}",
+        "in": "{{field}} en [{{values}}]"
+      },
+      "aggregated": {
+        "sourceEntity": "Lee registros de {{entity}}",
+        "sourceQuery": "Lee filas de la consulta {{query}}",
+        "filtersSummary": "Aplica {{count}} filtro(s) antes de agregar",
+        "records": "registros",
+        "aggregation": {
+          "SUM": "Suma {{field}} en los registros coincidentes",
+          "COUNT": "Cuenta registros coincidentes",
+          "AVG": "Promedia {{field}} en los registros coincidentes"
+        },
+        "groupBy": "Agrupa por {{fields}}",
+        "dimensions": "Desglosa por {{fields}}"
+      },
+      "computed": {
+        "parametersSummary": "Acepta {{count}} parámetro(s) en tiempo de ejecución",
+        "noParameters": "Sin parámetros en tiempo de ejecución — usa referencias fijas",
+        "computation": {
+          "percentChange": "Calcula el cambio porcentual entre entradas actual y base",
+          "difference": "Calcula la diferencia entre entradas actual y base",
+          "ratio": "Calcula la razón entre numerador y denominador",
+          "expression": "Evalúa una expresión personalizada desde entradas nombradas"
+        }
+      },
+      "details": {
+        "matchWhere": "Coincidir registros donde",
+        "fieldsDependency": "Depende de campos"
+      },
+      "advanced": {
+        "title": "Estructura"
+      }
+    },
     "multiselect": {
       "placeholder": "Seleccionar campos…",
       "selectedCount": "{{count}} seleccionados",
@@ -2794,10 +2849,26 @@
       "title": "Consultas",
       "add": "Añadir consulta",
       "empty": "Aún no hay consultas.",
+      "emptyFiltered": "Ninguna consulta coincide con los filtros actuales.",
       "edit": "Editar consulta",
       "delete": "Eliminar consulta",
       "expandPanel": "Expandir panel",
-      "collapsePanel": "Contraer panel"
+      "collapsePanel": "Contraer panel",
+      "filter": "Filtrar",
+      "sort": "Ordenar",
+      "clearFilters": "Borrar filtros",
+      "removeBadge": "Quitar filtro: {{label}}",
+      "filterByStatus": "Estado",
+      "filterByQueryMode": "Modo de consulta",
+      "filterByEntity": "Entidad origen",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
+      "sortNameAsc": "Nombre (A–Z)",
+      "sortNameDesc": "Nombre (Z–A)",
+      "sortSourceEntity": "Entidad origen",
+      "sortQueryMode": "Modo de consulta",
+      "sortUpdatedDesc": "Actualizadas recientemente",
+      "searchPlaceholder": "Buscar consultas…",
+      "searchClear": "Borrar búsqueda"
     },
     "metadata": {
       "createTitle": "Crear consulta",
@@ -2881,7 +2952,65 @@
       "label": "Límite de resultados",
       "topN": "Top N",
       "all": "Todos (hasta 500)",
-      "allHint": "Obtiene hasta 500 registros coincidentes usando paginación."
+      "allHint": "Obtiene hasta 500 registros coincidentes usando paginación.",
+      "aggregatedHint": "Las consultas agregadas obtienen todos los registros coincidentes antes de agrupar."
+    },
+    "queryMode": {
+      "label": "Modo de consulta",
+      "records": "Registros",
+      "aggregated": "Agregada",
+      "aggregatedHint": "Devuelve filas agrupadas con columnas de agregación en lugar de registros individuales."
+    },
+    "parameters": {
+      "label": "Parámetros",
+      "empty": "No hay parámetros declarados.",
+      "add": "Agregar parámetro",
+      "remove": "Eliminar",
+      "rowLabel": "Parámetro {{index}}",
+      "namePlaceholder": "period",
+      "fieldPlaceholder": "date",
+      "valueTypes": {
+        "dateBucket": "Bucket de fecha",
+        "scalar": "Escalar",
+        "stringList": "Lista de cadenas"
+      },
+      "granularity": {
+        "day": "Día",
+        "month": "Mes",
+        "year": "Año"
+      }
+    },
+    "groupBy": {
+      "label": "Agrupar por",
+      "placeholder": "Seleccionar campos de grupo",
+      "selectedCount": "{{count}} seleccionados",
+      "searchPlaceholder": "Buscar campos…",
+      "noResults": "Sin campos coincidentes",
+      "removeBadge": "Quitar {{label}}"
+    },
+    "aggregations": {
+      "label": "Agregaciones",
+      "empty": "No hay agregaciones configuradas.",
+      "add": "Agregar agregación",
+      "remove": "Eliminar",
+      "rowLabel": "Agregación {{index}}",
+      "countDocuments": "Contar todos los registros",
+      "operations": {
+        "SUM": "Suma",
+        "COUNT": "Conteo",
+        "AVG": "Promedio"
+      }
+    },
+    "groupSort": {
+      "label": "Orden de grupos",
+      "empty": "Sin orden de grupos.",
+      "add": "Agregar campo de orden",
+      "remove": "Eliminar",
+      "rowLabel": "Orden de grupo {{index}}"
+    },
+    "groupLimit": {
+      "label": "Límite de grupos",
+      "placeholder": "Máximo opcional de grupos (1–100)"
     },
     "preview": {
       "title": "Previsualizar resultados",
@@ -2889,6 +3018,69 @@
       "run": "Ejecutar consulta",
       "failed": "No se pudo ejecutar la consulta.",
       "resultCount": "{{count}} resultados"
+    },
+    "howItWorks": {
+      "panelTitle": "Cómo funciona",
+      "empty": "Selecciona una consulta para ver cómo funciona.",
+      "expandPanel": "Expandir panel de cómo funciona",
+      "collapsePanel": "Contraer panel de cómo funciona",
+      "steps": {
+        "source": "Fuente de datos",
+        "filters": "Filtros",
+        "parameters": "Parámetros",
+        "sort": "Orden",
+        "select": "Campos seleccionados",
+        "limit": "Límite de resultados",
+        "groupBy": "Agrupar por",
+        "aggregations": "Agregaciones",
+        "groupSort": "Orden de grupos",
+        "groupLimit": "Límite de grupos",
+        "output": "Salida"
+      },
+      "meta": {
+        "parameters": "{{count}} parámetro(s)",
+        "filters": "{{count}} filtro(s)"
+      },
+      "filters": {
+        "summary": "Aplica {{count}} regla(s) de filtro antes de consultar",
+        "condition": "{{field}} {{operator}} {{value}}",
+        "group": "{{combinator}}:"
+      },
+      "parameters": {
+        "summary": "Acepta {{count}} parámetro(s) en tiempo de ejecución",
+        "row": "{{name}} ({{type}}) vinculado a {{field}}",
+        "noField": "sin campo vinculado"
+      },
+      "records": {
+        "source": "Lee registros de {{entity}}",
+        "sortSummary": "Ordena por {{count}} campo(s)",
+        "sortRow": "{{field}} ({{direction}})",
+        "selectSummary": "Devuelve {{count}} campo(s) seleccionado(s)",
+        "limitTopN": "Devuelve los primeros {{limit}} registros coincidentes",
+        "limitAll": "Devuelve todos los registros coincidentes (hasta 500)"
+      },
+      "aggregated": {
+        "records": "registros",
+        "groupBySummary": "Agrupa por {{fields}}",
+        "aggregationsSummary": "Calcula {{count}} columna(s) de agregación",
+        "aggregation": {
+          "SUM": "Suma de {{field}} → {{outputKey}}",
+          "COUNT": "Conteo de {{field}} → {{outputKey}}",
+          "AVG": "Promedio de {{field}} → {{outputKey}}"
+        },
+        "groupSortSummary": "Ordena grupos por {{count}} campo(s)",
+        "groupLimitSummary": "Devuelve como máximo {{limit}} grupos"
+      },
+      "output": {
+        "records": "Devuelve registros de entidad coincidentes como filas",
+        "aggregated": "Devuelve filas agrupadas con columnas de agregación"
+      },
+      "details": {
+        "matchWhere": "Coincidir registros donde"
+      },
+      "advanced": {
+        "title": "Estructura"
+      }
     },
     "delete": {
       "title": "Eliminar consulta",
@@ -2903,6 +3095,7 @@
       "skeletonTitle": "Formato de ejemplo",
       "skeletonShow": "Mostrar ejemplo",
       "skeletonHide": "Ocultar ejemplo",
+      "fillExample": "Usar ejemplo",
       "valid": "El JSON es válido.",
       "invalid": "Errores de validación del JSON",
       "apply": "Aplicar",
@@ -2914,7 +3107,8 @@
       "query": {
         "viewTitle": "JSON de la consulta actual",
         "importTitle": "Importar JSON de consulta",
-        "importDescriptionEdit": "Reemplaza la configuración de la consulta con la definición importada. El nombre y la entidad origen no pueden cambiar. Guarda para persistir.",
+        "importDescriptionEdit": "Reemplaza la configuración de la consulta con la definición importada. El nombre y la entidad origen actuales siempre se conservan. Guarda para persistir.",
+        "identityPreservedNotice": "Se ignoraron el nombre y la entidad origen importados; se conservó la identidad de la consulta actual.",
         "nameChangeError": "El nombre de la consulta no puede cambiarse mediante importación JSON.",
         "sourceEntityChangeError": "La entidad origen no puede cambiarse mediante importación JSON."
       },
@@ -3345,22 +3539,83 @@
         "planRevision": "revisión del plan"
       },
       "formulas": {
+        "annuityPayment": "Cuota fija para cuotas iguales (amortización francesa)",
+        "annuityPaymentDetail1": "Usa capital, tasa por período y número de períodos",
+        "annuityPaymentDetail2": "Fórmula estándar: P × r × (1+r)^n / ((1+r)^n − 1)",
+        "simpleInterest": "Interés simple para un período (monto × tasa)",
+        "simpleInterestDetail1": "Sin capitalización — el interés se calcula solo sobre el monto original",
+        "monthlyRateFromQuote": "Convertir tasa bancaria cotizada (EA/NA/NMV) a decimal mensual",
+        "monthlyRateFromQuoteDetail1": "EA (efectiva anual) se convierte con fórmula compuesta mensual",
+        "monthlyRateFromQuoteDetail2": "NA y NMV usan sus respectivas reglas de conversión",
+        "scheduleAnchorDate": "Elegir la fecha de inicio del cronograma desde origen o próximo vencimiento",
+        "scheduleAnchorDateDetail1": "Usa originationDate si está definida, si no nextDueDate",
+        "loanOriginationDate": "Resolver la fecha de origen del préstamo desde términos o registro actual",
+        "loanOriginationDateDetail1": "Coalesce loanDetails.originationDate con términos del padre",
+        "loanScheduleAnchorDate": "Resolver la fecha ancla del cronograma del préstamo",
+        "loanScheduleAnchorDateDetail1": "Usa fecha de origen o próximo vencimiento del padre como ancla",
+        "loanCoalescePrincipal": "Resolver capital inicial desde original o saldo del padre",
+        "loanCoalescePrincipalDetail1": "Coalesce originalPrincipal con parent.currentBalance",
+        "loanBasePrincipal": "Resolver capital inicial desde ancla de origen",
+        "loanBasePrincipalDetail1": "Usa loanCoalescePrincipal cuando la fecha de origen está definida",
+        "loanPeriodBalance": "Saldo inicial para el período de pago actual",
+        "loanPeriodBalanceDetail1": "Usa saldo restante del loop, o capital base como respaldo",
+        "loanTermMonths": "Plazo del préstamo en meses",
+        "loanTermMonthsDetail1": "Lee loanDetails.termMonths del registro actual",
+        "loanIsLastPeriod": "Verdadero cuando el loop está en el último período de pago",
+        "loanIsLastPeriodDetail1": "Compara loopIndex con loanTermMonths − 1",
+        "loanMonthlyRate": "Tasa mensual decimal desde campos de cotización actuales",
+        "loanMonthlyRateDetail1": "Llama monthlyRateFromQuote con tasa y cotización actuales",
+        "loanMonthlyRateDetail2": "Usada por todos los cálculos de pago del préstamo",
+        "loanAnnuityPayment": "Cuota fija de anualidad francesa para el préstamo",
+        "loanAnnuityPaymentDetail1": "Llama annuityPayment con capital, tasa y plazo",
+        "loanAnnuityPaymentDetail2": "Usada cuando el tipo de amortización es FRENCH",
+        "loanInterestPayment": "Porción de interés para el período actual",
+        "loanInterestPaymentDetail1": "La estrategia varía según el tipo de amortización (francesa, alemana, flat)",
+        "loanPrincipalPayment": "Porción de capital para el período actual",
+        "loanPrincipalPaymentDetail1": "En el último período, liquida el saldo restante",
+        "loanPrincipalPaymentDetail2": "Si no, cuota de anualidad menos porción de interés",
+        "schedulePrincipalPortion": "Porción de capital escrita en la fila del cronograma",
+        "schedulePrincipalPortionDetail1": "Delega a loanPrincipalPayment",
+        "scheduleInterestPortion": "Porción de interés escrita en la fila del cronograma",
+        "scheduleInterestPortionDetail1": "Delega a loanInterestPayment",
+        "scheduleExpectedAmount": "Monto de pago esperado para la fila del cronograma",
+        "scheduleExpectedAmountDetail1": "Suma de porciones de capital e interés",
+        "amortizationLoopState": "Arrastrar saldo restante a la siguiente fila de pago",
+        "amortizationLoopStateDetail1": "Resta la porción de capital del saldo inicial del período",
+        "paymentScheduleFrenchRowCount": "Cantidad de filas para cronogramas de amortización francesa",
+        "paymentScheduleFrenchRowCountDetail1": "Igual al plazo en meses cuando la cuota de anualidad es válida",
+        "paymentScheduleAmortizedRowCount": "Cantidad de filas según tipo de amortización",
+        "paymentScheduleAmortizedRowCountDetail1": "Enruta a conteo francés o basado en plazo",
+        "paymentScheduleRowCount": "Total de filas de pago para un cronograma de préstamo",
+        "paymentScheduleRowCountDetail1": "Considera tipo de amortización, capital y plazo",
+        "paymentScheduleDueDate": "Fecha de vencimiento para una fila del cronograma",
+        "paymentScheduleDueDateDetail1": "Fecha ancla más loopIndex meses",
+        "frequencyStepMultiplier": "Multiplicador de paso de período para una frecuencia de pago",
+        "frequencyStepMultiplierDetail1": "Semanal=1, quincenal=2, mensual=1, trimestral=3, anual=12",
+        "frequencyUnit": "Unidad de suma de fechas para una frecuencia de pago",
+        "frequencyUnitDetail1": "Mapea código de frecuencia a semanas o meses",
+        "frequencyDueDate": "Fecha de vencimiento desde fecha base, frecuencia e índice de período",
+        "frequencyDueDateDetail1": "Suma periodIndex × multiplicador de paso a la fecha base",
+        "frequencyDueDateDetail2": "Usa frequencyUnit para determinar semanas vs meses",
         "frequencyScheduleDueDate": "Las fechas siguen la frecuencia de pago",
         "frequencyScheduleDueDateDetail1": "Comienza desde la primera fecha de pago",
         "frequencyScheduleDueDateDetail2": "Cada fila avanza según la frecuencia",
         "frequencyAdvanceDueDate": "Avanzar la fecha un período de pago",
+        "frequencyAdvanceDueDateDetail1": "Avanza baseDate un paso de frecuencia",
+        "scheduleHorizonOrDefault": "Horizonte del cronograma en meses con valor predeterminado",
+        "scheduleHorizonOrDefaultDetail1": "Usa scheduleHorizonMonths si está definido, si no 12",
         "recurringScheduleInitialRowCount": "Una fila si es único; si no, hasta el horizonte (máx. 1000)",
+        "recurringScheduleInitialRowCountDetail1": "Frecuencia ONE_TIME crea exactamente una fila",
         "recurringScheduleExtensionRowCount": "Completar hacia el horizonte (máx. 100 por ejecución)",
+        "recurringScheduleExtensionRowCountDetail1": "Calcula la brecha entre conteo existente y horizonte",
         "balanceSheetRoleFromItemType": "Rol de balance según tipo de ítem",
+        "balanceSheetRoleFromItemTypeDetail1": "Mapea LOAN, CARD, etc. a roles de activo/pasivo",
         "cardHostCurrentBalance": "Saldo tarjeta = rotativo + cuotas hijas",
+        "cardHostCurrentBalanceDetail1": "Suma revolvingBalance e installmentSum",
         "incrementPlanRevision": "Incrementar revisión del plan en uno",
+        "incrementPlanRevisionDetail1": "Incrementa el campo planRevision del registro actual",
         "inferFlatLoanOriginationDate": "Inferir fecha de origen del préstamo",
-        "paymentScheduleRowCount": "Calcular cantidad de filas de pago",
-        "paymentScheduleDueDate": "Calcular fecha de vencimiento",
-        "scheduleExpectedAmount": "Calcular monto esperado",
-        "schedulePrincipalPortion": "Calcular porción de capital",
-        "scheduleInterestPortion": "Calcular porción de interés",
-        "amortizationLoopState": "Arrastrar saldo a la siguiente fila"
+        "inferFlatLoanOriginationDateDetail1": "Usada para amortización flat/NONE cuando falta la fecha de origen"
       },
       "frequencyTable": {
         "title": "Cómo se calculan las fechas",

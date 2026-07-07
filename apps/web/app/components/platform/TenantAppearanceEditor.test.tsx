@@ -175,7 +175,7 @@ describe("TenantAppearanceEditor", () => {
 
       fireEvent.click(
         within(dialog).getByRole("button", {
-          name: "platform.appearance.themeJson.viewTrigger",
+          name: "jsonActions.viewAriaLabel",
         }),
       );
 
@@ -196,7 +196,7 @@ describe("TenantAppearanceEditor", () => {
 
       fireEvent.click(
         within(dialog).getByRole("button", {
-          name: "platform.appearance.themeJson.importTrigger",
+          name: "jsonActions.importAriaLabel",
         }),
       );
 

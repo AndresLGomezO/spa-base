@@ -16,6 +16,7 @@ import {
   type EntityQueryFilterEditorCondition,
   type EntityQueryFilterEditorGroup,
   isDateLikeFieldType,
+  isEntityQueryParameterScalarValue,
   listEntityQueryFilterFieldOptions,
   removeEditorNode,
   resolveQueryFilterFieldMeta,
@@ -167,6 +168,14 @@ function EntityQueryFilterValueEditor({
               </option>
             ))}
           </Select>
+        ) : isEntityQueryParameterScalarValue(row.scalarValue) ? (
+          <Input
+            value={row.scalarValue}
+            disabled={disabled}
+            type="text"
+            placeholder={t("queryBuilder.filters.valuePlaceholder")}
+            onChange={(event) => onChange({ scalarValue: event.target.value })}
+          />
         ) : (
           <Input
             value={row.scalarValue}

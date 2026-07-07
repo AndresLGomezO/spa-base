@@ -14,6 +14,8 @@ import {
   FieldLabel,
   Form,
   Input,
+  JsonImportTriggerButton,
+  JsonViewTriggerButton,
   PhotoUpload,
   Text,
   toast,
@@ -46,6 +48,7 @@ import {
 } from "@repo/theme/tenant-overrides";
 
 import { useAuth } from "../../auth/AuthContext";
+import { useJsonActionTriggerLabels } from "../json/json-action-trigger-labels";
 import { FormModal } from "../forms/FormModal";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import {
@@ -466,6 +469,7 @@ export function TenantAppearanceEditor({
   const { colorScheme } = useColorScheme();
   const { selectTenant } = useAuth();
   const themeJsonLabels = useMemo(() => tenantThemeJsonLabels(t), [t]);
+  const triggerLabels = useJsonActionTriggerLabels();
   const [tenant, setTenant] = useState<AdminTenant | null>(null);
   const [primaryPalette, setPrimaryPalette] = useState<
     ColorPaletteConfig | undefined
@@ -836,22 +840,14 @@ export function TenantAppearanceEditor({
             onSubmit={(event) => void handleSave(event)}
           >
             <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
+              <JsonViewTriggerButton
+                labels={triggerLabels}
                 onClick={() => setViewDialogOpen(true)}
-              >
-                {themeJsonLabels.viewTrigger}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
+              />
+              <JsonImportTriggerButton
+                labels={triggerLabels}
                 onClick={() => setImportDialogOpen(true)}
-              >
-                {themeJsonLabels.importTrigger}
-              </Button>
+              />
             </div>
 
             <section className="grid gap-3">
