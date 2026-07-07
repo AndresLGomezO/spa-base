@@ -21,10 +21,14 @@ describe("rates entity UI overrides catalog", () => {
     expect(catalog.overrides[0]?.entityName).toBe("account");
     expect(catalog.overrides[0]?.metricWidgets).toHaveLength(4);
     expect(catalog.overrides[1]?.entityName).toBe("transaction");
-    expect(catalog.overrides[1]?.metricWidgets).toHaveLength(1);
+    expect(catalog.overrides[1]?.metricWidgets).toHaveLength(2);
     expect(catalog.overrides[1]?.metricWidgets?.[0]?.id).toBe(
       "top-expense-category-snapshot",
     );
+    expect(catalog.overrides[1]?.metricWidgets?.[1]?.id).toBe(
+      "recent-activity-transactions",
+    );
+    expect(catalog.overrides[1]?.metricRowLayout).toBeDefined();
 
     for (const widget of catalog.overrides[0]?.metricWidgets ?? []) {
       expect(widget.layout).toBeDefined();

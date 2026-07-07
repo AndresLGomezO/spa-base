@@ -249,7 +249,12 @@ If JSON files exist under [`.local/tenant-import/`](../../.local/tenant-import/)
 
 The Auth user must already exist in the emulator (sign in once). If the user is missing, personal import is skipped and only the test-user mock data is seeded.
 
-During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../../.local/tenant-import/generate-schedule-payment-mocks.ts) exists, the seed runs it to build historical **payment schedules**, **transactions**, and **balance snapshots** from your imported definitions (2022 default start, or loan `originationDate`). Output is written to [`.local/tenant-import/generated/`](../../.local/tenant-import/generated/) and imported automatically:
+During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../../.local/tenant-import/generate-schedule-payment-mocks.ts) exists, the seed runs it to build historical **payment schedules**, **transactions**, and **balance snapshots** from your imported definitions (2022 default start, or loan `originationDate`). Real payments come from optional [`.local/tenant-import/transaction-history.json`](../../.local/tenant-import/transaction-history.json):
+
+- **`payments`**: `financialItemName` → `YYYY-MM` → COP amount (transaction dated on the item's schedule due day).
+- **`entries`**: explicit `{ "date": "YYYY-MM-DD", "amount": COP }` rows for irregular dates (e.g. salary deposits); supports multiple entries on the same day.
+
+Only months/entries you include produce transactions. Output is written to [`.local/tenant-import/generated/`](../../.local/tenant-import/generated/) and imported automatically:
 
 | Generated file                          | Entity                        |
 | --------------------------------------- | ----------------------------- |
@@ -258,7 +263,7 @@ During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../.
 | `generated/balanceSnapshot.json`        | `balanceSnapshot`             |
 | `generated/schedule-payment-mocks.json` | Combined artifact (same data) |
 
-Past due rows are marked **PAID** (~88%) or **OVERDUE** (~12%) with payment dates ±5 days around the due date. Current-day and future rows stay **UPCOMING**. Default payment account: **Ahorros** (`account.json`).
+Past due rows without a matching `transaction-history.json` entry stay **OVERDUE**. Rows with a real payment are **PAID** on the schedule due date. Current-day and future rows stay **UPCOMING**. Default payment account: **Ahorros** (`account.json`).
 
 Run the generator manually (from repo root):
 

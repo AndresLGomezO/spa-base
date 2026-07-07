@@ -39,6 +39,7 @@ export function SearchField({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onChangeRef = useRef(onChange);
   const isExternalUpdate = useRef(false);
+  const isFocusedRef = useRef(false);
 
   const showClearButton = localValue.length > 0;
 
@@ -58,9 +59,22 @@ export function SearchField({
   }, [onChange]);
 
   useEffect(() => {
+    if (isFocusedRef.current) {
+      return;
+    }
+
     isExternalUpdate.current = true;
     startTransition(() => setLocalValue(value));
   }, [value]);
+
+  const handleBlur = useCallback(() => {
+    isFocusedRef.current = false;
+
+    if (localValue !== value) {
+      isExternalUpdate.current = true;
+      setLocalValue(value);
+    }
+  }, [localValue, value]);
 
   useEffect(() => {
     if (isExternalUpdate.current) {
@@ -103,6 +117,10 @@ export function SearchField({
           isExternalUpdate.current = false;
           setLocalValue(event.target.value);
         }}
+        onFocus={() => {
+          isFocusedRef.current = true;
+        }}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className={cn("!pl-11 shadow-none", showClearButton && "!pr-10")}
         aria-label={ariaLabel ?? placeholder}

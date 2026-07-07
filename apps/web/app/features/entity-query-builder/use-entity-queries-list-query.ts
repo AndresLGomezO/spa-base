@@ -3,6 +3,10 @@ import { useSearchParams } from "react-router";
 
 import type { EntityQueryDefinitionRecord } from "../../lib/api-client";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../lib/list-query-search-param";
+import {
   DEFAULT_ENTITY_QUERY_LIST_SORT,
   ENTITY_QUERY_MODE_FILTERS,
   ENTITY_QUERY_STATUS_FILTERS,
@@ -80,7 +84,7 @@ export function buildEntityQueriesListQueryState(
 ): EntityQueriesListQueryState {
   const rawSort = searchParams.get("sort") ?? DEFAULT_ENTITY_QUERY_LIST_SORT;
   return {
-    search: searchParams.get("q")?.trim() ?? "",
+    search: readListQuerySearch(searchParams),
     statuses: parseCsvFilter(
       searchParams.get("status"),
       ENTITY_QUERY_STATUS_FILTERS,
@@ -100,7 +104,7 @@ export function filterEntityQueryDefinitions(
   definitions: readonly EntityQueryDefinitionRecord[],
   query: EntityQueriesListQueryState,
 ): EntityQueryDefinitionRecord[] {
-  const searchNeedle = query.search.toLowerCase();
+  const searchNeedle = query.search.trim().toLowerCase();
 
   return definitions.filter((definition) => {
     if (
@@ -193,12 +197,7 @@ export function useEntityQueriesListQuery(
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -330,7 +329,7 @@ export function useEntityQueriesListQuery(
   }, [filteredDefinitions]);
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.statuses.length > 0 ||
     query.queryModes.length > 0 ||
     query.entities.length > 0 ||
@@ -339,10 +338,10 @@ export function useEntityQueriesListQuery(
   const activeFilterBadges = useMemo((): EntityQueriesListFilterBadge[] => {
     const badges: EntityQueriesListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

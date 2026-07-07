@@ -105,12 +105,12 @@ export function MetricDefinitionsCatalogJsonImportDialog({
               type: "percentChange",
               current: {
                 type: "metricRef",
-                metricDefinitionId: "Net Balance by Month",
+                metricDefinitionId: "Total Balance by Month",
                 parameterMap: { period: "currentPeriod" },
               },
               baseline: {
                 type: "metricRef",
-                metricDefinitionId: "Net Balance by Month",
+                metricDefinitionId: "Total Balance by Month",
                 parameterMap: { period: "comparisonPeriod" },
               },
             },

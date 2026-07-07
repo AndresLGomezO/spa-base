@@ -183,12 +183,15 @@ describe("seed-local-tenant-ui-slices", () => {
       ),
     ) as {
       dashboardSections: Array<{ id: string; name: string; layout: unknown }>;
-      shellAppendRows: Array<{ id: string; component: { rows: unknown[] } }>;
+      shellAppendRows?: Array<{ id: string; component: { rows: unknown[] } }>;
     };
 
-    expect(slice.dashboardSections).toHaveLength(1);
+    expect(slice.shellAppendRows).toBeUndefined();
+    expect(slice.dashboardSections).toHaveLength(2);
     expect(slice.dashboardSections[0]?.id).toBe("financial-snapshot");
     expect(slice.dashboardSections[0]?.name).toBe("Financial Snapshot");
+    expect(slice.dashboardSections[1]?.id).toBe("recent-activity");
+    expect(slice.dashboardSections[1]?.name).toBe("Recent Activity");
 
     const sectionRootRow = (
       slice.dashboardSections[0]?.layout as {
@@ -197,6 +200,7 @@ describe("seed-local-tenant-ui-slices", () => {
             rows: Array<{
               component: {
                 rows: Array<{ component: { kind: string; rows: unknown[] } }>;
+                styles?: Array<{ property: string; value: string }>;
               };
             }>;
           }>;
@@ -205,6 +209,9 @@ describe("seed-local-tenant-ui-slices", () => {
     ).root.columns[0]?.rows[0];
 
     expect(sectionRootRow?.component?.rows).toHaveLength(1);
+    expect(sectionRootRow?.component?.styles).toEqual(
+      expect.arrayContaining([{ property: "marginBottom", value: "15" }]),
+    );
 
     const gridRow = sectionRootRow?.component.rows[0]?.component;
 
@@ -278,15 +285,39 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(emptyTrack?.id).toBe("track-empty-placeholder");
     expect(emptyTrack?.component?.rows).toEqual([]);
 
-    const shellRow = slice.shellAppendRows[0];
-    expect(shellRow?.id).toBe("track-financial-snapshot");
-    expect(
-      (
-        shellRow?.component.rows[0] as {
-          component?: { sectionId?: string };
-        }
-      )?.component?.sectionId,
-    ).toBe("financial-snapshot");
+    const recentActivityGrid = (
+      slice.dashboardSections[1]?.layout as {
+        root: {
+          columns: Array<{
+            rows: Array<{
+              component: {
+                rows: Array<{
+                  component: { kind: string; rows: unknown[] };
+                }>;
+              };
+            }>;
+          }>;
+        };
+      }
+    ).root.columns[0]?.rows[0]?.component.rows[0]?.component;
+    expect(recentActivityGrid?.kind).toBe("grid");
+    expect(recentActivityGrid?.rows).toHaveLength(2);
+    const recentActivityWidget = (
+      recentActivityGrid?.rows[0] as {
+        component?: {
+          rows?: Array<{
+            component?: {
+              widgetId?: string;
+              entityName?: string;
+              label?: string;
+            };
+          }>;
+        };
+      }
+    )?.component?.rows?.[0]?.component;
+    expect(recentActivityWidget?.widgetId).toBe("recent-activity-transactions");
+    expect(recentActivityWidget?.entityName).toBe("transaction");
+    expect(recentActivityWidget?.label).toBe("Transactions · Recent Activity");
   });
 
   it("exports seedLocalTenantUiSlicesIfPresent", () => {

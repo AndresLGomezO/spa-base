@@ -139,4 +139,230 @@ describe("evaluateComputedMetric", () => {
 
     expect(result.values).toEqual({});
   });
+
+  it("evaluates expression with three-operand subtraction (a - b - c)", async () => {
+    const income = buildIncomeMetric();
+    const outflows = {
+      ...income,
+      id: "outflows-id",
+      name: "Outflows by Month",
+    };
+    const invests = { ...income, id: "invests-id", name: "Invested by Month" };
+
+    const totalBalanceMetric: MetricDefinitionRecord = {
+      ...buildIncomeMetric(),
+      id: "total-balance-id",
+      metricId: "total-balance-by-month",
+      name: "Total Balance by Month",
+      computationMode: "computed",
+      parameters: [
+        {
+          name: "period",
+          valueType: "dateBucket",
+          granularity: "month",
+        },
+      ],
+      computation: {
+        type: "expression",
+        inputs: {
+          income: {
+            type: "metricRef",
+            metricDefinitionId: "Income by Month",
+            parameterMap: { date: "period" },
+          },
+          outflows: {
+            type: "metricRef",
+            metricDefinitionId: "Outflows by Month",
+            parameterMap: { date: "period" },
+          },
+          invests: {
+            type: "metricRef",
+            metricDefinitionId: "Invested by Month",
+            parameterMap: { date: "period" },
+          },
+        },
+        tokens: [
+          { type: "input", name: "income" },
+          { type: "input", name: "outflows" },
+          { type: "operator", op: "-" },
+          { type: "input", name: "invests" },
+          { type: "operator", op: "-" },
+        ],
+      },
+    };
+
+    const rowValues: Record<string, Record<string, number>> = {
+      "Income by Month": { "2026-06": 5000 },
+      "Outflows by Month": { "2026-06": 3200 },
+      "Invested by Month": { "2026-06": 800 },
+    };
+
+    const resolver: ComputedMetricInputResolver = {
+      resolveMetricDefinition: vi.fn(async (reference: string) => {
+        if (reference === "Income by Month") return income;
+        if (reference === "Outflows by Month") return outflows;
+        if (reference === "Invested by Month") return invests;
+        return null;
+      }),
+      readMetricRowValue: vi.fn(async ({ definition, dimensions }) => {
+        const period = dimensions.date;
+        if (typeof period !== "string") return null;
+        return rowValues[definition.name]?.[period] ?? null;
+      }),
+      readQueryRefValue: vi.fn(async () => null),
+    };
+
+    const result = await evaluateComputedMetric({
+      definition: totalBalanceMetric,
+      providedParameters: { period: "2026-06" },
+      userId: "user_123",
+      resolver,
+    });
+
+    expect(result.values.primary).toBe(5000 - 3200 - 800);
+  });
+
+  it("treats missing expression inputs as zero when at least one input has data", async () => {
+    const income = buildIncomeMetric();
+    const outflows = {
+      ...income,
+      id: "outflows-id",
+      name: "Outflows by Month",
+    };
+    const invests = { ...income, id: "invests-id", name: "Invested by Month" };
+
+    const totalBalanceMetric: MetricDefinitionRecord = {
+      ...buildIncomeMetric(),
+      id: "total-balance-id",
+      metricId: "total-balance-by-month",
+      name: "Total Balance by Month",
+      computationMode: "computed",
+      parameters: [
+        {
+          name: "period",
+          valueType: "dateBucket",
+          granularity: "month",
+        },
+      ],
+      computation: {
+        type: "expression",
+        inputs: {
+          income: {
+            type: "metricRef",
+            metricDefinitionId: "Income by Month",
+            parameterMap: { date: "period" },
+          },
+          outflows: {
+            type: "metricRef",
+            metricDefinitionId: "Outflows by Month",
+            parameterMap: { date: "period" },
+          },
+          invests: {
+            type: "metricRef",
+            metricDefinitionId: "Invested by Month",
+            parameterMap: { date: "period" },
+          },
+        },
+        tokens: [
+          { type: "input", name: "income" },
+          { type: "input", name: "outflows" },
+          { type: "operator", op: "-" },
+          { type: "input", name: "invests" },
+          { type: "operator", op: "-" },
+        ],
+      },
+    };
+
+    const rowValues: Record<string, Record<string, number>> = {
+      "Income by Month": { "2026-06": 5000 },
+      "Outflows by Month": { "2026-06": 3200 },
+    };
+
+    const resolver: ComputedMetricInputResolver = {
+      resolveMetricDefinition: vi.fn(async (reference: string) => {
+        if (reference === "Income by Month") return income;
+        if (reference === "Outflows by Month") return outflows;
+        if (reference === "Invested by Month") return invests;
+        return null;
+      }),
+      readMetricRowValue: vi.fn(async ({ definition, dimensions }) => {
+        const period = dimensions.date;
+        if (typeof period !== "string") return null;
+        return rowValues[definition.name]?.[period] ?? null;
+      }),
+      readQueryRefValue: vi.fn(async () => null),
+    };
+
+    const result = await evaluateComputedMetric({
+      definition: totalBalanceMetric,
+      providedParameters: { period: "2026-06" },
+      userId: "user_123",
+      resolver,
+    });
+
+    expect(result.values.primary).toBe(5000 - 3200);
+  });
+
+  it("returns empty values when all expression inputs are missing", async () => {
+    const income = buildIncomeMetric();
+    const outflows = {
+      ...income,
+      id: "outflows-id",
+      name: "Outflows by Month",
+    };
+
+    const totalBalanceMetric: MetricDefinitionRecord = {
+      ...buildIncomeMetric(),
+      id: "total-balance-id",
+      metricId: "total-balance-by-month",
+      name: "Total Balance by Month",
+      computationMode: "computed",
+      parameters: [
+        {
+          name: "period",
+          valueType: "dateBucket",
+          granularity: "month",
+        },
+      ],
+      computation: {
+        type: "expression",
+        inputs: {
+          income: {
+            type: "metricRef",
+            metricDefinitionId: "Income by Month",
+            parameterMap: { date: "period" },
+          },
+          outflows: {
+            type: "metricRef",
+            metricDefinitionId: "Outflows by Month",
+            parameterMap: { date: "period" },
+          },
+        },
+        tokens: [
+          { type: "input", name: "income" },
+          { type: "input", name: "outflows" },
+          { type: "operator", op: "-" },
+        ],
+      },
+    };
+
+    const resolver: ComputedMetricInputResolver = {
+      resolveMetricDefinition: vi.fn(async (reference: string) => {
+        if (reference === "Income by Month") return income;
+        if (reference === "Outflows by Month") return outflows;
+        return null;
+      }),
+      readMetricRowValue: vi.fn(async () => null),
+      readQueryRefValue: vi.fn(async () => null),
+    };
+
+    const result = await evaluateComputedMetric({
+      definition: totalBalanceMetric,
+      providedParameters: { period: "2026-06" },
+      userId: "user_123",
+      resolver,
+    });
+
+    expect(result.values).toEqual({});
+  });
 });

@@ -52,7 +52,7 @@ describe("MetricComputationPreview formatting", () => {
           parameterMap: { period: "comparisonPeriod" },
         },
       },
-      (id) => (id === "metric_a" ? "Net Balance by Month" : id),
+      (id) => (id === "metric_a" ? "Total Balance by Month" : id),
       () => "?",
       {
         current: "current",
@@ -68,7 +68,7 @@ describe("MetricComputationPreview formatting", () => {
     );
 
     expect(preview).toContain("percentChange(");
-    expect(preview).toContain("metric(Net Balance by Month");
+    expect(preview).toContain("metric(Total Balance by Month");
     expect(preview).toContain("period → currentPeriod");
     expect(preview).toContain("period → comparisonPeriod");
   });

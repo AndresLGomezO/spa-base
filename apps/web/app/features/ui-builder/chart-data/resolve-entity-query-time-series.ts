@@ -96,7 +96,11 @@ interface NetBalanceTypeSets {
   readonly usesMetricParity: boolean;
 }
 
-const STANDARD_OUTFLOW_TYPE_VALUES = new Set(["EXPENSE", "PAYMENT"]);
+const STANDARD_OUTFLOW_TYPE_VALUES = new Set([
+  "EXPENSE",
+  "PAYMENT",
+  "INVESTMENT",
+]);
 
 function inferNetBalanceTypesFromRowFilters(
   rowFilters: readonly ChartEntityQueryRowFilter[] | undefined,

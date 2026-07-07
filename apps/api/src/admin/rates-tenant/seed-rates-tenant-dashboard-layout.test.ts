@@ -47,8 +47,12 @@ describe("rates tenant dashboard layout catalog", () => {
     const shellJson = JSON.stringify(catalog.dashboardLayout);
     expect(shellJson).toMatch(/dashboard-section/);
     expect(shellJson).toMatch(/account-metrics/);
+    expect(shellJson).toMatch(/financial-snapshot/);
+    expect(shellJson).toMatch(/recent-activity/);
     expect(shellJson).toMatch(/view-filter/);
     expect(shellJson).toMatch(/enableDateFilter/);
     expect(shellJson).toMatch(/var\(--spacing-macro\)/);
+    expect(shellJson).toMatch(/row-f32cf5da-dca5-4a9d-8ca8-6cc6ac250fcd/);
+    expect(shellJson).toMatch(/Recent Activity/);
   });
 });

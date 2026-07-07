@@ -7,6 +7,10 @@ import type {
   DebugEventStatus,
 } from "../../lib/api-client";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../lib/list-query-search-param";
+import {
   DEBUGGER_STATUSES_BY_SOURCE,
   DEFAULT_DEBUGGER_LIST_SORT,
   debuggerEventSearchHaystack,
@@ -140,7 +144,7 @@ export function useDebuggerListQuery(
   const query = useMemo((): DebuggerListQuery => {
     const rawSort = searchParams.get("sort") ?? DEFAULT_DEBUGGER_LIST_SORT;
     return {
-      search: searchParams.get("q")?.trim() ?? "",
+      search: readListQuerySearch(searchParams),
       statuses: parseStatuses(searchParams.get("status"), activeSource),
       executionTypes:
         activeSource === "hookExecution"
@@ -170,12 +174,7 @@ export function useDebuggerListQuery(
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -280,7 +279,7 @@ export function useDebuggerListQuery(
   }, [updateSearchParams]);
 
   const filteredEvents = useMemo(() => {
-    const searchNeedle = query.search.toLowerCase();
+    const searchNeedle = query.search.trim().toLowerCase();
 
     return sourceEvents.filter((event) => {
       if (
@@ -379,7 +378,7 @@ export function useDebuggerListQuery(
   }, [activeSource, filteredEvents]);
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.statuses.length > 0 ||
     query.executionTypes.length > 0 ||
     query.minWrites > 0 ||
@@ -389,10 +388,10 @@ export function useDebuggerListQuery(
   const activeFilterBadges = useMemo((): DebuggerListFilterBadge[] => {
     const badges: DebuggerListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

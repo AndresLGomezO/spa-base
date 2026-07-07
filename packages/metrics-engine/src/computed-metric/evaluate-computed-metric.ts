@@ -153,19 +153,23 @@ function evaluateExpressionTokens(
   inputValues: Readonly<Record<string, number | null>>,
 ): number | null {
   const stack: number[] = [];
+  let hasAnyInputValue = false;
 
   for (const token of tokens.tokens) {
     if (token.type === "literal") {
+      hasAnyInputValue = true;
       stack.push(token.value);
       continue;
     }
 
     if (token.type === "input") {
       const value = inputValues[token.name];
-      if (value === null || value === undefined || !Number.isFinite(value)) {
-        return null;
+      if (typeof value === "number" && Number.isFinite(value)) {
+        hasAnyInputValue = true;
+        stack.push(value);
+      } else {
+        stack.push(0);
       }
-      stack.push(value);
       continue;
     }
 
@@ -194,6 +198,10 @@ function evaluateExpressionTokens(
       default:
         return null;
     }
+  }
+
+  if (!hasAnyInputValue) {
+    return null;
   }
 
   if (stack.length !== 1 || !Number.isFinite(stack[0]!)) {

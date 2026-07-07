@@ -3,6 +3,10 @@ import { useSearchParams } from "react-router";
 
 import type { ChartDefinitionRecord } from "../../lib/api-client.js";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../lib/list-query-search-param";
+import {
   CHART_DATA_SOURCE_FILTERS,
   CHART_DISPLAY_MODE_FILTERS,
   CHART_STATUS_FILTERS,
@@ -67,7 +71,7 @@ export function buildChartsListQueryState(
 ): ChartsListQueryState {
   const rawSort = searchParams.get("sort") ?? DEFAULT_CHART_LIST_SORT;
   return {
-    search: searchParams.get("q")?.trim() ?? "",
+    search: readListQuerySearch(searchParams),
     dataSources: parseCsvFilter(
       searchParams.get("dataSource"),
       CHART_DATA_SOURCE_FILTERS,
@@ -89,7 +93,7 @@ export function filterChartDefinitions(
   definitions: readonly ChartDefinitionRecord[],
   query: ChartsListQueryState,
 ): ChartDefinitionRecord[] {
-  const searchNeedle = query.search.toLowerCase();
+  const searchNeedle = query.search.trim().toLowerCase();
 
   return definitions.filter((definition) => {
     if (
@@ -189,12 +193,7 @@ export function useChartsListQuery(
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -323,7 +322,7 @@ export function useChartsListQuery(
   );
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.dataSources.length > 0 ||
     query.chartTypes.length > 0 ||
     query.displayModes.length > 0 ||
@@ -333,10 +332,10 @@ export function useChartsListQuery(
   const activeFilterBadges = useMemo((): ChartsListFilterBadge[] => {
     const badges: ChartsListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

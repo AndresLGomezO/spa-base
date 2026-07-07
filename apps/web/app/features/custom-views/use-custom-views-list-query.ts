@@ -3,6 +3,10 @@ import { useSearchParams } from "react-router";
 
 import type { CustomViewRecord } from "../../lib/api-client";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../lib/list-query-search-param";
+import {
   CUSTOM_VIEW_STATUS_FILTERS,
   DEFAULT_CUSTOM_VIEW_LIST_SORT,
   customViewSortLabelKey,
@@ -104,7 +108,7 @@ export function useCustomViewsListQuery(
   const query = useMemo((): CustomViewsListQuery => {
     const rawSort = searchParams.get("sort") ?? DEFAULT_CUSTOM_VIEW_LIST_SORT;
     return {
-      search: searchParams.get("q")?.trim() ?? "",
+      search: readListQuerySearch(searchParams),
       statuses: parseStatuses(searchParams.get("status")),
       entities: parseEntities(searchParams.get("entity")),
       sort: isCustomViewListSort(rawSort)
@@ -133,12 +137,7 @@ export function useCustomViewsListQuery(
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -205,7 +204,7 @@ export function useCustomViewsListQuery(
   }, [updateSearchParams]);
 
   const filteredViews = useMemo(() => {
-    const searchNeedle = query.search.toLowerCase();
+    const searchNeedle = query.search.trim().toLowerCase();
 
     return views.filter((view) => {
       if (query.statuses.length > 0 && !query.statuses.includes(view.status)) {
@@ -256,7 +255,7 @@ export function useCustomViewsListQuery(
   }, [filteredViews]);
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.statuses.length > 0 ||
     query.entities.length > 0 ||
     query.sort !== DEFAULT_CUSTOM_VIEW_LIST_SORT;
@@ -264,10 +263,10 @@ export function useCustomViewsListQuery(
   const activeFilterBadges = useMemo((): CustomViewsListFilterBadge[] => {
     const badges: CustomViewsListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

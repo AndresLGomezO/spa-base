@@ -1,65 +1,109 @@
 {
   "kind": "tenant-dashboard-layout-catalog",
   "version": 1,
-  "description": "Rates test tenant home dashboard — search/filters toolbar, account metric widgets in one grid row.",
+  "description": "Rates test tenant home dashboard — toolbar, account metrics, financial snapshot, and recent activity.",
   "dashboardLayout": {
     "root": {
       "type": "screen-root",
       "id": "dashboard-screen",
       "gridTemplateColumns": "1fr",
       "gap": "24px",
-      "styles": [
-        {
-          "property": "padding",
-          "value": "var(--spacing-macro)"
-        }
-      ],
       "rows": [
         {
           "type": "component",
-          "id": "track-dashboard-toolbar",
+          "id": "row-f32cf5da-dca5-4a9d-8ca8-6cc6ac250fcd",
           "component": {
             "kind": "container",
             "rows": [
               {
                 "type": "component",
-                "id": "row-dashboard-view-filter",
+                "id": "track-dashboard-toolbar",
                 "component": {
-                  "kind": "view-filter",
-                  "enableSearch": true,
-                  "enableFilters": true,
-                  "enableDateFilter": true,
-                  "dateFilterGranularity": "month",
-                  "dateFilterParam": "month",
-                  "searchPlaceholder": "Search accounts…",
-                  "filters": [
+                  "kind": "container",
+                  "rows": [
                     {
-                      "entityName": "account",
-                      "fieldName": "accountType"
-                    },
+                      "type": "component",
+                      "id": "row-dashboard-view-filter",
+                      "component": {
+                        "kind": "view-filter",
+                        "enableSearch": true,
+                        "enableFilters": true,
+                        "enableDateFilter": true,
+                        "dateFilterGranularity": "month",
+                        "dateFilterParam": "month",
+                        "searchPlaceholder": "Search accounts…",
+                        "filters": [
+                          {
+                            "entityName": "account",
+                            "fieldName": "accountType"
+                          },
+                          {
+                            "entityName": "account",
+                            "fieldName": "currency"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "component",
+                "id": "track-account-metrics",
+                "component": {
+                  "kind": "container",
+                  "rows": [
                     {
-                      "entityName": "account",
-                      "fieldName": "currency"
+                      "type": "component",
+                      "id": "row-section-account-metrics",
+                      "component": {
+                        "kind": "dashboard-section",
+                        "sectionId": "account-metrics"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "component",
+                "id": "track-financial-snapshot",
+                "component": {
+                  "kind": "container",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-section-financial-snapshot",
+                      "component": {
+                        "kind": "dashboard-section",
+                        "sectionId": "financial-snapshot"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "component",
+                "id": "track-recent-activity",
+                "component": {
+                  "kind": "container",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-section-recent-activity",
+                      "component": {
+                        "kind": "dashboard-section",
+                        "sectionId": "recent-activity",
+                        "label": "Recent Activity"
+                      }
                     }
                   ]
                 }
               }
-            ]
-          }
-        },
-        {
-          "type": "component",
-          "id": "track-account-metrics",
-          "component": {
-            "kind": "container",
-            "rows": [
+            ],
+            "styles": [
               {
-                "type": "component",
-                "id": "row-section-account-metrics",
-                "component": {
-                  "kind": "dashboard-section",
-                  "sectionId": "account-metrics"
-                }
+                "property": "padding",
+                "value": "var(--spacing-macro)"
               }
             ]
           }

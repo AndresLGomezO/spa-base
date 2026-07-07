@@ -17,9 +17,9 @@ Build a **gradient KPI card** with header (title + icon + period pill), a derive
    - Left: row with `text` ("Total Balance", `color: rgba(255,255,255,0.8)`) + `icon` (Eye, `rgba(255,255,255,0.7)`).
    - Right: `text` pill ("This month") with `backgroundColor: rgba(255,255,255,0.2)`, `backdropFilter: blur(8px)`, pill padding/radius on the **text** component.
 4. **Body column** — `gap: var(--spacing-compact)`:
-   - `metric-kpi` bound to `Net Balance by Month` with `parameterBindings.period` → `dashboardDateFilter`.
+   - `metric-kpi` bound to `Total Balance by Month` with `parameterBindings.period` → `dashboardDateFilter`.
    - `metric-kpi` bound to a computed metric (e.g. `Total Balance MoM %`) with `parameterBindings.currentPeriod` → `dashboardDateFilter`.
-5. **Chart overlay (last sibling)** — `chart` with `chartType: "area"`, `displayMode: "overlay"`, and `dataSource.type: "entityQuery"` with **`layout: "monthToDateRightAligned"`** (30 daily buckets, filled from the right through calendar today when the dashboard month matches the current month). Use `Transaction trend` with net-balance `rowFilters` / `valueTransforms` (expense rows × `-1`). KPI still reads **`Net Balance by Month`** via metric bindings; the overlay shows daily net transaction totals month-to-date. Place the chart row **after** header and body.
+5. **Chart overlay (last sibling)** — `chart` with `chartType: "area"`, `displayMode: "overlay"`, and `dataSource.type: "entityQuery"` with **`layout: "monthToDateRightAligned"`** (30 daily buckets, filled from the right through calendar today when the dashboard month matches the current month). Use `Transaction trend` with total-balance `rowFilters` / `valueTransforms` (expense, payment, and investment rows × `-1`). KPI still reads **`Total Balance by Month`** via metric bindings; the overlay shows daily net transaction totals month-to-date. Place the chart row **after** header and body.
 6. **Chart styling** — hide legend/axes for KPI backgrounds; set series color (e.g. `rgba(255,255,255,0.95)` on gradient cards) and optional area fill opacity. Anchor the chart to the **bottom half** of the card with overlay row styles: `top: 50%`, `bottom: 0`, `left: 0`, `right: 0`, `width: 100%`.
 7. **Register widget** — add to `metricWidgets[]` with stable `id`; reference via `metric-widget` in `metricRowLayout`.
 
@@ -31,7 +31,7 @@ metricWidget.root
     └── Content
         └── gradient card (column)
             ├── header row [title+icon | period pill]
-            ├── body column [metric-kpi Net Balance | metric-kpi MoM %]
+            ├── body column [metric-kpi Total Balance | metric-kpi MoM %]
             └── chart (overlay, bottom half: top 50%)  ← LAST
 ```
 
@@ -53,7 +53,7 @@ Reload with `pnpm seed:database` after editing catalog JSON.
 - Putting the chart overlay **first** in `container.rows` (use **last** + negative `marginBottom` for bottom anchoring).
 - Using `objectFit: "cover"` for decorative charts (use `contain`).
 - Using `opacity: "0.8"` for text fade — use `color: rgba(255,255,255,0.8)` instead.
-- Binding a simple sum metric when the design calls for **derived** KPI (income − outflows).
+- Binding a simple sum metric when the design calls for **derived** KPI (income − outflows − investments).
 
 ## Related
 

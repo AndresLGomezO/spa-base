@@ -260,14 +260,14 @@
             {
               "whenField": "type",
               "whenOperator": "in",
-              "whenValue": ["INCOME", "EXPENSE", "PAYMENT"]
+              "whenValue": ["INCOME", "EXPENSE", "PAYMENT", "INVESTMENT"]
             }
           ],
           "valueTransforms": [
             {
               "whenField": "type",
               "whenOperator": "in",
-              "whenValue": ["EXPENSE", "PAYMENT"],
+              "whenValue": ["EXPENSE", "PAYMENT", "INVESTMENT"],
               "multiplier": -1
             }
           ]
@@ -276,7 +276,7 @@
       "series": [
         {
           "id": "default",
-          "label": "Net Balance",
+          "label": "Total Balance",
           "color": "rgba(255, 255, 255, 0.95)",
           "showAreaFill": true,
           "areaFillColor": "rgba(255, 255, 255, 1)",

@@ -3,6 +3,10 @@ import { useSearchParams } from "react-router";
 
 import type { FormulaDefinitionRecord } from "../../lib/api-client";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../lib/list-query-search-param";
+import {
   DEFAULT_FORMULA_LIST_SORT,
   FORMULA_SOURCE_FILTERS,
   FORMULA_STATUS_FILTERS,
@@ -104,7 +108,7 @@ export function useFormulasListQuery(
   const query = useMemo((): FormulasListQuery => {
     const rawSort = searchParams.get("sort") ?? DEFAULT_FORMULA_LIST_SORT;
     return {
-      search: searchParams.get("q")?.trim() ?? "",
+      search: readListQuerySearch(searchParams),
       sources: parseSources(searchParams.get("source")),
       statuses: parseStatuses(searchParams.get("status")),
       sort: isFormulaListSort(rawSort) ? rawSort : DEFAULT_FORMULA_LIST_SORT,
@@ -123,12 +127,7 @@ export function useFormulasListQuery(
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -195,7 +194,7 @@ export function useFormulasListQuery(
   }, [updateSearchParams]);
 
   const filteredDefinitions = useMemo(() => {
-    const searchNeedle = query.search.toLowerCase();
+    const searchNeedle = query.search.trim().toLowerCase();
 
     return definitions.filter((definition) => {
       if (
@@ -251,7 +250,7 @@ export function useFormulasListQuery(
   }, [filteredDefinitions]);
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.sources.length > 0 ||
     query.statuses.length > 0 ||
     query.sort !== DEFAULT_FORMULA_LIST_SORT;
@@ -259,10 +258,10 @@ export function useFormulasListQuery(
   const activeFilterBadges = useMemo((): FormulasListFilterBadge[] => {
     const badges: FormulasListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

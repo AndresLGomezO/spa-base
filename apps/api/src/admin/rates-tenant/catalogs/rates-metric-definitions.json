@@ -604,29 +604,7 @@
     },
     {
       "name": "Total Balance by Month",
-      "description": "Sum of balance snapshot amounts bucketed by calendar month on date.",
-      "sourceModel": "balanceSnapshot",
-      "aggregations": [
-        {
-          "operation": "SUM",
-          "field": "balance"
-        }
-      ],
-      "filters": [],
-      "groupBy": [],
-      "dimensions": ["date"],
-      "dateFieldGranularity": {
-        "date": "month"
-      },
-      "valueDisplayFormat": "currency",
-      "version": 1,
-      "schemaVersionDependency": 0,
-      "fieldsDependency": ["balance", "date"],
-      "status": "ACTIVE"
-    },
-    {
-      "name": "Net Balance by Month",
-      "description": "Income minus outflows for a selected month bucket.",
+      "description": "Income minus outflows minus investments for a selected month bucket.",
       "computationMode": "computed",
       "sourceModel": "transaction",
       "parameters": [
@@ -637,21 +615,37 @@
         }
       ],
       "computation": {
-        "type": "difference",
-        "current": {
-          "type": "metricRef",
-          "metricDefinitionId": "Income by Month",
-          "parameterMap": {
-            "date": "period"
+        "type": "expression",
+        "inputs": {
+          "income": {
+            "type": "metricRef",
+            "metricDefinitionId": "Income by Month",
+            "parameterMap": {
+              "date": "period"
+            }
+          },
+          "outflows": {
+            "type": "metricRef",
+            "metricDefinitionId": "Outflows by Month",
+            "parameterMap": {
+              "date": "period"
+            }
+          },
+          "invests": {
+            "type": "metricRef",
+            "metricDefinitionId": "Invested by Month",
+            "parameterMap": {
+              "date": "period"
+            }
           }
         },
-        "baseline": {
-          "type": "metricRef",
-          "metricDefinitionId": "Outflows by Month",
-          "parameterMap": {
-            "date": "period"
-          }
-        }
+        "tokens": [
+          { "type": "input", "name": "income" },
+          { "type": "input", "name": "outflows" },
+          { "type": "operator", "op": "-" },
+          { "type": "input", "name": "invests" },
+          { "type": "operator", "op": "-" }
+        ]
       },
       "aggregations": [
         {
@@ -864,14 +858,14 @@
         "type": "percentChange",
         "current": {
           "type": "metricRef",
-          "metricDefinitionId": "Net Balance by Month",
+          "metricDefinitionId": "Total Balance by Month",
           "parameterMap": {
             "period": "currentPeriod"
           }
         },
         "baseline": {
           "type": "metricRef",
-          "metricDefinitionId": "Net Balance by Month",
+          "metricDefinitionId": "Total Balance by Month",
           "parameterMap": {
             "period": "comparisonPeriod"
           }

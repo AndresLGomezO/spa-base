@@ -213,12 +213,12 @@ function runLocalSchedulePaymentMockGenerator(importDir: string): void {
   const scriptPath = join(importDir, "generate-schedule-payment-mocks.ts");
   if (!existsSync(scriptPath)) {
     console.log(
-      `[seed] No local schedule mock generator at ${scriptPath}; skipping generated import.`,
+      `[seed] No local schedule generator at ${scriptPath}; skipping generated import.`,
     );
     return;
   }
 
-  console.log(`[seed] Running local schedule payment mock generator...`);
+  console.log(`[seed] Running local schedule payment generator...`);
   const result = spawnSync("pnpm", ["exec", "tsx", scriptPath], {
     cwd: join(process.cwd(), "apps/api"),
     stdio: "inherit",
@@ -233,7 +233,7 @@ function runLocalSchedulePaymentMockGenerator(importDir: string): void {
   }
   if (result.status !== 0) {
     throw new Error(
-      `Local schedule payment mock generator exited with status ${result.status ?? "unknown"}.`,
+      `Local schedule payment generator exited with status ${result.status ?? "unknown"}.`,
     );
   }
 }

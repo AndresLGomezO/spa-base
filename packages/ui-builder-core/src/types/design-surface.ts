@@ -43,6 +43,11 @@ const METRIC_ROW_KINDS: readonly UiComponentKind[] = [
   "metric-widget",
 ];
 
+const METRIC_WIDGET_KINDS: readonly UiComponentKind[] = [
+  ...LIST_ITEM_KINDS,
+  "query-viewer",
+];
+
 const MAIN_PAGE_KINDS: readonly UiComponentKind[] = [
   "page-header",
   "page-toolbar",
@@ -145,7 +150,7 @@ export function componentKindsForSurface(
     case "metricRow":
       return METRIC_ROW_KINDS;
     case "metricWidget":
-      return LIST_ITEM_KINDS;
+      return METRIC_WIDGET_KINDS;
     case "dashboardLayout":
       return DASHBOARD_LAYOUT_KINDS;
     case "mainPage":

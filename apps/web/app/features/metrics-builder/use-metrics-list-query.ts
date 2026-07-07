@@ -3,6 +3,10 @@ import { useSearchParams } from "react-router";
 
 import type { MetricDefinitionRecord } from "../../lib/api-client";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../lib/list-query-search-param";
+import {
   DEFAULT_METRIC_LIST_SORT,
   METRIC_MODE_FILTERS,
   METRIC_SOURCE_TYPE_FILTERS,
@@ -86,7 +90,7 @@ export function buildMetricsListQueryState(
 ): MetricsListQueryState {
   const rawSort = searchParams.get("sort") ?? DEFAULT_METRIC_LIST_SORT;
   return {
-    search: searchParams.get("q")?.trim() ?? "",
+    search: readListQuerySearch(searchParams),
     sourceTypes: parseCsvFilter(
       searchParams.get("sourceType"),
       METRIC_SOURCE_TYPE_FILTERS,
@@ -102,7 +106,7 @@ export function filterMetricDefinitions(
   definitions: readonly MetricDefinitionRecord[],
   query: MetricsListQueryState,
 ): MetricDefinitionRecord[] {
-  const searchNeedle = query.search.toLowerCase();
+  const searchNeedle = query.search.trim().toLowerCase();
 
   return definitions.filter((definition) => {
     if (
@@ -201,12 +205,7 @@ export function useMetricsListQuery(
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -374,7 +373,7 @@ export function useMetricsListQuery(
   }, [filteredDefinitions]);
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.sourceTypes.length > 0 ||
     query.modes.length > 0 ||
     query.statuses.length > 0 ||
@@ -384,10 +383,10 @@ export function useMetricsListQuery(
   const activeFilterBadges = useMemo((): MetricsListFilterBadge[] => {
     const badges: MetricsListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

@@ -29,3 +29,12 @@ describe("formPlain surface", () => {
     ).toBe(true);
   });
 });
+
+describe("metricWidget surface", () => {
+  it("allows query-viewer for entity-query snapshot cards", () => {
+    expect(
+      isComponentKindAllowedOnSurface("query-viewer", "metricWidget"),
+    ).toBe(true);
+    expect(componentKindsForSurface("metricWidget")).toContain("query-viewer");
+  });
+});

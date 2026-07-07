@@ -110,14 +110,14 @@ const netBalanceDataSource = {
       {
         whenField: "type",
         whenOperator: "in" as const,
-        whenValue: ["INCOME", "EXPENSE", "PAYMENT"],
+        whenValue: ["INCOME", "EXPENSE", "PAYMENT", "INVESTMENT"],
       },
     ],
     valueTransforms: [
       {
         whenField: "type",
         whenOperator: "in" as const,
-        whenValue: ["EXPENSE", "PAYMENT"],
+        whenValue: ["EXPENSE", "PAYMENT", "INVESTMENT"],
         multiplier: -1,
       },
     ],
@@ -138,7 +138,11 @@ describe("normalizeChartFieldValue and deriveNetBalanceTypeSets", () => {
 
     expect(sets.typeField).toBe("type");
     expect([...sets.incomeTypes]).toEqual(["INCOME"]);
-    expect([...sets.outflowTypes].sort()).toEqual(["EXPENSE", "PAYMENT"]);
+    expect([...sets.outflowTypes].sort()).toEqual([
+      "EXPENSE",
+      "INVESTMENT",
+      "PAYMENT",
+    ]);
     expect(sets.usesMetricParity).toBe(true);
   });
 
@@ -150,7 +154,11 @@ describe("normalizeChartFieldValue and deriveNetBalanceTypeSets", () => {
 
     expect(sets.usesMetricParity).toBe(true);
     expect([...sets.incomeTypes]).toEqual(["INCOME"]);
-    expect([...sets.outflowTypes].sort()).toEqual(["EXPENSE", "PAYMENT"]);
+    expect([...sets.outflowTypes].sort()).toEqual([
+      "EXPENSE",
+      "INVESTMENT",
+      "PAYMENT",
+    ]);
   });
 });
 
@@ -192,14 +200,14 @@ describe("buildEntityQueryRowsFetchKey", () => {
             {
               whenField: "type",
               whenOperator: "in",
-              whenValue: ["INCOME", "EXPENSE", "PAYMENT"],
+              whenValue: ["INCOME", "EXPENSE", "PAYMENT", "INVESTMENT"],
             },
           ],
           valueTransforms: [
             {
               whenField: "type",
               whenOperator: "in",
-              whenValue: ["EXPENSE", "PAYMENT"],
+              whenValue: ["EXPENSE", "PAYMENT", "INVESTMENT"],
               multiplier: -1,
             },
           ],
@@ -288,7 +296,7 @@ describe("fetchEntityQueryRows and bucketEntityQueryTimeSeriesRows", () => {
     ]);
   });
 
-  it("applies row filters and value transforms for net balance buckets", async () => {
+  it("applies row filters and value transforms for total balance buckets", async () => {
     const dataSource = {
       type: "entityQuery" as const,
       entityQueryDefinitionId: "Transaction trend",
@@ -304,14 +312,14 @@ describe("fetchEntityQueryRows and bucketEntityQueryTimeSeriesRows", () => {
           {
             whenField: "type",
             whenOperator: "in",
-            whenValue: ["INCOME", "EXPENSE", "PAYMENT"],
+            whenValue: ["INCOME", "EXPENSE", "PAYMENT", "INVESTMENT"],
           },
         ],
         valueTransforms: [
           {
             whenField: "type",
             whenOperator: "in",
-            whenValue: ["EXPENSE", "PAYMENT"],
+            whenValue: ["EXPENSE", "PAYMENT", "INVESTMENT"],
             multiplier: -1,
           },
         ],
@@ -323,12 +331,12 @@ describe("fetchEntityQueryRows and bucketEntityQueryTimeSeriesRows", () => {
       rows,
       dataSource,
       sharedContext,
-      [{ id: "default", label: "Net Balance", color: "white" }],
+      [{ id: "default", label: "Total Balance", color: "white" }],
     );
 
     expect(series[0]?.points).toEqual([
       { x: "2026-05", y: 58, seriesId: undefined },
-      { x: "2026-06", y: 60, seriesId: undefined },
+      { x: "2026-06", y: 35, seriesId: undefined },
     ]);
   });
 
@@ -357,16 +365,15 @@ describe("fetchEntityQueryRows and bucketEntityQueryTimeSeriesRows", () => {
     ]);
   });
 
-  it("matches metric difference formula for mixed transaction types", () => {
+  it("matches total balance metric formula for mixed transaction types including investment", () => {
     const rows = [
       { date: "2026-06-10T00:00:00.000Z", amount: 100, type: "INCOME" },
       { date: "2026-06-11T00:00:00.000Z", amount: 30, type: "EXPENSE" },
       { date: "2026-06-12T00:00:00.000Z", amount: 10, type: "PAYMENT" },
+      { date: "2026-06-13T00:00:00.000Z", amount: 25, type: "INVESTMENT" },
     ];
 
-    const incomeTotal = 100;
-    const outflowTotal = 30 + 10;
-    const expectedNet = incomeTotal - outflowTotal;
+    const expectedTotal = 100 - (30 + 10) - 25;
 
     const series = bucketEntityQueryTimeSeriesRows(
       rows,
@@ -379,10 +386,10 @@ describe("fetchEntityQueryRows and bucketEntityQueryTimeSeriesRows", () => {
         },
       },
       sharedContext,
-      [{ id: "default", label: "Net Balance", color: "white" }],
+      [{ id: "default", label: "Total Balance", color: "white" }],
     );
 
-    expect(series[0]?.points[0]?.y).toBe(expectedNet);
+    expect(series[0]?.points[0]?.y).toBe(expectedTotal);
   });
 
   it("subtracts outflows when type is enum-shaped", () => {

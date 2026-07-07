@@ -4,6 +4,10 @@ import { useSearchParams } from "react-router";
 import type { PresetCatalogEntry } from "./preset-catalog-entry";
 import type { PresetSourceFilter } from "./preset-catalog-entry";
 import {
+  readListQuerySearch,
+  writeListQuerySearch,
+} from "../../../lib/list-query-search-param";
+import {
   DEFAULT_PRESET_LIST_SORT,
   isPresetListSort,
   PRESET_SOURCE_FILTERS,
@@ -94,7 +98,7 @@ export function usePresetsListQuery(entries: readonly PresetCatalogEntry[]) {
   const query = useMemo((): PresetsListQuery => {
     const rawSort = searchParams.get("sort") ?? DEFAULT_PRESET_LIST_SORT;
     return {
-      search: searchParams.get("q")?.trim() ?? "",
+      search: readListQuerySearch(searchParams),
       sources: parseSources(searchParams.get("source")),
       sort: isPresetListSort(rawSort) ? rawSort : DEFAULT_PRESET_LIST_SORT,
     };
@@ -112,12 +116,7 @@ export function usePresetsListQuery(entries: readonly PresetCatalogEntry[]) {
   const setSearch = useCallback(
     (search: string) => {
       updateSearchParams((next) => {
-        const trimmed = search.trim();
-        if (trimmed.length === 0) {
-          next.delete("q");
-        } else {
-          next.set("q", trimmed);
-        }
+        writeListQuerySearch(next, search);
       });
     },
     [updateSearchParams],
@@ -164,7 +163,7 @@ export function usePresetsListQuery(entries: readonly PresetCatalogEntry[]) {
   }, [updateSearchParams]);
 
   const filteredEntries = useMemo(() => {
-    const searchNeedle = query.search.toLowerCase();
+    const searchNeedle = query.search.trim().toLowerCase();
 
     return entries.filter((entry) => {
       if (query.sources.length > 0 && !query.sources.includes(entry.source)) {
@@ -195,17 +194,17 @@ export function usePresetsListQuery(entries: readonly PresetCatalogEntry[]) {
   }, [filteredEntries]);
 
   const hasActiveFilters =
-    query.search.length > 0 ||
+    query.search.trim().length > 0 ||
     query.sources.length > 0 ||
     query.sort !== DEFAULT_PRESET_LIST_SORT;
 
   const activeFilterBadges = useMemo((): PresetsListFilterBadge[] => {
     const badges: PresetsListFilterBadge[] = [];
 
-    if (query.search.length > 0) {
+    if (query.search.trim().length > 0) {
       badges.push({
         id: "search",
-        label: query.search,
+        label: query.search.trim(),
         onRemove: () => setSearch(""),
       });
     }

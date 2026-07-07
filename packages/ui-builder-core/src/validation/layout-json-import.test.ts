@@ -92,6 +92,46 @@ describe("validateLayoutJsonImport", () => {
     );
   });
 
+  it("accepts query-viewer on metricWidget surface", () => {
+    const base = createEmptyLayout(1);
+    const column = resolveLayoutRootColumns(base)[0];
+    const layout =
+      column == null
+        ? base
+        : {
+            ...base,
+            root: {
+              ...base.root,
+              columns: [
+                {
+                  ...column,
+                  rows: [
+                    {
+                      type: "component" as const,
+                      id: "row-1",
+                      component: {
+                        kind: "query-viewer" as const,
+                        entityQueryDefinitionId:
+                          "Top outflow category (period)",
+                        rows: [],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(layout),
+      { type: "layout-document" },
+      { designSurface: "metricWidget", definition },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
   it("rejects invalid field paths", () => {
     const base = createEmptyLayout(1);
     const column = resolveLayoutRootColumns(base)[0];

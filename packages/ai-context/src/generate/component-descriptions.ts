@@ -161,7 +161,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
         displayMode: "overlay",
         dataSource: {
           type: "metricSeries",
-          metricDefinitionId: "Net Balance by Month",
+          metricDefinitionId: "Total Balance by Month",
           dimensionField: "date",
           bucketCount: 12,
           step: { unit: "month", offsetStart: -11, offsetEnd: 0 },
@@ -170,7 +170,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
         series: [
           {
             id: "default",
-            label: "Net Balance",
+            label: "Total Balance",
             color: "rgba(255, 255, 255, 0.95)",
             showAreaFill: true,
             areaFillOpacity: 0.18,

@@ -65,7 +65,7 @@ const netBalanceMetricDefinition = {
   id: "metric_net_balance",
   tenantId: "tenant_1",
   metricId: "net_balance_by_month",
-  name: "Net Balance by Month",
+  name: "Total Balance by Month",
   computationMode: "computed" as const,
   sourceModel: "transaction",
   parameters: [
@@ -98,7 +98,7 @@ const netBalanceChartDraft = {
   status: "ACTIVE",
   dataSource: {
     type: "metricSeries",
-    metricDefinitionId: "Net Balance by Month",
+    metricDefinitionId: "Total Balance by Month",
     dimensionField: "period",
     bucketCount: 12,
     step: { unit: "month", offsetStart: -11, offsetEnd: 0 },

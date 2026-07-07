@@ -34,7 +34,7 @@ Use when the chart must match a **computed** or aggregated metric exactly (e.g. 
 - Set `dimensionField` to the metric's sliding date parameter (`period` for computed net balance) or dimension field (`date` for aggregated monthly metrics).
 - Bind anchor month with `parameterBindings.period` → `dashboardDateFilter` (computed) or `dimensionBindings.date` → `dashboardDateFilter` (aggregated).
 
-Example — net balance (matches KPI evaluate path):
+Example — total balance (matches KPI evaluate path):
 
 ```json
 {
@@ -43,7 +43,7 @@ Example — net balance (matches KPI evaluate path):
   "displayMode": "overlay",
   "dataSource": {
     "type": "metricSeries",
-    "metricDefinitionId": "Net Balance by Month",
+    "metricDefinitionId": "Total Balance by Month",
     "dimensionField": "period",
     "bucketCount": 12,
     "step": { "unit": "month", "offsetStart": -11, "offsetEnd": 0 },

@@ -23,11 +23,9 @@
 | `formModalFooter` | No |
 | `metricStrip` | No |
 | `metricRow` | No |
-| `metricWidget` | No |
+| `metricWidget` | Yes |
 | `dashboardSection` | No |
 | `dashboardLayout` | No |
-
-> **Note:** Not listed in `componentKindsForSurface` today. Used in metric widget layouts via the designer catalog on `metricWidget` surface. Child template rows bind to the query source entity fields.
 
 ## Properties
 
