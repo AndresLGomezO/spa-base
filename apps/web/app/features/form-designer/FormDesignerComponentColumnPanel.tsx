@@ -27,6 +27,7 @@ import {
   applyComponentsColumnPatch,
   resolveComponentsLayoutBinding,
   resolveGridTrackCount,
+  isGridTrackColumnRef,
   type ComponentsTreeScope,
 } from "./form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
@@ -103,34 +104,20 @@ export function FormDesignerComponentColumnPanel({
     />
   );
 
-  const rowLayoutStyles = parentGridRow
-    ? filterStyleRulesForGenericEditor(parentGridRow.styles)
-    : filterStyleRulesForGenericEditor(binding.layout.root.styles);
+  const isGridTrackColumn = isGridTrackColumnRef(columnRef, parentGridRow);
 
-  const rowLayoutGridStyles = parentGridRow
-    ? (parentGridRow.styles ?? []).filter((rule) =>
-        isResponsiveGridStyleProperty(rule.property),
-      )
-    : (binding.layout.root.styles ?? []).filter((rule) =>
-        isResponsiveGridStyleProperty(rule.property),
-      );
+  const rowLayoutGridStyles = (binding.layout.root.styles ?? []).filter(
+    (rule) => isResponsiveGridStyleProperty(rule.property),
+  );
+
+  const rowLayoutStyles = filterStyleRulesForGenericEditor(
+    binding.layout.root.styles,
+  );
 
   const updateRowLayoutStyles = (
     genericStyles: readonly import("@repo/ui-builder-core").StyleRule[],
   ) => {
-    const nextStyles = [...genericStyles, ...rowLayoutGridStyles];
-    if (parentGridRow && isNestedComponentColumnRef(columnRef)) {
-      binding.updateGridRowMeta(
-        toComponentRowRef(parentGridRow.id, {
-          scope: "root",
-          columnIndex: columnRef.rootColumnIndex,
-        }),
-        { styles: nextStyles },
-      );
-      return;
-    }
-
-    binding.updateRootLayoutStyles(nextStyles);
+    binding.updateRootLayoutStyles([...genericStyles, ...rowLayoutGridStyles]);
   };
 
   const updateResponsiveGrid = (
@@ -231,12 +218,14 @@ export function FormDesignerComponentColumnPanel({
         labels={labels.styleRules}
       />
 
-      <CollapsibleStyleRulesEditor
-        title={labels.rowLayoutStyles}
-        styles={rowLayoutStyles}
-        onChange={updateRowLayoutStyles}
-        labels={labels.styleRules}
-      />
+      {!isGridTrackColumn ? (
+        <CollapsibleStyleRulesEditor
+          title={labels.rowLayoutStyles}
+          styles={rowLayoutStyles}
+          onChange={updateRowLayoutStyles}
+          labels={labels.styleRules}
+        />
+      ) : null}
 
       <CollapsibleMotionPresetSection
         title={labels.layoutEffects}

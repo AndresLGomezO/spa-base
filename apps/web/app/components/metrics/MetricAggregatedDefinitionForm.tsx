@@ -3,9 +3,9 @@ import {
   Alert,
   FieldLabel,
   SearchableMultiSelectDropdown,
-  Select,
   Text,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 

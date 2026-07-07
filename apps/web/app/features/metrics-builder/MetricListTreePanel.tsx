@@ -5,11 +5,11 @@ import {
   FilterPanel,
   FilterPanelBody,
   SearchField,
-  Select,
   Text,
   toast,
   useFilterPanelDismiss,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 import type { MetricDefinitionsCatalogEnvelope } from "@repo/metrics-engine/browser";

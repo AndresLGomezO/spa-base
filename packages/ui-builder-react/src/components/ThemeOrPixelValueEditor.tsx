@@ -76,6 +76,7 @@ export function ThemeOrPixelValueEditor({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{tokensLabel}</span>
           <Select
+            searchable
             value={
               tokenOptions.some((option) => option.value === rawValue)
                 ? rawValue
@@ -103,6 +104,7 @@ export function ThemeOrPixelValueEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{unitLabel}</span>
               <Select
+                searchable
                 value={parsedCustom.unit}
                 onChange={(event) =>
                   updateCustomValue(
@@ -138,6 +140,7 @@ export function ThemeOrPixelValueEditor({
                 <label className="flex w-24 flex-col gap-1 text-sm">
                   <span className="text-muted-foreground">{unitLabel}</span>
                   <Select
+                    searchable
                     value={parsedCustom.unit}
                     onChange={(event) =>
                       updateCustomValue(

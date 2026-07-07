@@ -8,6 +8,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MOCK_ENTITY_CATALOG } from "../../test/entity-catalog-fixtures";
+import { selectAdminSelectOption } from "../../test/admin-select-test-utils";
 import { EntityDefinitionEditor } from "./EntityDefinitionEditor";
 
 const mockGetEntityDefinition = vi.fn();
@@ -152,9 +153,7 @@ describe("EntityDefinitionEditor", () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("dataModels.displayField"), {
-      target: { value: "title" },
-    });
+    selectAdminSelectOption("dataModels.displayField", "title");
     fireEvent.click(screen.getByText("dataModels.saveModel"));
 
     await waitFor(() => {

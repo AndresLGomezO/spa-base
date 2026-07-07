@@ -1583,26 +1583,93 @@
                   "rows": [
                     {
                       "type": "component",
-                      "id": "row-top-category-query-viewer",
+                      "id": "row-e592cf39-0520-45c0-a614-83e8c2b8dac9",
                       "component": {
-                        "kind": "query-viewer",
-                        "entityQueryDefinitionId": "Top outflow category (period)",
-                        "parameterBindings": {
-                          "period": {
-                            "type": "dashboardDateFilter"
-                          }
-                        },
+                        "kind": "container",
                         "rows": [
                           {
                             "type": "component",
-                            "id": "row-top-category-card",
+                            "id": "row-7eeb8a61-2d1f-46b9-994e-2be68299eb77",
+                            "name": "Card Title",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "column",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-16618ae7-f6eb-424e-9507-31206bc824f0",
+                                  "component": {
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Top Category"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "14"
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-card-foreground)"
+                                      }
+                                    ],
+                                    "kind": "text"
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-706b58dc-3ff9-4625-aaeb-b7496a361b11",
+                                  "component": {
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "This month"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "11"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "#9ca3af"
+                                      },
+                                      {
+                                        "property": "padding",
+                                        "value": "4px 10px"
+                                      },
+                                      {
+                                        "property": "borderRadius",
+                                        "value": "999"
+                                      },
+                                      {
+                                        "property": "borderWidth",
+                                        "value": "1"
+                                      },
+                                      {
+                                        "property": "borderColor",
+                                        "value": "var(--color-border)"
+                                      },
+                                      {
+                                        "property": "borderStyle",
+                                        "value": "solid"
+                                      }
+                                    ],
+                                    "kind": "text"
+                                  }
+                                }
+                              ],
+                              "stackDirection": "row",
                               "styles": [
                                 {
-                                  "property": "backgroundColor",
-                                  "value": "var(--color-card)"
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "justifyContent",
+                                  "value": "between"
                                 },
                                 {
                                   "property": "width",
@@ -1610,330 +1677,142 @@
                                 },
                                 {
                                   "property": "height",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "borderRadius",
-                                  "value": "16"
-                                },
-                                {
-                                  "property": "padding",
-                                  "value": "16"
-                                },
-                                {
-                                  "property": "borderWidth",
-                                  "value": "1"
-                                },
-                                {
-                                  "property": "borderColor",
-                                  "value": "var(--color-border)"
-                                },
-                                {
-                                  "property": "borderStyle",
-                                  "value": "solid"
-                                },
-                                {
-                                  "property": "boxShadow",
-                                  "value": "0 4px 16px rgba(0,0,0,0.06)"
-                                },
-                                {
-                                  "property": "overflowX",
-                                  "value": "hidden"
-                                },
-                                {
-                                  "property": "overflowY",
-                                  "value": "hidden"
-                                },
-                                {
-                                  "property": "position",
-                                  "value": "relative"
+                                  "value": "auto"
                                 }
-                              ],
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-top-category-query-viewer",
+                            "component": {
+                              "kind": "query-viewer",
+                              "entityQueryDefinitionId": "Top outflow category (period)",
+                              "parameterBindings": {
+                                "period": {
+                                  "type": "dashboardDateFilter"
+                                }
+                              },
                               "rows": [
                                 {
                                   "type": "component",
-                                  "id": "row-top-category-header",
+                                  "id": "row-524362c5-0ba4-48b3-8322-a636edadd938",
                                   "component": {
-                                    "kind": "container",
-                                    "stackDirection": "row",
-                                    "styles": [
-                                      {
-                                        "property": "alignItems",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "justifyContent",
-                                        "value": "space-between"
-                                      },
-                                      {
-                                        "property": "width",
-                                        "value": "100%"
-                                      }
-                                    ],
+                                    "kind": "grid",
+                                    "gridTemplateColumns": "auto repeat(2, 1fr)",
                                     "rows": [
                                       {
                                         "type": "component",
-                                        "id": "row-top-category-title",
-                                        "component": {
-                                          "kind": "text",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "Top Category"
-                                          },
-                                          "styles": [
-                                            {
-                                              "property": "fontSize",
-                                              "value": "14"
-                                            },
-                                            {
-                                              "property": "fontWeight",
-                                              "value": "bold"
-                                            },
-                                            {
-                                              "property": "color",
-                                              "value": "var(--color-card-foreground)"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "type": "component",
-                                        "id": "row-top-category-period",
-                                        "component": {
-                                          "kind": "text",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "This month"
-                                          },
-                                          "styles": [
-                                            {
-                                              "property": "fontSize",
-                                              "value": "11"
-                                            },
-                                            {
-                                              "property": "color",
-                                              "value": "#9ca3af"
-                                            },
-                                            {
-                                              "property": "padding",
-                                              "value": "4px 10px"
-                                            },
-                                            {
-                                              "property": "borderRadius",
-                                              "value": "999"
-                                            },
-                                            {
-                                              "property": "borderWidth",
-                                              "value": "1"
-                                            },
-                                            {
-                                              "property": "borderColor",
-                                              "value": "var(--color-border)"
-                                            },
-                                            {
-                                              "property": "borderStyle",
-                                              "value": "solid"
-                                            }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-top-category-body",
-                                  "component": {
-                                    "kind": "container",
-                                    "stackDirection": "row",
-                                    "styles": [
-                                      {
-                                        "property": "alignItems",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "gap",
-                                        "value": "12"
-                                      },
-                                      {
-                                        "property": "width",
-                                        "value": "100%"
-                                      },
-                                      {
-                                        "property": "flex",
-                                        "value": "1"
-                                      },
-                                      {
-                                        "property": "minHeight",
-                                        "value": "0"
-                                      },
-                                      {
-                                        "property": "marginTop",
-                                        "value": "12"
-                                      },
-                                      {
-                                        "property": "position",
-                                        "value": "relative"
-                                      }
-                                    ],
-                                    "rows": [
-                                      {
-                                        "type": "component",
-                                        "id": "row-top-category-details",
+                                        "id": "row-2fc9880f-42f5-496a-b598-7ee91174e5ed",
                                         "component": {
                                           "kind": "container",
-                                          "stackDirection": "row",
-                                          "styles": [
-                                            {
-                                              "property": "alignItems",
-                                              "value": "center"
-                                            },
-                                            {
-                                              "property": "gap",
-                                              "value": "12"
-                                            },
-                                            {
-                                              "property": "width",
-                                              "value": "50%"
-                                            },
-                                            {
-                                              "property": "minWidth",
-                                              "value": "0"
-                                            },
-                                            {
-                                              "property": "zIndex",
-                                              "value": "1"
-                                            }
-                                          ],
                                           "rows": [
                                             {
                                               "type": "component",
-                                              "id": "row-top-category-icon-wrap",
+                                              "id": "row-a0d76c01-1394-4323-8952-dee0fc183ca9",
+                                              "name": "Category Image",
                                               "component": {
-                                                "kind": "container",
+                                                "primary": {
+                                                  "type": "field",
+                                                  "path": "category.image"
+                                                },
                                                 "styles": [
                                                   {
-                                                    "property": "width",
-                                                    "value": "48"
-                                                  },
-                                                  {
-                                                    "property": "height",
-                                                    "value": "48"
+                                                    "property": "justifyContent",
+                                                    "value": "center"
                                                   },
                                                   {
                                                     "property": "borderRadius",
                                                     "value": "999"
                                                   },
                                                   {
-                                                    "property": "backgroundColor",
-                                                    "value": "rgba(34, 197, 94, 0.12)"
-                                                  },
-                                                  {
-                                                    "property": "overflowX",
-                                                    "value": "hidden"
-                                                  },
-                                                  {
-                                                    "property": "overflowY",
-                                                    "value": "hidden"
+                                                    "property": "alignItems",
+                                                    "value": "center"
                                                   }
                                                 ],
-                                                "rows": [
+                                                "kind": "image",
+                                                "imageSize": 100,
+                                                "displayMode": "overlay",
+                                                "objectFit": "contain"
+                                              },
+                                              "styles": []
+                                            }
+                                          ],
+                                          "styles": [
+                                            {
+                                              "property": "width",
+                                              "value": "90"
+                                            },
+                                            {
+                                              "property": "height",
+                                              "value": "100%"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-ab0efb69-5ddf-449e-9929-035b53c92e87",
+                                        "component": {
+                                          "kind": "container",
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-03902a32-1f74-4417-a8f2-4c6592e6a02c",
+                                              "component": {
+                                                "primary": {
+                                                  "type": "field",
+                                                  "path": "category.name"
+                                                },
+                                                "styles": [
                                                   {
-                                                    "type": "component",
-                                                    "id": "row-top-category-image",
-                                                    "component": {
-                                                      "kind": "image",
-                                                      "primary": {
-                                                        "type": "field",
-                                                        "path": "categoryId.image"
-                                                      },
-                                                      "imageSize": 32,
-                                                      "objectFit": "cover"
-                                                    }
+                                                    "property": "fontSize",
+                                                    "value": "16"
+                                                  },
+                                                  {
+                                                    "property": "fontWeight",
+                                                    "value": "bold"
+                                                  },
+                                                  {
+                                                    "property": "color",
+                                                    "value": "var(--color-card-foreground)"
                                                   }
-                                                ]
+                                                ],
+                                                "kind": "text"
                                               }
                                             },
                                             {
                                               "type": "component",
-                                              "id": "row-top-category-text-block",
+                                              "id": "row-ff4d5378-329e-4d2d-ba92-8eb32b7d5c3e",
                                               "component": {
-                                                "kind": "container",
-                                                "stackDirection": "column",
+                                                "primary": {
+                                                  "type": "field",
+                                                  "path": "sum_amount"
+                                                },
                                                 "styles": [
                                                   {
-                                                    "property": "gap",
-                                                    "value": "4"
-                                                  },
-                                                  {
-                                                    "property": "minWidth",
-                                                    "value": "0"
+                                                    "property": "fontSize",
+                                                    "value": "20"
                                                   }
                                                 ],
+                                                "kind": "numeric",
+                                                "displayFormat": "currency",
+                                                "showCurrency": false,
+                                                "showToneColors": false
+                                              }
+                                            },
+                                            {
+                                              "type": "component",
+                                              "id": "row-27446291-8e33-4342-aad0-676b582a180d",
+                                              "component": {
+                                                "kind": "container",
                                                 "rows": [
                                                   {
                                                     "type": "component",
-                                                    "id": "row-top-category-name",
-                                                    "component": {
-                                                      "kind": "text",
-                                                      "primary": {
-                                                        "type": "field",
-                                                        "path": "categoryId.name"
-                                                      },
-                                                      "styles": [
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "13"
-                                                        },
-                                                        {
-                                                          "property": "fontWeight",
-                                                          "value": "bold"
-                                                        },
-                                                        {
-                                                          "property": "color",
-                                                          "value": "var(--color-card-foreground)"
-                                                        }
-                                                      ]
-                                                    }
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-top-category-value",
-                                                    "component": {
-                                                      "kind": "numeric",
-                                                      "primary": {
-                                                        "type": "field",
-                                                        "path": "sum_amount"
-                                                      },
-                                                      "displayFormat": "currency",
-                                                      "showCurrency": true,
-                                                      "styles": [
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "18"
-                                                        },
-                                                        {
-                                                          "property": "fontWeight",
-                                                          "value": "bold"
-                                                        },
-                                                        {
-                                                          "property": "letterSpacing",
-                                                          "value": "-0.025em"
-                                                        },
-                                                        {
-                                                          "property": "color",
-                                                          "value": "var(--color-card-foreground)"
-                                                        }
-                                                      ]
-                                                    }
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-top-category-mom",
+                                                    "id": "row-7d1e28b2-c0ca-4832-9cbd-96cd272f02ff",
                                                     "component": {
                                                       "kind": "metric-kpi",
                                                       "metricDefinitionId": "Category Outflow Partial MoM %",
-                                                      "label": "",
                                                       "groupBindings": {},
                                                       "dimensionBindings": {},
                                                       "parameterBindings": {
@@ -1945,8 +1824,30 @@
                                                           "type": "dashboardDateFilter"
                                                         }
                                                       },
+                                                      "label": "",
                                                       "showToneColors": true,
                                                       "tonePolarity": "inverted",
+                                                      "styles": [
+                                                        {
+                                                          "property": "fontSize",
+                                                          "value": "13"
+                                                        },
+                                                        {
+                                                          "property": "fontWeight",
+                                                          "value": "bold"
+                                                        }
+                                                      ]
+                                                    },
+                                                    "styles": []
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-6a31a062-8f19-4969-b121-934dba0a9e35",
+                                                    "component": {
+                                                      "primary": {
+                                                        "type": "static",
+                                                        "value": "vs previous month."
+                                                      },
                                                       "styles": [
                                                         {
                                                           "property": "fontSize",
@@ -1954,57 +1855,73 @@
                                                         },
                                                         {
                                                           "property": "fontWeight",
-                                                          "value": "bold"
+                                                          "value": "thin"
                                                         }
-                                                      ]
+                                                      ],
+                                                      "kind": "text"
                                                     }
+                                                  }
+                                                ],
+                                                "stackDirection": "row",
+                                                "styles": [
+                                                  {
+                                                    "property": "gap",
+                                                    "value": "var(--spacing-tight)"
                                                   }
                                                 ]
                                               }
+                                            }
+                                          ],
+                                          "styles": [
+                                            {
+                                              "property": "padding",
+                                              "value": "15"
                                             }
                                           ]
                                         }
                                       },
                                       {
                                         "type": "component",
-                                        "id": "row-top-category-chart",
+                                        "id": "row-e04ce3e4-2230-4ff1-ab3e-d4a1931b1345",
                                         "component": {
-                                          "kind": "chart",
-                                          "chartDefinitionId": "Top category expense trend chart",
-                                          "parameterBindings": {
-                                            "categoryId": {
-                                              "type": "entityField",
-                                              "fieldPath": "categoryId"
+                                          "kind": "container",
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-12e70221-14ba-4b49-8de8-ecead89e0cb4",
+                                              "component": {
+                                                "kind": "chart",
+                                                "chartDefinitionId": "Top category expense trend chart",
+                                                "parameterBindings": {
+                                                  "categoryId": {
+                                                    "type": "entityField",
+                                                    "fieldPath": "category.id"
+                                                  },
+                                                  "period": {
+                                                    "type": "dashboardDateFilter"
+                                                  }
+                                                },
+                                                "styles": [
+                                                  {
+                                                    "property": "height",
+                                                    "value": "100%"
+                                                  },
+                                                  {
+                                                    "property": "width",
+                                                    "value": "100%"
+                                                  }
+                                                ]
+                                              }
                                             }
-                                          },
+                                          ],
                                           "styles": [
                                             {
-                                              "property": "position",
-                                              "value": "absolute"
+                                              "property": "height",
+                                              "value": "100%"
                                             },
                                             {
-                                              "property": "top",
-                                              "value": "0"
-                                            },
-                                            {
-                                              "property": "right",
-                                              "value": "0"
-                                            },
-                                            {
-                                              "property": "bottom",
-                                              "value": "0"
-                                            },
-                                            {
-                                              "property": "left",
-                                              "value": "45%"
-                                            },
-                                            {
-                                              "property": "pointerEvents",
-                                              "value": "none"
-                                            },
-                                            {
-                                              "property": "zIndex",
-                                              "value": "0"
+                                              "property": "padding",
+                                              "value": "15"
                                             }
                                           ]
                                         }
@@ -2014,6 +1931,52 @@
                                 }
                               ]
                             }
+                          }
+                        ],
+                        "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "var(--color-card)"
+                          },
+                          {
+                            "property": "height",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "16"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "16"
+                          },
+                          {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-border)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
                           }
                         ]
                       }

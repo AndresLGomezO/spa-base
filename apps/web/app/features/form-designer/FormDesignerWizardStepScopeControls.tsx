@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { IconButton, Select } from "@repo/ui";
+import { IconButton } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import { useFormDesignerComponentsSession } from "./FormDesignerComponentsSession";

@@ -2,7 +2,8 @@ import type {
   ComputedMetricComputation,
   ComputedMetricInputRef,
 } from "@repo/metrics-engine/browser";
-import { Button, FieldLabel, Input, Select, Text } from "@repo/ui";
+import { Button, FieldLabel, Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import type {

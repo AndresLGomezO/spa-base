@@ -2,6 +2,8 @@ import type { FieldPathValidationDefinition } from "./field-paths.js";
 
 export const MAX_LAYOUT_RELATION_HOPS = 3;
 
+const NESTED_LAYOUT_SYSTEM_FIELDS = ["id", "createdAt", "updatedAt"] as const;
+
 export interface ResolvedLayoutFieldLeaf {
   readonly rootRelationField: string | null;
   readonly leafDefinition: FieldPathValidationDefinition;
@@ -273,6 +275,12 @@ export function collectNestedRelationLayoutFieldPaths(
   aliasPrefix = "",
   relationDepth = 0,
 ): Set<string> {
+  if (aliasPrefix) {
+    for (const systemField of NESTED_LAYOUT_SYSTEM_FIELDS) {
+      options.add(`${aliasPrefix}.${systemField}`);
+    }
+  }
+
   for (const [fieldName, meta] of Object.entries(definition.fields)) {
     if (meta.type === "document") {
       continue;
@@ -312,11 +320,16 @@ export function collectNestedRelationLayoutFieldPaths(
       continue;
     }
 
+    const visitedEntities = aliasPrefix ? aliasPrefix.split(".") : [];
+    if (visitedEntities.includes(target)) {
+      continue;
+    }
+
     const nextPrefix = aliasPrefix ? `${aliasPrefix}.${target}` : target;
     const targetDefinition = params?.resolveTarget?.(target);
 
     if (!targetDefinition) {
-      for (const subfield of ["name", "code"] as const) {
+      for (const subfield of ["id", "name", "code"] as const) {
         options.add(`${nextPrefix}.${subfield}`);
       }
       continue;

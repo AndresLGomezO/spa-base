@@ -103,6 +103,7 @@ export function ColorValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{themeTokensLabel}</span>
             <Select
+              searchable
               value={isThemeTokenValue(rawValue) ? rawValue : ""}
               onChange={(event) => {
                 if (event.target.value) {
@@ -123,6 +124,7 @@ export function ColorValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{semanticTokensLabel}</span>
             <Select
+              searchable
               value={isSemanticCssVarStyleValue(rawValue) ? rawValue : ""}
               onChange={(event) => {
                 if (event.target.value) {
@@ -144,6 +146,7 @@ export function ColorValueEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{effectsLabel}</span>
               <Select
+                searchable
                 value={
                   EFFECT_COLOR_OPTIONS.some(
                     (option) => option.value === rawValue,
@@ -171,6 +174,7 @@ export function ColorValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{sidebarLabel}</span>
             <Select
+              searchable
               value={
                 SIDEBAR_COLOR_OPTIONS.some(
                   (option) => option.value === rawValue,
@@ -197,6 +201,7 @@ export function ColorValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{badgeLabel}</span>
             <Select
+              searchable
               value={
                 BADGE_COLOR_OPTIONS.some((option) => option.value === rawValue)
                   ? rawValue
@@ -221,6 +226,7 @@ export function ColorValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{paletteTokensLabel}</span>
             <Select
+              searchable
               value={isPaletteCssVarStyleValue(rawValue) ? rawValue : ""}
               onChange={(event) => {
                 if (event.target.value) {
@@ -242,6 +248,7 @@ export function ColorValueEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{customTokensLabel}</span>
               <Select
+                searchable
                 value={
                   customColorOptions.some((option) => option.value === rawValue)
                     ? rawValue

@@ -17,6 +17,7 @@ import {
   flexWrapRowItemClassName,
   isFlexWrapRowStack,
   parseFlexLayoutFromStyles,
+  prefersInlineContentWidth,
   rowPrefersContentWidth,
   type FlexAlign,
   type LayoutInlineStyle,
@@ -160,7 +161,10 @@ export function rowUsesContentWidth(row: RowNode): boolean {
     return false;
   }
 
-  return rowPrefersContentWidth(row.component.styles);
+  return (
+    rowPrefersContentWidth(row.component.styles) ||
+    prefersInlineContentWidth(row.component)
+  );
 }
 
 function rowHasFixedExplicitHeight(row: RowNode): boolean {

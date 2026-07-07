@@ -65,6 +65,7 @@ export function LabelConfigEditor({
               {labels.labelPosition}
             </span>
             <Select
+              searchable
               value={label?.position ?? "above"}
               onChange={(event) =>
                 updateLabel({
@@ -125,6 +126,7 @@ export function LabelConfigEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{labels.labelColor}</span>
               <Select
+                searchable
                 value={label?.color ?? "default"}
                 onChange={(event) =>
                   updateLabel({
@@ -145,6 +147,7 @@ export function LabelConfigEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">Alignment</span>
             <Select
+              searchable
               value={label?.align ?? "left"}
               onChange={(event) =>
                 updateLabel({

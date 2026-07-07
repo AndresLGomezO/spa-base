@@ -6,10 +6,10 @@ import {
   FilterPanelBody,
   IconButton,
   SearchField,
-  Select,
   Text,
   useFilterPanelDismiss,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 

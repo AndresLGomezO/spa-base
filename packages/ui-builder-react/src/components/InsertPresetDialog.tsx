@@ -170,6 +170,7 @@ export function InsertPresetDialog({
               <label className="flex flex-col gap-1 text-sm">
                 <span>{labels.selectPreset}</span>
                 <Select
+                  searchable
                   className="border-input bg-background rounded-md border px-3 py-2 text-sm"
                   value={selectedPresetId}
                   onChange={(event) => setSelectedPresetId(event.target.value)}
@@ -198,6 +199,7 @@ export function InsertPresetDialog({
                         {slot.sourceHint ? ` (${slot.sourceHint})` : ""}
                       </span>
                       <Select
+                        searchable
                         className="border-input bg-background rounded-md border px-3 py-2 text-sm"
                         value={slotValues[slot.id] ?? ""}
                         onChange={(event) =>

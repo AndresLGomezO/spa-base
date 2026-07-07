@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { selectAdminSelectOption } from "../../test/admin-select-test-utils";
 import { FieldEditorModal } from "./FieldEditorModal";
 
 vi.mock("react-i18next", () => ({
@@ -158,9 +159,7 @@ describe("FieldEditorModal", () => {
     );
 
     fireEvent.click(screen.getByText("dataModels.fieldTypes.relation"));
-    fireEvent.change(screen.getByLabelText("dataModels.relationTarget"), {
-      target: { value: "loan" },
-    });
+    selectAdminSelectOption("dataModels.relationTarget", "Loans");
     fireEvent.click(screen.getByText("entity.save"));
 
     expect(onSave).toHaveBeenCalledWith(

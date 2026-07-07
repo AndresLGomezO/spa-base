@@ -12,7 +12,8 @@ import {
   DATA_HOOK_CONDITION_OPERATORS,
   VALUELESS_CONDITION_OPERATORS,
 } from "@repo/hooks";
-import { Button, Select, Text } from "@repo/ui";
+import { Button, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
 
 import { ExpressionEditor } from "./ExpressionEditor";

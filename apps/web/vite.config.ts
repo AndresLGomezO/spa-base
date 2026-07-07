@@ -68,4 +68,9 @@ export default defineConfig(({ command }) => ({
       allow: [__dirname, path.resolve(__dirname, "../..")],
     },
   },
+  resolve: {
+    alias: {
+      "~": path.resolve(__dirname, "app"),
+    },
+  },
 }));

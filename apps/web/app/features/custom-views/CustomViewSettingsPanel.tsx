@@ -1,13 +1,6 @@
 import { useMemo } from "react";
-import {
-  Button,
-  FieldLabel,
-  Input,
-  Select,
-  Text,
-  Textarea,
-  toast,
-} from "@repo/ui";
+import { Button, FieldLabel, Input, Text, Textarea, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";

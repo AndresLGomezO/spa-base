@@ -1,11 +1,15 @@
 import type { MetricBindingSource } from "@repo/entities";
 import { defaultDateFilterParam } from "@repo/ui-builder-core";
-import { Input, Text, Select } from "@repo/ui";
+import { Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { SerializableEntityDefinition } from "@repo/entities";
 import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
 import { listLayoutFieldOptions } from "@repo/entities";
+
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 
 interface MetricBindingSourceEditorProps {
   readonly fieldName: string;
@@ -66,10 +70,17 @@ export function MetricBindingSourceEditor({
   onChange,
 }: MetricBindingSourceEditorProps) {
   const { t } = useTranslation("common");
+  const { getDefinition } = useEntityCatalog();
   const type = resolveBindingEditorType(source, dateGranularity);
-  const entityFieldOptions = definition
-    ? listLayoutFieldOptions(definition)
-    : [];
+  const entityFieldOptions = useMemo(
+    () =>
+      definition
+        ? listLayoutFieldOptions(definition, {
+            resolveTarget: (target) => getDefinition(target),
+          })
+        : [],
+    [definition, getDefinition],
+  );
   const showDashboardDateOption = Boolean(dateGranularity);
   const dashboardDateParam = dateGranularity
     ? defaultDateFilterParam(dateGranularity)

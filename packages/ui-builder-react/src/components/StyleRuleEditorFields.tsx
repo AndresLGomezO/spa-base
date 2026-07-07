@@ -105,6 +105,7 @@ function StyleRuleValueInput({
   if (isEnumStyleProperty(rule.property)) {
     return (
       <Select
+        searchable
         value={String(rule.value)}
         onChange={(event) => onChange({ value: event.target.value })}
       >
@@ -158,6 +159,7 @@ export function StyleRuleEditorFields({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.styleProperty}</span>
         <Select
+          searchable
           value={rule.property}
           onChange={(event) => {
             const property = event.target.value as StylePropertyKey;

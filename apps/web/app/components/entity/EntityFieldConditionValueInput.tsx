@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 
-import { Input, SearchableMultiSelectDropdown, Select } from "@repo/ui";
+import { Input, SearchableMultiSelectDropdown } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import type {
   EntityFieldConditionFieldMeta,

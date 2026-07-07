@@ -5,6 +5,10 @@ import { Button } from "../button/Button";
 import { FilterValueBadge } from "../filter-value-badge/FilterValueBadge";
 import { Input } from "../input/Input";
 import { Popover } from "../popover/Popover";
+import {
+  filterOptionsByQuery,
+  flattenSelectOptions,
+} from "../select/select-options.js";
 
 export interface SearchableMultiSelectOption {
   readonly value: string;
@@ -46,16 +50,11 @@ export function SearchableMultiSelectDropdown({
     [options, selected],
   );
 
-  const filteredOptions = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) {
-      return availableOptions;
-    }
-
-    return availableOptions.filter((option) =>
-      option.label.toLowerCase().includes(query),
-    );
-  }, [availableOptions, searchTerm]);
+  const filteredOptions = useMemo(
+    () =>
+      flattenSelectOptions(filterOptionsByQuery(availableOptions, searchTerm)),
+    [availableOptions, searchTerm],
+  );
 
   const addOption = useCallback(
     (value: string) => {

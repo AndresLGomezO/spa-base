@@ -12,7 +12,8 @@ import type { SerializableEntityDefinition } from "@repo/entities";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Input, Select, Text } from "@repo/ui";
+import { Button, Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { useAnyPermission } from "../../auth/useAnyPermission.js";
 import { useEntityCatalog } from "../../entities/entity-catalog-context.js";

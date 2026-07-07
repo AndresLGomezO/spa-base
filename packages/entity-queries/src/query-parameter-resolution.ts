@@ -217,6 +217,48 @@ export function buildIntrinsicQueryParameterMap(
   return values;
 }
 
+function padTwoDigits(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+function formatCurrentDateBucket(
+  now: Date,
+  granularity: MetricDateGranularity,
+): string {
+  const year = now.getUTCFullYear();
+  const month = padTwoDigits(now.getUTCMonth() + 1);
+  const day = padTwoDigits(now.getUTCDate());
+
+  switch (granularity) {
+    case "year":
+      return String(year);
+    case "month":
+      return `${year}-${month}`;
+    case "day":
+      return `${year}-${month}-${day}`;
+  }
+}
+
+/** Default runtime values for saved query parameters when no external binding exists. */
+export function buildDefaultEntityQueryParameterValues(
+  parameters: readonly EntityQueryParameter[],
+  options: { readonly now?: Date } = {},
+): Record<string, unknown> {
+  const now = options.now ?? new Date();
+  const values: Record<string, unknown> = {};
+
+  for (const parameter of parameters) {
+    if (parameter.valueType === "dateBucket") {
+      values[parameter.name] = formatCurrentDateBucket(
+        now,
+        parameter.granularity ?? "month",
+      );
+    }
+  }
+
+  return values;
+}
+
 export function resolveQueryParameterFilterValue(
   value: Extract<EntityQueryFilterValue, { type: "parameter" }>,
   parameters: readonly EntityQueryParameter[],

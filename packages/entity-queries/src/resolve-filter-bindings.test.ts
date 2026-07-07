@@ -50,4 +50,24 @@ describe("resolveFilterBindingSource", () => {
       ),
     ).toEqual(["INCOME", "EXPENSE"]);
   });
+
+  it("resolves nested entityField bindings from populated relations", () => {
+    expect(
+      resolveFilterBindingSource(
+        { type: "entityField", fieldPath: "category.id" },
+        {
+          record: {
+            id: "txn-1",
+            categoryId: "cat-1",
+            _populated: {
+              categoryId: {
+                id: "cat-1",
+                name: "Food",
+              },
+            },
+          },
+        },
+      ),
+    ).toBe("cat-1");
+  });
 });

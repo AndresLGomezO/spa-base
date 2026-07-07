@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
+import { getJsonImportTextarea } from "../../test/admin-select-test-utils";
 import { CustomViewsView } from "./CustomViewsView";
 
 vi.mock("../../lib/api-client", () => ({
@@ -81,7 +82,7 @@ describe("CustomViewsView", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
     );
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(getJsonImportTextarea(), {
       target: {
         value: JSON.stringify({
           kind: "custom-views-catalog",

@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { DateUnit, ExpressionFunction, ExpressionNode } from "@repo/hooks";
 import { DATE_UNITS } from "@repo/hooks";
-import { Button, FieldLabel, Select, Text } from "@repo/ui";
+import { Button, FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import type {
   ExpressionEditorNodeRenderer,

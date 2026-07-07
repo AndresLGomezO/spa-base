@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  buildDefaultEntityQueryParameterValues,
   expandRelationFiltersInTree,
   ENTITY_QUERY_RELATION_LIST_MAX_ITEMS,
 } from "@repo/entity-queries/browser";
@@ -72,6 +73,11 @@ export function useCustomViewMergedQueryConfig(
     ],
     queryFn: async () => {
       const definition = queryDefinitionQuery.data!;
+      const now = new Date();
+      const parameterValues = buildDefaultEntityQueryParameterValues(
+        definition.parameters ?? [],
+        { now },
+      );
       const expansionCatalog = await resolveQueryExpansionCatalog({
         baseCatalog: catalogItems,
         sourceEntity: definition.sourceEntity,
@@ -83,6 +89,11 @@ export function useCustomViewMergedQueryConfig(
         sourceEntity: definition.sourceEntity,
         catalog: expansionCatalog,
         filter: definition.filter,
+        options: {
+          now,
+          parameters: definition.parameters ?? [],
+          parameterValues,
+        },
         listChildRecords: async (entityName, query) =>
           fetchAllEntityItems<Record<string, unknown>>(entityName, {
             maxItems: ENTITY_QUERY_RELATION_LIST_MAX_ITEMS,

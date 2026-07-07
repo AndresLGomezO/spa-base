@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
-import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
+import { Button, FieldLabel, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { ExpressionEditor } from "../data-hooks/ExpressionEditor";
 import {

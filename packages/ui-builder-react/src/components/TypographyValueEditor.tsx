@@ -53,6 +53,7 @@ export function TypographyValueEditor({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{tokensLabel}</span>
           <Select
+            searchable
             value={
               TYPOGRAPHY_FONT_FAMILY_OPTIONS.some(
                 (option) => option.value === rawValue,

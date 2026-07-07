@@ -4,7 +4,8 @@ import {
   resolvePreviewStrategy,
   toEditableLayoutDocument,
 } from "@repo/ui-builder-core";
-import { Button, Input, Select, Text, toast } from "@repo/ui";
+import { Button, Input, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useColorScheme } from "@repo/theme/react";
 import { useTranslation } from "react-i18next";
 

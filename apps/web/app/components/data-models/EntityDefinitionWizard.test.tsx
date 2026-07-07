@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { selectAdminSelectOption } from "../../test/admin-select-test-utils";
 import { EntityDefinitionWizard } from "./EntityDefinitionWizard";
 
 const mockCreateEntityDefinition = vi.fn();
@@ -86,9 +87,7 @@ describe("EntityDefinitionWizard", () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("dataModels.navCategory"), {
-      target: { value: "cat_sales" },
-    });
+    selectAdminSelectOption("dataModels.navCategory", "Sales");
     fireEvent.click(screen.getByLabelText("dataModels.useCategoryIcon"));
 
     await waitFor(() => {

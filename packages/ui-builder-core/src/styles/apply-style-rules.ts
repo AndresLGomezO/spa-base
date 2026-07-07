@@ -663,8 +663,11 @@ export function rowPrefersContentWidth(
     ) ?? false;
   const alignSelf = readAlignSelfValue(styles);
   const hasAlignSelfStartEnd = alignSelf === "start" || alignSelf === "end";
+  const widthRule = styles?.find((rule) => rule.property === "width");
+  const hasWidthAuto =
+    widthRule !== undefined && String(widthRule.value).trim() === "auto";
 
-  return hasFlexZero || hasAlignSelfStartEnd;
+  return hasFlexZero || hasAlignSelfStartEnd || hasWidthAuto;
 }
 
 /** Text, user, and inline image rows hug content unless they explicitly use flex: 1. */
@@ -680,7 +683,9 @@ export function prefersInlineContentWidth(component: {
   if (
     component.kind !== "text" &&
     component.kind !== "user" &&
-    component.kind !== "image"
+    component.kind !== "image" &&
+    component.kind !== "metric-kpi" &&
+    component.kind !== "metric-derived-kpi"
   ) {
     return false;
   }
@@ -741,6 +746,8 @@ export function flexWrapRowItemClassName(
   if (
     row.component?.kind === "dashboard-section" ||
     row.component?.kind === "metric-widget" ||
+    row.component?.kind === "metric-kpi" ||
+    row.component?.kind === "metric-derived-kpi" ||
     row.component?.kind === "query-viewer"
   ) {
     if (stylesIncludeFlexGrow(row.component.styles)) {

@@ -2,7 +2,8 @@ import type {
   DashboardSectionComponentConfig,
   UiComponentConfig,
 } from "@repo/ui-builder-core";
-import { FieldLabel, Select, Text } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";

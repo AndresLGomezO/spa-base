@@ -1,4 +1,5 @@
-import { Select, Text } from "@repo/ui";
+import { Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import type { EntityName } from "../../entities/entity-catalog";

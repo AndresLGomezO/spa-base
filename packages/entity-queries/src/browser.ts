@@ -42,6 +42,7 @@ export type {
 } from "./types.js";
 export { resolveTemporalPreset } from "./temporal.js";
 export { compareFilterValues } from "./compare-filter-values.js";
+export { buildDefaultEntityQueryParameterValues } from "./query-parameter-resolution.js";
 export {
   buildQueryConfigFromDefinition,
   resolveEntityQueryFilterValue,

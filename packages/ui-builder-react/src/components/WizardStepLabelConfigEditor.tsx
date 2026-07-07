@@ -149,6 +149,7 @@ export function WizardStepLabelConfigEditor({
                 {labels.labelPosition}
               </span>
               <Select
+                searchable
                 value={stepLabel?.position ?? "top"}
                 onChange={(event) =>
                   updateStepLabel({
@@ -171,6 +172,7 @@ export function WizardStepLabelConfigEditor({
                 {labels.labelAlignment ?? "Alignment"}
               </span>
               <Select
+                searchable
                 value={stepLabel?.align ?? "left"}
                 onChange={(event) =>
                   updateStepLabel({

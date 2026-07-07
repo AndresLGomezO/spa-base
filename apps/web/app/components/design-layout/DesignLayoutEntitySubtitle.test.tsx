@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { selectAdminSelectOption } from "../../test/admin-select-test-utils";
 import { DesignLayoutEntitySubtitle } from "./DesignLayoutEntitySubtitle";
 
 vi.mock("./use-design-layout-target-options", () => ({
@@ -49,9 +50,7 @@ describe("DesignLayoutEntitySubtitle", () => {
     );
 
     expect(screen.getByText("designLayout.targetLabel")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("designLayout.targetLabel"), {
-      target: { value: "entity:deal" },
-    });
+    selectAdminSelectOption("designLayout.targetLabel", "Deals");
     expect(onTargetChange).toHaveBeenCalledWith("entity:deal");
   });
 
@@ -66,7 +65,7 @@ describe("DesignLayoutEntitySubtitle", () => {
     );
 
     expect(screen.getByLabelText("designLayout.targetLabel")).toHaveValue(
-      "customView:upcoming-payments",
+      "Upcoming payments",
     );
   });
 });

@@ -350,7 +350,7 @@ describe("preview-row-chrome-layout", () => {
           styles: [{ property: "fontWeight", value: "bold" }],
         },
       }),
-    ).toBe(false);
+    ).toBe(true);
 
     expect(
       rowUsesContentWidth({

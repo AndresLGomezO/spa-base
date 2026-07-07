@@ -3,7 +3,8 @@ import type {
   UiComponentConfig,
 } from "@repo/ui-builder-core";
 import { MAX_CARD_IMAGE_SIZE_PX, MIN_CARD_IMAGE_SIZE_PX } from "@repo/ui";
-import { FieldLabel, Input, Select } from "@repo/ui";
+import { FieldLabel, Input } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 interface UserComponentEditorProps {

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Columns2 } from "lucide-react";
-import { Text, Select } from "@repo/ui";
+import { Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import { formatFieldLabel } from "../../entities/entity-catalog";

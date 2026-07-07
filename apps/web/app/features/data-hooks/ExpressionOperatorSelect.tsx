@@ -1,5 +1,5 @@
-import { Select } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { expressionOperatorSelectClassName } from "./expression-editor-shared";
 

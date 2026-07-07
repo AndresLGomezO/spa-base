@@ -55,6 +55,7 @@ export function ShadowValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{shortcutsLabel}</span>
             <Select
+              searchable
               value={
                 SHADOW_SHORTCUT_OPTIONS.some(
                   (option) => option.value === rawValue,
@@ -81,6 +82,7 @@ export function ShadowValueEditor({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{varsLabel}</span>
             <Select
+              searchable
               value={
                 SHADOW_VAR_OPTIONS.some((option) => option.value === rawValue)
                   ? rawValue

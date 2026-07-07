@@ -4,7 +4,8 @@ import type {
   MetricValueDisplayFormat,
 } from "@repo/metrics-engine/browser";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
-import { FieldLabel, Select, Text } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 

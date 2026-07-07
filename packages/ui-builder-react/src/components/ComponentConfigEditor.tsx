@@ -312,6 +312,7 @@ function FormBooleanFieldConfigFields({
           {labels.booleanFieldDisplay ?? "Boolean display"}
         </span>
         <Select
+          searchable
           value={booleanDisplay}
           onChange={(event) =>
             onChange({
@@ -337,6 +338,7 @@ function FormBooleanFieldConfigFields({
               {labels.booleanFieldSwitchVariant ?? "Switch style"}
             </span>
             <Select
+              searchable
               value={config.switchVariant ?? "ios"}
               onChange={(event) =>
                 onChange({
@@ -514,6 +516,7 @@ function EntityFieldSelectorConfigFields({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.field}</span>
         <Select
+          searchable
           value={config.fieldPath}
           onChange={(event) =>
             onChange({ ...config, fieldPath: event.target.value })
@@ -532,6 +535,7 @@ function EntityFieldSelectorConfigFields({
           {labels.entityFieldSelectorLayout ?? "Layout"}
         </span>
         <Select
+          searchable
           value={config.layout}
           onChange={(event) =>
             onChange({
@@ -578,6 +582,7 @@ function EntityFieldSelectorConfigFields({
             {labels.entityFieldSelectorCardsPerRow ?? "Cards per row"}
           </span>
           <Select
+            searchable
             value={config.cardsPerRow ?? 1}
             onChange={(event) =>
               onChange({
@@ -601,6 +606,7 @@ function EntityFieldSelectorConfigFields({
             {labels.entityFieldSelectorImageField ?? "Image field"}
           </span>
           <Select
+            searchable
             value={config.imageFieldPath ?? defaultImageField ?? ""}
             onChange={(event) =>
               onChange({
@@ -733,6 +739,7 @@ export function ComponentConfigEditor({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.component}</span>
           <Select
+            searchable
             value={config.kind}
             onChange={(event) =>
               handleKindChange(event.target.value as UiComponentKind)
@@ -766,6 +773,7 @@ export function ComponentConfigEditor({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.component}</span>
           <Select
+            searchable
             value={config.kind}
             onChange={(event) =>
               handleKindChange(event.target.value as UiComponentKind)
@@ -799,6 +807,7 @@ export function ComponentConfigEditor({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.component}</span>
           <Select
+            searchable
             value={config.kind}
             onChange={(event) =>
               handleKindChange(event.target.value as UiComponentKind)
@@ -816,6 +825,7 @@ export function ComponentConfigEditor({
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{labels.field}</span>
               <Select
+                searchable
                 value={config.fieldPath}
                 onChange={(event) =>
                   onChange({ ...config, fieldPath: event.target.value })
@@ -997,6 +1007,7 @@ export function ComponentConfigEditor({
                 {labels.wizardProgressVariant ?? "Progress style"}
               </span>
               <Select
+                searchable
                 value={resolveWizardProgressVariant(config)}
                 onChange={(event) =>
                   onChange({
@@ -1106,6 +1117,7 @@ export function ComponentConfigEditor({
                             {labels.matchValue}
                           </span>
                           <Select
+                            searchable
                             value={rule.matchValue ?? ""}
                             onChange={(event) => {
                               const rules = [
@@ -1280,6 +1292,7 @@ export function ComponentConfigEditor({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.component}</span>
         <Select
+          searchable
           value={fieldConfig.kind}
           onChange={(event) =>
             handleKindChange(event.target.value as UiComponentKind)
@@ -1338,6 +1351,7 @@ export function ComponentConfigEditor({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.field}</span>
           <Select
+            searchable
             value={
               fieldConfig.primary.type === "field"
                 ? fieldConfig.primary.path
@@ -1371,6 +1385,7 @@ export function ComponentConfigEditor({
             return (
               <div key={`${index}-${source.type}`} className="flex gap-2">
                 <Select
+                  searchable
                   value={source.type === "field" ? source.path : ""}
                   disabled={source.type !== "field"}
                   onChange={(event) => {
@@ -1431,6 +1446,7 @@ export function ComponentConfigEditor({
                 {labels.imageDisplayMode ?? "Display mode"}
               </span>
               <Select
+                searchable
                 value={fieldConfig.displayMode ?? "inline"}
                 onChange={(event) =>
                   onChange({
@@ -1452,6 +1468,7 @@ export function ComponentConfigEditor({
                 {labels.imageObjectFit ?? "Object fit"}
               </span>
               <Select
+                searchable
                 value={fieldConfig.objectFit ?? "contain"}
                 onChange={(event) =>
                   onChange({
@@ -1512,6 +1529,7 @@ export function ComponentConfigEditor({
               {labels.dateDisplayFormat}
             </span>
             <Select
+              searchable
               value={fieldConfig.dateDisplayFormat ?? "datetime"}
               onChange={(event) =>
                 onChange({
@@ -1537,6 +1555,7 @@ export function ComponentConfigEditor({
                 {labels.displayFormat}
               </span>
               <Select
+                searchable
                 value={fieldConfig.displayFormat ?? "plain"}
                 onChange={(event) =>
                   onChange({
@@ -1613,6 +1632,7 @@ export function ComponentConfigEditor({
                   placeholder={labels.matchValue}
                 />
                 <Select
+                  searchable
                   value={rule.badgeVariant ?? "default"}
                   onChange={(event) => {
                     const rules = [...(fieldConfig.conditionalStyles ?? [])];

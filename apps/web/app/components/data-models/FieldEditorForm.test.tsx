@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { selectAdminSelectOption } from "../../test/admin-select-test-utils";
 import { FieldEditorForm } from "./FieldEditorForm";
 
 vi.mock("react-i18next", () => ({
@@ -82,9 +83,7 @@ describe("FieldEditorForm", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("dataModels.relationTarget"), {
-      target: { value: "loan" },
-    });
+    selectAdminSelectOption("dataModels.relationTarget", "Loans");
 
     expect(onChange).toHaveBeenCalledWith({
       name: "loanId",
@@ -187,15 +186,16 @@ describe("FieldEditorForm", () => {
     );
 
     expect(screen.getByLabelText("dataModels.numberKind")).toHaveValue(
-      "decimal",
+      "dataModels.numberKinds.decimal",
     );
     expect(screen.getByLabelText("dataModels.numberDisplayFormat")).toHaveValue(
-      "percentage",
+      "dataModels.numberDisplayFormats.percentage",
     );
 
-    fireEvent.change(screen.getByLabelText("dataModels.numberKind"), {
-      target: { value: "integer" },
-    });
+    selectAdminSelectOption(
+      "dataModels.numberKind",
+      "dataModels.numberKinds.integer",
+    );
 
     expect(onChange).toHaveBeenCalledWith({
       name: "rate",

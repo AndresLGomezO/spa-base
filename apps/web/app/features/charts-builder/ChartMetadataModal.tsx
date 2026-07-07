@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Button,
-  FieldLabel,
-  Input,
-  Modal,
-  Select,
-  Text,
-  toast,
-} from "@repo/ui";
+import { Button, FieldLabel, Input, Modal, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import type { ChartType } from "@repo/ui-builder-core";
 
 import { useCharts } from "./charts-context.js";

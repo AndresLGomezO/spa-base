@@ -7,6 +7,10 @@
     "viewAriaLabel": "View JSON",
     "importAriaLabel": "Import JSON"
   },
+  "formControls": {
+    "selectSearchPlaceholder": "Search options…",
+    "selectNoResults": "No matching options"
+  },
   "language": {
     "label": "Language"
   },

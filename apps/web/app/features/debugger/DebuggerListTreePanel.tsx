@@ -6,11 +6,11 @@ import {
   IconButton,
   Input,
   SearchField,
-  Select,
   Text,
   toast,
   useFilterPanelDismiss,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { cn } from "@repo/theme/utils";
 import { Clipboard, LayoutDashboard, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";

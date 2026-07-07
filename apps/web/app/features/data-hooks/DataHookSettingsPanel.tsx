@@ -3,7 +3,8 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
-import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
+import { Button, FieldLabel, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import type {
   DataHookOperation,
   DataHookPhase,

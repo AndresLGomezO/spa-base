@@ -2,7 +2,8 @@ import type {
   MetricWidgetComponentConfig,
   UiComponentConfig,
 } from "@repo/ui-builder-core";
-import { FieldLabel, Text, Select } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, FieldLabel, Input, Modal, Select, toast } from "@repo/ui";
+import { Button, FieldLabel, Input, Modal, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useQuery } from "@tanstack/react-query";
 
 import { listEntityQueryDefinitions } from "../../lib/api-client";

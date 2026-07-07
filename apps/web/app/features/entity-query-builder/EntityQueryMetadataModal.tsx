@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import {
-  Button,
-  FieldLabel,
-  Input,
-  Modal,
-  Select,
-  Text,
-  toast,
-} from "@repo/ui";
+import { Button, FieldLabel, Input, Modal, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { getEntityLabel } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";

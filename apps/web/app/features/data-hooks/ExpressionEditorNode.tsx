@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
-import { FieldLabel, Input, Select, Text } from "@repo/ui";
+import { FieldLabel, Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import type { ExpressionNode } from "@repo/hooks";
 
 import { summarizeExpressionNode } from "../formulas/format-expression-dsl-preview";

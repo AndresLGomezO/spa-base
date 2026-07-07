@@ -274,6 +274,7 @@ function PrefillSourceFields({
           {labels.createFormPrefillSource}
         </FieldLabel>
         <Select
+          searchable
           value={sourceType}
           onChange={(event) => {
             const nextType = event.target.value as PrefillSourceKind;
@@ -315,6 +316,7 @@ function PrefillSourceFields({
             {labels.createFormPrefillSourceField}
           </FieldLabel>
           <Select
+            searchable
             value={source.type === "field" ? source.path : ""}
             onChange={(event) => {
               onChange({ type: "field", path: event.target.value });
@@ -335,6 +337,7 @@ function PrefillSourceFields({
             {labels.createFormPrefillEnumValue}
           </FieldLabel>
           <Select
+            searchable
             value={source.type === "enumValue" ? source.value : ""}
             onChange={(event) => {
               onChange({ type: "enumValue", value: event.target.value });
@@ -456,6 +459,7 @@ export function CreateFormPrefillEditor({
                 {labels.createFormPrefillTargetField}
               </FieldLabel>
               <Select
+                searchable
                 value={mapping.targetField}
                 onChange={(event) => {
                   updateMapping(

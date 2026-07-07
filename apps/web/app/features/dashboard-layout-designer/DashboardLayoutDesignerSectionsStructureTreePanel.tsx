@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import {
-  Button,
-  FieldLabel,
-  IconButton,
-  Input,
-  Modal,
-  Text,
-  Select,
-} from "@repo/ui";
+import { Button, FieldLabel, IconButton, Input, Modal, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { isRootContainerRow, moveRowAt } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 

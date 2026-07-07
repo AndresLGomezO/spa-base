@@ -6,7 +6,8 @@ import {
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import type { UiBuilderPresetRecord } from "@repo/entities";
-import { Button, Modal, Select, Text } from "@repo/ui";
+import { Button, Modal, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { entityCardViewAdapter } from "@repo/ui-builder-react";
 import {

@@ -16,6 +16,7 @@ import {
   type ColumnNode,
   type ComponentRowNode,
   type RowNode,
+  type StyleRule,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
@@ -217,6 +218,71 @@ function gridTrackRowRef(
     columnIndex: columnRef.rootColumnIndex,
     containerRowId: parentGridRow.id,
   });
+}
+
+function resolveGridTrackRowNode(
+  columnRef: ComponentColumnRef,
+  parentGridRow: ComponentRowNode | undefined,
+): ComponentRowNode | undefined {
+  if (
+    !isNestedComponentColumnRef(columnRef) ||
+    !parentGridRow ||
+    parentGridRow.type !== "component" ||
+    !isGridComponent(parentGridRow.component)
+  ) {
+    return undefined;
+  }
+
+  const trackRow = parentGridRow.component.rows[columnRef.nestedColumnIndex];
+  return trackRow?.type === "component" ? trackRow : undefined;
+}
+
+export function resolveGridTrackRowLayoutStyles(
+  columnRef: ComponentColumnRef,
+  parentGridRow: ComponentRowNode | undefined,
+): readonly StyleRule[] | undefined {
+  const trackRow = resolveGridTrackRowNode(columnRef, parentGridRow);
+  if (!trackRow) {
+    return undefined;
+  }
+
+  if (isRowHolderComponent(trackRow.component)) {
+    return trackRow.component.styles;
+  }
+
+  return trackRow.styles;
+}
+
+export function isGridTrackColumnRef(
+  columnRef: ComponentColumnRef,
+  parentGridRow: ComponentRowNode | undefined,
+): boolean {
+  return (
+    isNestedComponentColumnRef(columnRef) &&
+    parentGridRow?.type === "component" &&
+    isGridComponent(parentGridRow.component)
+  );
+}
+
+export function updateGridTrackRowLayoutStyles(
+  binding: ComponentsLayoutBinding,
+  columnRef: ComponentColumnRef,
+  parentGridRow: ComponentRowNode | undefined,
+  styles: readonly StyleRule[],
+): boolean {
+  const trackRow = resolveGridTrackRowNode(columnRef, parentGridRow);
+  if (!trackRow || !parentGridRow) {
+    return false;
+  }
+
+  binding.updateComponent(
+    gridTrackRowRef(columnRef, parentGridRow, trackRow.id),
+    {
+      ...trackRow.component,
+      styles: [...styles],
+    },
+  );
+  return true;
 }
 
 export function applyComponentsColumnPatch(

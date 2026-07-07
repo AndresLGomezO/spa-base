@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
-import { Select } from "@repo/ui";
+
 import { cn } from "@repo/theme/utils";
 
 import { useFormDesigner } from "./form-designer-context";

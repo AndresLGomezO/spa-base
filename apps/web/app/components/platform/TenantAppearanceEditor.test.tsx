@@ -155,9 +155,7 @@ describe("TenantAppearanceEditor", () => {
       const dialog = await openCustomizeModal();
 
       expect(
-        within(dialog).getByRole("combobox", {
-          name: "platform.appearance.preset",
-        }),
+        within(dialog).getByLabelText("platform.appearance.preset"),
       ).toBeInTheDocument();
       expect(
         within(dialog).getByLabelText("--color-primary"),

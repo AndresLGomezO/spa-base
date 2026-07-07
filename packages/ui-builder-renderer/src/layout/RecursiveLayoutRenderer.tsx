@@ -520,6 +520,8 @@ function rowStackShellClassName(
 
   if (
     component?.kind === "metric-widget" ||
+    component?.kind === "metric-kpi" ||
+    component?.kind === "metric-derived-kpi" ||
     component?.kind === "dashboard-section"
   ) {
     return parentIsFlexWrapRow

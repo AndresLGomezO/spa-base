@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildDefaultEntityQueryParameterValues,
   resolveDateBucketParameterBound,
   resolveQueryParameterFilterValue,
 } from "./query-parameter-resolution.js";
@@ -95,5 +96,25 @@ describe("resolveQueryParameterFilterValue", () => {
         { types: ["INCOME", "EXPENSE"] },
       ),
     ).toEqual(["INCOME", "EXPENSE"]);
+  });
+});
+
+describe("buildDefaultEntityQueryParameterValues", () => {
+  it("defaults dateBucket parameters to the current bucket", () => {
+    const now = new Date(Date.UTC(2026, 6, 15, 12, 0, 0));
+
+    expect(
+      buildDefaultEntityQueryParameterValues(
+        [
+          {
+            name: "period",
+            valueType: "dateBucket",
+            granularity: "month",
+            field: "nextDueDate",
+          },
+        ],
+        { now },
+      ),
+    ).toEqual({ period: "2026-07" });
   });
 });

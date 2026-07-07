@@ -427,6 +427,7 @@ export function ComponentClickActionEditor({
           {labels.actionType}
         </FieldLabel>
         <Select
+          searchable
           value={actionType}
           onChange={(event) => {
             const nextType = event.target.value as EditorActionType;
@@ -479,6 +480,7 @@ export function ComponentClickActionEditor({
               {labels.navigationDestination}
             </FieldLabel>
             <Select
+              searchable
               value={destination}
               onChange={(event) => {
                 const nextDestination = event.target
@@ -535,6 +537,7 @@ export function ComponentClickActionEditor({
               {labels.entityTarget}
             </FieldLabel>
             <Select
+              searchable
               value={targetScopeMode}
               onChange={(event) => {
                 const nextScope = event.target.value as TargetScopeMode;
@@ -558,6 +561,7 @@ export function ComponentClickActionEditor({
                   {labels.relationFieldPath}
                 </FieldLabel>
                 <Select
+                  searchable
                   value={relationFieldPath}
                   onChange={(event) => {
                     emitNavigation(
@@ -591,6 +595,7 @@ export function ComponentClickActionEditor({
                 {labels.specificEntity}
               </FieldLabel>
               <Select
+                searchable
                 value={specificEntityName}
                 onChange={(event) => {
                   emitNavigation(
@@ -617,6 +622,7 @@ export function ComponentClickActionEditor({
                 {labels.formDesign}
               </FieldLabel>
               <Select
+                searchable
                 value={formDesignId}
                 onChange={(event) => {
                   emitNavigation(
@@ -720,6 +726,7 @@ export function ComponentClickActionEditor({
                 {labels.externalUrlSource}
               </FieldLabel>
               <Select
+                searchable
                 value={externalUrlSource.path}
                 onChange={(event) => {
                   onChange({

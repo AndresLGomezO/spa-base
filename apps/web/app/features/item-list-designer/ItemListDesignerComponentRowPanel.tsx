@@ -9,6 +9,7 @@ import {
 import {
   componentKindsForSurface,
   isContainerComponent,
+  isGridComponent,
   type MotionPreset,
 } from "@repo/ui-builder-core";
 import { Text } from "@repo/ui";
@@ -31,6 +32,7 @@ import type { ComponentRowRef } from "../form-designer/form-designer-component-r
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
+import { GridRowPanel } from "../form-designer/GridRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
 import { resolveDesignSurfaceForScope } from "./item-list-designer-structure-scope";
@@ -76,6 +78,20 @@ export function ItemListDesignerComponentRowPanel({
       </Text>
     );
   }
+  if (row.type === "component" && isGridComponent(row.component)) {
+    return (
+      <GridRowPanel
+        row={row.component}
+        rowNode={row}
+        rowRef={rowRef}
+        binding={binding}
+        labels={labels}
+        treeLabels={treeLabels}
+        fieldDescriptors={fieldDescriptors}
+      />
+    );
+  }
+
   if (row.type === "component" && isContainerComponent(row.component)) {
     return (
       <ContainerComponentRowPanel

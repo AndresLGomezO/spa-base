@@ -7,7 +7,8 @@ import type {
   ChartPoint,
   ChartType,
 } from "@repo/ui-builder-core";
-import { Select, Text } from "@repo/ui";
+import { Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { MetricBindingsEditor } from "../metrics/MetricBindingsEditor.js";
 import { MetricBindingSourceEditor } from "../metrics/MetricBindingSourceEditor.js";

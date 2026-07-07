@@ -138,6 +138,7 @@ export function MotionPresetEditor({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.entrance}</span>
         <Select
+          searchable
           value={entrance}
           onChange={(event) =>
             onChange(
@@ -158,6 +159,7 @@ export function MotionPresetEditor({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.hoverSurface}</span>
         <Select
+          searchable
           value={hoverSurface}
           onChange={(event) =>
             onChange(
@@ -179,6 +181,7 @@ export function MotionPresetEditor({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.hoverTransform}</span>
         <Select
+          searchable
           value={hoverTransform}
           onChange={(event) =>
             onChange(
@@ -266,6 +269,7 @@ export function MotionPresetEditor({
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.transition}</span>
         <Select
+          searchable
           value={transition}
           onChange={(event) =>
             onChange(

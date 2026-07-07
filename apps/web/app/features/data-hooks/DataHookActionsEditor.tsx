@@ -2,7 +2,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
-import { Button, IconButton, Input, Select, Text } from "@repo/ui";
+import { Button, IconButton, Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import type {
   DataHookAction,
   DataHookExecutionMode,

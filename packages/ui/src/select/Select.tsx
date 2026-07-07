@@ -6,12 +6,19 @@ import {
   formControlFocusRingClassName,
   formControlFocusRingErrorClassName,
 } from "../focus-ring/focus-ring-classes";
+import { SearchableSelect } from "../searchable-select/SearchableSelect.js";
+import type { SelectOptionsInput } from "./select-options.js";
 
 export type SelectSize = "sm" | "default";
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   readonly hasError?: boolean;
   readonly selectSize?: SelectSize;
+  readonly searchable?: boolean;
+  readonly searchPlaceholder?: string;
+  readonly noResultsLabel?: string;
+  readonly options?: SelectOptionsInput;
+  readonly "data-testid"?: string;
 }
 
 const sizeClasses: Record<SelectSize, string> = {
@@ -21,9 +28,52 @@ const sizeClasses: Record<SelectSize, string> = {
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   function Select(
-    { className, hasError = false, selectSize = "default", children, ...props },
+    {
+      className,
+      hasError = false,
+      selectSize = "default",
+      searchable = false,
+      searchPlaceholder,
+      noResultsLabel,
+      options,
+      children,
+      value,
+      defaultValue,
+      onChange,
+      disabled,
+      id,
+      "aria-label": ariaLabel,
+      "data-testid": dataTestId,
+      multiple,
+      ...props
+    },
     ref,
   ) {
+    if (searchable && !multiple) {
+      void ref;
+      return (
+        <SearchableSelect
+          value={value === undefined ? undefined : String(value)}
+          defaultValue={
+            defaultValue === undefined ? undefined : String(defaultValue)
+          }
+          onChange={onChange}
+          options={options}
+          disabled={disabled}
+          hasError={hasError}
+          selectSize={selectSize}
+          searchPlaceholder={searchPlaceholder}
+          noResultsLabel={noResultsLabel}
+          className={className}
+          id={id}
+          aria-label={ariaLabel}
+          data-testid={dataTestId}
+        >
+          {children}
+        </SearchableSelect>
+      );
+    }
+
     return (
       <select
         ref={ref}
@@ -38,6 +88,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           hasError && formControlFocusRingErrorClassName,
           className,
         )}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={onChange}
+        disabled={disabled}
+        id={id}
+        aria-label={ariaLabel}
+        data-testid={dataTestId}
+        multiple={multiple}
         {...props}
       >
         {children}

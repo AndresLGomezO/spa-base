@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FieldLabel, Select, Text } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import type { ExpressionNode } from "@repo/hooks";
 
 import { FormulaDefinitionInfoButton } from "../formulas/FormulaDefinitionInfoButton";

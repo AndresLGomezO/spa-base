@@ -115,7 +115,9 @@ export function isValidLayoutFieldPath(
       return true;
     }
 
-    return subField in childDefinition.fields;
+    return (
+      subField in childDefinition.fields || ALLOWED_SYSTEM_FIELDS.has(subField)
+    );
   }
 
   const reverseChild = params?.resolveTarget?.(firstSegment);
@@ -541,7 +543,7 @@ export function listLayoutFieldOptions(
   params?: ListLayoutFieldOptionsParams,
 ): readonly string[] {
   const relationFkFields = new Set<string>();
-  const options = new Set<string>(["createdAt", "updatedAt"]);
+  const options = new Set<string>(["id", "createdAt", "updatedAt"]);
 
   for (const [fieldName, meta] of Object.entries(definition.fields)) {
     if (
@@ -554,7 +556,7 @@ export function listLayoutFieldOptions(
       if (target) {
         const targetDefinition = params?.resolveTarget?.(target);
         if (!targetDefinition) {
-          for (const subfield of ["name", "code"] as const) {
+          for (const subfield of ["id", "name", "code"] as const) {
             options.add(`${target}.${subfield}`);
           }
           continue;

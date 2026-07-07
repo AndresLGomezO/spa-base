@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { getJsonImportTextarea } from "../../test/admin-select-test-utils";
 import { EntityQueryListTreePanel } from "./EntityQueryListTreePanel";
 
 vi.mock("../../lib/api-client", () => ({
@@ -68,7 +69,7 @@ describe("EntityQueryListTreePanel", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
     );
-    fireEvent.change(screen.getByRole("textbox"), {
+    fireEvent.change(getJsonImportTextarea(), {
       target: {
         value: JSON.stringify({
           kind: "entity-query-definitions-catalog",

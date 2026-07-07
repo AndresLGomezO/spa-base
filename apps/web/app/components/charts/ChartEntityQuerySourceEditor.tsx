@@ -7,7 +7,8 @@ import type {
   ChartEntityQueryValueTransform,
   ChartMetricSeriesStep,
 } from "@repo/ui-builder-core";
-import { Select, Text } from "@repo/ui";
+import { Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { getEntityLabel } from "../../entities/entity-catalog.js";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog.js";

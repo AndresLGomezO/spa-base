@@ -7,7 +7,8 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { FieldLabel, toast, Select } from "@repo/ui";
+import { FieldLabel, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import {
   listEntityDefinitions,

@@ -19,8 +19,8 @@ import {
   PhotoUpload,
   Text,
   toast,
-  Select,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import {
   APPEARANCE_PRESETS,

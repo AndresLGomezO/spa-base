@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { FieldLabel, Select, Text } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { ChartDefinitionRecipeEditor } from "../../components/charts/ChartDefinitionRecipeEditor.js";
 import { useEntityCatalog } from "../../entities/entity-catalog-context.js";

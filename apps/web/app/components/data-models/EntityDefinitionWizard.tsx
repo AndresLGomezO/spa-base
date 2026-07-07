@@ -19,8 +19,8 @@ import {
   Text,
   Textarea,
   toast,
-  Select,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { buildDefaultUiForNewDefinition } from "@repo/dynamic-entities";
 

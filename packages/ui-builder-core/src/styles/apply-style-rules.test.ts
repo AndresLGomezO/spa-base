@@ -14,6 +14,7 @@ import {
   parseFlexLayoutFromStyles,
   prefersInlineContentWidth,
   resolveDashboardSectionShellClassName,
+  rowPrefersContentWidth,
   resolvePageSlotWrapper,
   resolveStyleRules,
   resolveRowWrapperStyleRules,
@@ -190,6 +191,15 @@ describe("applyStyleRules", () => {
     );
   });
 
+  it("uses content width classes when width is auto", () => {
+    expect(
+      componentSlotWrapperClassName([{ property: "width", value: "auto" }]),
+    ).toBe("w-fit max-w-full min-w-0 shrink-0");
+    expect(rowPrefersContentWidth([{ property: "width", value: "auto" }])).toBe(
+      true,
+    );
+  });
+
   it("maps flex grow onto slot wrappers", () => {
     expect(
       componentSlotWrapperClassName([{ property: "flex", value: "1" }]),
@@ -349,6 +359,31 @@ describe("applyStyleRules", () => {
         styles: [{ property: "flex", value: "1" }],
       }),
     ).toBe(false);
+  });
+
+  it("uses content width for metric-kpi rows by default", () => {
+    expect(
+      prefersInlineContentWidth({
+        kind: "metric-kpi",
+        styles: [{ property: "padding", value: "8" }],
+      }),
+    ).toBe(true);
+    expect(
+      inlineContentRowClassName({
+        kind: "metric-kpi",
+        styles: [{ property: "padding", value: "8" }],
+      }),
+    ).toBe("w-fit max-w-full shrink-0");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        {
+          type: "component",
+          component: { kind: "metric-kpi", styles: [] },
+        },
+      ),
+    ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
   });
 
   it("uses full width for overlay image rows instead of w-fit", () => {

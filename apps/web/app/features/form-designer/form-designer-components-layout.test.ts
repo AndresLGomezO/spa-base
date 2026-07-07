@@ -2,12 +2,21 @@ import {
   addComponentRowAt,
   beginContainerRootLayout,
   createDefaultComponent,
+  createEmptyLayout,
+  insertGridRowAt,
   isContainerComponent,
+  isGridComponent,
   resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
-import { findRowByRef } from "./form-designer-components-layout";
+import {
+  createComponentsLayoutBinding,
+  findRowByRef,
+  isGridTrackColumnRef,
+  resolveGridTrackRowLayoutStyles,
+  updateGridTrackRowLayoutStyles,
+} from "./form-designer-components-layout";
 import {
   buildStructureTree,
   type StructureTreeLabels,
@@ -120,5 +129,83 @@ describe("findRowByRef with container layouts", () => {
     if (resolved?.type === "component") {
       expect(resolved.component.kind).toBe("user");
     }
+  });
+});
+
+describe("grid track row layout styles", () => {
+  it("reads and writes styles on the track container component", () => {
+    const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+      createEmptyLayout(1),
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      { trackCount: 2 },
+    );
+
+    const gridRow = resolveLayoutRootColumns(withGrid)[0]?.rows.find(
+      (row) => row.id === gridRowId,
+    );
+    if (
+      !gridRow ||
+      gridRow.type !== "component" ||
+      !isGridComponent(gridRow.component)
+    ) {
+      throw new Error("Expected grid row");
+    }
+
+    const trackRow = gridRow.component.rows[1];
+    if (!trackRow || trackRow.type !== "component") {
+      throw new Error("Expected second grid track");
+    }
+
+    const columnRef = {
+      rootColumnIndex: 0,
+      nestedParentRowId: gridRowId,
+      nestedColumnIndex: 1,
+    };
+
+    expect(resolveGridTrackRowLayoutStyles(columnRef, gridRow)).toEqual(
+      undefined,
+    );
+
+    let nextLayout = withGrid;
+    const binding = createComponentsLayoutBinding(withGrid, (layout) => {
+      nextLayout = layout;
+    });
+
+    const styles = [{ property: "padding", value: "1rem" }] as const;
+    expect(
+      updateGridTrackRowLayoutStyles(binding, columnRef, gridRow, styles),
+    ).toBe(true);
+
+    const updatedGridRow = resolveLayoutRootColumns(nextLayout)[0]?.rows.find(
+      (row) => row.id === gridRowId,
+    );
+    if (
+      !updatedGridRow ||
+      updatedGridRow.type !== "component" ||
+      !isGridComponent(updatedGridRow.component)
+    ) {
+      throw new Error("Expected updated grid row");
+    }
+
+    const updatedTrackRow = updatedGridRow.component.rows[1];
+    if (
+      !updatedTrackRow ||
+      updatedTrackRow.type !== "component" ||
+      !isContainerComponent(updatedTrackRow.component)
+    ) {
+      throw new Error("Expected updated grid track");
+    }
+
+    expect(updatedTrackRow.component.styles).toEqual([...styles]);
+    expect(updatedTrackRow.styles).toBeUndefined();
+    expect(updatedGridRow.styles).toBeUndefined();
+    expect(resolveGridTrackRowLayoutStyles(columnRef, updatedGridRow)).toEqual([
+      ...styles,
+    ]);
+    expect(isGridTrackColumnRef(columnRef, updatedGridRow)).toBe(true);
+    expect(isGridTrackColumnRef({ rootColumnIndex: 0 }, updatedGridRow)).toBe(
+      false,
+    );
   });
 });

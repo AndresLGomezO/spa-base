@@ -3,7 +3,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 
-import { Button, Input, Select, Text } from "@repo/ui";
+import { Button, Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { EntityFieldConditionValueInput } from "./EntityFieldConditionValueInput";

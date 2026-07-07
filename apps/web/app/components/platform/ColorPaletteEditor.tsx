@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ColorPaletteConfig, ColorScaleStep } from "@repo/shared-types";
-import { Button, FieldLabel, Input, Text, Select } from "@repo/ui";
+import { Button, FieldLabel, Input, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import {
   COLOR_SCALE_STEPS,
   generateColorScale,

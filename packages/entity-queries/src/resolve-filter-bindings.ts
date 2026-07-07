@@ -52,6 +52,49 @@ function parseListFilterValue(raw: string): string | number | boolean {
   return raw;
 }
 
+function readEntityFieldBindingValue(
+  record: Record<string, unknown>,
+  fieldPath: string,
+): unknown {
+  const trimmedPath = fieldPath.trim();
+  if (trimmedPath.length === 0) {
+    return undefined;
+  }
+
+  if (!trimmedPath.includes(".")) {
+    return record[trimmedPath];
+  }
+
+  const [firstSegment, ...rest] = trimmedPath.split(".");
+  const subPath = rest.join(".");
+  if (!firstSegment || subPath.length === 0) {
+    return undefined;
+  }
+
+  const populated = record._populated as
+    | Record<string, Record<string, unknown> | null | undefined>
+    | undefined;
+  const populatedRecord =
+    populated?.[firstSegment] ?? populated?.[`${firstSegment}Id`];
+  if (populatedRecord && typeof populatedRecord === "object") {
+    return readEntityFieldBindingValue(populatedRecord, subPath);
+  }
+
+  const directValue = record[firstSegment];
+  if (
+    directValue &&
+    typeof directValue === "object" &&
+    !Array.isArray(directValue)
+  ) {
+    return readEntityFieldBindingValue(
+      directValue as Record<string, unknown>,
+      subPath,
+    );
+  }
+
+  return record[trimmedPath];
+}
+
 function resolveRelativePeriodAnchor(
   source: Extract<FilterBindingSource, { type: "relativePeriod" }>,
   context: PageFilterContext,
@@ -119,7 +162,10 @@ export function resolveFilterBindingSource(
       if (!context.record) {
         return null;
       }
-      const value = context.record[source.fieldPath];
+      const value = readEntityFieldBindingValue(
+        context.record,
+        source.fieldPath,
+      );
       if (
         typeof value === "string" ||
         typeof value === "number" ||

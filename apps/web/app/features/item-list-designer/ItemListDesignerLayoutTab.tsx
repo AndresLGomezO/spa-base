@@ -1,5 +1,6 @@
 import { updateLayoutMeta } from "@repo/ui-builder-core";
-import { Switch, Select } from "@repo/ui";
+import { Switch } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import {

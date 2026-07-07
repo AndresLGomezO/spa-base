@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { CreateUiBuilderPresetInput } from "@repo/entities";
 import type { DesignSurface } from "@repo/ui-builder-core";
-import { Button, Input, Modal, Select, Text } from "@repo/ui";
+import { Button, Input, Modal, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import { usePresets } from "./presets-context";

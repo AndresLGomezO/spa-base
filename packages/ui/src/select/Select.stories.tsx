@@ -57,6 +57,42 @@ export const WithGroups: Story = {
   ),
 };
 
+export const Searchable: Story = {
+  render: () => (
+    <Select searchable defaultValue="marginTop">
+      <option value="marginTop">Margin Top</option>
+      <option value="marginBottom">Margin Bottom</option>
+      <option value="backgroundColor">Background Color</option>
+      <option value="fontSize">Font Size</option>
+    </Select>
+  ),
+};
+
+export const SearchableWithGroups: Story = {
+  render: () => (
+    <Select searchable defaultValue="">
+      <option value="">Choose device…</option>
+      <optgroup label="Apple">
+        <option value="iphone">iPhone</option>
+        <option value="ipad">iPad</option>
+      </optgroup>
+      <optgroup label="Google">
+        <option value="pixel">Pixel</option>
+      </optgroup>
+    </Select>
+  ),
+};
+
+export const SearchableSmall: Story = {
+  render: () => (
+    <Select searchable selectSize="sm" defaultValue="a">
+      <option value="a">Option A</option>
+      <option value="b">Option B</option>
+      <option value="c">Option C</option>
+    </Select>
+  ),
+};
+
 export const Multiple: Story = {
   render: () => (
     <Select multiple className="min-h-28" defaultValue={["a", "c"]}>

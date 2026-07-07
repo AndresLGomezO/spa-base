@@ -6,10 +6,10 @@ import {
   FieldLabel,
   Input,
   SearchableMultiSelectDropdown,
-  Select,
   Text,
   toast,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { EntityQueryFiltersEditor } from "../../components/entity/EntityQueryFiltersEditor";
 import {

@@ -1,4 +1,5 @@
-import { FieldLabel, Text, Select } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useTranslation } from "react-i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";

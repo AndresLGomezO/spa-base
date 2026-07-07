@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FieldPathValidationDefinition } from "./field-paths.js";
+import { listLayoutFieldOptions } from "./field-paths.js";
 import {
   collectNestedRelationLayoutFieldPaths,
   resolveLayoutFieldLeaf,
@@ -142,5 +143,46 @@ describe("resolveLayoutFieldLeaf", () => {
       leafFieldName: "code",
       leafEntityName: "bank",
     });
+  });
+
+  it("does not recurse through self-referential relation hops", () => {
+    const categoryDefinition: FieldPathValidationDefinition = {
+      name: "category",
+      fields: {
+        name: {},
+        image: { type: "image" },
+        parentCategoryId: {
+          relation: { type: "many-to-one", target: "category" },
+        },
+      },
+    };
+
+    const transactionDefinition: FieldPathValidationDefinition = {
+      name: "transaction",
+      fields: {
+        categoryId: {
+          relation: { type: "many-to-one", target: "category" },
+        },
+      },
+    };
+
+    const resolveTarget = (
+      target: string,
+    ): FieldPathValidationDefinition | undefined => {
+      if (target === "category") {
+        return categoryDefinition;
+      }
+      return undefined;
+    };
+
+    const options = listLayoutFieldOptions(transactionDefinition, {
+      resolveTarget,
+    });
+
+    expect(options).toContain("category.image");
+    expect(options).toContain("category.name");
+    expect(options).toContain("category.id");
+    expect(options).not.toContain("category.category.image");
+    expect(options).not.toContain("category.category.category.image");
   });
 });

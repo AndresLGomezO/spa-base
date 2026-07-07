@@ -36,6 +36,13 @@ const accountDefinition: FieldPathValidationDefinition = {
 };
 
 describe("listLayoutFieldOptions", () => {
+  it("includes system id and timestamp fields", () => {
+    const options = listLayoutFieldOptions(accountDefinition);
+    expect(options).toContain("id");
+    expect(options).toContain("createdAt");
+    expect(options).toContain("updatedAt");
+  });
+
   it("includes relation display paths and excludes fk fields", () => {
     const options = listLayoutFieldOptions(accountDefinition);
     expect(options).toContain("bank.name");

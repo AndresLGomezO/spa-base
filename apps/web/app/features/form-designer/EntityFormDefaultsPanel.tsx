@@ -1,5 +1,6 @@
 import { listFormDesignOptions, normalizeEntityViews } from "@repo/entities";
-import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
+import { Button, FieldLabel, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";

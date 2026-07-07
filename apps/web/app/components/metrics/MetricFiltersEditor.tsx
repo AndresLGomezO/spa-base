@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, Select, Text } from "@repo/ui";
+import { Button, Text } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { formatFieldLabel } from "../../entities/entity-catalog";

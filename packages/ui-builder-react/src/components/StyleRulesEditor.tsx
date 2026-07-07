@@ -148,6 +148,7 @@ function StyleRuleValueInput({
   if (isEnumStyleProperty(rule.property)) {
     return (
       <Select
+        searchable
         value={String(rule.value)}
         onChange={(event) => onChange(event.target.value)}
       >
@@ -224,6 +225,7 @@ export function StyleRulesEditor({
               {labels.styleProperty}
             </span>
             <Select
+              searchable
               value={rule.property}
               onChange={(event) =>
                 updateRule(index, {

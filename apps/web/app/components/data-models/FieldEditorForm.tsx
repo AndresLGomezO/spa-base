@@ -14,8 +14,8 @@ import {
   PhotoUpload,
   Text,
   toast,
-  Select,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
 import {

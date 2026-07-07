@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
+import { Button, FieldLabel, Text, toast } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 
 import { metricDefinitionFormJsonLabels } from "../../components/metrics/json/metric-definition-json-labels";
 import { MetricDefinitionJsonToolbar } from "../../components/metrics/json/MetricDefinitionJsonToolbar";

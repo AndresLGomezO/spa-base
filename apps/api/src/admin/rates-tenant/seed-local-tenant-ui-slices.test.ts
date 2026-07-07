@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { parseEntityQueryDefinitionsCatalogJson } from "@repo/entity-queries";
+import type { EntityQueryFilterCondition } from "@repo/entity-queries";
 
 import {
   hasLocalTenantUiSlices,
@@ -61,6 +62,48 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(topOutflow?.queryMode).toBe("aggregated");
     expect(topOutflow?.groupBy).toEqual(["categoryId"]);
     expect(topOutflow?.groupLimit).toBe(1);
+    expect(topOutflow?.parameters ?? []).toEqual([]);
+    expect(
+      topOutflow?.filter.type === "group"
+        ? topOutflow.filter.children
+            .filter(
+              (child): child is EntityQueryFilterCondition =>
+                child.type === "condition" && child.field === "date",
+            )
+            .map((child) => child.value)
+        : [],
+    ).toEqual([
+      { type: "temporal", preset: "startOfMonth" },
+      { type: "temporal", preset: "endOfMonth" },
+    ]);
+
+    const upcomingPayments = parsed.data.entityQueryDefinitions.find(
+      (query) => query.name === "Upcoming payments (dashboard)",
+    );
+    const dateConditions =
+      upcomingPayments?.filter.type === "group"
+        ? upcomingPayments.filter.children.filter(
+            (child) => child.type === "condition",
+          )
+        : [];
+    const monthConditions = dateConditions.filter(
+      (child) => child.field === "dueDate",
+    );
+    expect(monthConditions).toEqual([
+      {
+        type: "condition",
+        field: "dueDate",
+        operator: ">=",
+        value: { type: "temporal", preset: "startOfMonth" },
+      },
+      {
+        type: "condition",
+        field: "dueDate",
+        operator: "<=",
+        value: { type: "temporal", preset: "endOfMonth" },
+      },
+    ]);
+    expect(upcomingPayments?.parameters ?? []).toEqual([]);
   });
 
   it("parses local paymentSchedule widget override slice", () => {
@@ -127,7 +170,7 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(shellStyles).toEqual(
       expect.arrayContaining([
         { property: "width", value: "100%" },
-        { property: "height", value: "400" },
+        { property: "height", value: "423" },
       ]),
     );
   });
@@ -147,36 +190,59 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(slice.dashboardSections[0]?.id).toBe("financial-snapshot");
     expect(slice.dashboardSections[0]?.name).toBe("Financial Snapshot");
 
-    const gridRow = (
+    const sectionRootRow = (
       slice.dashboardSections[0]?.layout as {
         root: {
           columns: Array<{
-            rows: Array<{ component: { kind: string; rows: unknown[] } }>;
+            rows: Array<{
+              component: {
+                rows: Array<{ component: { kind: string; rows: unknown[] } }>;
+              };
+            }>;
           }>;
         };
       }
-    ).root.columns[0]?.rows[0]?.component;
+    ).root.columns[0]?.rows[0];
+
+    expect(sectionRootRow?.component?.rows).toHaveLength(1);
+
+    const gridRow = sectionRootRow?.component.rows[0]?.component;
 
     expect(gridRow?.kind).toBe("grid");
-    expect(gridRow?.rows).toHaveLength(2);
+    expect(gridRow?.rows).toHaveLength(3);
 
     const spendingTrack = gridRow?.rows[1] as {
       component?: {
         kind?: string;
         rows?: Array<{
           id?: string;
-          component?: { kind?: string; rows?: unknown[] };
+          component?: {
+            kind?: string;
+            rows?: unknown[];
+            styles?: Array<{ property: string; value: string }>;
+          };
         }>;
+        styles?: Array<{ property: string; value: string }>;
       };
     };
     expect(spendingTrack?.component?.kind).toBe("container");
-    expect(spendingTrack?.component?.rows).toHaveLength(2);
+    expect(spendingTrack?.component?.rows).toHaveLength(1);
+    expect(spendingTrack?.component?.styles).toEqual(
+      expect.arrayContaining([{ property: "height", value: "423" }]),
+    );
 
-    const upperBand = spendingTrack?.component?.rows?.[0];
-    expect(upperBand?.id).toBe("row-spending-snapshot-upper");
+    const spendingContent = spendingTrack?.component?.rows?.[0];
+    expect(spendingContent?.id).toBe("row-spending-snapshot-upper");
+    expect(spendingContent?.component?.rows).toHaveLength(2);
+    expect(spendingContent?.component?.styles).toEqual(
+      expect.arrayContaining([
+        { property: "width", value: "100%" },
+        { property: "gap", value: "var(--spacing-comfortable)" },
+      ]),
+    );
 
     const miniGrid = (
-      upperBand?.component as {
+      spendingContent?.component as {
         rows?: Array<{ component?: { kind?: string; rows?: unknown[] } }>;
       }
     )?.rows?.[0]?.component;
@@ -195,17 +261,22 @@ describe("seed-local-tenant-ui-slices", () => {
       "budget-status-snapshot-mini",
     ]);
 
-    const lowerBand = spendingTrack?.component?.rows?.[1];
-    expect(lowerBand?.id).toBe("row-spending-snapshot-lower");
-    const lowerWidget = (
-      lowerBand?.component as {
+    const topCategoryWidget = (
+      spendingContent?.component as {
         rows?: Array<{
           component?: { widgetId?: string; entityName?: string };
         }>;
       }
-    )?.rows?.[0]?.component;
-    expect(lowerWidget?.widgetId).toBe("top-expense-category-snapshot");
-    expect(lowerWidget?.entityName).toBe("transaction");
+    )?.rows?.[1]?.component;
+    expect(topCategoryWidget?.widgetId).toBe("top-expense-category-snapshot");
+    expect(topCategoryWidget?.entityName).toBe("transaction");
+
+    const emptyTrack = gridRow?.rows[2] as {
+      id?: string;
+      component?: { rows?: unknown[] };
+    };
+    expect(emptyTrack?.id).toBe("track-empty-placeholder");
+    expect(emptyTrack?.component?.rows).toEqual([]);
 
     const shellRow = slice.shellAppendRows[0];
     expect(shellRow?.id).toBe("track-financial-snapshot");
