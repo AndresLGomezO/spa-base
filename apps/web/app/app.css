@@ -32,13 +32,14 @@
 }
 
 .ui-motion-hover-interactive {
+  background-color: var(--motion-rest-bg, transparent);
   transition:
     background-color var(--motion-hover-duration, 150ms) ease,
     transform var(--motion-hover-duration, 150ms) ease,
     box-shadow var(--motion-hover-duration, 150ms) ease;
 }
 .ui-motion-hover-interactive:hover {
-  background-color: var(--motion-hover-bg, transparent);
+  background-color: var(--motion-hover-bg, var(--motion-rest-bg, transparent));
   transform: var(--motion-hover-transform, none);
   box-shadow: var(--motion-hover-shadow, none);
 }

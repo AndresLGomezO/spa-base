@@ -13,7 +13,18 @@ export const motionPresetSchema = z
     delayMs: z.number().int().min(0).max(MOTION_DURATION_MAX_MS).optional(),
     staggerIndex: z.boolean().optional(),
     hover: z.enum(["none", "lift", "glow"]).optional(),
-    hoverSurface: z.enum(["none", "default", "accent", "muted"]).optional(),
+    hoverSurface: z
+      .enum([
+        "none",
+        "default",
+        "accent",
+        "muted",
+        "info",
+        "destructive",
+        "warning",
+        "success",
+      ])
+      .optional(),
     hoverTransform: z
       .enum(["none", "lift", "scale-up", "scale-down", "glow"])
       .optional(),

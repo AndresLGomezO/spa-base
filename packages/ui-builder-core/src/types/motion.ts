@@ -7,7 +7,15 @@ export type MotionEntrance = "none" | "fade" | "slide-up" | "scale";
 /** @deprecated Prefer `hoverTransform`. Kept for legacy layout JSON. */
 export type MotionHover = "none" | "lift" | "glow";
 
-export type MotionHoverSurface = "none" | "default" | "accent" | "muted";
+export type MotionHoverSurface =
+  | "none"
+  | "default"
+  | "accent"
+  | "muted"
+  | "info"
+  | "destructive"
+  | "warning"
+  | "success";
 
 export type MotionHoverTransform =
   | "none"

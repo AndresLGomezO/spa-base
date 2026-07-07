@@ -49,6 +49,10 @@ const HOVER_SURFACE_OPTIONS: readonly {
   { value: "default", label: "Highlight (theme)" },
   { value: "accent", label: "Accent (theme)" },
   { value: "muted", label: "Muted (theme)" },
+  { value: "info", label: "Info tint (theme)" },
+  { value: "destructive", label: "Destructive tint (theme)" },
+  { value: "warning", label: "Warning tint (theme)" },
+  { value: "success", label: "Success tint (theme)" },
 ];
 
 const HOVER_TRANSFORM_OPTIONS: readonly {

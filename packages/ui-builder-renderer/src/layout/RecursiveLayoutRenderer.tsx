@@ -65,7 +65,10 @@ import type { LayoutRenderContext } from "../context.js";
 import { wrapRowWithClickAction } from "../click-action/wrap-row-click-action.js";
 import { LayoutRenderOptionsProvider } from "../layout-render-options-context.js";
 import { renderUiComponent } from "../engine/render-component.js";
-import { resolveMotionPreset } from "../motion/resolve-motion.js";
+import {
+  resolveMotionPreset,
+  mergeMotionPresetStyle,
+} from "../motion/resolve-motion.js";
 import { usePreviewBreakpoint } from "../preview-breakpoint-context.js";
 import type {
   LayoutWrapperRenderOptions,
@@ -872,6 +875,10 @@ function renderRow(
           parentColumn.styles,
           row,
         );
+  const motionPreset =
+    row.type === "component"
+      ? resolveMotionPreset(row.motion, rowIndex)
+      : { className: "" };
   if (row.type === "component") {
     if (isGridComponent(row.component)) {
       const gridStyles = resolveRowWrapperStyleRules(row.component.styles);
@@ -887,14 +894,16 @@ function renderRow(
       const gridInner = (
         <div
           key={row.id}
-          className={gridStyles.className}
+          className={[gridStyles.className, motionPreset.className]
+            .filter(Boolean)
+            .join(" ")}
           style={{
             display: "grid",
             gridTemplateColumns: normalizeGridTemplateColumnsForCss(
               row.component.gridTemplateColumns,
             ),
             alignItems: row.component.alignItems,
-            ...gridInlineStyle,
+            ...mergeMotionPresetStyle(gridInlineStyle, motionPreset),
             gap: resolveGridGapCSSValue(
               row.component.gap,
               row.component.styles,
@@ -930,8 +939,10 @@ function renderRow(
       const neutralInner = (
         <div
           key={row.id}
-          className={neutralStyles.className}
-          style={neutralStyles.style}
+          className={[neutralStyles.className, motionPreset.className]
+            .filter(Boolean)
+            .join(" ")}
+          style={mergeMotionPresetStyle(neutralStyles.style, motionPreset)}
         />
       );
       return wrapRowContent(
@@ -1042,10 +1053,11 @@ function renderRow(
               containerStackDirection,
             ),
             containerStyles.className,
+            motionPreset.className,
           ]
             .filter(Boolean)
             .join(" ")}
-          style={containerShellStyle}
+          style={mergeMotionPresetStyle(containerShellStyle, motionPreset)}
         >
           {renderRows(
             row.component.rows,
@@ -1108,7 +1120,6 @@ function renderRow(
       rowStylesForMerge,
       componentStylesForRow,
     );
-    const motionClass = resolveMotionPreset(row.motion, rowIndex);
     const isMainPage = context.mode === "mainPage";
     const isFormFill = context.mode === "form";
     const isWizardForm = isWizardFormContext(context);
@@ -1195,12 +1206,12 @@ function renderRow(
           inlineFlexGrowStretchClassName(row.component, stackDirection),
           formSlotClassName,
           rowWrapperStyleClassName(rowStyles),
-          motionClass,
+          motionPreset.className,
           displayRange.className,
         ]
           .filter(Boolean)
           .join(" ")}
-        style={rowStyles.style}
+        style={mergeMotionPresetStyle(rowStyles.style, motionPreset)}
       >
         {wrapRowWithClickAction(
           row,
@@ -1336,11 +1347,14 @@ export function RecursiveLayoutRenderer({
           className={[
             "flex w-full min-w-0 max-w-full flex-col",
             rootStylesResolved.className,
-            rootMotionClass,
+            rootMotionClass.className,
           ]
             .filter(Boolean)
             .join(" ")}
-          style={rootStylesResolved.style}
+          style={mergeMotionPresetStyle(
+            rootStylesResolved.style,
+            rootMotionClass,
+          )}
         >
           <div
             style={{
@@ -1412,11 +1426,14 @@ export function RecursiveLayoutRenderer({
           className={[
             fillRootClass,
             rootStylesResolved.className,
-            rootMotionClass,
+            rootMotionClass.className,
           ]
             .filter(Boolean)
             .join(" ")}
-          style={rootStylesResolved.style}
+          style={mergeMotionPresetStyle(
+            rootStylesResolved.style,
+            rootMotionClass,
+          )}
         >
           {renderWrappedColumns(
             layout.root.columns,
@@ -1437,11 +1454,14 @@ export function RecursiveLayoutRenderer({
         className={[
           fillRootClass,
           rootStylesResolved.className,
-          rootMotionClass,
+          rootMotionClass.className,
         ]
           .filter(Boolean)
           .join(" ")}
-        style={rootStylesResolved.style}
+        style={mergeMotionPresetStyle(
+          rootStylesResolved.style,
+          rootMotionClass,
+        )}
       >
         {renderLayoutColumnGrid(
           layout.root.columns,

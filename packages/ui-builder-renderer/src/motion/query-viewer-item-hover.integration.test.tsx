@@ -50,6 +50,24 @@ function motionStyleVar(
   return (style as Record<string, string | undefined>)[key];
 }
 
+function findRowById(
+  rows: readonly ComponentRowNode[] | undefined,
+  rowId: string,
+): ComponentRowNode | undefined {
+  for (const row of rows ?? []) {
+    if (row.id === rowId) {
+      return row;
+    }
+    if (row.type === "component" && row.component?.kind === "container") {
+      const nested = findRowById(row.component.rows, rowId);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+  return undefined;
+}
+
 describe("query viewer item row hover", () => {
   it("preserves hoverSurface on the payment item template row and renders interactive hover", () => {
     const json = readFileSync(
@@ -78,12 +96,12 @@ describe("query viewer item row hover", () => {
     const itemRow = queryViewer!.rows[0] as ComponentRowNode & {
       motion?: MotionPreset;
     };
-    expect(itemRow.motion?.hoverSurface).toBe("default");
+    expect(itemRow.motion?.hoverSurface).toBe("info");
 
     const motion = resolveMotionPreset(itemRow.motion);
     expect(motion.className).toContain("ui-motion-hover-interactive");
     expect(motionStyleVar(motion.style, "--motion-hover-bg")).toBe(
-      "var(--color-hover)",
+      "color-mix(in oklch, var(--color-info) 24%, transparent)",
     );
 
     const itemLayout: UiLayoutDocument = {
@@ -106,5 +124,116 @@ describe("query viewer item row hover", () => {
 
     expect(html).toContain("ui-motion-hover-interactive");
     expect(html).toContain("--motion-hover-bg");
+  });
+
+  it("renders tinted mini-widget action buttons with rest/hover background vars", () => {
+    const json = readFileSync(
+      join(
+        process.cwd(),
+        "../../.local/tenant-import/ui/paymentSchedule-entity-ui-overrides.json",
+      ),
+      "utf8",
+    );
+    const catalog = JSON.parse(json) as {
+      overrides: Array<{
+        metricWidgets: Array<{ id: string; layout: unknown }>;
+      }>;
+    };
+    const widget = catalog.overrides[0]?.metricWidgets.find(
+      (entry) => entry.id === "due-today-snapshot-mini",
+    );
+    expect(widget).toBeDefined();
+
+    const parsed = uiLayoutDocumentSchema.parse(widget!.layout);
+    const rootRows =
+      parsed.root.type === "root"
+        ? ((parsed.root.columns[0]?.rows ?? []) as readonly ComponentRowNode[])
+        : [];
+    const actionRow = findRowById(
+      rootRows,
+      "row-due-today-snapshot-mini-action",
+    ) as ComponentRowNode & { motion?: MotionPreset };
+    expect(actionRow?.motion?.hoverSurface).toBe("destructive");
+
+    const actionLayout: UiLayoutDocument = {
+      root: {
+        type: "root",
+        id: "mini-action-root",
+        columnCount: 1,
+        columns: [
+          {
+            id: "mini-action-col",
+            rows: [actionRow!],
+          },
+        ],
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      <EmbeddedLayoutRenderer layout={actionLayout} context={minimalContext} />,
+    );
+
+    expect(html).toContain("ui-motion-hover-interactive");
+    expect(html).toContain("--motion-rest-bg");
+    expect(html).toContain("--motion-hover-bg");
+    expect(html).not.toMatch(/background-color:color-mix/);
+  });
+
+  it("renders See all text links with interactive hover on the row wrapper", () => {
+    const json = readFileSync(
+      join(
+        process.cwd(),
+        "../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-ui-overrides.json",
+      ),
+      "utf8",
+    );
+    const catalog = JSON.parse(json) as {
+      overrides: Array<{
+        metricWidgets: Array<{ id: string; layout: unknown }>;
+      }>;
+    };
+    const transactionOverride = catalog.overrides.find((entry) =>
+      entry.metricWidgets?.some(
+        (widget) => widget.id === "recent-activity-transactions",
+      ),
+    );
+    const widget = transactionOverride?.metricWidgets.find(
+      (entry) => entry.id === "recent-activity-transactions",
+    );
+    expect(widget).toBeDefined();
+
+    const parsed = uiLayoutDocumentSchema.parse(widget!.layout);
+    const rootRows =
+      parsed.root.type === "root"
+        ? ((parsed.root.columns[0]?.rows ?? []) as readonly ComponentRowNode[])
+        : [];
+    const seeAllRow = findRowById(
+      rootRows,
+      "row-recent-activity-see-all",
+    ) as ComponentRowNode & { motion?: MotionPreset };
+    expect(seeAllRow?.motion?.hoverSurface).toBe("default");
+
+    const seeAllLayout: UiLayoutDocument = {
+      root: {
+        type: "root",
+        id: "see-all-root",
+        columnCount: 1,
+        columns: [
+          {
+            id: "see-all-col",
+            rows: [seeAllRow!],
+          },
+        ],
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      <EmbeddedLayoutRenderer layout={seeAllLayout} context={minimalContext} />,
+    );
+
+    expect(html).toContain("ui-motion-hover-interactive");
+    expect(html).toContain("--motion-hover-bg");
+    expect(html).toContain("padding-top:4px");
+    expect(html).toContain("border-radius:8px");
   });
 });

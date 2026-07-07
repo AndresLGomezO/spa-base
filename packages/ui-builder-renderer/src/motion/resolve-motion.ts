@@ -13,12 +13,16 @@ const ENTRANCE_CLASS: Record<NonNullable<MotionPreset["entrance"]>, string> = {
   scale: "ui-motion-entrance-scale",
 };
 
-const HOVER_INTERACTIVE_CLASS = "ui-motion-hover-interactive";
+export const MOTION_HOVER_INTERACTIVE_CLASS = "ui-motion-hover-interactive";
 
 const HOVER_SURFACE_BG: Record<Exclude<MotionHoverSurface, "none">, string> = {
   default: "var(--color-hover)",
   accent: "var(--color-accent-hover)",
   muted: "var(--color-muted)",
+  info: "color-mix(in oklch, var(--color-info) 24%, transparent)",
+  destructive: "color-mix(in oklch, var(--color-destructive) 40%, transparent)",
+  warning: "color-mix(in oklch, var(--color-warning) 40%, transparent)",
+  success: "color-mix(in oklch, var(--color-success) 40%, transparent)",
 };
 
 export interface ResolvedMotionPreset {
@@ -151,7 +155,7 @@ export function resolveMotionPreset(
   }
 
   if (hasInteractiveHover(preset)) {
-    classes.push(HOVER_INTERACTIVE_CLASS);
+    classes.push(MOTION_HOVER_INTERACTIVE_CLASS);
   }
 
   if (preset.transition === "layout") {
@@ -178,6 +182,37 @@ export function resolveMotionPreset(
     className: classes.filter(Boolean).join(" "),
     ...(style ? { style } : {}),
   };
+}
+
+/** Inline backgrounds win over class-based :hover; park them on --motion-rest-bg instead. */
+export function mergeMotionPresetStyle(
+  baseStyle: CSSProperties | undefined,
+  motionPreset: ResolvedMotionPreset,
+): CSSProperties {
+  const merged: CSSProperties = { ...baseStyle, ...motionPreset.style };
+
+  if (!motionPreset.className.includes(MOTION_HOVER_INTERACTIVE_CLASS)) {
+    return merged;
+  }
+
+  const restBackground =
+    baseStyle?.backgroundColor ??
+    (typeof baseStyle?.background === "string"
+      ? baseStyle.background
+      : undefined);
+
+  if (restBackground === undefined) {
+    return merged;
+  }
+
+  const cssVars = merged as Record<string, string | number | undefined>;
+  cssVars["--motion-rest-bg"] = restBackground;
+  delete merged.backgroundColor;
+  if (merged.background === restBackground) {
+    delete merged.background;
+  }
+
+  return merged;
 }
 
 export const REDUCED_MOTION_MEDIA = "(prefers-reduced-motion: reduce)" as const;

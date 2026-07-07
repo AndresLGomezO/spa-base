@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { curveMonotoneX } from "@visx/curve";
 import { LinearGradient } from "@visx/gradient";
@@ -11,10 +11,6 @@ import { cn } from "@repo/theme/utils";
 import { ChartContainer } from "./ChartContainer.js";
 import { ChartLegend } from "./ChartLegend.js";
 import { resolveChartInsets } from "./chart-layout.js";
-import {
-  resolveAreaFillGradientColor,
-  resolveAreaFillGradientOpacity,
-} from "./parse-chart-color.js";
 import type { ChartRenderSeries, LineAreaChartProps } from "./types.js";
 
 interface PreparedSeries {
@@ -23,8 +19,8 @@ interface PreparedSeries {
   readonly color: string;
   readonly strokeWidth: number;
   readonly showAreaFill: boolean;
-  readonly areaFillGradientRgb: string;
-  readonly areaFillGradientOpacity: number;
+  readonly areaFillColor: string;
+  readonly areaFillOpacity: number;
   readonly points: Array<{ x: number; y: number }>;
   readonly xLabels: string[];
 }
@@ -57,11 +53,6 @@ function prepareSeries(
     const strokeColor = entry.color ?? "var(--color-primary, #6366f1)";
     const areaFillColor =
       entry.areaFillColor ?? entry.color ?? "var(--color-primary, #6366f1)";
-    const areaFillOpacity = entry.areaFillOpacity ?? 0.25;
-    const parsedAreaFill = resolveAreaFillGradientColor(
-      areaFillColor,
-      strokeColor,
-    );
 
     prepared.push({
       id: entry.id,
@@ -69,11 +60,8 @@ function prepareSeries(
       color: strokeColor,
       strokeWidth: entry.strokeWidth ?? 2,
       showAreaFill: chartType === "area" ? true : (entry.showAreaFill ?? false),
-      areaFillGradientRgb: parsedAreaFill.rgb,
-      areaFillGradientOpacity: resolveAreaFillGradientOpacity(
-        parsedAreaFill,
-        areaFillOpacity,
-      ),
+      areaFillColor,
+      areaFillOpacity: entry.areaFillOpacity ?? 0.25,
       points: numericPoints,
       xLabels,
     });
@@ -105,6 +93,10 @@ function resolvePointX(
   return linearScale(point.x);
 }
 
+function sanitizeSvgId(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
 function ChartSvg({
   width,
   height,
@@ -113,6 +105,7 @@ function ChartSvg({
   yAxis,
   grid,
   animation,
+  instanceId,
 }: {
   readonly width: number;
   readonly height: number;
@@ -121,6 +114,7 @@ function ChartSvg({
   readonly yAxis: LineAreaChartProps["yAxis"];
   readonly grid: LineAreaChartProps["grid"];
   readonly animation: LineAreaChartProps["animation"];
+  readonly instanceId: string;
 }) {
   const primary = preparedSeries[0];
   const insets = resolveChartInsets(undefined, xAxis, yAxis);
@@ -176,7 +170,7 @@ function ChartSvg({
         ) : null}
 
         {preparedSeries.map((entry) => {
-          const gradientId = `chart-area-gradient-${entry.id}`;
+          const gradientId = `chart-area-gradient-${instanceId}-${entry.id}`;
           const mapped = entry.points.map((point, index) => ({
             x: resolvePointX(point, index, entry.xLabels, innerWidth),
             y: yScale(point.y),
@@ -188,9 +182,9 @@ function ChartSvg({
                 <>
                   <LinearGradient
                     id={gradientId}
-                    from={entry.areaFillGradientRgb}
-                    to={entry.areaFillGradientRgb}
-                    fromOpacity={entry.areaFillGradientOpacity}
+                    from="currentColor"
+                    to="currentColor"
+                    fromOpacity={entry.areaFillOpacity}
                     toOpacity={0}
                     vertical
                   />
@@ -202,6 +196,7 @@ function ChartSvg({
                     y0={() => innerHeight}
                     curve={curveMonotoneX}
                     fill={`url(#${gradientId})`}
+                    color={entry.areaFillColor}
                     stroke="none"
                   />
                 </>
@@ -278,6 +273,7 @@ export function LineAreaChart({
   loading,
   emptyMessage = "No chart data",
 }: LineAreaChartProps) {
+  const instanceId = sanitizeSvgId(useId());
   const preparedSeries = useMemo(
     () => prepareSeries(series, chartType),
     [series, chartType],
@@ -322,6 +318,7 @@ export function LineAreaChart({
               yAxis={yAxis}
               grid={grid}
               animation={animation}
+              instanceId={instanceId}
             />
             <ChartLegend series={series} legend={legend} insets={insets} />
           </>

@@ -688,7 +688,7 @@
                                 },
                                 {
                                   "property": "bottom",
-                                  "value": "0"
+                                  "value": "10"
                                 },
                                 {
                                   "property": "left",
@@ -977,7 +977,7 @@
                                 },
                                 {
                                   "property": "bottom",
-                                  "value": "0"
+                                  "value": "10"
                                 },
                                 {
                                   "property": "left",
@@ -1266,7 +1266,7 @@
                                 },
                                 {
                                   "property": "bottom",
-                                  "value": "0"
+                                  "value": "10"
                                 },
                                 {
                                   "property": "left",
@@ -2122,6 +2122,34 @@
                                       {
                                         "type": "component",
                                         "id": "row-recent-activity-see-all",
+                                        "motion": {
+                                          "hoverSurface": "default",
+                                          "hoverTransform": "none",
+                                          "hoverDurationMs": 150,
+                                          "transition": "all"
+                                        },
+                                        "styles": [
+                                          {
+                                            "property": "paddingTop",
+                                            "value": "4"
+                                          },
+                                          {
+                                            "property": "paddingBottom",
+                                            "value": "4"
+                                          },
+                                          {
+                                            "property": "paddingLeft",
+                                            "value": "8"
+                                          },
+                                          {
+                                            "property": "paddingRight",
+                                            "value": "8"
+                                          },
+                                          {
+                                            "property": "borderRadius",
+                                            "value": "8"
+                                          }
+                                        ],
                                         "clickAction": {
                                           "type": "externalUrl",
                                           "url": {
@@ -2212,7 +2240,7 @@
                                                 }
                                               },
                                               "motion": {
-                                                "hoverSurface": "default",
+                                                "hoverSurface": "muted",
                                                 "hoverTransform": "none",
                                                 "hoverDurationMs": 150,
                                                 "transition": "all"
