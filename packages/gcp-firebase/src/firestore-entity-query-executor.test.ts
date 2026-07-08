@@ -8,12 +8,14 @@ const mockGet = vi.fn();
 const mockLimit = vi.fn();
 const mockOrderBy = vi.fn();
 const mockWhere = vi.fn();
+const mockStartAfter = vi.fn();
 
 function createChainableQuery() {
   const query = {
     where: mockWhere.mockReturnThis(),
     orderBy: mockOrderBy.mockReturnThis(),
     limit: mockLimit.mockReturnThis(),
+    startAfter: mockStartAfter.mockReturnThis(),
     get: mockGet,
   };
   return query;
@@ -61,6 +63,7 @@ describe("createFirestoreEntityQueryExecutor in-memory list pipeline", () => {
     mockWhere.mockImplementation(() => createChainableQuery());
     mockOrderBy.mockImplementation(() => createChainableQuery());
     mockLimit.mockImplementation(() => createChainableQuery());
+    mockStartAfter.mockImplementation(() => createChainableQuery());
     mockGet.mockResolvedValue({
       docs: records.map((record) => ({
         data: () => record,
@@ -143,5 +146,62 @@ describe("createFirestoreEntityQueryExecutor in-memory list pipeline", () => {
     });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("paginates in-memory snapshot loads beyond a single Firestore page", async () => {
+    const manyRecords = Array.from({ length: 150 }, (_, index) => ({
+      id: `record_${String(index).padStart(3, "0")}`,
+      tenantId: "tenant_a",
+      status: index >= 140 ? "UPCOMING" : "PAID",
+      accessUserIds: ["user_1"],
+    }));
+
+    let callCount = 0;
+    mockGet.mockImplementation(async () => {
+      const pageIndex = callCount;
+      callCount += 1;
+      const pageSize = 100;
+      const start = pageIndex * pageSize;
+      const slice = manyRecords.slice(start, start + pageSize);
+      return {
+        docs: slice.map((record) => ({
+          data: () => record,
+        })),
+      };
+    });
+
+    const executor = createFirestoreEntityQueryExecutor({
+      config: { projectId: "demo" },
+      collection: "paymentSchedules",
+      converter,
+      inMemoryListQueries: true,
+      clientFallbackMaxDocs: 5000,
+      tenantWideRead: false,
+    });
+
+    const result = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [
+          {
+            field: "accessUserIds",
+            operator: "array-contains",
+            value: "user_1",
+          },
+          {
+            field: "status",
+            operator: "==",
+            value: "UPCOMING",
+          },
+        ],
+        postFilters: [],
+        sort: { field: "id", direction: "asc" },
+        limit: 25,
+      }),
+    );
+
+    expect(callCount).toBeGreaterThan(1);
+    expect(result.items).toHaveLength(10);
+    expect(result.items.every((item) => item.status === "UPCOMING")).toBe(true);
   });
 });

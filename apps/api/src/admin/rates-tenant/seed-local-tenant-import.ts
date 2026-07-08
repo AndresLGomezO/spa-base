@@ -1,6 +1,6 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
 import type { EntityFileReference } from "@repo/entities";
@@ -17,15 +17,18 @@ import { getAuth } from "firebase-admin/auth";
 
 import { apiEnv } from "../../config/env.js";
 import {
+  RATES_GCP_DEMO_OWNER_UID,
   RATES_LOCAL_IMPORT_OWNER_EMAIL,
   RATES_LOCAL_IMPORT_TENANT_ROLE,
 } from "./constants.js";
 import {
   createRatesRecordSeedContext,
-  ensureRatesRecord,
+  importRatesRecordsBatch,
 } from "./seed-record-helpers.js";
 
-const LOCAL_IMPORT_DIR = join(process.cwd(), ".local/tenant-import");
+const LOCAL_IMPORT_DIR =
+  process.env.TENANT_IMPORT_DIR?.trim() ||
+  join(process.cwd(), ".local/tenant-import");
 
 const LOCAL_IMPORT_SPECS = [
   { fileName: "category.json", entityName: "category" },
@@ -54,6 +57,11 @@ const LOCAL_GENERATED_IMPORT_SPECS = [
 
 type LocalImportSpec = (typeof LOCAL_IMPORT_SPECS)[number];
 type LocalGeneratedImportSpec = (typeof LOCAL_GENERATED_IMPORT_SPECS)[number];
+
+export interface LocalTenantImportOptions {
+  readonly requireOwner?: boolean;
+  readonly expectedUid?: string;
+}
 
 function isAuthUserNotFound(error: unknown): boolean {
   const code =
@@ -116,7 +124,7 @@ export function normalizeLocalImportRecord(
   ) as Record<string, unknown>;
 }
 
-function resolveLogoContentType(fileName: string): string | null {
+export function resolveEntityImageContentType(fileName: string): string | null {
   const normalized = fileName.trim().toLowerCase();
   if (normalized.endsWith(".png")) {
     return "image/png";
@@ -133,83 +141,193 @@ function resolveLogoContentType(fileName: string): string | null {
   return null;
 }
 
-function readActorLogoFileName(record: Record<string, unknown>): string | null {
-  const logo = record.logo;
-  if (!logo || typeof logo !== "object" || Array.isArray(logo)) {
+export function readEntityImageFileName(
+  record: Record<string, unknown>,
+  fieldName: string,
+): string | null {
+  const fileRef = record[fieldName];
+  if (!fileRef || typeof fileRef !== "object" || Array.isArray(fileRef)) {
     return null;
   }
 
-  const fileName = (logo as EntityFileReference).fileName;
+  const fileName = (fileRef as EntityFileReference).fileName;
   return typeof fileName === "string" && fileName.trim().length > 0
     ? fileName.trim()
     : null;
 }
 
-async function seedActorLogosFromLocalFiles(
+const LOCAL_ENTITY_IMAGE_SEED_SPECS = [
+  {
+    entityName: "actor",
+    jsonFile: "actor.json",
+    fieldName: "logo",
+  },
+  {
+    entityName: "category",
+    jsonFile: "category.json",
+    fieldName: "image",
+  },
+] as const;
+
+const ENTITY_IMAGE_UPLOAD_CONCURRENCY = 8;
+
+type UploadedEntityImages = ReadonlyMap<string, EntityFileReference>;
+
+function uploadedEntityImageKey(entityName: string, objectId: string): string {
+  return `${entityName}:${objectId}`;
+}
+
+async function runWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function runWorker(): Promise<void> {
+    while (true) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) {
+        return;
+      }
+      results[index] = await worker(items[index]!, index);
+    }
+  }
+
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
+}
+
+function applyUploadedEntityImage(
+  entityName: string,
+  id: string,
+  business: Record<string, unknown>,
+  uploadedImages: UploadedEntityImages,
+): Record<string, unknown> {
+  const uploaded = uploadedImages.get(uploadedEntityImageKey(entityName, id));
+  if (!uploaded) {
+    return business;
+  }
+
+  const fieldName =
+    entityName === "actor"
+      ? "logo"
+      : entityName === "category"
+        ? "image"
+        : null;
+  if (!fieldName) {
+    return business;
+  }
+
+  return {
+    ...business,
+    [fieldName]: uploaded,
+  };
+}
+
+async function uploadEntityImagesFromLocalFiles(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
   importDir: string,
-  context: ReturnType<typeof createRatesRecordSeedContext>,
-): Promise<void> {
+): Promise<UploadedEntityImages> {
   const logosDir = join(importDir, "logos");
-  const actorPath = join(importDir, "actor.json");
-  if (!existsSync(logosDir) || !existsSync(actorPath)) {
-    return;
+  const uploadedImages = new Map<string, EntityFileReference>();
+  if (!existsSync(logosDir)) {
+    return uploadedImages;
   }
 
-  const records = readImportRecords(actorPath);
-  let uploaded = 0;
-
-  for (const record of records) {
-    const actorId = record.id;
-    if (typeof actorId !== "string" || actorId.trim().length === 0) {
+  for (const spec of LOCAL_ENTITY_IMAGE_SEED_SPECS) {
+    const entityPath = join(importDir, spec.jsonFile);
+    if (!existsSync(entityPath)) {
       continue;
     }
 
-    const fileName = readActorLogoFileName(record);
-    if (!fileName) {
-      continue;
-    }
+    const records = readImportRecords(entityPath);
+    const uploadTargets = records.flatMap((record) => {
+      const objectId = record.id;
+      if (typeof objectId !== "string" || objectId.trim().length === 0) {
+        return [];
+      }
 
-    const localLogoPath = join(logosDir, fileName);
-    if (!existsSync(localLogoPath)) {
-      console.log(
-        `[seed]   actor logo file missing for ${record.name ?? actorId}: ${fileName}`,
-      );
-      continue;
-    }
+      const fileName = readEntityImageFileName(record, spec.fieldName);
+      if (!fileName) {
+        return [];
+      }
 
-    const contentType = resolveLogoContentType(fileName);
-    if (!contentType) {
-      console.log(
-        `[seed]   unsupported actor logo type for ${record.name ?? actorId}: ${fileName}`,
-      );
-      continue;
-    }
+      const localImagePath = join(logosDir, fileName);
+      if (!existsSync(localImagePath)) {
+        console.log(
+          `[seed]   ${spec.entityName} ${spec.fieldName} file missing for ${record.name ?? objectId}: ${fileName}`,
+        );
+        return [];
+      }
 
-    const file = await uploadEntityFile({
-      config: firebaseAdminConfig,
-      tenantId,
-      entityName: "actor",
-      fieldName: "logo",
-      fieldType: "image",
-      objectId: actorId,
-      buffer: readFileSync(localLogoPath),
-      contentType,
-      fileName,
-      uploadedBy: "seed-database",
+      const contentType = resolveEntityImageContentType(fileName);
+      if (!contentType) {
+        console.log(
+          `[seed]   unsupported ${spec.entityName} ${spec.fieldName} type for ${record.name ?? objectId}: ${fileName}`,
+        );
+        return [];
+      }
+
+      return [
+        {
+          objectId,
+          fileName,
+          localImagePath,
+          contentType,
+          label: String(record.name ?? objectId),
+        },
+      ];
     });
 
-    await ensureRatesRecord(context, "actor", actorId, { logo: file });
-    uploaded += 1;
+    if (uploadTargets.length === 0) {
+      continue;
+    }
+
+    const startedAt = Date.now();
+    await runWithConcurrency(
+      uploadTargets,
+      ENTITY_IMAGE_UPLOAD_CONCURRENCY,
+      async (target) => {
+        const file = await uploadEntityFile({
+          config: firebaseAdminConfig,
+          tenantId,
+          entityName: spec.entityName,
+          fieldName: spec.fieldName,
+          fieldType: "image",
+          objectId: target.objectId,
+          buffer: readFileSync(target.localImagePath),
+          contentType: target.contentType,
+          fileName: target.fileName,
+          uploadedBy: "seed-database",
+        });
+
+        uploadedImages.set(
+          uploadedEntityImageKey(spec.entityName, target.objectId),
+          file,
+        );
+      },
+    );
+
+    console.log(
+      `[seed]   ${spec.entityName} ${spec.fieldName}: ${uploadTargets.length} uploaded from ${logosDir} (${Date.now() - startedAt}ms)`,
+    );
   }
 
-  if (uploaded > 0) {
-    console.log(`[seed]   actor logos: ${uploaded} uploaded from ${logosDir}`);
-  }
+  return uploadedImages;
 }
 
-function runLocalSchedulePaymentMockGenerator(importDir: string): void {
+async function runLocalSchedulePaymentMockGenerator(
+  importDir: string,
+): Promise<void> {
   const scriptPath = join(importDir, "generate-schedule-payment-mocks.ts");
   if (!existsSync(scriptPath)) {
     console.log(
@@ -219,22 +337,46 @@ function runLocalSchedulePaymentMockGenerator(importDir: string): void {
   }
 
   console.log(`[seed] Running local schedule payment generator...`);
-  const result = spawnSync("pnpm", ["exec", "tsx", scriptPath], {
-    cwd: join(process.cwd(), "apps/api"),
-    stdio: "inherit",
-    env: {
-      ...process.env,
-      TENANT_IMPORT_DIR: importDir,
-    },
-  });
+  const previousImportDir = process.env.TENANT_IMPORT_DIR;
+  process.env.TENANT_IMPORT_DIR = importDir;
 
-  if (result.error) {
-    throw result.error;
-  }
-  if (result.status !== 0) {
-    throw new Error(
-      `Local schedule payment generator exited with status ${result.status ?? "unknown"}.`,
+  try {
+    const generator = await import(pathToFileURL(scriptPath).href);
+    const snapshot = generator.loadImportSnapshot();
+    const anchorDate = generator.toDateOnly(new Date());
+    const payload = await generator.generateLocalSchedulePaymentMocks(
+      snapshot,
+      anchorDate,
     );
+
+    const outputDir = join(importDir, "generated");
+    mkdirSync(outputDir, { recursive: true });
+    writeFileSync(
+      join(outputDir, "paymentSchedule.json"),
+      `${JSON.stringify(payload.paymentSchedule, null, 2)}\n`,
+      "utf8",
+    );
+    writeFileSync(
+      join(outputDir, "transaction.json"),
+      `${JSON.stringify(payload.transaction, null, 2)}\n`,
+      "utf8",
+    );
+    writeFileSync(
+      join(outputDir, "balanceSnapshot.json"),
+      `${JSON.stringify(payload.balanceSnapshot, null, 2)}\n`,
+      "utf8",
+    );
+
+    console.log(
+      `[tenant-import] Generated schedule payment mocks in ${outputDir} ` +
+        `(${payload.paymentSchedule.length} schedules, ${payload.transaction.length} transactions, ${payload.balanceSnapshot.length} snapshots, anchor ${anchorDate}).`,
+    );
+  } finally {
+    if (previousImportDir === undefined) {
+      delete process.env.TENANT_IMPORT_DIR;
+    } else {
+      process.env.TENANT_IMPORT_DIR = previousImportDir;
+    }
   }
 }
 
@@ -242,6 +384,7 @@ async function ensureLocalImportOwnerAccess(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
   email: string,
+  options: LocalTenantImportOptions = {},
 ): Promise<string | null> {
   initializeFirebaseAdmin(firebaseAdminConfig);
   const auth = getAuth();
@@ -251,6 +394,11 @@ async function ensureLocalImportOwnerAccess(
     uid = (await auth.getUserByEmail(email)).uid;
   } catch (error: unknown) {
     if (isAuthUserNotFound(error)) {
+      if (options.requireOwner) {
+        throw new Error(
+          `GCP seed requires Firebase Auth user for ${email}, but the user was not found.`,
+        );
+      }
       console.log(
         `[seed] Skipping local tenant import: Auth user not found for ${email}. ` +
           "Sign in once in the emulator, then re-run pnpm seed:database.",
@@ -258,6 +406,16 @@ async function ensureLocalImportOwnerAccess(
       return null;
     }
     throw error;
+  }
+
+  if (options.expectedUid && uid !== options.expectedUid) {
+    throw new Error(
+      `Firebase Auth UID mismatch for ${email}: expected ${options.expectedUid}, got ${uid}.`,
+    );
+  }
+
+  if (options.requireOwner) {
+    console.log(`[seed] GCP owner verified: ${email} → ${uid}`);
   }
 
   const userRepository =
@@ -284,23 +442,55 @@ async function ensureLocalImportOwnerAccess(
   return uid;
 }
 
+export async function verifyGcpImportOwner(
+  tenantId: string,
+  firebaseAdminConfig: FirebaseAdminConfig,
+  email: string = resolveLocalTenantImportOwnerEmail(),
+  expectedUid: string = RATES_GCP_DEMO_OWNER_UID,
+): Promise<string> {
+  const ownerId = await ensureLocalImportOwnerAccess(
+    tenantId,
+    firebaseAdminConfig,
+    email,
+    { requireOwner: true, expectedUid },
+  );
+  if (!ownerId) {
+    throw new Error(`GCP import owner verification failed for ${email}.`);
+  }
+  return ownerId;
+}
+
 async function importLocalRecords(
   context: ReturnType<typeof createRatesRecordSeedContext>,
   importDir: string,
   specs: readonly { readonly fileName: string; readonly entityName: string }[],
+  uploadedImages: UploadedEntityImages = new Map(),
 ): Promise<void> {
   for (const spec of specs) {
     const filePath = join(importDir, spec.fileName);
     const records = readImportRecords(filePath);
+    const startedAt = Date.now();
 
-    for (const record of records) {
-      const normalized = normalizeLocalImportRecord(context.tenantId, record);
-      const { id, ...business } = normalized;
-      await ensureRatesRecord(context, spec.entityName, id as string, business);
-    }
+    await importRatesRecordsBatch(
+      context,
+      spec.entityName,
+      records.map((record) => {
+        const normalized = normalizeLocalImportRecord(context.tenantId, record);
+        const { id, ...business } = normalized;
+        return {
+          id: id as string,
+          business: applyUploadedEntityImage(
+            spec.entityName,
+            id as string,
+            business,
+            uploadedImages,
+          ),
+        };
+      }),
+    );
 
     console.log(
-      `[seed]   ${spec.fileName}: ${records.length} ${spec.entityName} record(s)`,
+      `[seed]   ${spec.fileName}: ${records.length} ${spec.entityName} record(s) (${Date.now() - startedAt}ms)`,
     );
   }
 }
@@ -310,9 +500,15 @@ export async function seedLocalTenantImportIfPresent(
   firebaseAdminConfig: FirebaseAdminConfig,
   definitionRecords: readonly EntityDefinitionRecord[],
   importDir: string = LOCAL_IMPORT_DIR,
+  importOptions: LocalTenantImportOptions = {},
 ): Promise<{ readonly seeded: boolean; readonly ownerEmail: string | null }> {
   const presentSpecs = listPresentLocalImportSpecs(importDir);
   if (presentSpecs.length === 0) {
+    if (importOptions.requireOwner) {
+      throw new Error(
+        `GCP seed requires local import JSON in ${importDir}, but no supported files were found.`,
+      );
+    }
     console.log(
       `[seed] No local tenant import JSON in ${importDir}; skipping personal import.`,
     );
@@ -324,6 +520,7 @@ export async function seedLocalTenantImportIfPresent(
     tenantId,
     firebaseAdminConfig,
     ownerEmail,
+    importOptions,
   );
   if (!ownerId) {
     return { seeded: false, ownerEmail };
@@ -340,14 +537,13 @@ export async function seedLocalTenantImportIfPresent(
     `[seed] Importing ${presentSpecs.length} local JSON file(s) for ${ownerEmail} from ${importDir}...`,
   );
 
-  await importLocalRecords(context, importDir, presentSpecs);
-  await seedActorLogosFromLocalFiles(
+  const uploadedImages = await uploadEntityImagesFromLocalFiles(
     tenantId,
     firebaseAdminConfig,
     importDir,
-    context,
   );
-  runLocalSchedulePaymentMockGenerator(importDir);
+  await importLocalRecords(context, importDir, presentSpecs, uploadedImages);
+  await runLocalSchedulePaymentMockGenerator(importDir);
 
   const generatedSpecs = listPresentLocalGeneratedImportSpecs(importDir);
   if (generatedSpecs.length > 0) {

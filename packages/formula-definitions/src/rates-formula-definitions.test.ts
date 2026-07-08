@@ -69,7 +69,7 @@ const germanScope: Partial<ExpressionScope> = {
   loaded: {
     parent: {
       currentBalance: 18_650_000,
-      amount: 692_487,
+      amount: 692_487.94,
     },
   },
   loopState: 18_650_000,
@@ -141,10 +141,23 @@ describe("loan state atoms", () => {
 });
 
 describe("loan strategy formulas", () => {
-  it("computes loanPrincipalPayment for GERMAN as balance divided by term", () => {
+  it("computes loanPrincipalPayment for GERMAN mid-loan first row from statement amount minus interest", () => {
     expect(
       evaluateRatesFormula("loanPrincipalPayment", germanScope),
-    ).toBeCloseTo(310_833, 0);
+    ).toBeCloseTo(312_027.94, 0);
+    expect(
+      evaluateRatesFormula("scheduleExpectedAmount", germanScope),
+    ).toBeCloseTo(692_487.94, 0);
+  });
+
+  it("computes loanPrincipalPayment for GERMAN using remaining term periods", () => {
+    expect(
+      evaluateRatesFormula("loanPrincipalPayment", {
+        ...germanScope,
+        loopIndex: 1,
+        loopState: 18_337_972.06,
+      }),
+    ).toBeCloseTo(310_813.09, 0);
   });
 
   it("computes loanInterestPayment as balance times monthly rate", () => {

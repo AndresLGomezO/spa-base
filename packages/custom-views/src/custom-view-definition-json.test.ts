@@ -146,14 +146,37 @@ describe("custom-view-definition-json", () => {
       );
     }
 
-    expect(parsed.data.customViews).toHaveLength(21);
-    const monthlyControl = parsed.data.customViews.find(
-      (view) => view.viewId === "monthly-control",
+    expect(parsed.data.customViews).toHaveLength(4);
+    for (const view of parsed.data.customViews) {
+      expect(view.hiddenFromNav).toBe(true);
+    }
+    expect(parsed.data.customViews.map((view) => view.viewId).sort()).toEqual([
+      "due-today",
+      "payments-due-this-month",
+      "transactions-this-month",
+      "upcoming-payments",
+    ]);
+  });
+
+  it("parses archived rates custom views catalog", () => {
+    const catalogPath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../../apps/api/src/admin/rates-tenant/catalogs/removed/rates-custom-views.json",
     );
-    expect(monthlyControl?.entityQueryDefinitionName).toBe(
-      "Active commitments",
+    const parsed = parseCustomViewsCatalogJson(
+      readFileSync(catalogPath, "utf8"),
     );
-    expect(monthlyControl?.navCategoryId).toBe("cat_commitments");
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error(
+        parsed.errors
+          .map((error) => `${error.path}: ${error.message}`)
+          .join("\n"),
+      );
+    }
+
+    expect(parsed.data.customViews).toHaveLength(17);
     expect(
       parsed.data.customViews.some(
         (view) => view.viewId === "accounts-by-balance",

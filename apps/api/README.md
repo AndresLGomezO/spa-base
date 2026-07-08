@@ -226,6 +226,33 @@ Requires Firestore (and Auth emulator for the demo user). With Docker dev, start
 
 Re-run after `pnpm dev:docker:reset` or when refreshing catalog/demo data.
 
+#### GCP seed (real Firestore / Auth)
+
+To seed the same `rates` tenant against a deployed GCP project using your local gcloud credentials:
+
+```bash
+gcloud auth login
+gcloud config set project entitysystem-development
+gcloud auth application-default login
+
+pnpm seed:database -- --gcp --project entitysystem-development
+```
+
+Preflight checks (fail fast):
+
+- `gcloud` CLI is on PATH with an active account
+- `gcloud config get-value project` matches `--project`
+- Application Default Credentials are configured
+
+GCP mode:
+
+- Uses tenant **`rates`** (same as emulator)
+- Seeds catalogs, UI overrides, and metric backfill
+- Imports **only** [`.local/tenant-import/`](../../.local/tenant-import/) data for **andreslgomezo@gmail.com**
+- Does **not** create `testuser1@rates.com` or fictional demo business records
+- Verifies Firebase Auth UID for `andreslgomezo@gmail.com` matches `RATES_GCP_DEMO_OWNER_UID` in [`constants.ts`](src/admin/rates-tenant/constants.ts)
+- Skips local hook-cache reload (no local API required)
+
 ### Rates demo user (emulator / Docker)
 
 | Field    | Value                                                                                                                                   |
@@ -239,7 +266,7 @@ Sign in through the web app with the Auth emulator enabled. No manual Firestore 
 
 ### Local tenant import (optional)
 
-If JSON files exist under [`.local/tenant-import/`](../../.local/tenant-import/) at the repo root, `pnpm seed:database` imports them **in addition to** the demo mock data above. Missing files are skipped individually.
+If JSON files exist under [`.local/tenant-import/`](../../.local/tenant-import/) at the repo root, `pnpm seed:database` imports them **in addition to** the demo mock data above (emulator mode only). In `--gcp` mode, personal import is the only business-record seed. Missing files are skipped individually in emulator mode; GCP mode fails if no import JSON is present.
 
 | Field           | Value                                                                                                                                                          |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -282,6 +309,8 @@ Generate static entity import JSON from [`tenant-data.yaml`](../../.local/tenant
 ```bash
 python3 .local/tenant-import/generate-import-json.py
 ```
+
+**Actor and category logos (optional):** place normalized image files under [`.local/tenant-import/logos/`](../../.local/tenant-import/logos/). File names must match the `fileName` in `actor.json` (`logo`) and `category.json` (`image`). See [`logos/manifest.json`](../../.local/tenant-import/logos/manifest.json) for the actor/category mapping. On `pnpm seed:database` (emulator or `--gcp`), matching files are uploaded to tenant storage and wired on the imported records.
 
 **Total Balance chart asset (optional):** place `total-balance-chart.png` under [`.local/tenant-import/assets/`](../../.local/tenant-import/assets/). On `pnpm seed:database`, the Rates seed uploads it to tenant storage and wires the Accounts metrics widget chart overlay. If the file is missing, the seed uses the bundled SVG fallback at `apps/web/public/images/total-balance-area-chart.svg`.
 

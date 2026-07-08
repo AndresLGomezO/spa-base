@@ -59,6 +59,18 @@ const FORMULA_PREVIEW_CATALOG: Readonly<
     summaryKey: "dataHooks.preview.formulas.loanTermMonths",
     detailBulletKeys: ["dataHooks.preview.formulas.loanTermMonthsDetail1"],
   },
+  loanGermanRemainingTermMonths: {
+    summaryKey: "dataHooks.preview.formulas.loanGermanRemainingTermMonths",
+    detailBulletKeys: [
+      "dataHooks.preview.formulas.loanGermanRemainingTermMonthsDetail1",
+    ],
+  },
+  loanGermanUsesStatementAmount: {
+    summaryKey: "dataHooks.preview.formulas.loanGermanUsesStatementAmount",
+    detailBulletKeys: [
+      "dataHooks.preview.formulas.loanGermanUsesStatementAmountDetail1",
+    ],
+  },
   loanIsLastPeriod: {
     summaryKey: "dataHooks.preview.formulas.loanIsLastPeriod",
     detailBulletKeys: ["dataHooks.preview.formulas.loanIsLastPeriodDetail1"],

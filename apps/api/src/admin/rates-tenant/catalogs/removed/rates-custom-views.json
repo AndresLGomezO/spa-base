@@ -1,0 +1,212 @@
+{
+  "kind": "custom-views-catalog",
+  "version": 1,
+  "exportedAt": "2026-07-08T10:58:21.916Z",
+  "description": "Archived Rates tenant sidebar custom views (v1 cleanup). Not seeded. Entity nav replaces these links.",
+  "customViews": [
+    {
+      "name": "Monthly control",
+      "viewId": "monthly-control",
+      "entityQueryDefinitionName": "Active commitments",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 1,
+      "nav": {
+        "label": "Monthly control",
+        "icon": "FileText"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Due this month",
+      "viewId": "commitments-due-this-month",
+      "entityQueryDefinitionName": "Commitments due this month",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 2,
+      "nav": {
+        "label": "Due this month",
+        "icon": "Calendar"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Past due",
+      "viewId": "past-due-commitments",
+      "entityQueryDefinitionName": "Past due commitments",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 3,
+      "nav": {
+        "label": "Past due",
+        "icon": "AlertTriangle"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Debts",
+      "viewId": "debts",
+      "entityQueryDefinitionName": "Debts",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 4,
+      "nav": {
+        "label": "Debts",
+        "icon": "Landmark"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Assets",
+      "viewId": "assets",
+      "entityQueryDefinitionName": "Assets",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 5,
+      "nav": {
+        "label": "Assets",
+        "icon": "TrendingUp"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Liabilities",
+      "viewId": "liabilities",
+      "entityQueryDefinitionName": "Liabilities",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 6,
+      "nav": {
+        "label": "Liabilities",
+        "icon": "TrendingDown"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By property",
+      "viewId": "by-property",
+      "entityQueryDefinitionName": "By property",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 7,
+      "nav": {
+        "label": "By property",
+        "icon": "Home"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Paused",
+      "viewId": "paused-items",
+      "entityQueryDefinitionName": "Paused items",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 8,
+      "nav": {
+        "label": "Paused",
+        "icon": "PauseCircle"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Recurring",
+      "viewId": "recurring-commitments",
+      "entityQueryDefinitionName": "Recurring commitments",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 9,
+      "nav": {
+        "label": "Recurring",
+        "icon": "Repeat"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By bank",
+      "viewId": "by-bank",
+      "entityQueryDefinitionName": "By bank",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 10,
+      "nav": {
+        "label": "By bank",
+        "icon": "Building2"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Income items",
+      "viewId": "income-flow",
+      "entityQueryDefinitionName": "Income flow",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 11,
+      "nav": {
+        "label": "Income items",
+        "icon": "HandCoins"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Expense items",
+      "viewId": "expense-flow",
+      "entityQueryDefinitionName": "Expense flow",
+      "navCategoryId": "cat_commitments",
+      "navOrder": 12,
+      "nav": {
+        "label": "Expense items",
+        "icon": "Receipt"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Overdue",
+      "viewId": "overdue-payments",
+      "entityQueryDefinitionName": "Overdue payments",
+      "navCategoryId": "cat_movements",
+      "navOrder": 2,
+      "nav": {
+        "label": "Overdue",
+        "icon": "AlertCircle"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Income",
+      "viewId": "income-this-month",
+      "entityQueryDefinitionName": "Income this month",
+      "navCategoryId": "cat_movements",
+      "navOrder": 6,
+      "nav": {
+        "label": "Income",
+        "icon": "HandCoins"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Expenses",
+      "viewId": "expenses-this-month",
+      "entityQueryDefinitionName": "Expenses this month",
+      "navCategoryId": "cat_movements",
+      "navOrder": 7,
+      "nav": {
+        "label": "Expenses",
+        "icon": "Receipt"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Balance history",
+      "viewId": "balance-history",
+      "entityQueryDefinitionName": "Latest balance snapshots",
+      "navCategoryId": "cat_movements",
+      "navOrder": 8,
+      "nav": {
+        "label": "Balance history",
+        "icon": "Camera"
+      },
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Accounts",
+      "viewId": "accounts-by-balance",
+      "entityQueryDefinitionName": "Accounts by balance",
+      "navCategoryId": "cat_my_money",
+      "navOrder": 1,
+      "nav": {
+        "label": "Accounts",
+        "icon": "Landmark"
+      },
+      "status": "ACTIVE"
+    }
+  ]
+}

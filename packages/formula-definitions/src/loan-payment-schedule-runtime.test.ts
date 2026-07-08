@@ -87,7 +87,7 @@ const revolvingLoanDetails = {
 const revolvingFinancialItem = {
   id: "f613909f-f7a8-4576-b9d8-8162253facd6",
   name: "Crediservice Rotativo",
-  amount: 692_487,
+  amount: 692_487.94,
   currentBalance: 18_650_000,
   nextDueDate: "2026-07-16",
 };
@@ -238,15 +238,15 @@ describe("loan payment schedule runtime", () => {
       unknown
     >[];
 
-    expect(rows[0]?.principalPortion).toBeCloseTo(310_833, 0);
+    expect(rows[0]?.principalPortion).toBeCloseTo(312_027.94, 0);
     expect(rows[0]?.interestPortion).toBeCloseTo(380_460, 0);
-    expect(rows[0]?.expectedAmount).toBeCloseTo(691_293, 0);
+    expect(rows[0]?.expectedAmount).toBeCloseTo(692_487.94, 0);
 
-    expect(rows[1]?.principalPortion).toBeCloseTo(305_653, 0);
-    expect(rows[1]?.interestPortion).toBeCloseTo(374_120, -2);
-    expect(rows[1]?.expectedAmount).toBeCloseTo(679_773, -2);
+    expect(rows[1]?.principalPortion).toBeCloseTo(310_813.09, 0);
+    expect(rows[1]?.interestPortion).toBeCloseTo(374_094.63, 0);
+    expect(rows[1]?.expectedAmount).toBeCloseTo(684_907.72, 0);
 
-    expect(rows[2]?.expectedAmount).toBeCloseTo(668_442, 0);
+    expect(rows[2]?.expectedAmount).toBeCloseTo(678_567.13, 0);
     expect(Number(rows[2]?.expectedAmount)).toBeLessThan(
       Number(rows[1]?.expectedAmount),
     );

@@ -65,7 +65,7 @@ const customViewsCatalogEnvelopeSchema = z.object({
   kind: z.literal(CUSTOM_VIEWS_CATALOG_JSON_KIND),
   version: z.literal(CUSTOM_VIEW_DEFINITION_JSON_VERSION),
   exportedAt: z.string().datetime(),
-  customViews: z.array(portableCustomViewDefinitionSchema).min(1),
+  customViews: z.array(portableCustomViewDefinitionSchema),
 });
 
 export { customViewsCatalogEnvelopeSchema };

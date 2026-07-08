@@ -40,7 +40,7 @@ const ApiEnvSchema = z.object({
     .number()
     .int()
     .nonnegative()
-    .default(1_000),
+    .default(5_000),
   INDEX_PROVISIONING_PUBSUB: z
     .enum(["true", "false"])
     .default("false")

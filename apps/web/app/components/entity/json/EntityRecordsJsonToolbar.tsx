@@ -4,11 +4,7 @@ import {
   type EntityRecordsExportEnvelope,
   type SerializableEntityDefinition,
 } from "@repo/entities";
-import {
-  JsonActionTriggerGroup,
-  JsonViewTriggerButton,
-  toast,
-} from "@repo/ui";
+import { JsonActionTriggerGroup, JsonViewTriggerButton, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { EntityName } from "../../../entities/entity-catalog";

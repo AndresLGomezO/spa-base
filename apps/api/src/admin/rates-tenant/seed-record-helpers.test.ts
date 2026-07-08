@@ -5,6 +5,7 @@ import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
 import {
   createRatesRecordSeedContext,
   createSeedHookEntityRuntime,
+  importRatesRecordsBatch,
 } from "./seed-record-helpers.js";
 
 const paymentScheduleRecord: EntityDefinitionRecord = {
@@ -44,5 +45,38 @@ describe("createSeedHookEntityRuntime", () => {
     );
     expect(runtime.getRepository("rates", "paymentSchedule")).toBeDefined();
     expect(runtime.resolveEntity("paymentSchedule", "other")).toBeUndefined();
+  });
+});
+
+describe("importRatesRecordsBatch", () => {
+  it("no-ops for empty record lists", async () => {
+    const context = createRatesRecordSeedContext(
+      "rates",
+      { projectId: "demo" },
+      [paymentScheduleRecord],
+      "owner_123",
+    );
+
+    await expect(
+      importRatesRecordsBatch(context, "paymentSchedule", []),
+    ).resolves.toBeUndefined();
+  });
+
+  it("throws when the entity is not registered on the seed context", async () => {
+    const context = createRatesRecordSeedContext(
+      "rates",
+      { projectId: "demo" },
+      [paymentScheduleRecord],
+      "owner_123",
+    );
+
+    await expect(
+      importRatesRecordsBatch(context, "missingEntity", [
+        {
+          id: "ps_1",
+          business: { financialItemId: "fi_1", dueDate: "2026-01-01" },
+        },
+      ]),
+    ).rejects.toThrow('Entity "missingEntity" is not registered');
   });
 });

@@ -1,7 +1,7 @@
 {
   "kind": "formula-definitions-catalog",
   "version": 1,
-  "exportedAt": "2026-07-03T12:24:35.537Z",
+  "exportedAt": "2026-07-08T01:40:31.203Z",
   "formulaDefinitions": [
     {
       "name": "monthlyRateFromQuote",
@@ -404,6 +404,90 @@
       "source": "tenant"
     },
     {
+      "name": "loanGermanRemainingTermMonths",
+      "description": "Loan: GERMAN remaining periods including current row",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "max",
+        "args": [
+          {
+            "kind": "literal",
+            "value": 1
+          },
+          {
+            "kind": "binary",
+            "op": "-",
+            "left": {
+              "kind": "formula",
+              "name": "loanTermMonths",
+              "inputs": {}
+            },
+            "right": {
+              "kind": "var",
+              "name": "loopIndex"
+            }
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanGermanUsesStatementAmount",
+      "description": "Loan: GERMAN mid-loan first row uses parent statement amount",
+      "inputs": [],
+      "body": {
+        "kind": "binary",
+        "op": "&&",
+        "left": {
+          "kind": "call",
+          "fn": "isEmpty",
+          "args": [
+            {
+              "kind": "formula",
+              "name": "loanOriginationDate",
+              "inputs": {}
+            }
+          ]
+        },
+        "right": {
+          "kind": "binary",
+          "op": "&&",
+          "left": {
+            "kind": "binary",
+            "op": "==",
+            "left": {
+              "kind": "var",
+              "name": "loopIndex"
+            },
+            "right": {
+              "kind": "literal",
+              "value": 0
+            }
+          },
+          "right": {
+            "kind": "unary",
+            "op": "!",
+            "operand": {
+              "kind": "call",
+              "fn": "isEmpty",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "amount"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
       "name": "loanIsLastPeriod",
       "description": "Loan: true when loopIndex is on the final period",
       "inputs": [],
@@ -607,18 +691,44 @@
               "value": "GERMAN"
             },
             "then": {
-              "kind": "binary",
-              "op": "/",
-              "left": {
-                "kind": "formula",
-                "name": "loanPeriodBalance",
-                "inputs": {}
-              },
-              "right": {
-                "kind": "formula",
-                "name": "loanTermMonths",
-                "inputs": {}
-              }
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "formula",
+                  "name": "loanGermanUsesStatementAmount",
+                  "inputs": {}
+                },
+                {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "parent",
+                    "path": "amount"
+                  },
+                  "right": {
+                    "kind": "formula",
+                    "name": "loanInterestPayment",
+                    "inputs": {}
+                  }
+                },
+                {
+                  "kind": "binary",
+                  "op": "/",
+                  "left": {
+                    "kind": "formula",
+                    "name": "loanPeriodBalance",
+                    "inputs": {}
+                  },
+                  "right": {
+                    "kind": "formula",
+                    "name": "loanGermanRemainingTermMonths",
+                    "inputs": {}
+                  }
+                }
+              ]
             }
           },
           {
@@ -747,6 +857,43 @@
               "kind": "call",
               "fn": "coalesce",
               "args": [
+                {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "amount"
+                },
+                {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "formula",
+                    "name": "loanPrincipalPayment",
+                    "inputs": {}
+                  },
+                  "right": {
+                    "kind": "formula",
+                    "name": "loanInterestPayment",
+                    "inputs": {}
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "GERMAN"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "formula",
+                  "name": "loanGermanUsesStatementAmount",
+                  "inputs": {}
+                },
                 {
                   "kind": "field",
                   "source": "loaded",
@@ -1185,8 +1332,7 @@
       "inputs": [
         {
           "name": "frequency",
-          "required": true,
-          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
+          "required": true
         }
       ],
       "body": {
@@ -1261,8 +1407,7 @@
       "inputs": [
         {
           "name": "frequency",
-          "required": true,
-          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
+          "required": true
         }
       ],
       "body": {
@@ -1337,18 +1482,15 @@
       "inputs": [
         {
           "name": "baseDate",
-          "required": true,
-          "description": "Starting date for schedule calculation (ISO string)"
+          "required": true
         },
         {
           "name": "frequency",
-          "required": true,
-          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
+          "required": true
         },
         {
           "name": "periodIndex",
-          "required": true,
-          "description": "Zero-based period index for due date calculation"
+          "required": true
         }
       ],
       "body": {
@@ -1384,13 +1526,11 @@
       "inputs": [
         {
           "name": "baseDate",
-          "required": true,
-          "description": "Starting date for schedule calculation (ISO string)"
+          "required": true
         },
         {
           "name": "frequency",
-          "required": true,
-          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
+          "required": true
         }
       ],
       "body": {
@@ -1434,13 +1574,11 @@
       "inputs": [
         {
           "name": "baseDate",
-          "required": true,
-          "description": "Starting date for schedule calculation (ISO string)"
+          "required": true
         },
         {
           "name": "frequency",
-          "required": true,
-          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
+          "required": true
         }
       ],
       "body": {
@@ -1498,8 +1636,7 @@
       "inputs": [
         {
           "name": "frequency",
-          "required": true,
-          "description": "Payment frequency code (WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUAL, ONE_TIME)"
+          "required": true
         }
       ],
       "body": {
@@ -1548,8 +1685,7 @@
       "inputs": [
         {
           "name": "existingCount",
-          "required": true,
-          "description": "Number of schedule rows already created"
+          "required": true
         }
       ],
       "body": {
@@ -1584,8 +1720,7 @@
       "inputs": [
         {
           "name": "itemType",
-          "required": true,
-          "description": "Financial item type code (LOAN, CARD, etc.)"
+          "required": true
         }
       ],
       "body": {
@@ -1710,13 +1845,11 @@
       "inputs": [
         {
           "name": "revolvingBalance",
-          "required": false,
-          "description": "Revolving balance on the credit card"
+          "required": false
         },
         {
           "name": "installmentSum",
-          "required": true,
-          "description": "Sum of installment child balances"
+          "required": true
         }
       ],
       "body": {

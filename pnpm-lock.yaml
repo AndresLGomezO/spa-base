@@ -380,6 +380,9 @@ importers:
       '@repo/tenant-bundle':
         specifier: workspace:*
         version: link:../../packages/tenant-bundle
+      '@repo/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       '@repo/ui-builder-core':
         specifier: workspace:*
         version: link:../../packages/ui-builder-core

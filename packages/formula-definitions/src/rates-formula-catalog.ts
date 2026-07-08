@@ -86,6 +86,28 @@ function layer1Formulas(): readonly PortableFormulaDefinition[] {
       coalesce(fieldCurrent("termMonths"), lit(12)),
     ),
     tenant(
+      "loanGermanRemainingTermMonths",
+      "Loan: GERMAN remaining periods including current row",
+      call(
+        "max",
+        lit(1),
+        binary("-", formulaRef("loanTermMonths"), varRef("loopIndex")),
+      ),
+    ),
+    tenant(
+      "loanGermanUsesStatementAmount",
+      "Loan: GERMAN mid-loan first row uses parent statement amount",
+      binary(
+        "&&",
+        call("isEmpty", formulaRef("loanOriginationDate")),
+        binary(
+          "&&",
+          binary("==", varRef("loopIndex"), lit(0)),
+          unary("!", call("isEmpty", fieldParent("amount"))),
+        ),
+      ),
+    ),
+    tenant(
       "loanIsLastPeriod",
       "Loan: true when loopIndex is on the final period",
       binary(
@@ -141,10 +163,18 @@ function layer2Formulas(): readonly PortableFormulaDefinition[] {
           },
           {
             when: lit("GERMAN"),
-            then: binary(
-              "/",
-              formulaRef("loanPeriodBalance"),
-              formulaRef("loanTermMonths"),
+            then: ifExpr(
+              formulaRef("loanGermanUsesStatementAmount"),
+              binary(
+                "-",
+                fieldParent("amount"),
+                formulaRef("loanInterestPayment"),
+              ),
+              binary(
+                "/",
+                formulaRef("loanPeriodBalance"),
+                formulaRef("loanGermanRemainingTermMonths"),
+              ),
             ),
           },
           {
@@ -195,6 +225,18 @@ function layer3Formulas(): readonly PortableFormulaDefinition[] {
           {
             when: lit("NONE"),
             then: coalesce(
+              fieldParent("amount"),
+              binary(
+                "+",
+                formulaRef("loanPrincipalPayment"),
+                formulaRef("loanInterestPayment"),
+              ),
+            ),
+          },
+          {
+            when: lit("GERMAN"),
+            then: ifExpr(
+              formulaRef("loanGermanUsesStatementAmount"),
               fieldParent("amount"),
               binary(
                 "+",

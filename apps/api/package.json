@@ -47,6 +47,7 @@
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@repo/tenant-bundle": "workspace:*",
+    "@repo/theme": "workspace:*",
     "cron-parser": "catalog:",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",

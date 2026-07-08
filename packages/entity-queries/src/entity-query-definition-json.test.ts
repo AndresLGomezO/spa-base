@@ -184,26 +184,17 @@ describe("entity-query-definition-json", () => {
       );
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(44);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(10);
     const names = parsed.data.entityQueryDefinitions.map((query) => query.name);
+    expect(names).toContain("Transactions this month");
     expect(names).toContain("Upcoming payments");
+    expect(names).toContain("Due today");
+    expect(names).toContain("Due this month");
+    expect(names).toContain("Top outflow category (period)");
     expect(names).toContain("Category outflows (period to date)");
     expect(names).toContain("Category transaction trend");
-    expect(names).toContain("Active commitments");
-    expect(names).toContain("Income by category");
     expect(names).toContain("Transaction trend");
-    expect(
-      parsed.data.entityQueryDefinitions.some(
-        (query) =>
-          query.sourceEntity === "financialItem" &&
-          query.filter.children.some(
-            (child) =>
-              child.type === "condition" &&
-              child.field === "actor.type" &&
-              child.value.type === "static" &&
-              child.value.value === "PROPERTY",
-          ),
-      ),
-    ).toBe(true);
+    expect(names).toContain("Due today (metrics)");
+    expect(names).toContain("Upcoming this week (metrics)");
   });
 });

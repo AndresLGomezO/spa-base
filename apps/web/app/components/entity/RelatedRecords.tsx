@@ -4,7 +4,7 @@ import { DataTable, Heading, Text } from "@repo/ui";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 
-import { listEntity } from "../../lib/api-client";
+import { fetchAllEntityItems } from "../../lib/fetch-all-entity-items";
 import type { EntityName } from "../../entities/entity-catalog";
 import {
   useEntityCatalog,
@@ -42,16 +42,16 @@ export function RelatedRecords({
   const { data, isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      listEntity<Record<string, unknown>>(childEntityName, {
+      fetchAllEntityItems<Record<string, unknown>>(childEntityName, {
+        maxItems: 500,
         query: {
           filter: [{ field: foreignKeyField, operator: "==", value: parentId }],
-          pagination: { limit: 20, offset: 0 },
         },
       }),
     enabled: isKnownEntity(childEntityName),
   });
 
-  const items = data?.items ?? [];
+  const items = data ?? [];
   const label = getEntityLabel(definition);
 
   const visibleFields = useMemo(() => {

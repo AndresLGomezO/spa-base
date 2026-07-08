@@ -73,6 +73,7 @@ const EQUALITY_OPERATORS = new Set<FirestoreNativeOperator>([
 /** Max rows loaded when search scans a collection (token post-filter; no search index). */
 const SEARCH_SCAN_MAX_ITEMS = 500;
 const SEARCH_SCAN_PAGE_SIZE = 100;
+const IN_MEMORY_SNAPSHOT_PAGE_SIZE = 100;
 
 function compareValues(left: unknown, right: unknown): number {
   if (typeof left === "number" && typeof right === "number") {
@@ -458,16 +459,42 @@ class FirestoreEntityQueryExecutor<
       const readSnapshot = async (
         queryToRun: NormalizedEntityQuery,
       ): Promise<Record<string, unknown>[]> => {
-        const snapshot = await buildFirestoreQuery(collectionRef, queryToRun)
-          .limit(maxDocs)
-          .get();
-        return snapshot.docs.map(
-          (doc) =>
-            this.executorConfig.converter.read(doc.data()) as Record<
-              string,
-              unknown
-            >,
-        );
+        const baseQuery = buildFirestoreQuery(collectionRef, queryToRun);
+        const items: Record<string, unknown>[] = [];
+        let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+
+        while (items.length < maxDocs) {
+          const remaining = maxDocs - items.length;
+          const pageSize = Math.min(IN_MEMORY_SNAPSHOT_PAGE_SIZE, remaining);
+          let pageQuery = baseQuery.limit(pageSize);
+
+          if (lastDoc) {
+            pageQuery = pageQuery.startAfter(lastDoc);
+          }
+
+          const snapshot = await pageQuery.get();
+          if (snapshot.empty) {
+            break;
+          }
+
+          items.push(
+            ...snapshot.docs.map(
+              (doc) =>
+                this.executorConfig.converter.read(doc.data()) as Record<
+                  string,
+                  unknown
+                >,
+            ),
+          );
+
+          if (snapshot.docs.length < pageSize) {
+            break;
+          }
+
+          lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+
+        return items;
       };
 
       const ownershipUserId = ownershipFilters.find(

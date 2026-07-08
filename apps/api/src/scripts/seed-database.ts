@@ -1,7 +1,10 @@
 import { existsSync } from "node:fs";
 import { connect } from "node:net";
 
-import { createFirestoreAdminEntityDefinitionRepository } from "@repo/gcp-firebase";
+import {
+  createFirestoreAdminEntityDefinitionRepository,
+  type FirebaseAdminConfig,
+} from "@repo/gcp-firebase";
 
 import { seedPlatformRoles } from "../admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "../admin/seed-platform-tenants.js";
@@ -9,6 +12,12 @@ import { RATES_TENANT_ID } from "../admin/rates-tenant/constants.js";
 import { apiEnv } from "../config/env.js";
 import { createEntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { isDevHookCacheReloadEnabled } from "../dev/reload-hook-cache.route.js";
+import { assertGcpSeedPreflight } from "./gcp-seed-preflight.js";
+import {
+  parseSeedDatabaseArgs,
+  type SeedDatabaseCliOptions,
+} from "./parse-seed-database-args.js";
+import { resolveTenantImportDir } from "./resolve-tenant-import-dir.js";
 
 function isInsideDocker(): boolean {
   return existsSync("/.dockerenv");
@@ -36,7 +45,16 @@ function normalizeServiceUrl(url: string, serviceName: string): string {
   return url.replace(`${serviceName}:`, "127.0.0.1:");
 }
 
-function buildFirebaseAdminConfig() {
+function clearEmulatorEnvVars(): void {
+  delete process.env.FIRESTORE_EMULATOR_HOST;
+  delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  delete process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+  delete process.env.FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST;
+  // .env.dev points at the local emulator bucket; derive from --project in GCP mode.
+  delete process.env.GCP_STORAGE_BUCKET;
+}
+
+function buildEmulatorFirebaseAdminConfig(): FirebaseAdminConfig {
   const firestoreEmulatorHost = normalizeEmulatorHost(
     apiEnv.FIRESTORE_EMULATOR_HOST,
     "firebase-emulator",
@@ -57,6 +75,14 @@ function buildFirebaseAdminConfig() {
     storageEmulatorHost,
     storageEmulatorPublicHost: apiEnv.FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST,
     storageBucket: apiEnv.GCP_STORAGE_BUCKET,
+  };
+}
+
+function buildGcpFirebaseAdminConfig(projectId: string): FirebaseAdminConfig {
+  const storageBucket = `${projectId}.appspot.com`;
+  return {
+    projectId,
+    storageBucket,
   };
 }
 
@@ -138,26 +164,43 @@ async function reloadHookCachesForTenants(
   }
 }
 
-export async function runDatabaseSeed(): Promise<void> {
-  const firebaseAdminConfig = buildFirebaseAdminConfig();
+export async function runDatabaseSeed(
+  options: SeedDatabaseCliOptions = { gcp: false },
+): Promise<void> {
+  let firebaseAdminConfig: FirebaseAdminConfig;
 
-  console.log("[seed] Project:", firebaseAdminConfig.projectId);
-  if (firebaseAdminConfig.firestoreEmulatorHost) {
-    console.log(
-      "[seed] Firestore emulator:",
-      firebaseAdminConfig.firestoreEmulatorHost,
-    );
-    await assertTcpReachable(
-      firebaseAdminConfig.firestoreEmulatorHost,
-      "Firestore emulator",
-    );
-  }
-  if (firebaseAdminConfig.authEmulatorHost) {
-    console.log("[seed] Auth emulator:", firebaseAdminConfig.authEmulatorHost);
-    await assertTcpReachable(
-      firebaseAdminConfig.authEmulatorHost,
-      "Auth emulator",
-    );
+  if (options.gcp) {
+    assertGcpSeedPreflight(options.projectId!);
+    clearEmulatorEnvVars();
+    process.env.TENANT_IMPORT_DIR = resolveTenantImportDir();
+    firebaseAdminConfig = buildGcpFirebaseAdminConfig(options.projectId!);
+    console.log(`[seed] Mode: GCP (${firebaseAdminConfig.projectId})`);
+    console.log(`[seed] Storage bucket: ${firebaseAdminConfig.storageBucket}`);
+    console.log(`[seed] Import dir: ${process.env.TENANT_IMPORT_DIR}`);
+  } else {
+    firebaseAdminConfig = buildEmulatorFirebaseAdminConfig();
+    console.log("[seed] Mode: emulator");
+    console.log("[seed] Project:", firebaseAdminConfig.projectId);
+    if (firebaseAdminConfig.firestoreEmulatorHost) {
+      console.log(
+        "[seed] Firestore emulator:",
+        firebaseAdminConfig.firestoreEmulatorHost,
+      );
+      await assertTcpReachable(
+        firebaseAdminConfig.firestoreEmulatorHost,
+        "Firestore emulator",
+      );
+    }
+    if (firebaseAdminConfig.authEmulatorHost) {
+      console.log(
+        "[seed] Auth emulator:",
+        firebaseAdminConfig.authEmulatorHost,
+      );
+      await assertTcpReachable(
+        firebaseAdminConfig.authEmulatorHost,
+        "Auth emulator",
+      );
+    }
   }
 
   const entityDefinitionRepository =
@@ -176,17 +219,24 @@ export async function runDatabaseSeed(): Promise<void> {
   await seedPlatformRoles(firebaseAdminConfig);
 
   console.log(
-    "[seed] Seeding platform tenants (rates catalog + per-user dev data)...",
+    options.gcp
+      ? "[seed] Seeding rates tenant on GCP (andreslgomezo@gmail.com import only)..."
+      : "[seed] Seeding platform tenants (rates catalog + per-user dev data)...",
   );
-  await seedPlatformTenants(firebaseAdminConfig, entityRuntime);
+  await seedPlatformTenants(firebaseAdminConfig, entityRuntime, {
+    gcp: options.gcp,
+  });
 
-  await reloadHookCachesForTenants([RATES_TENANT_ID]);
+  if (!options.gcp) {
+    await reloadHookCachesForTenants([RATES_TENANT_ID]);
+  }
 
   console.log("[seed] Database seed complete.");
 }
 
 async function main(): Promise<void> {
-  await runDatabaseSeed();
+  const options = parseSeedDatabaseArgs(process.argv.slice(2));
+  await runDatabaseSeed(options);
   process.exit(0);
 }
 

@@ -2,14 +2,48 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { RATES_GCP_DEMO_OWNER_UID } from "./constants.js";
 import {
   listPresentLocalGeneratedImportSpecs,
   listPresentLocalImportSpecs,
   normalizeLocalImportRecord,
+  readEntityImageFileName,
+  resolveEntityImageContentType,
   resolveLocalTenantImportOwnerEmail,
+  verifyGcpImportOwner,
 } from "./seed-local-tenant-import.js";
+
+const getUserByEmail = vi.fn();
+
+vi.mock("firebase-admin/auth", () => ({
+  getAuth: () => ({
+    getUserByEmail,
+  }),
+}));
+
+vi.mock("@repo/gcp-firebase", () => ({
+  initializeFirebaseAdmin: vi.fn(),
+  getFirebaseUserRecord: vi.fn(async () => ({
+    uid: RATES_GCP_DEMO_OWNER_UID,
+    email: "andreslgomezo@gmail.com",
+    emailVerified: true,
+    displayName: null,
+    photoURL: null,
+    phoneNumber: null,
+    disabled: false,
+    providerData: [],
+    metadata: { creationTime: "", lastSignInTime: "" },
+  })),
+  mapFirebaseUserRecordToAuthUserProjection: vi.fn((record) => record),
+  createFirestoreAdminRegisteredUserRepository: vi.fn(() => ({
+    upsertFromAuthUser: vi.fn(),
+    getByUid: vi.fn(async () => ({ tenants: {} })),
+    updateAccess: vi.fn(async () => true),
+  })),
+  setFirebaseUserCustomClaims: vi.fn(),
+}));
 
 describe("seed-local-tenant-import", () => {
   it("lists only JSON files that exist in the import directory", () => {
@@ -62,5 +96,77 @@ describe("seed-local-tenant-import", () => {
       fileName: "logo.png",
       contentType: "image/png",
     });
+  });
+
+  it("resolves supported entity image content types", () => {
+    expect(resolveEntityImageContentType("logo.png")).toBe("image/png");
+    expect(resolveEntityImageContentType("photo.jpg")).toBe("image/jpeg");
+    expect(resolveEntityImageContentType("icon.webp")).toBe("image/webp");
+    expect(resolveEntityImageContentType("logo.gif")).toBeNull();
+  });
+
+  it("reads entity image file names from logo or image fields", () => {
+    const record = {
+      id: "cat_1",
+      image: { fileName: "category-income.png" },
+      logo: { fileName: "actor.png" },
+    };
+
+    expect(readEntityImageFileName(record, "image")).toBe(
+      "category-income.png",
+    );
+    expect(readEntityImageFileName(record, "logo")).toBe("actor.png");
+    expect(readEntityImageFileName(record, "missing")).toBeNull();
+  });
+});
+
+describe("verifyGcpImportOwner", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("accepts the expected Firebase UID for andreslgomezo@gmail.com", async () => {
+    getUserByEmail.mockResolvedValue({
+      uid: RATES_GCP_DEMO_OWNER_UID,
+      email: "andreslgomezo@gmail.com",
+    });
+
+    await expect(
+      verifyGcpImportOwner(
+        "rates",
+        { projectId: "entitysystem-development" },
+        "andreslgomezo@gmail.com",
+        RATES_GCP_DEMO_OWNER_UID,
+      ),
+    ).resolves.toBe(RATES_GCP_DEMO_OWNER_UID);
+  });
+
+  it("fails when Firebase UID does not match the expected constant", async () => {
+    getUserByEmail.mockResolvedValue({
+      uid: "different-uid",
+      email: "andreslgomezo@gmail.com",
+    });
+
+    await expect(
+      verifyGcpImportOwner(
+        "rates",
+        { projectId: "entitysystem-development" },
+        "andreslgomezo@gmail.com",
+        RATES_GCP_DEMO_OWNER_UID,
+      ),
+    ).rejects.toThrow("Firebase Auth UID mismatch");
+  });
+
+  it("fails when the owner email is missing in Firebase Auth", async () => {
+    getUserByEmail.mockRejectedValue({ code: "auth/user-not-found" });
+
+    await expect(
+      verifyGcpImportOwner(
+        "rates",
+        { projectId: "entitysystem-development" },
+        "andreslgomezo@gmail.com",
+        RATES_GCP_DEMO_OWNER_UID,
+      ),
+    ).rejects.toThrow("GCP seed requires Firebase Auth user");
   });
 });

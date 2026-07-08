@@ -8,6 +8,7 @@ import type { EntityRuntimeContext } from "../../entities/entity-runtime-context
 import { seedTenantRolesFromTemplates } from "../seed-tenant-roles-from-templates.js";
 import { activateAndBackfillRatesMetrics } from "./backfill-rates-metrics.js";
 import {
+  RATES_GCP_DEMO_OWNER_UID,
   RATES_TENANT_ID,
   RATES_TENANT_NAME,
   RATES_TEST_USER_EMAIL,
@@ -16,15 +17,19 @@ import { seedRatesBusinessRecords } from "./records/index.js";
 import { buildRatesCustomRoles } from "./roles.js";
 import { seedRatesCatalogs } from "./seed-rates-catalogs.js";
 import { seedRatesGcpDemoUserAccess } from "./seed-gcp-demo-user-access.js";
-import { seedLocalTenantImportIfPresent } from "./seed-local-tenant-import.js";
+import {
+  seedLocalTenantImportIfPresent,
+  type LocalTenantImportOptions,
+} from "./seed-local-tenant-import.js";
 import { seedLocalTenantUiSlicesIfPresent } from "./seed-local-tenant-ui-slices.js";
 import { seedRatesEntityUiOverrides } from "./seed-rates-entity-ui-overrides.js";
 import { seedRatesUiBuilderPresets } from "./seed-rates-ui-builder-presets.js";
 import { seedRatesTenantDashboardLayout } from "./seed-rates-tenant-dashboard-layout.js";
+import { seedRatesTenantAppearance } from "./seed-rates-tenant-appearance.js";
 import { ensureRatesRole } from "./seed-helpers.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
 
-type RatesDemoOwnerStrategy = "localTestUser" | "gcpUid";
+type RatesDemoOwnerStrategy = "localTestUser" | "gcpUid" | "gcpImportOwner";
 
 interface SeedRatesTenantOptions {
   readonly tenantId?: string;
@@ -32,6 +37,7 @@ interface SeedRatesTenantOptions {
   readonly ensureTenant?: boolean;
   readonly demoOwnerStrategy?: RatesDemoOwnerStrategy;
   readonly backfillMetrics?: boolean;
+  readonly localImportOptions?: LocalTenantImportOptions;
 }
 
 interface SeedRatesTenantResult {
@@ -60,6 +66,9 @@ async function seedRatesTenant(
   const ensureTenant = options.ensureTenant ?? false;
   const demoOwnerStrategy = options.demoOwnerStrategy ?? "localTestUser";
   const backfillMetrics = options.backfillMetrics ?? true;
+  const enableLocalImport =
+    demoOwnerStrategy === "localTestUser" ||
+    demoOwnerStrategy === "gcpImportOwner";
 
   const tenantRepository =
     createFirestoreAdminTenantRepository(firebaseAdminConfig);
@@ -95,7 +104,7 @@ async function seedRatesTenant(
   let demoOwnerId: string | null = null;
   if (demoOwnerStrategy === "localTestUser") {
     demoOwnerId = await seedRatesTestUser(firebaseAdminConfig);
-  } else {
+  } else if (demoOwnerStrategy === "gcpUid") {
     demoOwnerId = await seedRatesGcpDemoUserAccess(
       tenantId,
       firebaseAdminConfig,
@@ -114,11 +123,13 @@ async function seedRatesTenant(
     );
   }
 
-  if (demoOwnerStrategy === "localTestUser") {
+  if (enableLocalImport) {
     await seedLocalTenantImportIfPresent(
       tenantId,
       firebaseAdminConfig,
       catalogResult.definitionRecords,
+      undefined,
+      options.localImportOptions,
     );
   }
 
@@ -132,7 +143,9 @@ async function seedRatesTenant(
 
   await seedRatesTenantDashboardLayout(tenantId, firebaseAdminConfig);
 
-  if (demoOwnerStrategy === "localTestUser") {
+  await seedRatesTenantAppearance(tenantId, firebaseAdminConfig);
+
+  if (enableLocalImport) {
     await seedLocalTenantUiSlicesIfPresent(
       tenantId,
       firebaseAdminConfig,
@@ -176,5 +189,21 @@ export async function seedRatesTenantMock(
     tenantName: RATES_TENANT_NAME,
     demoOwnerStrategy: "localTestUser",
     backfillMetrics: true,
+  });
+}
+
+export async function seedRatesTenantGcp(
+  firebaseAdminConfig: FirebaseAdminConfig,
+  entityRuntime: EntityRuntimeContext,
+): Promise<SeedRatesTenantResult> {
+  return seedRatesTenant(firebaseAdminConfig, entityRuntime, {
+    tenantId: RATES_TENANT_ID,
+    tenantName: RATES_TENANT_NAME,
+    demoOwnerStrategy: "gcpImportOwner",
+    backfillMetrics: true,
+    localImportOptions: {
+      requireOwner: true,
+      expectedUid: RATES_GCP_DEMO_OWNER_UID,
+    },
   });
 }

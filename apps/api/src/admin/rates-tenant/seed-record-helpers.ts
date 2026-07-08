@@ -58,6 +58,20 @@ function getSeedEntityRepository(
   return repository;
 }
 
+function buildParsedSeedRecord(
+  context: RatesRecordSeedContext,
+  entity: DefinedEntity<string, FieldDefinitions>,
+  id: string,
+  business: Record<string, unknown>,
+  now: string,
+): GenericRecord {
+  const draft = applySearchMirrorFields(
+    entity,
+    buildSeedRecord(context.tenantId, business, id, context.ownerId, now),
+  );
+  return entity.schema.parse(draft) as GenericRecord;
+}
+
 async function ensureRecord(
   tenantId: string,
   repository: TenantScopedEntityRepository<GenericRecord, unknown>,
@@ -189,4 +203,32 @@ export async function ensureRatesRecord(
     context.ownerId,
     business,
   );
+}
+
+export async function importRatesRecordsBatch(
+  context: RatesRecordSeedContext,
+  entityName: string,
+  records: readonly {
+    readonly id: string;
+    readonly business: Record<string, unknown>;
+  }[],
+): Promise<void> {
+  if (records.length === 0) {
+    return;
+  }
+
+  const entity = context.entities.get(entityName);
+  if (!entity) {
+    throw new Error(
+      `Entity "${entityName}" is not registered for rates seed on tenant "${context.tenantId}".`,
+    );
+  }
+
+  const repository = getSeedEntityRepository(context, entity);
+  const now = new Date().toISOString();
+  const parsedRecords = records.map(({ id, business }) =>
+    buildParsedSeedRecord(context, entity, id, business, now),
+  );
+
+  await repository.createMany(context.tenantId, parsedRecords);
 }
