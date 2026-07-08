@@ -16,13 +16,39 @@ import { isContainerComponent } from "../types/component.js";
 import {
   flexWrapRowItemClassName,
   isFlexWrapRowStack,
+  layoutInlineStyleFromStyleRules,
   parseFlexLayoutFromStyles,
   prefersInlineContentWidth,
   rowPrefersContentWidth,
+  stylesHaveWidthBounds,
   type FlexAlign,
   type LayoutInlineStyle,
 } from "../styles/apply-style-rules.js";
 import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
+
+/** Width constraints that must live on the flex-wrap item for correct wrap math. */
+function flexWrapItemWidthStyle(
+  row: RowNode,
+): Pick<LayoutInlineStyle, "minWidth" | "maxWidth" | "width"> | undefined {
+  if (row.type !== "component") {
+    return undefined;
+  }
+
+  const style = layoutInlineStyleFromStyleRules(row.component.styles);
+  const next: Pick<LayoutInlineStyle, "minWidth" | "maxWidth" | "width"> = {};
+
+  if (style.minWidth !== undefined) {
+    next.minWidth = style.minWidth;
+  }
+  if (style.maxWidth !== undefined) {
+    next.maxWidth = style.maxWidth;
+  }
+  if (style.width !== undefined) {
+    next.width = style.width;
+  }
+
+  return Object.keys(next).length > 0 ? next : undefined;
+}
 
 function findRowNodeInRows(
   rows: readonly RowNode[],
@@ -282,9 +308,18 @@ export function resolveRowShellLayoutClasses(options: {
       return {
         shell: `relative flex min-h-0 flex-col ${flexItemClass}`,
         inner: "relative z-0 flex min-h-0 min-w-0 w-full max-w-full flex-col",
+        shellStyle: flexWrapItemWidthStyle(options.row),
       };
     }
   }
+
+  const widthBounds =
+    options.row?.type === "component"
+      ? stylesHaveWidthBounds(options.row.component.styles)
+      : false;
+  const widthBoundsShellStyle = options.row
+    ? flexWrapItemWidthStyle(options.row)
+    : undefined;
 
   if (options.parentStackDirection !== "row") {
     if (options.isStructuralRow || options.preferFlexGrow) {
@@ -313,6 +348,15 @@ export function resolveRowShellLayoutClasses(options: {
     return {
       shell: "relative flex min-h-0 min-w-0 flex-1 flex-col",
       inner: "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col",
+    };
+  }
+
+  if (widthBounds) {
+    return {
+      shell:
+        "relative flex min-h-0 min-w-0 max-w-full flex-[1_1_auto] basis-auto flex-col",
+      inner: "relative z-0 flex min-h-0 min-w-0 w-full max-w-full flex-col",
+      shellStyle: widthBoundsShellStyle,
     };
   }
 

@@ -244,9 +244,73 @@ describe("preview-row-chrome-layout", () => {
       preferContentWidth: false,
     });
 
-    expect(containerClasses.shell).toContain("flex-[1_1_0]");
+    expect(containerClasses.shell).toContain("w-fit");
+    expect(containerClasses.shell).toContain("basis-auto");
+    expect(containerClasses.shell).not.toContain("flex-[1_1_0]");
     expect(textClasses.shell).toContain("shrink-0");
     expect(textClasses.shell).not.toContain("w-fit");
+  });
+
+  it("hoists container minWidth onto the flex-wrap shell for wrap math", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "row",
+      parentUsesFlexWrap: true,
+      parentStackStyles: [{ property: "flexWrap", value: "wrap" }],
+      row: {
+        type: "component",
+        id: "container-1",
+        component: {
+          kind: "container",
+          rows: [],
+          styles: [
+            { property: "minWidth", value: "500" },
+            { property: "maxWidth", value: "600" },
+          ],
+        },
+      },
+      isStructuralRow: true,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+    });
+
+    expect(classes.shell).toContain("flex-[1_1_auto]");
+    expect(classes.shell).toContain("basis-auto");
+    expect(classes.shell).not.toContain("w-fit");
+    expect(classes.shellStyle).toEqual({
+      minWidth: "500px",
+      maxWidth: "600px",
+    });
+  });
+
+  it("grows width-bounded metric widgets between min and max in row stacks", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "row",
+      parentUsesFlexWrap: true,
+      parentStackStyles: [{ property: "flexWrap", value: "wrap" }],
+      row: {
+        type: "component",
+        id: "metric-widget-1",
+        component: {
+          kind: "metric-widget",
+          entityName: "account",
+          widgetId: "total-balance-by-month",
+          styles: [
+            { property: "minWidth", value: "400" },
+            { property: "maxWidth", value: "450" },
+          ],
+        },
+      },
+      isStructuralRow: false,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+    });
+
+    expect(classes.shell).toContain("flex-[1_1_auto]");
+    expect(classes.shell).toContain("basis-auto");
+    expect(classes.shellStyle).toEqual({
+      minWidth: "400px",
+      maxWidth: "450px",
+    });
   });
 
   it("uses content width for metric-widget rows inside flex-wrap stacks", () => {

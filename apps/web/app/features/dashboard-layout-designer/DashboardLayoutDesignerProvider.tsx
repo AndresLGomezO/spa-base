@@ -57,6 +57,10 @@ import {
   type DashboardLayoutDesignerSectionsSnapshot,
 } from "./dashboard-layout-designer-snapshots";
 import {
+  applySectionSelectionToSearchParams,
+  getDashboardLayoutDesignerSectionId,
+} from "./dashboard-layout-designer-section-selection";
+import {
   DASHBOARD_LAYOUT_DESIGNER_FOCUS_SEARCH_PARAM,
   DASHBOARD_LAYOUT_DESIGNER_TAB_SEARCH_PARAM,
   isShellLayoutFocus,
@@ -163,6 +167,10 @@ export function DashboardLayoutDesignerProvider({
       ),
     [searchParams],
   );
+  const selectedSectionIdFromUrl = useMemo(
+    () => getDashboardLayoutDesignerSectionId(searchParams),
+    [searchParams],
+  );
   const activeTabId: DashboardLayoutDesignerTabId = "design";
   const designFocusRef = useRef(designFocus);
   designFocusRef.current = designFocus;
@@ -248,6 +256,16 @@ export function DashboardLayoutDesignerProvider({
     [setSearchParams],
   );
 
+  const navigateToSection = useCallback(
+    (sectionId: string) => {
+      setSearchParams(
+        (current) => applySectionSelectionToSearchParams(current, sectionId),
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const saveSections = useCallback(async (): Promise<string | null> => {
     const error = await editor.saveSections();
     if (error === null) {
@@ -274,10 +292,56 @@ export function DashboardLayoutDesignerProvider({
 
   const switchSection = useCallback(
     (sectionId: string) => {
-      editor.setSelectedSectionId(sectionId);
+      navigateToSection(sectionId);
     },
-    [editor],
+    [navigateToSection],
   );
+
+  useEffect(() => {
+    const sections = editor.dashboardSections;
+
+    if (sections.length === 0) {
+      if (selectedSectionIdFromUrl.length > 0) {
+        navigateToSection("");
+      }
+      if (editor.selectedSectionId !== "") {
+        editor.setSelectedSectionId("");
+      }
+      return;
+    }
+
+    const urlIsValid = sections.some(
+      (section) => section.id === selectedSectionIdFromUrl,
+    );
+    const editorIsValid = sections.some(
+      (section) => section.id === editor.selectedSectionId,
+    );
+
+    if (urlIsValid) {
+      if (editor.selectedSectionId !== selectedSectionIdFromUrl) {
+        editor.setSelectedSectionId(selectedSectionIdFromUrl);
+      }
+      return;
+    }
+
+    const resolvedId = editorIsValid
+      ? editor.selectedSectionId
+      : (sections[0]?.id ?? "");
+
+    if (editor.selectedSectionId !== resolvedId) {
+      editor.setSelectedSectionId(resolvedId);
+    }
+
+    if (selectedSectionIdFromUrl !== resolvedId) {
+      navigateToSection(resolvedId);
+    }
+  }, [
+    editor,
+    editor.dashboardSections,
+    editor.selectedSectionId,
+    navigateToSection,
+    selectedSectionIdFromUrl,
+  ]);
 
   const closeStructurePanel = useCallback(() => {
     structurePanelSessionRef.current = null;

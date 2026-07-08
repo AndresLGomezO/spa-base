@@ -608,10 +608,43 @@ export function resolveDashboardSectionShellClassName(
   return "min-w-0 max-w-full shrink-0";
 }
 
+/** True when styles declare a usable width range (`minWidth` and/or `maxWidth`). */
+export function stylesHaveWidthBounds(
+  styles: readonly StyleRule[] | undefined,
+): boolean {
+  return (
+    styles?.some(
+      (rule) => rule.property === "minWidth" || rule.property === "maxWidth",
+    ) ?? false
+  );
+}
+
+/**
+ * Flex-wrap item classes for content/embeddable rows.
+ * Width-bounded items grow/shrink between min/max; otherwise they hug content.
+ */
+export function flexWrapBoundedOrIntrinsicItemClassName(
+  styles: readonly StyleRule[] | undefined,
+): string {
+  if (stylesIncludeFlexGrow(styles)) {
+    return "min-w-0 max-w-full flex-[1_1_0] basis-0";
+  }
+
+  if (stylesHaveWidthBounds(styles)) {
+    return "min-w-0 max-w-full flex-[1_1_auto] basis-auto";
+  }
+
+  return "w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto";
+}
+
 /** Width/height class for the shell that wraps an embedded metric widget layout. */
 export function resolveMetricWidgetShellClassName(
   styles: readonly StyleRule[] | undefined,
 ): string {
+  if (stylesHaveWidthBounds(styles)) {
+    return "min-w-0 w-full max-w-full";
+  }
+
   if (rowPrefersContentWidth(styles)) {
     return "min-w-0 w-fit max-w-full shrink-0";
   }
@@ -636,6 +669,10 @@ export function resolveEmbeddableComponentRowClassName(
       return "min-h-0 shrink-0 grow-0 flex-1";
     }
 
+    if (stylesHaveWidthBounds(component.styles)) {
+      return "w-full min-w-0 max-w-full shrink-0 grow-0";
+    }
+
     if (rowPrefersContentWidth(component.styles)) {
       return "w-fit max-w-full min-w-0 shrink-0 grow-0";
     }
@@ -645,6 +682,10 @@ export function resolveEmbeddableComponentRowClassName(
 
   if (stylesIncludeFlexGrow(component.styles)) {
     return "min-w-0 max-w-full shrink-0 flex-1";
+  }
+
+  if (stylesHaveWidthBounds(component.styles)) {
+    return "w-full min-w-0 max-w-full";
   }
 
   if (rowPrefersContentWidth(component.styles)) {
@@ -740,7 +781,7 @@ export function flexWrapRowItemClassName(
   }
 
   if (row.component?.kind === "container") {
-    return "min-w-0 max-w-full flex-[1_1_0] basis-0";
+    return flexWrapBoundedOrIntrinsicItemClassName(row.component.styles);
   }
 
   if (
@@ -750,11 +791,7 @@ export function flexWrapRowItemClassName(
     row.component?.kind === "metric-derived-kpi" ||
     row.component?.kind === "query-viewer"
   ) {
-    if (stylesIncludeFlexGrow(row.component.styles)) {
-      return "min-w-0 max-w-full flex-[1_1_0] basis-0";
-    }
-
-    return "w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto";
+    return flexWrapBoundedOrIntrinsicItemClassName(row.component.styles);
   }
 
   return "";

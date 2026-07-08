@@ -31,6 +31,7 @@ import {
   resolveResponsiveGridLayout,
   resolveGridGapCSSValue,
   resolveRowWrapperStyleRules,
+  stylesHaveWidthBounds,
   stylesIncludeFlexGrow,
   usesFlexWrapLayout,
   usesResponsiveGridLayout,
@@ -513,6 +514,10 @@ function rowStackShellClassName(
 
   if (component?.kind === "view-filter") {
     return "min-w-0 w-full max-w-full";
+  }
+
+  if (component && stylesHaveWidthBounds(component.styles)) {
+    return "min-w-0 max-w-full flex-[1_1_auto] basis-auto";
   }
 
   if (component && prefersInlineContentWidth(component)) {

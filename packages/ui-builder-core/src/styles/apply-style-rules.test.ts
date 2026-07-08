@@ -14,6 +14,8 @@ import {
   parseFlexLayoutFromStyles,
   prefersInlineContentWidth,
   resolveDashboardSectionShellClassName,
+  resolveEmbeddableComponentRowClassName,
+  resolveMetricWidgetShellClassName,
   rowPrefersContentWidth,
   resolvePageSlotWrapper,
   resolveStyleRules,
@@ -289,7 +291,36 @@ describe("applyStyleRules", () => {
         [{ property: "flexWrap", value: "wrap" }],
         { type: "component", component: { kind: "container" } },
       ),
+    ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        {
+          type: "component",
+          component: {
+            kind: "container",
+            styles: [{ property: "flex", value: "1" }],
+          },
+        },
+      ),
     ).toBe("min-w-0 max-w-full flex-[1_1_0] basis-0");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        {
+          type: "component",
+          component: {
+            kind: "container",
+            styles: [
+              { property: "minWidth", value: "500" },
+              { property: "maxWidth", value: "600" },
+            ],
+          },
+        },
+      ),
+    ).toBe("min-w-0 max-w-full flex-[1_1_auto] basis-auto");
     expect(
       flexWrapRowItemClassName(
         "row",
@@ -323,6 +354,40 @@ describe("applyStyleRules", () => {
         },
       ),
     ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        {
+          type: "component",
+          component: {
+            kind: "metric-widget",
+            styles: [
+              { property: "minWidth", value: "400" },
+              { property: "maxWidth", value: "450" },
+            ],
+          },
+        },
+      ),
+    ).toBe("min-w-0 max-w-full flex-[1_1_auto] basis-auto");
+    expect(
+      resolveMetricWidgetShellClassName([
+        { property: "minWidth", value: "400" },
+        { property: "maxWidth", value: "450" },
+      ]),
+    ).toBe("min-w-0 w-full max-w-full");
+    expect(
+      resolveEmbeddableComponentRowClassName(
+        {
+          kind: "metric-widget",
+          styles: [
+            { property: "minWidth", value: "170" },
+            { property: "maxWidth", value: "200" },
+          ],
+        },
+        "row",
+      ),
+    ).toBe("w-full min-w-0 max-w-full");
     expect(
       inlineContentRowClassName(
         { kind: "text", styles: [{ property: "fontWeight", value: "bold" }] },

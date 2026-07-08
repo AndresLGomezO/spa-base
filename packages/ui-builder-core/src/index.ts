@@ -455,6 +455,7 @@ export {
   prefersInlineContentWidth,
   inlineContentRowClassName,
   flexWrapRowItemClassName,
+  stylesHaveWidthBounds,
   isFlexWrapRowStack,
   stackShellWidthClassName,
   stackShellLayoutClasses,
