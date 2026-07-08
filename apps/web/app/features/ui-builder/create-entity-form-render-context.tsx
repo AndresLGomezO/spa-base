@@ -237,7 +237,9 @@ export function createEntityFormRenderContext(options: {
     resolveImage: layoutImageContext.resolveImage,
     isImagePresent: layoutImageContext.isImagePresent,
     chartRenderer: layoutImageContext.chartRenderer,
-    lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
+    lucideIconRenderer: (config, atBreakpoint) => (
+      <LayoutLucideIcon config={config} atBreakpoint={atBreakpoint} />
+    ),
     ...createComponentClickContextHelpers({
       item: clickItem,
       entityName: options.entityName,

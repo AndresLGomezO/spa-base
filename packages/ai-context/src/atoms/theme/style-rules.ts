@@ -86,6 +86,12 @@ export function buildThemeStyleRulesAtom(): string {
 - **Positioning** (\`position\`, \`top\`, \`right\`, \`bottom\`, \`left\`, \`width\`, \`height\`, \`zIndex\`, \`pointerEvents\`, \`opacity\`, \`backdropFilter\`): row wrapper inline styles.
 - **Padding**, **gap**, **border radius**, **fontSize**, **min/max width/height**: component/container inline styles.
 
+## Responsive values (\`valuesByBreakpoint\`)
+- Optional map: \`{ "base"?: v, "sm"?: v, "md"?: v, "lg"?: v, "xl"?: v }\`.
+- Through-cascade: a key applies from mobile through that breakpoint; at viewport C pick the smallest key ≥ C, else \`value\`, else unset.
+- Example mobile-only font size: \`{"property":"fontSize","value":"16","valuesByBreakpoint":{"base":"10"}}\`.
+- Do **not** use \`valuesByBreakpoint\` for \`gridColumns*\` (dedicated grid responsive properties).
+
 ## Image overlay (\`displayMode: "overlay"\`)
 - Use on decorative chart/background images inside \`container\` rows.
 - Renderer auto-layers overlay images behind sibling content (\`zIndex\` 0 vs 1) and sets the container to \`position: relative\` unless overridden.
@@ -104,7 +110,8 @@ ${STYLE_PROPERTY_OPTIONS.join(", ")}
   {"property":"color","value":"var(--color-foreground)"},
   {"property":"padding","value":"var(--spacing-macro)"},
   {"property":"borderRadius","value":"var(--radius-lg)"},
-  {"property":"fontFamily","value":"var(--font-sans)"}
+  {"property":"fontFamily","value":"var(--font-sans)"},
+  {"property":"fontSize","value":"16","valuesByBreakpoint":{"base":"10"}}
 ]
 \`\`\`
 `;

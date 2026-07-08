@@ -132,230 +132,122 @@
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-account-metrics-grid",
+                        "id": "row-04d8d505-590f-42be-8c70-edb9246a5320",
                         "component": {
-                          "kind": "grid",
-                          "gridTemplateColumns": "minmax(400px, 450px) 1fr",
-                          "gap": "15",
-                          "alignItems": "stretch",
+                          "kind": "metric-widget",
+                          "entityName": "account",
+                          "widgetId": "total-balance-by-month",
+                          "styles": [
+                            {
+                              "property": "height",
+                              "value": "100%"
+                            },
+                            {
+                              "property": "maxWidth",
+                              "value": "450"
+                            },
+                            {
+                              "property": "minWidth",
+                              "value": "300"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "component",
+                        "id": "row-1b21a831-baa1-4c39-b9f5-4d87f2bafd25",
+                        "component": {
+                          "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "track-total-balance-widget",
+                              "id": "row-e1f09ffe-7f0f-4eef-b5d6-fecc162f5638",
                               "component": {
-                                "kind": "container",
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-total-balance-widget",
-                                    "component": {
-                                      "kind": "metric-widget",
-                                      "entityName": "account",
-                                      "widgetId": "total-balance-by-month",
-                                      "styles": [
-                                        {
-                                          "property": "width",
-                                          "value": "100%"
-                                        },
-                                        {
-                                          "property": "height",
-                                          "value": "100%"
-                                        },
-                                        {
-                                          "property": "flex",
-                                          "value": "1"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ],
-                                "stackDirection": "column",
+                                "kind": "metric-widget",
+                                "entityName": "account",
+                                "widgetId": "income-by-month",
                                 "styles": [
-                                  {
-                                    "property": "width",
-                                    "value": "100%"
-                                  },
                                   {
                                     "property": "height",
                                     "value": "100%"
                                   },
                                   {
+                                    "property": "maxWidth",
+                                    "value": "250"
+                                  },
+                                  {
                                     "property": "minWidth",
-                                    "value": "0"
-                                  },
-                                  {
-                                    "property": "overflowX",
-                                    "value": "hidden"
-                                  },
-                                  {
-                                    "property": "overflowY",
-                                    "value": "hidden"
+                                    "value": "110"
                                   }
                                 ]
                               }
                             },
                             {
                               "type": "component",
-                              "id": "track-income-widget",
+                              "id": "row-56d63920-7247-46aa-be8e-c36fb425ad64",
                               "component": {
-                                "kind": "container",
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-6cc7ce45-2f2a-49b1-a860-b5dd899e41e5",
-                                    "component": {
-                                      "kind": "grid",
-                                      "gridTemplateColumns": "repeat(3, minmax(170px,200px))",
-                                      "gap": "10",
-                                      "rows": [
-                                        {
-                                          "type": "component",
-                                          "id": "row-84941c38-fce8-42c3-b39f-48a009d19fb7",
-                                          "component": {
-                                            "kind": "container",
-                                            "rows": [
-                                              {
-                                                "type": "component",
-                                                "id": "row-d1a59487-bd7c-4271-97ee-954fbf47178b",
-                                                "component": {
-                                                  "kind": "metric-widget",
-                                                  "entityName": "account",
-                                                  "widgetId": "income-by-month",
-                                                  "styles": [
-                                                    {
-                                                      "property": "width",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "height",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "flex",
-                                                      "value": "1"
-                                                    }
-                                                  ]
-                                                }
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "type": "component",
-                                          "id": "row-f9d18df8-ab76-4865-8d00-fa0d75787924",
-                                          "component": {
-                                            "kind": "container",
-                                            "rows": [
-                                              {
-                                                "type": "component",
-                                                "id": "row-3552036f-4b6a-413a-9a5f-c022be46a448",
-                                                "component": {
-                                                  "kind": "metric-widget",
-                                                  "entityName": "account",
-                                                  "widgetId": "expenses-by-month",
-                                                  "styles": [
-                                                    {
-                                                      "property": "width",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "height",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "flex",
-                                                      "value": "1"
-                                                    }
-                                                  ]
-                                                }
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "type": "component",
-                                          "id": "row-fd6fa7d5-43af-4a2f-a102-e7029921d91c",
-                                          "component": {
-                                            "kind": "container",
-                                            "rows": [
-                                              {
-                                                "type": "component",
-                                                "id": "row-d6d36a45-1687-4208-8220-e0098e014a10",
-                                                "component": {
-                                                  "kind": "metric-widget",
-                                                  "entityName": "account",
-                                                  "widgetId": "invest-by-month",
-                                                  "styles": [
-                                                    {
-                                                      "property": "width",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "height",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "flex",
-                                                      "value": "1"
-                                                    }
-                                                  ]
-                                                }
-                                              }
-                                            ]
-                                          }
-                                        }
-                                      ],
-                                      "styles": []
-                                    },
-                                    "styles": []
-                                  }
-                                ],
-                                "stackDirection": "column",
+                                "kind": "metric-widget",
+                                "entityName": "account",
+                                "widgetId": "expenses-by-month",
                                 "styles": [
-                                  {
-                                    "property": "width",
-                                    "value": "100%"
-                                  },
                                   {
                                     "property": "height",
                                     "value": "100%"
                                   },
                                   {
                                     "property": "minWidth",
-                                    "value": "0"
+                                    "value": "110"
                                   },
                                   {
-                                    "property": "overflowX",
-                                    "value": "hidden"
+                                    "property": "maxWidth",
+                                    "value": "250"
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-fc8644ed-5f67-45d8-8b66-9ebcf1b75e33",
+                              "component": {
+                                "kind": "metric-widget",
+                                "entityName": "account",
+                                "widgetId": "invest-by-month",
+                                "styles": [
+                                  {
+                                    "property": "height",
+                                    "value": "100%"
                                   },
                                   {
-                                    "property": "overflowY",
-                                    "value": "hidden"
+                                    "property": "maxWidth",
+                                    "value": "250"
+                                  },
+                                  {
+                                    "property": "minWidth",
+                                    "value": "110"
                                   }
                                 ]
                               }
                             }
                           ],
+                          "stackDirection": "row",
                           "styles": [
                             {
-                              "property": "width",
-                              "value": "100%"
-                            },
-                            {
-                              "property": "height",
-                              "value": "200"
-                            },
-                            {
-                              "property": "overflowX",
-                              "value": "auto"
-                            },
-                            {
-                              "property": "overflowY",
-                              "value": "hidden"
+                              "property": "gap",
+                              "value": "var(--spacing-compact)"
                             }
                           ]
-                        },
-                        "styles": []
+                        }
+                      }
+                    ],
+                    "stackDirection": "row",
+                    "styles": [
+                      {
+                        "property": "gap",
+                        "value": "var(--spacing-comfortable)"
+                      },
+                      {
+                        "property": "flexWrap",
+                        "value": "wrap"
                       }
                     ]
                   }

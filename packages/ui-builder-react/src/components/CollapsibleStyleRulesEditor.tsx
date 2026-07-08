@@ -10,12 +10,50 @@ import {
 } from "./StyleRuleEditorFields.js";
 import {
   addStyleRule,
+  defaultValueForProperty,
   formatStyleRuleValuePreview,
   removeStyleRule,
   upsertStyleRule,
 } from "./style-rules-state.js";
 
-const POPOVER_PANEL_CLASS = "w-72 min-w-[18rem]";
+/** Wide editor panel so style + screen-override forms have room. */
+const POPOVER_PANEL_CLASS =
+  "w-[min(36rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)]";
+
+function mergeStyleRulePatch(
+  current: StyleRule,
+  patch: Partial<StyleRule>,
+): StyleRule {
+  if (patch.property && patch.property !== current.property) {
+    return {
+      property: patch.property,
+      value:
+        patch.value !== undefined
+          ? patch.value
+          : defaultValueForProperty(patch.property),
+      ...(patch.valuesByBreakpoint !== undefined
+        ? { valuesByBreakpoint: patch.valuesByBreakpoint }
+        : {}),
+    };
+  }
+
+  const merged: StyleRule = {
+    ...current,
+    ...patch,
+  };
+
+  return {
+    property: merged.property,
+    ...(merged.value !== undefined ? { value: merged.value } : {}),
+    ...(Object.prototype.hasOwnProperty.call(patch, "valuesByBreakpoint")
+      ? merged.valuesByBreakpoint !== undefined
+        ? { valuesByBreakpoint: merged.valuesByBreakpoint }
+        : {}
+      : merged.valuesByBreakpoint !== undefined
+        ? { valuesByBreakpoint: merged.valuesByBreakpoint }
+        : {}),
+  };
+}
 
 export interface CollapsibleStyleRulesEditorProps {
   readonly title: string;
@@ -96,7 +134,10 @@ export function CollapsibleStyleRulesEditor({
   const [addDraft, setAddDraft] = useState<StyleRule | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<StyleRule | null>(null);
+  const [addSubViewActive, setAddSubViewActive] = useState(false);
+  const [editSubViewActive, setEditSubViewActive] = useState(false);
   const saveLabel = labels.saveStyleRule ?? labels.addStyleRule;
+  const cancelLabel = labels.styleBreakpointCancel ?? "Cancel";
 
   const handleAddOpenChange = (open: boolean) => {
     setAddOpen(open);
@@ -104,12 +145,15 @@ export function CollapsibleStyleRulesEditor({
       setCardOpen(true);
       setEditingIndex(null);
       setEditDraft(null);
+      setEditSubViewActive(false);
+      setAddSubViewActive(false);
       const next = addStyleRule(styles);
       const created = next[next.length - 1];
       setAddDraft(created ?? { property: "padding", value: "0" });
       return;
     }
     setAddDraft(null);
+    setAddSubViewActive(false);
   };
 
   const confirmAdd = () => {
@@ -119,13 +163,20 @@ export function CollapsibleStyleRulesEditor({
     const existingIndex = styles.findIndex(
       (rule) => rule.property === addDraft.property,
     );
+    // Always include valuesByBreakpoint so clearing overrides (undefined) persists.
+    const patch: Partial<StyleRule> = {
+      property: addDraft.property,
+      value: addDraft.value,
+      valuesByBreakpoint: addDraft.valuesByBreakpoint,
+    };
     if (existingIndex >= 0) {
-      onChange(upsertStyleRule(styles, existingIndex, addDraft));
+      onChange(upsertStyleRule(styles, existingIndex, patch));
     } else {
       onChange([...styles, addDraft]);
     }
     setAddOpen(false);
     setAddDraft(null);
+    setAddSubViewActive(false);
   };
 
   const handleEditOpenChange = (index: number, open: boolean) => {
@@ -133,21 +184,33 @@ export function CollapsibleStyleRulesEditor({
       setCardOpen(true);
       setAddOpen(false);
       setAddDraft(null);
+      setAddSubViewActive(false);
+      setEditSubViewActive(false);
       setEditingIndex(index);
       setEditDraft({ ...styles[index]! });
       return;
     }
     setEditingIndex(null);
     setEditDraft(null);
+    setEditSubViewActive(false);
   };
 
   const confirmEdit = (index: number) => {
     if (!editDraft) {
       return;
     }
-    onChange(upsertStyleRule(styles, index, editDraft));
+    // Always include valuesByBreakpoint so clearing overrides (undefined) persists.
+    // Passing the draft object alone omits the key and upsert keeps the previous map.
+    onChange(
+      upsertStyleRule(styles, index, {
+        property: editDraft.property,
+        value: editDraft.value,
+        valuesByBreakpoint: editDraft.valuesByBreakpoint,
+      }),
+    );
     setEditingIndex(null);
     setEditDraft(null);
+    setEditSubViewActive(false);
   };
 
   const addTrigger = (
@@ -156,7 +219,11 @@ export function CollapsibleStyleRulesEditor({
       onOpenChange={handleAddOpenChange}
       layer="elevated"
       placement="right-start"
-      title={labels.addStyleRule}
+      title={
+        addSubViewActive
+          ? (labels.styleAddBreakpoint ?? labels.addStyleRule)
+          : labels.addStyleRule
+      }
       panelClassName={POPOVER_PANEL_CLASS}
       trigger={
         <IconButton type="button" label={labels.addStyleRule} size="sm">
@@ -165,26 +232,31 @@ export function CollapsibleStyleRulesEditor({
       }
     >
       {addDraft ? (
-        <>
+        <div className="flex flex-col gap-5">
           <StyleRuleEditorFields
             rule={addDraft}
             labels={labels}
-            onChange={(patch) => setAddDraft({ ...addDraft, ...patch })}
+            onChange={(patch) =>
+              setAddDraft(mergeStyleRulePatch(addDraft, patch))
+            }
+            onSubViewChange={setAddSubViewActive}
           />
-          <div className="flex items-center justify-end gap-2">
-            <IconButton
-              type="button"
-              label={labels.removeStyleRule}
-              size="sm"
-              onClick={() => setAddOpen(false)}
-            >
-              <TrashIcon />
-            </IconButton>
-            <Button type="button" size="sm" onClick={confirmAdd}>
-              {labels.addStyleRule}
-            </Button>
-          </div>
-        </>
+          {!addSubViewActive ? (
+            <div className="border-border/60 flex items-center justify-between gap-2 border-t pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAddOpen(false)}
+              >
+                {cancelLabel}
+              </Button>
+              <Button type="button" size="sm" onClick={confirmAdd}>
+                {labels.addStyleRule}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </Popover>
   );
@@ -242,7 +314,11 @@ export function CollapsibleStyleRulesEditor({
                         }
                         layer="elevated"
                         placement="right-start"
-                        title={saveLabel}
+                        title={
+                          editSubViewActive && editingIndex === index
+                            ? (labels.styleEditBreakpoint ?? saveLabel)
+                            : saveLabel
+                        }
                         panelClassName={POPOVER_PANEL_CLASS}
                         trigger={
                           <IconButton type="button" label={saveLabel} size="sm">
@@ -251,24 +327,39 @@ export function CollapsibleStyleRulesEditor({
                         }
                       >
                         {editDraft && editingIndex === index ? (
-                          <>
+                          <div className="flex flex-col gap-5">
                             <StyleRuleEditorFields
                               rule={editDraft}
                               labels={labels}
                               onChange={(patch) =>
-                                setEditDraft({ ...editDraft, ...patch })
+                                setEditDraft(
+                                  mergeStyleRulePatch(editDraft, patch),
+                                )
                               }
+                              onSubViewChange={setEditSubViewActive}
                             />
-                            <div className="flex justify-end">
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => confirmEdit(index)}
-                              >
-                                {saveLabel}
-                              </Button>
-                            </div>
-                          </>
+                            {!editSubViewActive ? (
+                              <div className="border-border/60 flex items-center justify-between gap-2 border-t pt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleEditOpenChange(index, false)
+                                  }
+                                >
+                                  {cancelLabel}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => confirmEdit(index)}
+                                >
+                                  {saveLabel}
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
                         ) : null}
                       </Popover>
                       <IconButton

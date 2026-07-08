@@ -3,9 +3,9 @@ export const UI_STYLE_LAYERS_ATOM_ID = "ui.style-layers";
 export function buildUiStyleLayersAtom(): string {
   return `# Style attachment layers
 
-Styles are \`StyleRule[]\` arrays: \`{ "property": "<key>", "value": "<token or css>" }\`.
+Styles are \`StyleRule[]\` arrays: \`{ "property": "<key>", "value"?: "<token or css>", "valuesByBreakpoint"?: { "base"?: "...", ... } }\`.
 
-See \`theme.style-rules\` for the full property enum and color vs pixel conventions.
+\`value\` is the global fallback. Optional \`valuesByBreakpoint\` through-overrides apply from mobile through the named breakpoint (smallest covering key wins). See \`theme.style-rules\`.
 
 ## Three layout style layers
 

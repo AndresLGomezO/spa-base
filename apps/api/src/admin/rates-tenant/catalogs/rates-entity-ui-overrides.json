@@ -442,78 +442,12 @@
                       "id": "row-income-card",
                       "component": {
                         "kind": "container",
-                        "stackDirection": "column",
-                        "styles": [
-                          {
-                            "property": "backgroundColor",
-                            "value": "var(--color-card)"
-                          },
-                          {
-                            "property": "width",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "borderRadius",
-                            "value": "24"
-                          },
-                          {
-                            "property": "padding",
-                            "value": "20"
-                          },
-                          {
-                            "property": "borderWidth",
-                            "value": "1"
-                          },
-                          {
-                            "property": "borderColor",
-                            "value": "var(--color-card)"
-                          },
-                          {
-                            "property": "borderStyle",
-                            "value": "solid"
-                          },
-                          {
-                            "property": "boxShadow",
-                            "value": "0 10px 30px rgba(0,0,0,0.08)"
-                          },
-                          {
-                            "property": "overflowY",
-                            "value": "hidden"
-                          },
-                          {
-                            "property": "overflowX",
-                            "value": "hidden"
-                          },
-                          {
-                            "property": "height",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "position",
-                            "value": "relative"
-                          }
-                        ],
                         "rows": [
                           {
                             "type": "component",
                             "id": "row-income-header",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "gap",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "start"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
@@ -521,7 +455,6 @@
                                   "component": {
                                     "kind": "icon",
                                     "iconName": "Wallet",
-                                    "iconSize": 20,
                                     "styles": [
                                       {
                                         "property": "color",
@@ -529,7 +462,10 @@
                                       },
                                       {
                                         "property": "padding",
-                                        "value": "var(--spacing-compact)"
+                                        "value": "var(--spacing-compact)",
+                                        "valuesByBreakpoint": {
+                                          "base": "5"
+                                        }
                                       },
                                       {
                                         "property": "borderRadius",
@@ -538,6 +474,13 @@
                                       {
                                         "property": "backgroundColor",
                                         "value": "var(--color-success)"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20",
+                                        "valuesByBreakpoint": {
+                                          "base": "13"
+                                        }
                                       }
                                     ]
                                   }
@@ -546,7 +489,6 @@
                                   "type": "component",
                                   "id": "row-income-label",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "Income"
@@ -554,7 +496,10 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "15",
+                                        "valuesByBreakpoint": {
+                                          "sm": "12"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -564,8 +509,27 @@
                                         "property": "color",
                                         "value": "var(--color-card-foreground)"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
+                                }
+                              ],
+                              "stackDirection": "row",
+                              "styles": [
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "gap",
+                                  "value": "12",
+                                  "valuesByBreakpoint": {
+                                    "sm": "5"
+                                  }
+                                },
+                                {
+                                  "property": "justifyContent",
+                                  "value": "start"
                                 }
                               ]
                             }
@@ -576,13 +540,13 @@
                             "component": {
                               "kind": "metric-kpi",
                               "metricDefinitionId": "Income by Month",
-                              "label": "",
                               "groupBindings": {},
                               "dimensionBindings": {
                                 "date": {
                                   "type": "dashboardDateFilter"
                                 }
                               },
+                              "label": "",
                               "styles": [
                                 {
                                   "property": "marginTop",
@@ -590,7 +554,10 @@
                                 },
                                 {
                                   "property": "fontSize",
-                                  "value": "20"
+                                  "value": "20",
+                                  "valuesByBreakpoint": {
+                                    "base": "12"
+                                  }
                                 },
                                 {
                                   "property": "fontWeight",
@@ -611,7 +578,6 @@
                             "type": "component",
                             "id": "row-income-period",
                             "component": {
-                              "kind": "text",
                               "primary": {
                                 "type": "static",
                                 "value": "This month"
@@ -619,13 +585,17 @@
                               "styles": [
                                 {
                                   "property": "fontSize",
-                                  "value": "10"
+                                  "value": "10",
+                                  "valuesByBreakpoint": {
+                                    "base": "8"
+                                  }
                                 },
                                 {
                                   "property": "color",
                                   "value": "#9ca3af"
                                 }
-                              ]
+                              ],
+                              "kind": "text"
                             }
                           },
                           {
@@ -634,7 +604,6 @@
                             "component": {
                               "kind": "metric-kpi",
                               "metricDefinitionId": "Income MoM %",
-                              "label": "",
                               "groupBindings": {},
                               "dimensionBindings": {},
                               "parameterBindings": {
@@ -642,12 +611,16 @@
                                   "type": "dashboardDateFilter"
                                 }
                               },
+                              "label": "",
                               "showToneColors": true,
                               "tonePolarity": "normal",
                               "styles": [
                                 {
                                   "property": "fontSize",
-                                  "value": "14"
+                                  "value": "14",
+                                  "valuesByBreakpoint": {
+                                    "base": "10"
+                                  }
                                 },
                                 {
                                   "property": "fontWeight",
@@ -705,6 +678,60 @@
                               ]
                             }
                           }
+                        ],
+                        "stackDirection": "column",
+                        "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "var(--color-card)"
+                          },
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "24"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "20",
+                            "valuesByBreakpoint": {
+                              "base": "15"
+                            }
+                          },
+                          {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-card)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "0 10px 30px rgba(0,0,0,0.08)"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "height",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "position",
+                            "value": "relative"
+                          }
                         ]
                       }
                     }
@@ -747,7 +774,10 @@
                           },
                           {
                             "property": "padding",
-                            "value": "20"
+                            "value": "20",
+                            "valuesByBreakpoint": {
+                              "base": "15"
+                            }
                           },
                           {
                             "property": "borderWidth",
@@ -796,7 +826,10 @@
                                 },
                                 {
                                   "property": "gap",
-                                  "value": "12"
+                                  "value": "12",
+                                  "valuesByBreakpoint": {
+                                    "sm": "5"
+                                  }
                                 },
                                 {
                                   "property": "justifyContent",
@@ -810,7 +843,6 @@
                                   "component": {
                                     "kind": "icon",
                                     "iconName": "Receipt",
-                                    "iconSize": 20,
                                     "styles": [
                                       {
                                         "property": "color",
@@ -818,7 +850,10 @@
                                       },
                                       {
                                         "property": "padding",
-                                        "value": "var(--spacing-compact)"
+                                        "value": "var(--spacing-compact)",
+                                        "valuesByBreakpoint": {
+                                          "base": "5"
+                                        }
                                       },
                                       {
                                         "property": "borderRadius",
@@ -827,6 +862,13 @@
                                       {
                                         "property": "backgroundColor",
                                         "value": "var(--color-destructive)"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20",
+                                        "valuesByBreakpoint": {
+                                          "base": "13"
+                                        }
                                       }
                                     ]
                                   }
@@ -843,7 +885,10 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "15",
+                                        "valuesByBreakpoint": {
+                                          "sm": "12"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -879,7 +924,10 @@
                                 },
                                 {
                                   "property": "fontSize",
-                                  "value": "20"
+                                  "value": "20",
+                                  "valuesByBreakpoint": {
+                                    "base": "12"
+                                  }
                                 },
                                 {
                                   "property": "fontWeight",
@@ -908,7 +956,10 @@
                               "styles": [
                                 {
                                   "property": "fontSize",
-                                  "value": "10"
+                                  "value": "10",
+                                  "valuesByBreakpoint": {
+                                    "base": "8"
+                                  }
                                 },
                                 {
                                   "property": "color",
@@ -936,7 +987,10 @@
                               "styles": [
                                 {
                                   "property": "fontSize",
-                                  "value": "14"
+                                  "value": "14",
+                                  "valuesByBreakpoint": {
+                                    "base": "10"
+                                  }
                                 },
                                 {
                                   "property": "fontWeight",
@@ -1036,7 +1090,10 @@
                           },
                           {
                             "property": "padding",
-                            "value": "20"
+                            "value": "20",
+                            "valuesByBreakpoint": {
+                              "base": "15"
+                            }
                           },
                           {
                             "property": "borderWidth",
@@ -1085,7 +1142,10 @@
                                 },
                                 {
                                   "property": "gap",
-                                  "value": "12"
+                                  "value": "12",
+                                  "valuesByBreakpoint": {
+                                    "sm": "5"
+                                  }
                                 },
                                 {
                                   "property": "justifyContent",
@@ -1099,7 +1159,6 @@
                                   "component": {
                                     "kind": "icon",
                                     "iconName": "Star",
-                                    "iconSize": 20,
                                     "styles": [
                                       {
                                         "property": "color",
@@ -1107,7 +1166,10 @@
                                       },
                                       {
                                         "property": "padding",
-                                        "value": "var(--spacing-compact)"
+                                        "value": "var(--spacing-compact)",
+                                        "valuesByBreakpoint": {
+                                          "base": "5"
+                                        }
                                       },
                                       {
                                         "property": "borderRadius",
@@ -1116,6 +1178,13 @@
                                       {
                                         "property": "backgroundColor",
                                         "value": "var(--color-warning)"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20",
+                                        "valuesByBreakpoint": {
+                                          "base": "13"
+                                        }
                                       }
                                     ]
                                   }
@@ -1132,7 +1201,10 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "15",
+                                        "valuesByBreakpoint": {
+                                          "sm": "12"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -1168,7 +1240,10 @@
                                 },
                                 {
                                   "property": "fontSize",
-                                  "value": "20"
+                                  "value": "20",
+                                  "valuesByBreakpoint": {
+                                    "base": "12"
+                                  }
                                 },
                                 {
                                   "property": "fontWeight",
@@ -1197,7 +1272,10 @@
                               "styles": [
                                 {
                                   "property": "fontSize",
-                                  "value": "10"
+                                  "value": "10",
+                                  "valuesByBreakpoint": {
+                                    "base": "8"
+                                  }
                                 },
                                 {
                                   "property": "color",
@@ -1225,7 +1303,10 @@
                               "styles": [
                                 {
                                   "property": "fontSize",
-                                  "value": "14"
+                                  "value": "14",
+                                  "valuesByBreakpoint": {
+                                    "base": "10"
+                                  }
                                 },
                                 {
                                   "property": "fontWeight",
@@ -1564,7 +1645,12 @@
         {
           "type": "table",
           "name": "default",
-          "fields": ["date", "amount", "type", "categoryId"]
+          "fields": [
+            "date",
+            "amount",
+            "type",
+            "categoryId"
+          ]
         }
       ],
       "listViewType": "table",

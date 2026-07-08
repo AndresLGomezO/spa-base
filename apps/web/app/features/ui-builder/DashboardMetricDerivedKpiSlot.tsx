@@ -70,6 +70,7 @@ export function DashboardMetricDerivedKpiSlot({
       valueClassName={presentation?.valueClassName}
       valueStyle={presentation?.valueStyle}
       textSize={presentation?.textSize}
+      cssText={presentation?.cssText}
     />
   );
 }

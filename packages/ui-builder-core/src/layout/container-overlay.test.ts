@@ -58,20 +58,37 @@ describe("container height style helpers", () => {
     ).toBe(false);
   });
 
-  it("treats pixel minHeight as a definite height for percentage children", () => {
-    expect(
-      containerEstablishesDefiniteHeight([
-        { property: "minHeight", value: "200" },
-      ]),
-    ).toBe(true);
+  it("omits deferred padding from shell inline so responsive cssText can win", () => {
     expect(
       resolveContainerShellLayoutStyle(
-        [{ property: "minHeight", value: "200" }],
+        [
+          {
+            property: "padding",
+            value: "24",
+            valuesByBreakpoint: { md: "8" },
+          },
+          { property: "marginTop", value: "4" },
+        ],
         [],
       ),
     ).toEqual({
-      minHeight: "200px",
-      height: "200px",
+      marginTop: "4px",
+    });
+
+    expect(
+      resolveContainerShellLayoutStyle(
+        [
+          {
+            property: "padding",
+            value: "24",
+            valuesByBreakpoint: { md: "8" },
+          },
+        ],
+        [],
+        { atBreakpoint: "base" },
+      ),
+    ).toEqual({
+      padding: "8px",
     });
   });
 

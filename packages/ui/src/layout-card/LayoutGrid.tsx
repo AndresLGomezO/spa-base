@@ -12,7 +12,8 @@ import type { LayoutDirection, LayoutNodeBase } from "./types.js";
 export interface LayoutGridProps extends HTMLAttributes<HTMLDivElement> {
   readonly children: ReactNode;
   readonly direction?: LayoutDirection;
-  readonly gap?: number;
+  /** Pixel gap. Pass `null` to omit inline gap (CSS / style.gap controls spacing). */
+  readonly gap?: number | null;
   readonly columns?: number | string;
   /** Force CSS grid layout (e.g. when using Tailwind grid-cols-* classes). */
   readonly display?: "grid" | "flex";
@@ -68,7 +69,11 @@ export function LayoutGrid({
       style={{
         ...gridStyle,
         ...style,
-        gap: style?.gap ?? `${gap}px`,
+        ...(style?.gap !== undefined
+          ? {}
+          : gap === null
+            ? {}
+            : { gap: `${gap}px` }),
         ...(useCssGrid
           ? {
               gridTemplateColumns:

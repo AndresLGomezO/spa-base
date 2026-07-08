@@ -1,4 +1,5 @@
 import type { PreviewDevice } from "@repo/ui-builder-core";
+import { resolveResponsiveBreakpointForWidth } from "@repo/ui-builder-core";
 import type { ReactNode } from "react";
 
 import {
@@ -37,14 +38,17 @@ export function PreviewFrame({ children }: PreviewFrameProps) {
           {children}
         </LayoutPreviewViewport>
       );
-    case "width":
+    case "width": {
+      const snappedBreakpoint =
+        resolveResponsiveBreakpointForWidth(previewWidthPx);
       return (
         <div
           className="mx-auto flex min-h-0 w-full flex-1 flex-col overflow-hidden"
           style={{ width: previewWidthPx, maxWidth: previewWidthPx }}
         >
           <LayoutPreviewViewport
-            breakpoint="full"
+            breakpoint={snappedBreakpoint}
+            showFrame={false}
             className="h-full"
             fillHeight
           >
@@ -52,6 +56,7 @@ export function PreviewFrame({ children }: PreviewFrameProps) {
           </LayoutPreviewViewport>
         </div>
       );
+    }
     case "fixed":
       return (
         <LayoutPreviewViewport

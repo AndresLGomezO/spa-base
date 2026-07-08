@@ -5,7 +5,7 @@ import type {
 import { isContainerComponent } from "../types/component.js";
 import type { RowNode, UiLayoutDocument } from "../types/layout.js";
 import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
-import type { StyleRule, StylePropertyKey } from "../styles/style-types.js";
+import type { StyleRule, StylePropertyKey, StyleBreakpoint } from "../styles/style-types.js";
 import {
   layoutInlineStyleFromStyleRules,
   stylesIncludeFlexGrow,
@@ -395,8 +395,9 @@ export function resolveContainerContentLayerRowStyles(
 export function resolveContainerShellOverlayStyle(
   styles: readonly StyleRule[] | undefined,
   rows: readonly RowNode[],
+  atBreakpoint?: StyleBreakpoint,
 ): LayoutInlineStyle {
-  const base = layoutInlineStyleFromStyleRules(styles);
+  const base = layoutInlineStyleFromStyleRules(styles, atBreakpoint);
   if (!containerHasOverlayImage(rows)) {
     return base;
   }
@@ -418,12 +419,17 @@ export function resolveContainerShellLayoutStyle(
   options?: {
     readonly parentStackDirection?: "column" | "row";
     readonly applyPercentSplitFlex?: boolean;
+    readonly atBreakpoint?: StyleBreakpoint;
   },
 ): LayoutInlineStyle {
-  let base = resolveContainerShellOverlayStyle(styles, rows);
+  const atBreakpoint = options?.atBreakpoint;
+  let base = resolveContainerShellOverlayStyle(styles, rows, atBreakpoint);
 
   if (base.height === undefined && containerHasPixelMinHeight(styles)) {
-    const minHeight = layoutInlineStyleFromStyleRules(styles).minHeight;
+    const minHeight = layoutInlineStyleFromStyleRules(
+      styles,
+      atBreakpoint,
+    ).minHeight;
     if (minHeight !== undefined) {
       base = { ...base, height: minHeight };
     }

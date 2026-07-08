@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { resolveStaticImageSrc } from "@repo/entities";
 import {
   conditionalRulesToBadgeVariants,
-  fontSizePxFromStyles,
   isFieldUiComponent,
   isIconComponent,
   isUserComponent,
@@ -21,15 +20,15 @@ import {
   filterComponentInnerStyleRules,
   resolvePageSlotWrapper,
   resolveMetricKpiPresentation,
+  resolveComponentRenderStyles,
   resolveStyleRules,
-  layoutInlineStyleFromStyleRules,
-  textInlineStyleFromStyleRules,
-  splitStyleRuleClasses,
   textWrapClassFromStyles,
   type FieldUiComponentConfig,
   type ImageComponentConfig,
+  type ResponsiveGridBreakpoint,
   type UiComponentConfig,
 } from "@repo/ui-builder-core";
+import { ResponsiveStyleTag } from "../layout/ResponsiveStyleTag.js";
 import {
   CardFieldBadge,
   CardFieldCurrency,
@@ -179,12 +178,13 @@ function resolveImageRenderOptions(config: ImageComponentConfig): {
 export function renderUiComponent(
   config: UiComponentConfig,
   context: LayoutRenderContext,
+  atBreakpoint?: ResponsiveGridBreakpoint,
 ): ReactNode {
   if (isMetricKpiComponent(config)) {
     return (
       context.metricKpiRenderer?.(
         config,
-        resolveMetricKpiPresentation(config.styles),
+        resolveMetricKpiPresentation(config.styles, atBreakpoint),
       ) ?? null
     );
   }
@@ -193,7 +193,7 @@ export function renderUiComponent(
     return (
       context.metricDerivedKpiRenderer?.(
         config,
-        resolveMetricKpiPresentation(config.styles),
+        resolveMetricKpiPresentation(config.styles, atBreakpoint),
       ) ?? null
     );
   }
@@ -238,7 +238,10 @@ export function renderUiComponent(
     ) {
       return null;
     }
-    const { containerClassName } = splitStyleRuleClasses(config.styles);
+    const { containerClassName } = resolveComponentRenderStyles(
+      config.styles,
+      atBreakpoint,
+    );
     return context.formFieldRenderer?.(config, containerClassName) ?? null;
   }
 
@@ -249,7 +252,10 @@ export function renderUiComponent(
     ) {
       return null;
     }
-    const { containerClassName } = splitStyleRuleClasses(config.styles);
+    const { containerClassName } = resolveComponentRenderStyles(
+      config.styles,
+      atBreakpoint,
+    );
     return (
       context.entityFieldSelectorRenderer?.(config, containerClassName) ?? null
     );
@@ -295,7 +301,10 @@ export function renderUiComponent(
       extraClassName?: string,
       options?: { readonly attachPageListScrollRef?: boolean },
     ) => {
-      const slotWrapper = resolvePageSlotWrapper(config.styles, extraClassName);
+      const slotWrapper = resolvePageSlotWrapper(config.styles, {
+        baseClassName: extraClassName,
+        atBreakpoint,
+      });
       return (
         <div
           ref={
@@ -309,6 +318,7 @@ export function renderUiComponent(
           className={slotWrapper.className}
           style={slotWrapper.style}
         >
+          <ResponsiveStyleTag cssText={slotWrapper.cssText} />
           {node}
         </div>
       );
@@ -342,7 +352,7 @@ export function renderUiComponent(
   }
 
   if (isIconComponent(config)) {
-    return context.lucideIconRenderer?.(config) ?? null;
+    return context.lucideIconRenderer?.(config, atBreakpoint) ?? null;
   }
 
   if (isUserComponent(config)) {
@@ -354,12 +364,26 @@ export function renderUiComponent(
   }
 
   const innerStyles = filterComponentInnerStyleRules(config.styles);
+  const {
+    containerClassName,
+    textClassName,
+    containerStyle,
+    valueStyle,
+    textSize,
+    cssText,
+  } = resolveComponentRenderStyles(innerStyles, atBreakpoint);
 
-  const { containerClassName, textClassName } =
-    splitStyleRuleClasses(innerStyles);
-  const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
-  const valueStyle = textInlineStyleFromStyleRules(innerStyles);
-  const textSize = fontSizePxFromStyles(innerStyles);
+  const withResponsiveCss = (node: ReactNode): ReactNode => {
+    if (!cssText) {
+      return node;
+    }
+    return (
+      <>
+        <ResponsiveStyleTag cssText={cssText} />
+        {node}
+      </>
+    );
+  };
 
   const chain = resolveFieldChain({
     primary: config.primary,
@@ -374,7 +398,7 @@ export function renderUiComponent(
     chain.staticValue !== undefined &&
     config.kind !== "image"
   ) {
-    return (
+    return withResponsiveCss(
       <CardFieldValue
         value={chain.staticValue}
         allowEmpty
@@ -385,7 +409,7 @@ export function renderUiComponent(
         valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
         label={labelFromConfig(config, "", context)}
-      />
+      />,
     );
   }
 
@@ -420,7 +444,7 @@ export function renderUiComponent(
 
     const src = resolveStaticImageSrc(rawValue);
 
-    return (
+    return withResponsiveCss(
       <CardFieldImage
         src={src}
         alt={label ?? fieldPath}
@@ -429,7 +453,7 @@ export function renderUiComponent(
         objectFit={imageRenderOptions.objectFit}
         className={containerClassName}
         style={containerStyle}
-      />
+      />,
     );
   }
 
@@ -441,9 +465,12 @@ export function renderUiComponent(
       context,
     );
     const matched = matchConditionalStyles(rawValue, config.conditionalStyles);
-    const badgeContainer = resolveStyleRules(innerStyles, matched.className);
+    const badgeContainer = resolveStyleRules(innerStyles, {
+      baseClassName: matched.className,
+      atBreakpoint,
+    });
 
-    return (
+    return withResponsiveCss(
       <CardFieldBadge
         value={badgeValue}
         variant={resolveBadgeVariant(
@@ -456,7 +483,7 @@ export function renderUiComponent(
         )}
         className={badgeContainer.className}
         style={{ ...badgeContainer.style, ...matched.style }}
-      />
+      />,
     );
   }
 
@@ -481,7 +508,7 @@ export function renderUiComponent(
     );
 
     if (isSample || (meta.isArray && Array.isArray(rawValue))) {
-      return (
+      return withResponsiveCss(
         <CardFieldValue
           label={label}
           value={displayValue}
@@ -495,11 +522,11 @@ export function renderUiComponent(
           textSize={textSize}
           valueStyle={valueStyle}
           {...textPropsFromLabel(config)}
-        />
+        />,
       );
     }
 
-    return (
+    return withResponsiveCss(
       <CardFieldCurrency
         amount={displayValue}
         currency={showCurrency ? context.resolveCurrencyCode?.() : undefined}
@@ -510,7 +537,7 @@ export function renderUiComponent(
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
         {...textPropsFromLabel(config)}
-      />
+      />,
     );
   }
 
@@ -533,7 +560,7 @@ export function renderUiComponent(
     );
 
     if (isSample || (meta.isArray && Array.isArray(rawValue))) {
-      return (
+      return withResponsiveCss(
         <CardFieldValue
           label={label}
           value={displayValue}
@@ -547,7 +574,7 @@ export function renderUiComponent(
           textSize={textSize}
           valueStyle={valueStyle}
           {...textPropsFromLabel(config)}
-        />
+        />,
       );
     }
 
@@ -562,7 +589,7 @@ export function renderUiComponent(
       },
     );
 
-    return (
+    return withResponsiveCss(
       <CardFieldDate
         value={rawValue}
         dateDisplayFormat={dateDisplayFormat}
@@ -577,7 +604,7 @@ export function renderUiComponent(
         textSize={textSize}
         valueStyle={{ ...valueStyle, ...matched.style }}
         {...textPropsFromLabel(config)}
-      />
+      />,
     );
   }
 
@@ -593,7 +620,7 @@ export function renderUiComponent(
     context,
   );
 
-  return (
+  return withResponsiveCss(
     <CardFieldValue
       label={label}
       value={displayValue}
@@ -607,6 +634,6 @@ export function renderUiComponent(
       textSize={textSize}
       valueStyle={valueStyle}
       {...textPropsFromLabel(config)}
-    />
+    />,
   );
 }

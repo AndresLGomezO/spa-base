@@ -962,11 +962,19 @@
       "screenHint": "Vista previa de pantalla responsive",
       "constraintHint": "Vista previa del componente dentro de restricciones de ancho",
       "width": "Ancho",
+      "screenSize": "Pantalla",
       "device": "Dispositivo",
       "devices": {
         "mobile": "Móvil",
         "tablet": "Tablet",
         "desktop": "Escritorio"
+      },
+      "breakpoints": {
+        "base": "Móvil",
+        "sm": "SM",
+        "md": "MD",
+        "lg": "LG",
+        "xl": "XL"
       }
     },
     "properties": {
@@ -1463,6 +1471,22 @@
       "removeStyleRule": "Eliminar",
       "styleProperty": "Propiedad",
       "styleValue": "Valor",
+      "styleDefaultValue": "Predeterminado",
+      "styleBreakpoints": "Overrides por pantalla",
+      "styleBreakpointsHint": "Se aplica desde móvil hasta el tamaño de pantalla seleccionado.",
+      "styleAddBreakpoint": "Añadir override de pantalla",
+      "styleEditBreakpoint": "Editar override de pantalla",
+      "styleSaveBreakpoint": "Guardar override",
+      "styleBreakpointScreen": "Pantalla",
+      "styleBreakpointEmpty": "Sin overrides por pantalla",
+      "styleBreakpointCancel": "Cancelar",
+      "styleBreakpointBack": "Atrás",
+      "styleBreakpointClear": "Limpiar",
+      "styleBreakpointShortBase": "Móvil",
+      "styleBreakpointShortSm": "SM",
+      "styleBreakpointShortMd": "MD",
+      "styleBreakpointShortLg": "LG",
+      "styleBreakpointShortXl": "XL",
       "styleColorTheme": "Tema",
       "styleColorCustom": "Personalizado",
       "styleColorThemeTokens": "Tokens de tema",

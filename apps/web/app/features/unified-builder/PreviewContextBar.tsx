@@ -1,4 +1,10 @@
 import type { PreviewDevice } from "@repo/ui-builder-core";
+import {
+  RESPONSIVE_BREAKPOINT_ORDER,
+  RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS,
+  resolveResponsiveBreakpointForWidth,
+  type ResponsiveGridBreakpoint,
+} from "@repo/ui-builder-core";
 import { CollapsibleSegmentedSwitcher, Text } from "@repo/ui";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
@@ -22,6 +28,24 @@ const PREVIEW_DEVICE_LABEL_KEYS: Record<PreviewDevice, PreviewDeviceLabelKey> =
     tablet: "unifiedBuilder.preview.devices.tablet",
     desktop: "unifiedBuilder.preview.devices.desktop",
   };
+
+type PreviewBreakpointLabelKey =
+  | "unifiedBuilder.preview.breakpoints.base"
+  | "unifiedBuilder.preview.breakpoints.sm"
+  | "unifiedBuilder.preview.breakpoints.md"
+  | "unifiedBuilder.preview.breakpoints.lg"
+  | "unifiedBuilder.preview.breakpoints.xl";
+
+const PREVIEW_BREAKPOINT_LABEL_KEYS: Record<
+  ResponsiveGridBreakpoint,
+  PreviewBreakpointLabelKey
+> = {
+  base: "unifiedBuilder.preview.breakpoints.base",
+  sm: "unifiedBuilder.preview.breakpoints.sm",
+  md: "unifiedBuilder.preview.breakpoints.md",
+  lg: "unifiedBuilder.preview.breakpoints.lg",
+  xl: "unifiedBuilder.preview.breakpoints.xl",
+};
 
 function PreviewDeviceSwitcher() {
   const { t } = useTranslation("common");
@@ -59,29 +83,94 @@ function PreviewDeviceSwitcher() {
   );
 }
 
-function PreviewWidthSlider() {
+/**
+ * Width strategies expose a screen-size switcher from strategy presets (or the
+ * standard breakpoint widths) plus a fine-grained slider.
+ */
+function PreviewWidthControls() {
   const { t } = useTranslation("common");
   const { strategy, previewWidthPx, setPreviewWidthPx } = usePreviewContext();
+
+  const screenWidths = useMemo(() => {
+    if (strategy.type !== "width") {
+      return [] as readonly number[];
+    }
+    const fromPresets = (strategy.presets ?? []).filter(
+      (width) => width >= strategy.min && width <= strategy.max,
+    );
+    const candidates =
+      fromPresets.length > 0
+        ? fromPresets
+        : RESPONSIVE_BREAKPOINT_ORDER.map(
+            (bp) => RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS[bp],
+          ).filter((width) => width >= strategy.min && width <= strategy.max);
+
+    // One control per breakpoint (largest preset wins when several map to XL).
+    const byBreakpoint = new Map<ResponsiveGridBreakpoint, number>();
+    for (const width of candidates) {
+      byBreakpoint.set(resolveResponsiveBreakpointForWidth(width), width);
+    }
+    return RESPONSIVE_BREAKPOINT_ORDER.map((bp) => byBreakpoint.get(bp)).filter(
+      (width): width is number => width !== undefined,
+    );
+  }, [strategy]);
+
+  const screenOptions = useMemo(
+    () =>
+      screenWidths.map((width) => {
+        const breakpoint = resolveResponsiveBreakpointForWidth(width);
+        const label = t(PREVIEW_BREAKPOINT_LABEL_KEYS[breakpoint]);
+        return {
+          value: String(width),
+          label,
+          ariaLabel: `${label} (${width}px)`,
+        };
+      }),
+    [screenWidths, t],
+  );
 
   if (strategy.type !== "width") {
     return null;
   }
 
+  const activeBreakpoint = resolveResponsiveBreakpointForWidth(previewWidthPx);
+  const matchingPresetWidth =
+    screenWidths.find(
+      (width) =>
+        resolveResponsiveBreakpointForWidth(width) === activeBreakpoint,
+    ) ?? null;
+  const screenLabel = t("unifiedBuilder.preview.screenSize");
+  const widthLabel = t("unifiedBuilder.preview.width");
+
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="text-muted-foreground">
-        {t("unifiedBuilder.preview.width")}
-      </span>
-      <input
-        type="range"
-        min={strategy.min}
-        max={strategy.max}
-        step={10}
-        value={previewWidthPx}
-        onChange={(event) => setPreviewWidthPx(Number(event.target.value))}
-      />
-      <span className="tabular-nums">{previewWidthPx}px</span>
-    </label>
+    <div className="flex flex-wrap items-end gap-3">
+      {screenOptions.length > 0 ? (
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">{screenLabel}</span>
+          <CollapsibleSegmentedSwitcher
+            value={
+              matchingPresetWidth !== null ? String(matchingPresetWidth) : ""
+            }
+            ariaLabel={screenLabel}
+            segmentWidth="2.75rem"
+            options={screenOptions}
+            onChange={(value) => setPreviewWidthPx(Number(value))}
+          />
+        </div>
+      ) : null}
+      <label className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">{widthLabel}</span>
+        <input
+          type="range"
+          min={strategy.min}
+          max={strategy.max}
+          step={10}
+          value={previewWidthPx}
+          onChange={(event) => setPreviewWidthPx(Number(event.target.value))}
+        />
+        <span className="tabular-nums">{previewWidthPx}px</span>
+      </label>
+    </div>
   );
 }
 
@@ -109,7 +198,7 @@ export function PreviewContextBar({
         <div className="flex flex-wrap items-center gap-3">
           {themeControls}
           <PreviewDeviceSwitcher />
-          <PreviewWidthSlider />
+          <PreviewWidthControls />
         </div>
       </div>
 

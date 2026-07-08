@@ -193,6 +193,7 @@ export function createEntityLayoutRenderContext(options: {
         valueClassName={presentation?.valueClassName}
         valueStyle={presentation?.valueStyle}
         textSize={presentation?.textSize}
+        cssText={presentation?.cssText}
       />
     ),
     metricDerivedKpiRenderer: (config, presentation) => (
@@ -210,6 +211,7 @@ export function createEntityLayoutRenderContext(options: {
         valueClassName={presentation?.valueClassName}
         valueStyle={presentation?.valueStyle}
         textSize={presentation?.textSize}
+        cssText={presentation?.cssText}
       />
     ),
     chartRenderer: (config) => (
@@ -281,7 +283,9 @@ export function createEntityLayoutRenderContext(options: {
               }),
           })
         : undefined,
-    lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
+    lucideIconRenderer: (config, atBreakpoint) => (
+      <LayoutLucideIcon config={config} atBreakpoint={atBreakpoint} />
+    ),
     ...createComponentClickContextHelpers({
       item,
       entityName: definition.name,

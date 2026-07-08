@@ -185,12 +185,37 @@ const responsiveGridBreakpointSchema = z.enum(["base", "sm", "md", "lg", "xl"]);
 
 const shadowTokenSchema = z.enum(["none", "card"]);
 
+const styleRuleValueSchema = z.union([
+  z.string(),
+  themeTokenSchema,
+  shadowTokenSchema,
+]);
+
 export const styleRuleSchema = z
   .object({
     property: stylePropertySchema,
-    value: z.union([z.string(), themeTokenSchema, shadowTokenSchema]),
+    value: styleRuleValueSchema.optional(),
+    valuesByBreakpoint: z
+      .object({
+        base: styleRuleValueSchema.optional(),
+        sm: styleRuleValueSchema.optional(),
+        md: styleRuleValueSchema.optional(),
+        lg: styleRuleValueSchema.optional(),
+        xl: styleRuleValueSchema.optional(),
+      })
+      .strict()
+      .optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (rule) =>
+      rule.value !== undefined ||
+      (rule.valuesByBreakpoint !== undefined &&
+        Object.values(rule.valuesByBreakpoint).some(
+          (entry) => entry !== undefined,
+        )),
+    { message: "Style rule requires value or valuesByBreakpoint" },
+  );
 
 const labelConfigSchema = z
   .object({

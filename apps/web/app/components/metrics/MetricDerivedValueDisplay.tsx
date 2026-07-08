@@ -5,6 +5,7 @@ import { LayoutCard, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { MetricDerivedKpiComponentConfig } from "@repo/ui-builder-core";
+import { ResponsiveStyleTag } from "@repo/ui-builder-renderer";
 
 import type { MetricBindingContext } from "../../lib/metric-binding-resolution.js";
 import { useMetricDerivedValue } from "../../hooks/metrics/useMetricDerivedValue.js";
@@ -25,6 +26,7 @@ interface MetricDerivedValueDisplayProps {
   readonly valueClassName?: string;
   readonly valueStyle?: CSSProperties;
   readonly textSize?: number;
+  readonly cssText?: string;
 }
 
 function MetricValueShell({
@@ -32,26 +34,35 @@ function MetricValueShell({
   children,
   className,
   style,
+  cssText,
 }: {
   readonly presentation: MetricValuePresentation;
   readonly children: ReactNode;
   readonly className?: string;
   readonly style?: CSSProperties;
+  readonly cssText?: string;
 }) {
+  const withResponsiveCss = (node: ReactNode): ReactNode => (
+    <>
+      <ResponsiveStyleTag cssText={cssText} />
+      {node}
+    </>
+  );
+
   if (presentation === "inline") {
     if (!className && !style) {
-      return <>{children}</>;
+      return withResponsiveCss(children);
     }
-    return (
+    return withResponsiveCss(
       <div className={className} style={style}>
         {children}
-      </div>
+      </div>,
     );
   }
-  return (
+  return withResponsiveCss(
     <LayoutCard className={className} style={style}>
       {children}
-    </LayoutCard>
+    </LayoutCard>,
   );
 }
 
@@ -84,7 +95,7 @@ function MetricKpiValueText({
   return (
     <span
       className={valueClassName}
-      style={{ ...valueStyle, ...metricValueTextStyle(textSize) }}
+      style={{ ...metricValueTextStyle(textSize), ...valueStyle }}
     >
       {children}
     </span>
@@ -100,6 +111,7 @@ export function MetricDerivedValueDisplay({
   valueClassName,
   valueStyle,
   textSize,
+  cssText,
 }: MetricDerivedValueDisplayProps) {
   const { t, i18n } = useTranslation("common");
   const derived = useMetricDerivedValue({
@@ -156,6 +168,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.derivedKpi.unconfigured")}
@@ -170,6 +183,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.loading")}
@@ -184,6 +198,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.forbidden")}
@@ -198,6 +213,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.derivedKpi.invalidExpression")}
@@ -212,6 +228,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.derivedKpi.divideByZero")}
@@ -226,6 +243,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.derivedKpi.shapeMismatch")}
@@ -240,6 +258,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.error")}
@@ -256,6 +275,7 @@ export function MetricDerivedValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <MetricKpiValueText
           valueClassName={valueTextClassName}
@@ -273,6 +293,7 @@ export function MetricDerivedValueDisplay({
       presentation={presentation}
       className={className}
       style={style}
+      cssText={cssText}
     >
       <Text className="text-muted-foreground text-xs">{title}</Text>
       {!inline && formulaPreview.length > 0 ? (

@@ -246,3 +246,20 @@ describe("resolveResponsiveGridLayout atBreakpoint", () => {
     expect(atLg.className).toBe("grid-cols-3");
   });
 });
+
+describe("resolveResponsiveBreakpointForWidth", () => {
+  it("maps preview widths to the largest matching breakpoint", async () => {
+    const { resolveResponsiveBreakpointForWidth } = await import(
+      "./responsive-grid.js"
+    );
+    expect(resolveResponsiveBreakpointForWidth(320)).toBe("base");
+    expect(resolveResponsiveBreakpointForWidth(390)).toBe("base");
+    expect(resolveResponsiveBreakpointForWidth(640)).toBe("sm");
+    expect(resolveResponsiveBreakpointForWidth(767)).toBe("sm");
+    expect(resolveResponsiveBreakpointForWidth(768)).toBe("md");
+    expect(resolveResponsiveBreakpointForWidth(800)).toBe("md");
+    expect(resolveResponsiveBreakpointForWidth(1024)).toBe("lg");
+    expect(resolveResponsiveBreakpointForWidth(1280)).toBe("xl");
+    expect(resolveResponsiveBreakpointForWidth(1600)).toBe("xl");
+  });
+});

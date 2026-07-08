@@ -33,4 +33,20 @@ describe("resolveMetricKpiPresentation", () => {
     expect(presentation.style.marginTop).toBeUndefined();
     expect(presentation.style.padding).toBe("8px");
   });
+
+  it("exposes responsive fontSize cssText and CSS var valueStyle", () => {
+    const presentation = resolveMetricKpiPresentation([
+      {
+        property: "fontSize",
+        value: "20",
+        valuesByBreakpoint: { md: "10" },
+      },
+    ]);
+
+    expect(presentation.textSize).toBeUndefined();
+    expect(presentation.valueStyle?.fontSize).toBe("var(--ub-font-size)");
+    expect(presentation.cssText).toContain("--ub-font-size:10px");
+    expect(presentation.cssText).toContain("--ub-font-size:20px");
+    expect(presentation.className).toMatch(/ub-rs-/);
+  });
 });

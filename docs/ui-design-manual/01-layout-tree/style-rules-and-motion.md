@@ -6,7 +6,7 @@ Visual styling is declarative: arrays of `StyleRule` objects attached at specifi
 
 ## StyleRule format
 
-Each rule is a property/value pair:
+Each rule binds a property to a default value and optional through-breakpoint overrides:
 
 ```json
 { "property": "backgroundColor", "value": "primary" }
@@ -15,7 +15,33 @@ Each rule is a property/value pair:
 | Field | Type | Description |
 |-------|------|-------------|
 | `property` | string | Style property key (see [Style property reference](../appendix/style-property-reference.md)) |
-| `value` | string | ThemeToken, shadow token, CSS variable, or literal CSS value |
+| `value` | string (optional) | Global fallback: ThemeToken, shadow token, CSS variable, or literal CSS value |
+| `valuesByBreakpoint` | object (optional) | Through-overrides per `base` \| `sm` \| `md` \| `lg` \| `xl` |
+
+A rule must include at least one of `value` or `valuesByBreakpoint`.
+
+### Responsive through-cascade
+
+`valuesByBreakpoint` keys apply **from mobile (`base`) through the named breakpoint**. At viewport `C`, pick the **smallest** key whose index is `>= C`; otherwise use `value`; otherwise the property is unset.
+
+```json
+{
+  "property": "fontSize",
+  "value": "16",
+  "valuesByBreakpoint": { "base": "10" }
+}
+```
+
+| Authoring | base | sm–xl |
+|-----------|------|-------|
+| `value:16` only | 16 | 16 |
+| `valuesByBreakpoint.base:10` only | 10 | unset |
+| `base:10` + `value:16` | 10 | 16 |
+| `valuesByBreakpoint.md:16` only | 16 through md | unset on lg+ |
+
+Grid column properties (`gridColumns*`) keep their dedicated responsive authors and are excluded from `valuesByBreakpoint`.
+
+Designer preview snaps via `atBreakpoint`; production emits mobile-first `@media` CSS for overrides.
 
 ### Example array
 
@@ -26,7 +52,12 @@ Each rule is a property/value pair:
   { "property": "color", "value": "var(--color-foreground)" },
   { "property": "padding", "value": "var(--spacing-macro)" },
   { "property": "borderRadius", "value": "var(--radius-lg)" },
-  { "property": "fontFamily", "value": "var(--font-sans)" }
+  { "property": "fontFamily", "value": "var(--font-sans)" },
+  {
+    "property": "fontSize",
+    "value": "16",
+    "valuesByBreakpoint": { "base": "10" }
+  }
 ]
 ```
 

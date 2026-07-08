@@ -8,6 +8,7 @@ import {
   flexWrapClassFromStyles,
   fontSizePxFromStyles,
   gapPxFromStyles,
+  gapStyleFromStyleRules,
   resolveGridGapCSSValue,
   inlineContentRowClassName,
   inlineFlexGrowStretchClassName,
@@ -451,6 +452,87 @@ describe("applyStyleRules", () => {
     ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
   });
 
+  it("emits base fontSize as CSS var and media overrides (no inline fontSize)", () => {
+    const resolved = resolveStyleRules([
+      {
+        property: "fontSize",
+        value: "16",
+        valuesByBreakpoint: { base: "10" },
+      },
+    ]);
+    expect(resolved.style.fontSize).toBeUndefined();
+    expect(resolved.cssText).toContain("--ub-font-size:10px");
+    expect(resolved.cssText).toContain("font-size:var(--ub-font-size)");
+    expect(resolved.cssText).toContain("@media (min-width:640px)");
+    expect(resolved.cssText).toContain("--ub-font-size:16px");
+    expect(resolved.className).toMatch(/ub-rs-/);
+  });
+
+  it("snaps fontSize when atBreakpoint is set", () => {
+    const resolved = resolveStyleRules(
+      [
+        {
+          property: "fontSize",
+          value: "16",
+          valuesByBreakpoint: { base: "10" },
+        },
+      ],
+      { atBreakpoint: "md" },
+    );
+    expect(resolved.style.fontSize).toBe("16px");
+    expect(resolved.cssText).toBeUndefined();
+  });
+
+  it("emits md through-override from base through md, then fallback", () => {
+    const resolved = resolveStyleRules([
+      {
+        property: "fontSize",
+        value: "20",
+        valuesByBreakpoint: { md: "10" },
+      },
+    ]);
+    expect(resolved.style.fontSize).toBeUndefined();
+    expect(resolved.cssText).toContain("--ub-font-size:10px");
+    expect(resolved.cssText).toContain("font-size:var(--ub-font-size)");
+    expect(resolved.cssText).toContain("@media (min-width:1024px)");
+    expect(resolved.cssText).toContain("--ub-font-size:20px");
+    expect(resolved.cssText).not.toContain("@media (min-width:640px)");
+    expect(resolved.cssText).not.toContain("@media (min-width:768px)");
+  });
+
+  it("emits stacked base and md overrides with fallback above md", () => {
+    const resolved = resolveStyleRules([
+      {
+        property: "fontSize",
+        value: "20",
+        valuesByBreakpoint: { base: "5", md: "10" },
+      },
+    ]);
+    expect(resolved.cssText).toContain("--ub-font-size:5px");
+    expect(resolved.cssText).toContain("font-size:var(--ub-font-size)");
+    expect(resolved.cssText).toContain("@media (min-width:640px)");
+    expect(resolved.cssText).toContain("--ub-font-size:10px");
+    expect(resolved.cssText).toContain("@media (min-width:1024px)");
+    expect(resolved.cssText).toContain("--ub-font-size:20px");
+  });
+
+  it("resolveComponentRenderStyles uses CSS var for responsive fontSize", async () => {
+    const { resolveComponentRenderStyles } = await import(
+      "./resolve-component-render-styles.js"
+    );
+    const rendered = resolveComponentRenderStyles([
+      {
+        property: "fontSize",
+        value: "20",
+        valuesByBreakpoint: { base: "10" },
+      },
+    ]);
+    expect(rendered.textSize).toBeUndefined();
+    expect(rendered.valueStyle.fontSize).toBe("var(--ub-font-size)");
+    expect(rendered.cssText).toContain("--ub-font-size:10px");
+    expect(rendered.cssText).toContain("--ub-font-size:20px");
+  });
+
   it("uses full width for overlay image rows instead of w-fit", () => {
     expect(
       prefersInlineContentWidth({
@@ -502,6 +584,98 @@ describe("applyStyleRules", () => {
     expect(
       resolveGridGapCSSValue(undefined, [{ property: "gap", value: "20" }]),
     ).toBe("20px");
+  });
+
+  it("snaps gap at preview breakpoint and emits CSS for production", async () => {
+    const { resolveGapLayoutProps, resolveLayoutSpacingProps } = await import(
+      "./apply-style-rules.js"
+    );
+    const rule = {
+      property: "gap" as const,
+      value: "20",
+      valuesByBreakpoint: { md: "8" },
+    };
+
+    expect(gapPxFromStyles([rule], "base")).toBe(8);
+    expect(gapPxFromStyles([rule], "lg")).toBe(20);
+    expect(gapStyleFromStyleRules([rule])).toBeUndefined();
+    expect(resolveGridGapCSSValue(undefined, [rule])).toBeUndefined();
+    expect(resolveGridGapCSSValue(undefined, [rule], "base")).toBe("8px");
+    expect(resolveGridGapCSSValue(undefined, [rule], "lg")).toBe("20px");
+
+    const preview = resolveGapLayoutProps([rule], "md");
+    expect(preview.gap).toBe(8);
+    expect(preview.cssText).toBeUndefined();
+
+    const production = resolveLayoutSpacingProps([rule]);
+    expect(production.gap).toBeNull();
+    expect(production.cssText).toContain("gap:8px");
+    expect(production.cssText).toContain("@media (min-width:1024px)");
+    expect(production.cssText).toContain("gap:20px");
+    expect(production.className).toMatch(/ub-rs-/);
+  });
+
+  it("omits any property with valuesByBreakpoint from flat inline styles", () => {
+    const styles = [
+      {
+        property: "padding" as const,
+        value: "24",
+        valuesByBreakpoint: { md: "8" },
+      },
+      {
+        property: "width" as const,
+        value: "400",
+        valuesByBreakpoint: { base: "200" },
+      },
+      { property: "marginTop" as const, value: "12" },
+    ];
+
+    const flat = layoutInlineStyleFromStyleRules(styles);
+    expect(flat.padding).toBeUndefined();
+    expect(flat.width).toBeUndefined();
+    expect(flat.marginTop).toBe("12px");
+
+    const atMd = layoutInlineStyleFromStyleRules(styles, "md");
+    expect(atMd.padding).toBe("8px");
+    expect(atMd.width).toBe("400px");
+    expect(atMd.marginTop).toBe("12px");
+  });
+
+  it("emits media CSS for spacing, flex, and theme-token color overrides", () => {
+    const resolved = resolveStyleRules([
+      {
+        property: "padding",
+        value: "24",
+        valuesByBreakpoint: { md: "8" },
+      },
+      {
+        property: "alignItems",
+        value: "center",
+        valuesByBreakpoint: { base: "start" },
+      },
+      {
+        property: "backgroundColor",
+        value: "primary",
+        valuesByBreakpoint: { base: "muted" },
+      },
+      {
+        property: "boxShadow",
+        value: "card",
+        valuesByBreakpoint: { md: "none" },
+      },
+    ]);
+
+    expect(resolved.style.padding).toBeUndefined();
+    expect(resolved.cssText).toContain("padding:8px");
+    expect(resolved.cssText).toContain("padding:24px");
+    expect(resolved.cssText).toContain("align-items:flex-start");
+    expect(resolved.cssText).toContain("align-items:center");
+    expect(resolved.cssText).toContain("background-color:var(--color-muted)");
+    expect(resolved.cssText).toContain(
+      "background-color:color-mix(in oklab, var(--color-primary) 10%, transparent)",
+    );
+    expect(resolved.cssText).toContain("box-shadow:none");
+    expect(resolved.cssText).toContain("box-shadow:var(--shadow-card)");
   });
 
   it("reads fontSize as pixels for inline styles, not Tailwind classes", () => {

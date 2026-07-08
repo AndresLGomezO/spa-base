@@ -1,4 +1,4 @@
-import type { StylePropertyKey, StyleRule } from "./style-types.js";
+import type { StyleBreakpoint, StylePropertyKey, StyleRule } from "./style-types.js";
 import {
   resolveRowWrapperStyleRules,
   type ResolvedStyleRules,
@@ -50,6 +50,7 @@ export function filterComponentInnerStyleRules(
 export function mergeRowWrapperStyles(
   rowStyles: readonly StyleRule[] | undefined,
   componentStyles: readonly StyleRule[] | undefined,
+  options?: { readonly atBreakpoint?: StyleBreakpoint },
 ): ResolvedStyleRules {
   const hoisted = new Map<StylePropertyKey, StyleRule>();
 
@@ -64,5 +65,7 @@ export function mergeRowWrapperStyles(
     (rule) => !isRowSlotHoistedStyleProperty(rule.property),
   );
 
-  return resolveRowWrapperStyleRules([...nonHoistedRow, ...hoisted.values()]);
+  return resolveRowWrapperStyleRules([...nonHoistedRow, ...hoisted.values()], {
+    atBreakpoint: options?.atBreakpoint,
+  });
 }

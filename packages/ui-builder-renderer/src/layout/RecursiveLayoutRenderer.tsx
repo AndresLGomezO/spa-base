@@ -1,4 +1,5 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
+import { ResponsiveStyleTag } from "./ResponsiveStyleTag.js";
 import {
   buildGridTemplateColumnsFromPercents,
   columnFlexBasisStyle,
@@ -10,15 +11,12 @@ import {
   columnStackHasPercentSplitContainer,
   resolvePercentSplitSiblingContainerClass,
   flexWrapClassFromStyles,
-  gapPxFromStyles,
-  gapStyleFromStyleRules,
   hasExplicitColumnWidthPercents,
   isContainerComponent,
   filterLayoutStyleRules,
   isGridComponent,
   isScreenRootNode,
   normalizeGridTemplateColumnsForCss,
-  isCssLengthTokenValue,
   mergeRowWrapperStyles,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
@@ -29,6 +27,7 @@ import {
   resolveChartComponentRowStyles,
   resolveImageComponentRowStyles,
   resolveResponsiveGridLayout,
+  resolveLayoutSpacingProps,
   resolveGridGapCSSValue,
   resolveRowWrapperStyleRules,
   stylesHaveWidthBounds,
@@ -57,6 +56,7 @@ import {
   type ResponsiveGridBreakpoint,
   type RowLocator,
   type RowNode,
+  type StyleRule,
   type UiComponentConfig,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -171,17 +171,15 @@ const WIZARD_FORM_COLUMN_SHELL_CLASS =
   "flex min-h-0 min-w-0 flex-col overflow-hidden";
 
 function gapLayoutProps(
-  styles: readonly import("@repo/ui-builder-core").StyleRule[] | undefined,
+  styles: readonly StyleRule[] | undefined,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
 ): {
-  readonly gap: number;
+  readonly gap: number | null;
   readonly style?: CSSProperties;
+  readonly className?: string;
+  readonly cssText?: string;
 } {
-  const gapCss = gapStyleFromStyleRules(styles);
-  if (gapCss && isCssLengthTokenValue(gapCss)) {
-    return { gap: 0, style: { gap: gapCss } };
-  }
-
-  return { gap: gapPxFromStyles(styles) };
+  return resolveLayoutSpacingProps(styles, atBreakpoint);
 }
 
 function isWizardFormContext(context: LayoutRenderContext): boolean {
@@ -409,7 +407,7 @@ function renderRows(
     context,
     columnGridOptions?.stretchRootColumns ?? false,
   );
-  const columnGapProps = gapLayoutProps(column.styles);
+  const columnGapProps = gapLayoutProps(column.styles, atBreakpoint);
   const useProductionShellLayout = shouldUseProductionRowShellLayout(
     context,
     Boolean(columnGridOptions?.rowWrapper),
@@ -430,6 +428,7 @@ function renderRows(
       style={columnGapProps.style}
       className={[
         columnStackShellClass,
+        columnGapProps.className,
         stretchColumn &&
           stackDirection === "column" &&
           (isMainPage || isStretchedSurfaceFill) &&
@@ -456,6 +455,7 @@ function renderRows(
       align={columnFlex.align}
       justify={columnFlex.justify}
     >
+      <ResponsiveStyleTag cssText={columnGapProps.cssText} />
       {rows.map((row, rowIndex) => (
         <Fragment key={row.id}>
           {renderRow(
@@ -691,7 +691,7 @@ function renderLayoutColumnGrid(
               responsiveLayout.proportionalColumnsTemplate,
           } as CSSProperties)
         : undefined;
-    const gridGapProps = gapLayoutProps(styles);
+    const gridGapProps = gapLayoutProps(styles, atBreakpoint);
 
     return (
       <LayoutGrid
@@ -699,11 +699,12 @@ function renderLayoutColumnGrid(
         display="grid"
         gap={gridGapProps.gap}
         align="stretch"
-        className={[stretchClass, responsiveLayout.className]
+        className={[stretchClass, responsiveLayout.className, gridGapProps.className]
           .filter(Boolean)
           .join(" ")}
         style={{ ...proportionalStyle, ...gridGapProps.style }}
       >
+        <ResponsiveStyleTag cssText={gridGapProps.cssText} />
         {columns.map((column, index) => (
           <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
         ))}
@@ -712,16 +713,17 @@ function renderLayoutColumnGrid(
   }
 
   if (responsiveLayout.mode === "autoFit") {
-    const gridGapProps = gapLayoutProps(styles);
+    const gridGapProps = gapLayoutProps(styles, atBreakpoint);
     return (
       <LayoutGrid
         direction="row"
         gap={gridGapProps.gap}
         columns={responsiveLayout.columnsTemplate}
         align="stretch"
-        className={stretchClass}
+        className={[stretchClass, gridGapProps.className].filter(Boolean).join(" ")}
         style={gridGapProps.style}
       >
+        <ResponsiveStyleTag cssText={gridGapProps.cssText} />
         {columns.map((column, index) => (
           <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
         ))}
@@ -729,7 +731,7 @@ function renderLayoutColumnGrid(
     );
   }
 
-  const gridGapProps = gapLayoutProps(styles);
+  const gridGapProps = gapLayoutProps(styles, atBreakpoint);
   return (
     <LayoutGrid
       direction="row"
@@ -741,9 +743,10 @@ function renderLayoutColumnGrid(
         )
       }
       align="stretch"
-      className={stretchClass}
+      className={[stretchClass, gridGapProps.className].filter(Boolean).join(" ")}
       style={gridGapProps.style}
     >
+      <ResponsiveStyleTag cssText={gridGapProps.cssText} />
       {columns.map((column, index) => (
         <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
       ))}
@@ -774,7 +777,7 @@ function renderWrappedColumns(
     stretchColumn: columnRenderFlags.stretchColumn && fillGridHeight,
   };
   const percents = resolveColumnWidthPercents(columns);
-  const wrappedGapProps = gapLayoutProps(styles);
+  const wrappedGapProps = gapLayoutProps(styles, atBreakpoint);
 
   return (
     <LayoutStack
@@ -785,11 +788,13 @@ function renderWrappedColumns(
         isListOrDetailSurface(context) ? "flex min-w-0" : "flex w-full min-w-0",
         columnFlags.stretchColumn && "h-full min-h-0",
         flexWrapClassFromStyles(styles),
+        wrappedGapProps.className,
       ]
         .filter(Boolean)
         .join(" ")}
       align="stretch"
     >
+      <ResponsiveStyleTag cssText={wrappedGapProps.cssText} />
       {columns.map((column, index) => {
         const columnContent = renderColumn(
           column,
@@ -886,8 +891,11 @@ function renderRow(
       : { className: "" };
   if (row.type === "component") {
     if (isGridComponent(row.component)) {
-      const gridStyles = resolveRowWrapperStyleRules(row.component.styles);
+      const gridStyles = resolveRowWrapperStyleRules(row.component.styles, {
+        atBreakpoint,
+      });
       const gridInlineStyle = gridStyles.style ?? {};
+      const { gap: _responsiveGap, ...gridStyleWithoutGap } = gridInlineStyle;
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-grid`,
         rows: row.component.rows,
@@ -896,6 +904,11 @@ function renderRow(
         rootColumnIndex: rowScope.rootColumnIndex,
         containerParentRowId: row.id,
       };
+      const resolvedGap = resolveGridGapCSSValue(
+        row.component.gap,
+        row.component.styles,
+        atBreakpoint,
+      );
       const gridInner = (
         <div
           key={row.id}
@@ -908,13 +921,11 @@ function renderRow(
               row.component.gridTemplateColumns,
             ),
             alignItems: row.component.alignItems,
-            ...mergeMotionPresetStyle(gridInlineStyle, motionPreset),
-            gap: resolveGridGapCSSValue(
-              row.component.gap,
-              row.component.styles,
-            ),
+            ...mergeMotionPresetStyle(gridStyleWithoutGap, motionPreset),
+            ...(resolvedGap !== undefined ? { gap: resolvedGap } : {}),
           }}
         >
+          <ResponsiveStyleTag cssText={gridStyles.cssText} />
           {renderGridTrackRows(
             row.component.rows,
             context,
@@ -940,7 +951,9 @@ function renderRow(
       !row.component.stackDirection &&
       filterLayoutStyleRules(row.component.styles ?? []).length === 0
     ) {
-      const neutralStyles = resolveRowWrapperStyleRules(row.component.styles);
+      const neutralStyles = resolveRowWrapperStyleRules(row.component.styles, {
+        atBreakpoint,
+      });
       const neutralInner = (
         <div
           key={row.id}
@@ -962,7 +975,9 @@ function renderRow(
       const containerOverlayContext = createContainerOverlayContext(
         row.component.rows,
       );
-      const containerStyles = resolveRowWrapperStyleRules(row.component.styles);
+      const containerStyles = resolveRowWrapperStyleRules(row.component.styles, {
+        atBreakpoint,
+      });
       const containerShellStyle = resolveContainerShellLayoutStyle(
         row.component.styles,
         row.component.rows,
@@ -970,6 +985,7 @@ function renderRow(
           parentStackDirection: stackDirection,
           applyPercentSplitFlex:
             !usesPreviewRowWrapper && !useProductionShellLayout,
+          atBreakpoint,
         },
       );
       const containerStackDirection = row.component.stackDirection ?? "column";
@@ -1062,8 +1078,15 @@ function renderRow(
           ]
             .filter(Boolean)
             .join(" ")}
-          style={mergeMotionPresetStyle(containerShellStyle, motionPreset)}
+          style={mergeMotionPresetStyle(
+            {
+              ...containerShellStyle,
+              ...containerStyles.style,
+            },
+            motionPreset,
+          )}
         >
+          <ResponsiveStyleTag cssText={containerStyles.cssText} />
           {renderRows(
             row.component.rows,
             context,
@@ -1124,6 +1147,7 @@ function renderRow(
     const rowStyles = mergeRowWrapperStyles(
       rowStylesForMerge,
       componentStylesForRow,
+      { atBreakpoint },
     );
     const isMainPage = context.mode === "mainPage";
     const isFormFill = context.mode === "form";
@@ -1218,9 +1242,10 @@ function renderRow(
           .join(" ")}
         style={mergeMotionPresetStyle(rowStyles.style, motionPreset)}
       >
+        <ResponsiveStyleTag cssText={rowStyles.cssText} />
         {wrapRowWithClickAction(
           row,
-          renderUiComponent(row.component, context),
+          renderUiComponent(row.component, context, atBreakpoint),
           context,
         )}
       </div>
@@ -1264,7 +1289,9 @@ function renderColumn(
     return null;
   }
 
-  const columnStyles = resolveRowWrapperStyleRules(column.styles);
+  const columnStyles = resolveRowWrapperStyleRules(column.styles, {
+    atBreakpoint,
+  });
   const flexBasis =
     options?.flexBasisPercent !== undefined
       ? columnFlexBasisStyle(options.flexBasisPercent)
@@ -1288,6 +1315,7 @@ function renderColumn(
         ...flexBasis,
       }}
     >
+      <ResponsiveStyleTag cssText={columnStyles.cssText} />
       {column.rows.length > 0
         ? renderRows(
             column.rows,
@@ -1330,10 +1358,10 @@ export function RecursiveLayoutRenderer({
 
   if (isScreenRootNode(layout.root)) {
     const screenRoot = layout.root;
-    const rootStylesResolved = resolveRowWrapperStyleRules(
-      screenRoot.styles,
-      className,
-    );
+    const rootStylesResolved = resolveRowWrapperStyleRules(screenRoot.styles, {
+      baseClassName: className,
+      atBreakpoint,
+    });
     const columnGridOptions: ColumnGridRenderOptions = {
       rootColumnWrapper,
       nestedColumnWrapper,
@@ -1361,26 +1389,47 @@ export function RecursiveLayoutRenderer({
             rootMotionClass,
           )}
         >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: normalizeGridTemplateColumnsForCss(
-                screenRoot.gridTemplateColumns,
-              ),
-              gap: resolveGridGapCSSValue(screenRoot.gap, screenRoot.styles),
-              alignItems: screenRoot.alignItems,
-            }}
-          >
-            {renderGridTrackRows(
-              screenRoot.rows,
-              context,
-              atBreakpoint,
-              { rootColumnIndex: 0 },
-              0,
-              syntheticColumn,
-              columnGridOptions,
-            )}
-          </div>
+          <ResponsiveStyleTag cssText={rootStylesResolved.cssText} />
+          {(() => {
+            const explicitGap = screenRoot.gap?.trim()
+              ? resolveGridGapCSSValue(screenRoot.gap, undefined)
+              : undefined;
+                const styleGap =
+              explicitGap === undefined
+                ? resolveLayoutSpacingProps(screenRoot.styles, atBreakpoint)
+                : undefined;
+            const gapStyleValue =
+              explicitGap ??
+              styleGap?.style?.gap ??
+              (styleGap?.gap !== undefined && styleGap.gap !== null
+                ? `${styleGap.gap}px`
+                : undefined);
+
+            return (
+              <div
+                className={styleGap?.className}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: normalizeGridTemplateColumnsForCss(
+                    screenRoot.gridTemplateColumns,
+                  ),
+                  ...(gapStyleValue !== undefined ? { gap: gapStyleValue } : {}),
+                  alignItems: screenRoot.alignItems,
+                }}
+              >
+                <ResponsiveStyleTag cssText={styleGap?.cssText} />
+                {renderGridTrackRows(
+                  screenRoot.rows,
+                  context,
+                  atBreakpoint,
+                  { rootColumnIndex: 0 },
+                  0,
+                  syntheticColumn,
+                  columnGridOptions,
+                )}
+              </div>
+            );
+          })()}
         </div>
       </LayoutRenderOptionsProvider>
     );
@@ -1409,10 +1458,10 @@ export function RecursiveLayoutRenderer({
               ? "flex h-full min-h-0 w-full min-w-0 flex-col"
               : "flex w-full min-w-0 flex-col"
             : "flex w-full min-w-0 max-w-full flex-col";
-  const rootStylesResolved = resolveRowWrapperStyleRules(
-    layout.root.styles,
-    className,
-  );
+  const rootStylesResolved = resolveRowWrapperStyleRules(layout.root.styles, {
+    baseClassName: className,
+    atBreakpoint,
+  });
   const columnGridOptions: ColumnGridRenderOptions = {
     rootColumnWrapper,
     nestedColumnWrapper,
@@ -1440,6 +1489,7 @@ export function RecursiveLayoutRenderer({
             rootMotionClass,
           )}
         >
+          <ResponsiveStyleTag cssText={rootStylesResolved.cssText} />
           {renderWrappedColumns(
             layout.root.columns,
             context,
@@ -1468,6 +1518,7 @@ export function RecursiveLayoutRenderer({
           rootMotionClass,
         )}
       >
+        <ResponsiveStyleTag cssText={rootStylesResolved.cssText} />
         {renderLayoutColumnGrid(
           layout.root.columns,
           context,

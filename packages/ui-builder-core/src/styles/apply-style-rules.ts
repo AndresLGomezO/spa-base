@@ -1,4 +1,19 @@
-import type { StyleRule, StylePropertyKey, ThemeToken } from "./style-types.js";
+import type {
+  StyleRule,
+  StylePropertyKey,
+  StyleRuleValue,
+  ThemeToken,
+} from "./style-types.js";
+import {
+  collapseStyleRulesAtBreakpoint,
+  isResponsiveStylePropertyExcluded,
+  mediaMinWidthForBreakpoint,
+  resolveStyleValuesAcrossBreakpoints,
+  styleRuleHasBreakpointOverrides,
+  stylesHaveBreakpointOverrides,
+  type StyleBreakpoint,
+} from "./responsive-style-rules.js";
+import { RESPONSIVE_BREAKPOINT_ORDER } from "../layout/responsive-grid.js";
 import {
   isCssBackgroundFillValue,
   isCssColorValue,
@@ -173,9 +188,50 @@ function isThemeToken(value: string): value is ThemeToken {
   return isThemeTokenValue(value);
 }
 
+/**
+ * Production path: properties with `valuesByBreakpoint` must not become inline
+ * styles or Layout props (those beat `@media`). Preview passes `atBreakpoint`
+ * and collapses instead.
+ */
+export function shouldDeferPropertyToScopedCss(
+  rule: StyleRule,
+  atBreakpoint?: StyleBreakpoint,
+): boolean {
+  return (
+    atBreakpoint === undefined &&
+    !isResponsiveStylePropertyExcluded(rule.property) &&
+    styleRuleHasBreakpointOverrides(rule)
+  );
+}
+
+/** Collapse at preview BP, or strip deferred responsive rules for production flat reads. */
+export function filterStyleRulesForFlatApplication(
+  styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
+): readonly StyleRule[] {
+  if (atBreakpoint !== undefined) {
+    return collapseStyleRulesAtBreakpoint(styles, atBreakpoint);
+  }
+
+  return (styles ?? []).filter(
+    (rule) => !shouldDeferPropertyToScopedCss(rule),
+  );
+}
+
 function ruleToClass(rule: StyleRule): string | undefined {
-  const { property, value } = rule;
+  if (rule.value === undefined) {
+    return undefined;
+  }
+  return ruleToClassForValue(rule.property, rule.value);
+}
+
+/** Maps a flat property/value to a Tailwind utility when possible. */
+export function ruleToClassForValue(
+  property: StylePropertyKey,
+  value: StyleRuleValue,
+): string | undefined {
   const raw = String(value);
+  const rule = { property, value } satisfies StyleRule;
 
   if (COLOR_STYLE_PROPERTIES.has(property) && isCustomColorRule(rule)) {
     return undefined;
@@ -291,6 +347,9 @@ function ruleToClass(rule: StyleRule): string | undefined {
 }
 
 function isCustomColorRule(rule: StyleRule): boolean {
+  if (rule.value === undefined) {
+    return false;
+  }
   if (!COLOR_STYLE_PROPERTIES.has(rule.property)) {
     return false;
   }
@@ -303,6 +362,9 @@ function isCustomColorRule(rule: StyleRule): boolean {
 }
 
 function isCustomBoxShadowRule(rule: StyleRule): boolean {
+  if (rule.value === undefined) {
+    return false;
+  }
   return (
     rule.property === "boxShadow" &&
     !isShadowTokenValue(String(rule.value)) &&
@@ -370,7 +432,7 @@ function readAlignSelfValue(
   styles: readonly StyleRule[] | undefined,
 ): FlexAlign | undefined {
   const rule = styles?.find((entry) => entry.property === "alignSelf");
-  if (!rule) {
+  if (!rule || rule.value === undefined) {
     return undefined;
   }
 
@@ -423,6 +485,7 @@ export function slotSelfAlignClassName(
 
 export function parseFlexLayoutFromStyles(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): FlexLayoutFromStyles {
   let align: FlexAlign | undefined;
   let justify: FlexJustify | undefined;
@@ -430,7 +493,10 @@ export function parseFlexLayoutFromStyles(
   const selfClasses: string[] = [];
   const slotFlexClasses: string[] = [];
 
-  for (const rule of styles ?? []) {
+  for (const rule of filterStyleRulesForFlatApplication(styles, atBreakpoint)) {
+    if (rule.value === undefined) {
+      continue;
+    }
     const raw = String(rule.value);
     if (rule.property === "alignItems") {
       align = parseFlexAlign(raw) ?? align;
@@ -474,30 +540,46 @@ export function parseFlexLayoutFromStyles(
 
 export function usesFlexWrapLayout(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): boolean {
-  const wrap = parseFlexLayoutFromStyles(styles).wrap;
+  const wrap = parseFlexLayoutFromStyles(styles, atBreakpoint).wrap;
   return wrap === "wrap" || wrap === "wrap-reverse";
 }
 
 export function flexWrapClassFromStyles(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): string {
-  const wrap = parseFlexLayoutFromStyles(styles).wrap;
+  const wrap = parseFlexLayoutFromStyles(styles, atBreakpoint).wrap;
   if (wrap === "wrap") {
     return "flex-wrap";
   }
   if (wrap === "wrap-reverse") {
     return "flex-wrap-reverse";
   }
+  // Production: wrap overrides live in scoped cssText — don't force flat class.
+  if (
+    atBreakpoint === undefined &&
+    (styles ?? []).some(
+      (rule) =>
+        rule.property === "flexWrap" && shouldDeferPropertyToScopedCss(rule),
+    )
+  ) {
+    return "";
+  }
   return "";
 }
 
 export function usesTextWrap(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): boolean {
   return (
-    styles?.some(
-      (rule) => rule.property === "textWrap" && String(rule.value) === "wrap",
+    filterStyleRulesForFlatApplication(styles, atBreakpoint).some(
+      (rule) =>
+        rule.property === "textWrap" &&
+        rule.value !== undefined &&
+        String(rule.value) === "wrap",
     ) ?? false
   );
 }
@@ -505,9 +587,23 @@ export function usesTextWrap(
 /** Default single-line ellipsis; use `textWrap: wrap` for multi-line content. */
 export function textWrapClassFromStyles(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): string {
-  const rule = styles?.find((entry) => entry.property === "textWrap");
-  if (!rule) {
+  const rule = filterStyleRulesForFlatApplication(styles, atBreakpoint).find(
+    (entry) => entry.property === "textWrap",
+  );
+  if (!rule || rule.value === undefined) {
+    if (
+      atBreakpoint === undefined &&
+      (styles ?? []).some(
+        (entry) =>
+          entry.property === "textWrap" &&
+          shouldDeferPropertyToScopedCss(entry),
+      )
+    ) {
+      // Responsive textWrap is applied via scoped cssText only.
+      return "";
+    }
     return "truncate";
   }
 
@@ -536,8 +632,12 @@ export function textWrapClassForLayoutShell(
 /** Maps `flex` style rules onto layout row/slot wrappers (e.g. `flex: 1`). */
 export function slotFlexGrowClassName(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): string {
-  const flexRule = styles?.find((rule) => rule.property === "flex");
+  const flexRule = filterStyleRulesForFlatApplication(
+    styles,
+    atBreakpoint,
+  ).find((rule) => rule.property === "flex");
   if (!flexRule) {
     return "";
   }
@@ -556,11 +656,13 @@ export function slotFlexGrowClassName(
 
 export function stylesIncludeFlexGrow(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): boolean {
-  return (
-    styles?.some(
-      (rule) => rule.property === "flex" && String(rule.value) === "1",
-    ) ?? false
+  return filterStyleRulesForFlatApplication(styles, atBreakpoint).some(
+    (rule) =>
+      rule.property === "flex" &&
+      rule.value !== undefined &&
+      String(rule.value) === "1",
   );
 }
 
@@ -700,7 +802,10 @@ export function rowPrefersContentWidth(
 ): boolean {
   const hasFlexZero =
     styles?.some(
-      (rule) => rule.property === "flex" && String(rule.value) === "0",
+      (rule) =>
+        rule.property === "flex" &&
+        rule.value !== undefined &&
+        String(rule.value) === "0",
     ) ?? false;
   const alignSelf = readAlignSelfValue(styles);
   const hasAlignSelfStartEnd = alignSelf === "start" || alignSelf === "end";
@@ -733,7 +838,10 @@ export function prefersInlineContentWidth(component: {
 
   return !(
     component.styles?.some(
-      (rule) => rule.property === "flex" && String(rule.value) === "1",
+      (rule) =>
+        rule.property === "flex" &&
+        rule.value !== undefined &&
+        String(rule.value) === "1",
     ) ?? false
   );
 }
@@ -898,18 +1006,30 @@ export function componentSlotWrapperClassName(
     .join(" ");
 }
 
-/** Pixel font size for card field values; undefined when no valid `fontSize` rule. */
-export function fontSizePxFromStyles(
+function fontSizeRuleFlatValue(
   styles: readonly StyleRule[] | undefined,
-): number | undefined {
+): string | undefined {
   const fontSizeRule = styles?.find(
     (rule) => rule.property === FONT_SIZE_STYLE_PROPERTY,
   );
-  if (!fontSizeRule) {
+  if (!fontSizeRule || fontSizeRule.value === undefined) {
+    return undefined;
+  }
+  return String(fontSizeRule.value);
+}
+
+/** Pixel font size for card field values; undefined when no valid `fontSize` rule. */
+export function fontSizePxFromStyles(
+  styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
+): number | undefined {
+  const raw = fontSizeRuleFlatValue(
+    filterStyleRulesForFlatApplication(styles, atBreakpoint),
+  );
+  if (raw === undefined) {
     return undefined;
   }
 
-  const raw = String(fontSizeRule.value);
   if (isCssLengthTokenValue(raw)) {
     return undefined;
   }
@@ -921,14 +1041,11 @@ export function fontSizePxFromStyles(
 function resolveFontSizeStyleValue(
   styles: readonly StyleRule[] | undefined,
 ): string | undefined {
-  const fontSizeRule = styles?.find(
-    (rule) => rule.property === FONT_SIZE_STYLE_PROPERTY,
-  );
-  if (!fontSizeRule) {
+  const raw = fontSizeRuleFlatValue(styles);
+  if (raw === undefined) {
     return undefined;
   }
 
-  const raw = String(fontSizeRule.value);
   if (isCssLengthTokenValue(raw)) {
     return raw;
   }
@@ -940,27 +1057,33 @@ function resolveFontSizeStyleValue(
 /** Inline text styles for card field values (custom colors + font size). */
 export function textInlineStyleFromStyleRules(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): TextInlineStyle {
+  const flat = filterStyleRulesForFlatApplication(styles, atBreakpoint);
   const style: TextInlineStyle = {};
-  const fontSize = resolveFontSizeStyleValue(styles);
+  const fontSize = resolveFontSizeStyleValue(flat);
   if (fontSize !== undefined) {
     style.fontSize = fontSize;
   }
 
-  const colorRule = styles?.find((rule) => rule.property === "color");
-  if (colorRule && isCustomColorRule(colorRule)) {
+  const colorRule = flat.find((rule) => rule.property === "color");
+  if (colorRule && colorRule.value !== undefined && isCustomColorRule(colorRule)) {
     style.color = String(colorRule.value).trim();
   }
 
-  const fontFamilyRule = styles?.find((rule) => rule.property === "fontFamily");
-  if (fontFamilyRule && isCssFontFamilyValue(String(fontFamilyRule.value))) {
+  const fontFamilyRule = flat.find((rule) => rule.property === "fontFamily");
+  if (
+    fontFamilyRule &&
+    fontFamilyRule.value !== undefined &&
+    isCssFontFamilyValue(String(fontFamilyRule.value))
+  ) {
     style.fontFamily = String(fontFamilyRule.value).trim();
   }
 
-  const letterSpacingRule = styles?.find(
+  const letterSpacingRule = flat.find(
     (rule) => rule.property === "letterSpacing",
   );
-  if (letterSpacingRule) {
+  if (letterSpacingRule && letterSpacingRule.value !== undefined) {
     const resolved = resolveBoxLengthStyleValue(
       String(letterSpacingRule.value),
     );
@@ -969,8 +1092,8 @@ export function textInlineStyleFromStyleRules(
     }
   }
 
-  const opacityRule = styles?.find((rule) => rule.property === "opacity");
-  if (opacityRule) {
+  const opacityRule = flat.find((rule) => rule.property === "opacity");
+  if (opacityRule && opacityRule.value !== undefined) {
     const resolved = parseOpacityStyleValue(String(opacityRule.value));
     if (resolved !== undefined) {
       style.opacity = resolved;
@@ -980,12 +1103,20 @@ export function textInlineStyleFromStyleRules(
   return style;
 }
 
+function gapRuleFromStyles(
+  styles: readonly StyleRule[] | undefined,
+): StyleRule | undefined {
+  return styles?.find((rule) => rule.property === "gap");
+}
+
 /** CSS gap value from style rules (theme token or px). */
 export function gapStyleFromStyleRules(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): string | undefined {
-  const gapRule = styles?.find((rule) => rule.property === "gap");
-  if (!gapRule) {
+  const flat = filterStyleRulesForFlatApplication(styles, atBreakpoint);
+  const gapRule = gapRuleFromStyles(flat);
+  if (!gapRule || gapRule.value === undefined) {
     return undefined;
   }
 
@@ -996,21 +1127,24 @@ export function gapStyleFromStyleRules(
 export function resolveGridGapCSSValue(
   gap: string | undefined,
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): string | undefined {
   const trimmedGap = gap?.trim();
   if (trimmedGap) {
     return resolveLengthStyleValue(trimmedGap) ?? trimmedGap;
   }
 
-  return gapStyleFromStyleRules(styles);
+  return gapStyleFromStyleRules(styles, atBreakpoint);
 }
 
 /** Pixel gap for `LayoutGrid` / `LayoutStack`; defaults to 0 when no `gap` style rule. */
 export function gapPxFromStyles(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): number {
-  const gapRule = styles?.find((rule) => rule.property === "gap");
-  if (!gapRule) {
+  const flat = filterStyleRulesForFlatApplication(styles, atBreakpoint);
+  const gapRule = gapRuleFromStyles(flat);
+  if (!gapRule || gapRule.value === undefined) {
     return 0;
   }
 
@@ -1018,11 +1152,73 @@ export function gapPxFromStyles(
   return Number.isFinite(px) && px >= 0 ? px : 0;
 }
 
+/**
+ * Layout stack/grid gap: snapped inline value in preview, or scoped CSS in
+ * production when `valuesByBreakpoint` is set. `gap: null` means omit inline px
+ * so media-query CSS can control spacing.
+ */
+export interface GapLayoutProps {
+  /** Pixel gap for LayoutGrid/Stack; `null` omits inline gap (CSS-driven). */
+  readonly gap: number | null;
+  readonly style?: LayoutInlineStyle;
+  readonly className?: string;
+  readonly cssText?: string;
+}
+
+/** @deprecated Prefer {@link resolveLayoutSpacingProps}. */
+export type LayoutSpacingProps = GapLayoutProps;
+
+/**
+ * Spacing props for LayoutGrid/Stack. When gap (or other deferred layout props)
+ * need scoped CSS, returns `gap: null` + cssText instead of locking inline px.
+ */
+export function resolveLayoutSpacingProps(
+  styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
+): GapLayoutProps {
+  if (atBreakpoint !== undefined) {
+    const flat = collapseStyleRulesAtBreakpoint(styles, atBreakpoint);
+    const gapCss = gapStyleFromStyleRules(flat, atBreakpoint);
+    if (gapCss && isCssLengthTokenValue(gapCss)) {
+      return { gap: null, style: { gap: gapCss } };
+    }
+    return { gap: gapPxFromStyles(flat, atBreakpoint) };
+  }
+
+  const gapRule = gapRuleFromStyles(styles);
+  if (gapRule && shouldDeferPropertyToScopedCss(gapRule)) {
+    const gapOnly = styles?.filter((rule) => rule.property === "gap") ?? [];
+    const resolved = resolveStyleRules(gapOnly);
+    return {
+      gap: null,
+      className: resolved.styleScopeClassName,
+      cssText: resolved.cssText,
+    };
+  }
+
+  const gapCss = gapStyleFromStyleRules(styles);
+  if (gapCss && isCssLengthTokenValue(gapCss)) {
+    return { gap: null, style: { gap: gapCss } };
+  }
+
+  return { gap: gapPxFromStyles(styles) };
+}
+
+export function resolveGapLayoutProps(
+  styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
+): GapLayoutProps {
+  return resolveLayoutSpacingProps(styles, atBreakpoint);
+}
+
 function applyCustomVisualRules(
   styles: readonly StyleRule[] | undefined,
   style: LayoutInlineStyle,
 ): void {
   for (const rule of styles ?? []) {
+    if (rule.value === undefined || shouldDeferPropertyToScopedCss(rule)) {
+      continue;
+    }
     if (isCustomColorRule(rule)) {
       const value = String(rule.value).trim();
       switch (rule.property) {
@@ -1062,11 +1258,12 @@ function applyCustomVisualRules(
 /** Inline margin/padding from style rules. */
 export function spacingStyleFromStyleRules(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): SpacingInlineStyle {
   const style: SpacingInlineStyle = {};
 
-  for (const rule of styles ?? []) {
-    if (!SPACING_STYLE_PROPERTIES.has(rule.property)) {
+  for (const rule of filterStyleRulesForFlatApplication(styles, atBreakpoint)) {
+    if (!SPACING_STYLE_PROPERTIES.has(rule.property) || rule.value === undefined) {
       continue;
     }
 
@@ -1238,6 +1435,9 @@ function applyBoxLayoutStyleRules(
   style: LayoutInlineStyle,
 ): void {
   for (const rule of styles ?? []) {
+    if (rule.value === undefined || shouldDeferPropertyToScopedCss(rule)) {
+      continue;
+    }
     const raw = String(rule.value);
 
     if (
@@ -1295,13 +1495,18 @@ function applyBoxLayoutStyleRules(
 /** Spacing plus pixel dimensions (border radius, min/max width, border width). */
 export function layoutInlineStyleFromStyleRules(
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): LayoutInlineStyle {
+  const flat = filterStyleRulesForFlatApplication(styles, atBreakpoint);
   const style: LayoutInlineStyle = {
-    ...spacingStyleFromStyleRules(styles),
+    ...spacingStyleFromStyleRules(flat, atBreakpoint),
   };
 
-  for (const rule of styles ?? []) {
-    const raw = String(rule.value);
+  for (const rule of flat) {
+    const raw = rule.value === undefined ? undefined : String(rule.value);
+    if (raw === undefined) {
+      continue;
+    }
     if (BORDER_RADIUS_STYLE_PROPERTIES.has(rule.property)) {
       applyLengthStyleRule(style, rule.property, raw);
       continue;
@@ -1319,7 +1524,7 @@ export function layoutInlineStyleFromStyleRules(
 
     applyBoxLayoutStyleRules([rule], style);
 
-    const px = parseNonNegativePx(rule.value);
+    const px = parseNonNegativePx(raw);
     if (px !== undefined && rule.property === "borderWidth") {
       if (px > 0) {
         style.borderWidth = `${px}px`;
@@ -1328,7 +1533,6 @@ export function layoutInlineStyleFromStyleRules(
     }
 
     if (rule.property === "borderStyle") {
-      const raw = String(rule.value);
       if (
         raw === "solid" ||
         raw === "dashed" ||
@@ -1340,7 +1544,7 @@ export function layoutInlineStyleFromStyleRules(
     }
   }
 
-  applyCustomVisualRules(styles, style);
+  applyCustomVisualRules(flat, style);
 
   return style;
 }
@@ -1348,13 +1552,321 @@ export function layoutInlineStyleFromStyleRules(
 export interface ResolvedStyleRules {
   readonly className: string;
   readonly style: LayoutInlineStyle;
+  /** Scoped class paired with {@link cssText} for production responsive overrides. */
+  readonly styleScopeClassName?: string;
+  /** Mobile-first `@media` CSS for breakpoint overrides (inject next to the node). */
+  readonly cssText?: string;
 }
 
-export function resolveStyleRules(
+export interface ResolveStyleRulesOptions {
+  readonly atBreakpoint?: StyleBreakpoint;
+  readonly baseClassName?: string;
+}
+
+function hashStyleSeed(seed: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function kebabCssProperty(camel: string): string {
+  return camel.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+}
+
+function layoutStyleToCssDeclarations(style: LayoutInlineStyle): string {
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(style)) {
+    if (value === undefined || value === "") {
+      continue;
+    }
+    parts.push(`${kebabCssProperty(key)}:${value}`);
+  }
+  return parts.join(";");
+}
+
+function cssDeclarationsForFlatValue(
+  property: StylePropertyKey,
+  value: StyleRuleValue,
+): string | undefined {
+  const flat: StyleRule = { property, value };
+  const inline = layoutInlineStyleFromStyleRules([flat]);
+
+  // fontSize: emit CSS var + font-size on the scope so nested value spans (and
+  // inheriting children) follow media updates without a fixed inline px lock.
+  if (property === "fontSize" && inline.fontSize !== undefined) {
+    return `--ub-font-size:${inline.fontSize};font-size:var(--ub-font-size)`;
+  }
+
+  if (property === "letterSpacing") {
+    const resolved = resolveBoxLengthStyleValue(String(value));
+    if (resolved !== undefined) {
+      return `letter-spacing:${resolved}`;
+    }
+  }
+
+  const fromInline = layoutStyleToCssDeclarations(inline);
+  if (fromInline.length > 0) {
+    return fromInline;
+  }
+
+  const raw = String(value);
+  const tokenCss = themeTokenCssDeclarations(property, raw);
+  if (tokenCss) {
+    return tokenCss;
+  }
+
+  switch (property) {
+    case "fontWeight":
+      if (raw === "bold") return "font-weight:700";
+      if (raw === "thin") return "font-weight:400";
+      return undefined;
+    case "fontStyle":
+      return raw === "italic" ? "font-style:italic" : undefined;
+    case "textDecoration":
+      return raw === "underline" ? "text-decoration:underline" : undefined;
+    case "textAlign":
+      if (raw === "left" || raw === "center" || raw === "right") {
+        return `text-align:${raw}`;
+      }
+      return undefined;
+    case "textWrap":
+      if (raw === "wrap") {
+        return "overflow:visible;text-overflow:clip;white-space:normal;word-break:break-word;min-width:0;max-width:100%";
+      }
+      if (raw === "truncate") {
+        return "overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      }
+      return undefined;
+    case "flexWrap":
+      if (raw === "wrap") return "flex-wrap:wrap";
+      if (raw === "wrap-reverse") return "flex-wrap:wrap-reverse";
+      if (raw === "nowrap") return "flex-wrap:nowrap";
+      return undefined;
+    case "alignItems":
+      if (raw === "start") return "align-items:flex-start";
+      if (raw === "center") return "align-items:center";
+      if (raw === "end") return "align-items:flex-end";
+      if (raw === "stretch") return "align-items:stretch";
+      return undefined;
+    case "justifyContent":
+      if (raw === "start") return "justify-content:flex-start";
+      if (raw === "center") return "justify-content:center";
+      if (raw === "end") return "justify-content:flex-end";
+      if (raw === "between") return "justify-content:space-between";
+      return undefined;
+    case "alignSelf":
+      if (raw === "start") return "align-self:flex-start";
+      if (raw === "center") return "align-self:center";
+      if (raw === "end") return "align-self:flex-end";
+      if (raw === "stretch") return "align-self:stretch";
+      return undefined;
+    case "overflowX":
+      return `overflow-x:${raw}`;
+    case "overflowY":
+      return `overflow-y:${raw}`;
+    case "flex":
+      return `flex:${raw}`;
+    default:
+      return undefined;
+  }
+}
+
+/** Raw CSS for theme tokens so breakpoint swaps work under @media (no Tailwind). */
+function themeTokenCssDeclarations(
+  property: StylePropertyKey,
+  raw: string,
+): string | undefined {
+  if (property === "boxShadow" && isShadowTokenValue(raw)) {
+    if (raw === "none") {
+      return "box-shadow:none";
+    }
+    if (raw === "card") {
+      return "box-shadow:var(--shadow-card)";
+    }
+  }
+
+  if (!isThemeToken(raw)) {
+    return undefined;
+  }
+
+  switch (property) {
+    case "backgroundColor":
+      return themeTokenBackgroundCss(raw);
+    case "color":
+      return themeTokenTextCss(raw);
+    case "borderColor":
+      return themeTokenBorderCss(raw);
+    default:
+      return undefined;
+  }
+}
+
+function themeTokenBackgroundCss(token: ThemeToken): string {
+  switch (token) {
+    case "muted":
+      return "background-color:var(--color-muted)";
+    case "primary":
+      return "background-color:color-mix(in oklab, var(--color-primary) 10%, transparent)";
+    case "success":
+      return "background-color:color-mix(in oklab, var(--color-success) 10%, transparent)";
+    case "warning":
+      return "background-color:color-mix(in oklab, var(--color-warning) 10%, transparent)";
+    case "danger":
+      return "background-color:color-mix(in oklab, var(--color-destructive) 10%, transparent)";
+    case "info":
+      return "background-color:color-mix(in oklab, var(--color-info) 10%, transparent)";
+    case "background":
+      return "background-color:var(--color-background)";
+    case "foreground":
+      return "background-color:color-mix(in oklab, var(--color-foreground) 10%, transparent)";
+    case "transparent":
+      return "background-color:transparent";
+    default:
+      return "background-color:var(--color-muted)";
+  }
+}
+
+function themeTokenTextCss(token: ThemeToken): string {
+  switch (token) {
+    case "muted":
+      return "color:var(--color-muted-foreground)";
+    case "primary":
+      return "color:var(--color-primary)";
+    case "success":
+      return "color:var(--color-success)";
+    case "warning":
+      return "color:var(--color-warning)";
+    case "danger":
+      return "color:var(--color-destructive)";
+    case "info":
+      return "color:var(--color-info)";
+    case "transparent":
+      return "color:transparent";
+    case "background":
+    case "foreground":
+    case "default":
+    default:
+      return "color:var(--color-foreground)";
+  }
+}
+
+function themeTokenBorderCss(token: ThemeToken): string {
+  switch (token) {
+    case "muted":
+      return "border-color:var(--color-muted)";
+    case "primary":
+      return "border-color:var(--color-primary)";
+    case "success":
+      return "border-color:var(--color-success)";
+    case "warning":
+      return "border-color:var(--color-warning)";
+    case "danger":
+      return "border-color:var(--color-destructive)";
+    case "info":
+      return "border-color:var(--color-info)";
+    case "background":
+      return "border-color:var(--color-background)";
+    case "foreground":
+      return "border-color:var(--color-foreground)";
+    case "transparent":
+      return "border-color:transparent";
+    default:
+      return "border-color:var(--color-border)";
+  }
+}
+
+function unsetCssForProperty(property: StylePropertyKey): string {
+  const probe = layoutInlineStyleFromStyleRules([{ property, value: "0" }]);
+  const keys = Object.keys(probe);
+  if (keys.length > 0) {
+    return keys.map((key) => `${kebabCssProperty(key)}:unset`).join(";");
+  }
+
+  switch (property) {
+    case "fontSize":
+      return "--ub-font-size:unset;font-size:unset";
+    case "fontWeight":
+      return "font-weight:unset";
+    case "fontStyle":
+      return "font-style:unset";
+    case "textDecoration":
+      return "text-decoration:unset";
+    case "textAlign":
+      return "text-align:unset";
+    case "textWrap":
+      return "overflow:unset;text-overflow:unset;white-space:unset;word-break:unset";
+    case "backgroundColor":
+      return "background:unset;background-color:unset";
+    case "color":
+      return "color:unset";
+    case "borderColor":
+      return "border-color:unset";
+    case "boxShadow":
+      return "box-shadow:unset";
+    case "flexWrap":
+      return "flex-wrap:unset";
+    case "alignItems":
+      return "align-items:unset";
+    case "justifyContent":
+      return "justify-content:unset";
+    case "alignSelf":
+      return "align-self:unset";
+    case "overflowX":
+      return "overflow-x:unset";
+    case "overflowY":
+      return "overflow-y:unset";
+    case "flex":
+      return "flex:unset";
+    default:
+      return "";
+  }
+}
+
+function resolveFlatStyleRules(
   styles: readonly StyleRule[] | undefined,
-  baseClassName?: string,
+  baseClassName: string | undefined,
+  mode: "component" | "rowWrapper" | "pageSlot",
 ): ResolvedStyleRules {
+  if (mode === "pageSlot") {
+    const containerClasses = classesFromRules(
+      styles,
+      (rule) =>
+        !TEXT_STYLE_PROPERTIES.has(rule.property) &&
+        !PIXEL_INLINE_STYLE_PROPERTIES.has(rule.property),
+    );
+    const flexWrapper = componentSlotWrapperClassName(styles);
+    return {
+      className: [
+        baseClassName,
+        "w-full min-w-0",
+        flexWrapper,
+        textWrapClassFromStyles(styles),
+        ...containerClasses,
+      ]
+        .filter(Boolean)
+        .join(" "),
+      style: layoutInlineStyleFromStyleRules(styles),
+    };
+  }
+
   const split = splitStyleRuleClasses(styles, baseClassName);
+  if (mode === "rowWrapper") {
+    return {
+      className: [
+        split.containerClassName,
+        textWrapClassForLayoutShell(styles),
+        split.textClassName,
+        slotFlexGrowClassName(styles),
+      ]
+        .filter(Boolean)
+        .join(" "),
+      style: layoutInlineStyleFromStyleRules(styles),
+    };
+  }
+
   return {
     className: [
       split.containerClassName,
@@ -1367,23 +1879,150 @@ export function resolveStyleRules(
   };
 }
 
+function emitProductionResponsiveStyleRules(
+  styles: readonly StyleRule[],
+  baseClassName: string | undefined,
+  mode: "component" | "rowWrapper" | "pageSlot",
+): ResolvedStyleRules {
+  const staticRules: StyleRule[] = [];
+  const responsiveRules: StyleRule[] = [];
+
+  for (const rule of styles) {
+    if (
+      isResponsiveStylePropertyExcluded(rule.property) ||
+      !styleRuleHasBreakpointOverrides(rule)
+    ) {
+      if (rule.value !== undefined) {
+        staticRules.push({ property: rule.property, value: rule.value });
+      } else if (isResponsiveStylePropertyExcluded(rule.property)) {
+        staticRules.push(rule);
+      }
+      continue;
+    }
+    responsiveRules.push(rule);
+  }
+
+  if (responsiveRules.length === 0) {
+    return resolveFlatStyleRules(staticRules, baseClassName, mode);
+  }
+
+  const baseFlat: StyleRule[] = [...staticRules];
+  const baseCssDecls: string[] = [];
+  const mediaBlocks: string[] = [];
+  const seedParts: string[] = [];
+
+  for (const rule of responsiveRules) {
+    const across = resolveStyleValuesAcrossBreakpoints(rule);
+    seedParts.push(
+      `${rule.property}:${RESPONSIVE_BREAKPOINT_ORDER.map((bp) => `${bp}=${across[bp] ?? ""}`).join(",")}`,
+    );
+
+    let previous: StyleRuleValue | undefined | null = null;
+
+    for (const bp of RESPONSIVE_BREAKPOINT_ORDER) {
+      const current = across[bp];
+      if (current === previous) {
+        continue;
+      }
+
+      if (current === undefined) {
+        if (previous !== null && previous !== undefined && bp !== "base") {
+          const unset = unsetCssForProperty(rule.property);
+          if (unset) {
+            mediaBlocks.push(
+              `@media (min-width:${mediaMinWidthForBreakpoint(bp)}px){.__SCOPE__{${unset}}}`,
+            );
+          }
+        }
+        previous = current;
+        continue;
+      }
+
+      const decls = cssDeclarationsForFlatValue(rule.property, current);
+      if (bp === "base") {
+        if (decls) {
+          // Keep responsive length/color values out of inline styles — they would
+          // beat @media overrides. Base lives in the scoped stylesheet instead.
+          baseCssDecls.push(decls);
+        } else {
+          baseFlat.push({ property: rule.property, value: current });
+        }
+      } else if (decls) {
+        mediaBlocks.push(
+          `@media (min-width:${mediaMinWidthForBreakpoint(bp)}px){.__SCOPE__{${decls}}}`,
+        );
+      }
+
+      previous = current;
+    }
+  }
+
+  const flatResolved = resolveFlatStyleRules(baseFlat, baseClassName, mode);
+  if (baseCssDecls.length === 0 && mediaBlocks.length === 0) {
+    return flatResolved;
+  }
+
+  const scopeClassName = `ub-rs-${hashStyleSeed(seedParts.join("|"))}`;
+  const cssParts: string[] = [];
+  if (baseCssDecls.length > 0) {
+    cssParts.push(`.${scopeClassName}{${baseCssDecls.join(";")}}`);
+  }
+  for (const block of mediaBlocks) {
+    cssParts.push(block.replaceAll(".__SCOPE__", `.${scopeClassName}`));
+  }
+
+  return {
+    className: [flatResolved.className, scopeClassName].filter(Boolean).join(" "),
+    style: flatResolved.style,
+    styleScopeClassName: scopeClassName,
+    cssText: cssParts.join(""),
+  };
+}
+
+function resolveStyleRulesInternal(
+  styles: readonly StyleRule[] | undefined,
+  mode: "component" | "rowWrapper" | "pageSlot",
+  options?: ResolveStyleRulesOptions | string,
+): ResolvedStyleRules {
+  const normalized: ResolveStyleRulesOptions =
+    typeof options === "string"
+      ? { baseClassName: options }
+      : (options ?? {});
+  const { atBreakpoint, baseClassName } = normalized;
+
+  if (atBreakpoint !== undefined) {
+    const collapsed = collapseStyleRulesAtBreakpoint(styles, atBreakpoint);
+    return resolveFlatStyleRules(collapsed, baseClassName, mode);
+  }
+
+  if (!stylesHaveBreakpointOverrides(styles)) {
+    return resolveFlatStyleRules(styles, baseClassName, mode);
+  }
+
+  return emitProductionResponsiveStyleRules(
+    [...(styles ?? [])],
+    baseClassName,
+    mode,
+  );
+}
+
+export function resolveStyleRules(
+  styles: readonly StyleRule[] | undefined,
+  baseClassNameOrOptions?: string | ResolveStyleRulesOptions,
+): ResolvedStyleRules {
+  return resolveStyleRulesInternal(styles, "component", baseClassNameOrOptions);
+}
+
 /** Style rules for layout shells that wrap interactive components. */
 export function resolveRowWrapperStyleRules(
   styles: readonly StyleRule[] | undefined,
-  baseClassName?: string,
+  baseClassNameOrOptions?: string | ResolveStyleRulesOptions,
 ): ResolvedStyleRules {
-  const split = splitStyleRuleClasses(styles, baseClassName);
-  return {
-    className: [
-      split.containerClassName,
-      textWrapClassForLayoutShell(styles),
-      split.textClassName,
-      slotFlexGrowClassName(styles),
-    ]
-      .filter(Boolean)
-      .join(" "),
-    style: layoutInlineStyleFromStyleRules(styles),
-  };
+  return resolveStyleRulesInternal(
+    styles,
+    "rowWrapper",
+    baseClassNameOrOptions,
+  );
 }
 
 /**
@@ -1394,28 +2033,9 @@ export function resolveRowWrapperStyleRules(
  */
 export function resolvePageSlotWrapper(
   styles: readonly StyleRule[] | undefined,
-  baseClassName?: string,
+  baseClassNameOrOptions?: string | ResolveStyleRulesOptions,
 ): ResolvedStyleRules {
-  const containerClasses = classesFromRules(
-    styles,
-    (rule) =>
-      !TEXT_STYLE_PROPERTIES.has(rule.property) &&
-      !PIXEL_INLINE_STYLE_PROPERTIES.has(rule.property),
-  );
-  const flexWrapper = componentSlotWrapperClassName(styles);
-
-  return {
-    className: [
-      baseClassName,
-      "w-full min-w-0",
-      flexWrapper,
-      textWrapClassFromStyles(styles),
-      ...containerClasses,
-    ]
-      .filter(Boolean)
-      .join(" "),
-    style: layoutInlineStyleFromStyleRules(styles),
-  };
+  return resolveStyleRulesInternal(styles, "pageSlot", baseClassNameOrOptions);
 }
 
 export function splitStyleRuleClasses(

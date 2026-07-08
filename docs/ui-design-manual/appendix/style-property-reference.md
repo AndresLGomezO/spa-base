@@ -1,6 +1,8 @@
 # Style property reference
 
-Complete list of `StyleRule.property` values. Each rule is `{ "property": "<key>", "value": "<token or css>" }`.
+Complete list of `StyleRule.property` values. Each rule is `{ "property": "<key>", "value"?: "<token or css>", "valuesByBreakpoint"?: { "base"?: "...", "sm"?: "...", ... } }`.
+
+`value` is the global fallback. Optional `valuesByBreakpoint` entries apply **from mobile through that breakpoint** (smallest covering key wins; see [Style rules and motion](../01-layout-tree/style-rules-and-motion.md)).
 
 ---
 

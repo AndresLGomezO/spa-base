@@ -23,286 +23,164 @@
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-financial-snapshot-grid",
+                        "id": "row-548082e6-ea6b-43de-afcd-605b2aa3a234",
                         "component": {
-                          "kind": "grid",
-                          "gridTemplateColumns": "repeat(3, minmax(0, 1fr))",
-                          "gap": "16",
-                          "alignItems": "stretch",
+                          "kind": "metric-widget",
+                          "entityName": "paymentSchedule",
+                          "widgetId": "upcoming-payments-dashboard",
+                          "styles": [
+                            {
+                              "property": "height",
+                              "value": "100%"
+                            },
+                            {
+                              "property": "maxWidth",
+                              "value": "550"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "component",
+                        "id": "row-0aa8c8ec-b4b8-4fca-bfe1-a723be674e1d",
+                        "component": {
+                          "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "track-upcoming-payments",
+                              "id": "row-40d74a32-feb4-47fe-a07a-06e8dab58621",
                               "component": {
                                 "kind": "container",
                                 "rows": [
                                   {
                                     "type": "component",
-                                    "id": "row-upcoming-payments-widget",
+                                    "id": "row-be4a3096-b5ac-42df-ab82-9026d1508895",
                                     "component": {
                                       "kind": "metric-widget",
                                       "entityName": "paymentSchedule",
-                                      "widgetId": "upcoming-payments-dashboard",
+                                      "widgetId": "due-today-snapshot-mini",
                                       "styles": [
                                         {
-                                          "property": "width",
+                                          "property": "height",
                                           "value": "100%"
+                                        },
+                                        {
+                                          "property": "maxWidth",
+                                          "value": "190"
+                                        },
+                                        {
+                                          "property": "minWidth",
+                                          "value": "100"
                                         }
                                       ]
                                     }
-                                  }
-                                ],
-                                "stackDirection": "column",
-                                "styles": [
-                                  {
-                                    "property": "width",
-                                    "value": "100%"
                                   },
-                                  {
-                                    "property": "minWidth",
-                                    "value": "0"
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "type": "component",
-                              "id": "track-spending-snapshot",
-                              "component": {
-                                "kind": "container",
-                                "rows": [
                                   {
                                     "type": "component",
-                                    "id": "row-spending-snapshot-upper",
+                                    "id": "row-3a4cfaa8-8772-4d2a-8c3b-df8555ab95d0",
                                     "component": {
-                                      "kind": "container",
-                                      "rows": [
-                                        {
-                                          "type": "component",
-                                          "id": "row-spending-snapshot-mini-grid",
-                                          "component": {
-                                            "kind": "grid",
-                                            "gridTemplateColumns": "repeat(3, minmax(0, 1fr))",
-                                            "gap": "12",
-                                            "alignItems": "stretch",
-                                            "rows": [
-                                              {
-                                                "type": "component",
-                                                "id": "track-due-today-mini",
-                                                "component": {
-                                                  "kind": "container",
-                                                  "rows": [
-                                                    {
-                                                      "type": "component",
-                                                      "id": "row-due-today-mini-widget",
-                                                      "component": {
-                                                        "kind": "metric-widget",
-                                                        "entityName": "paymentSchedule",
-                                                        "widgetId": "due-today-snapshot-mini",
-                                                        "styles": [
-                                                          {
-                                                            "property": "width",
-                                                            "value": "100%"
-                                                          },
-                                                          {
-                                                            "property": "height",
-                                                            "value": "100%"
-                                                          }
-                                                        ]
-                                                      }
-                                                    }
-                                                  ],
-                                                  "stackDirection": "column",
-                                                  "styles": [
-                                                    {
-                                                      "property": "width",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "minWidth",
-                                                      "value": "0"
-                                                    },
-                                                    {
-                                                      "property": "height",
-                                                      "value": "100%"
-                                                    }
-                                                  ]
-                                                }
-                                              },
-                                              {
-                                                "type": "component",
-                                                "id": "track-upcoming-week-mini",
-                                                "component": {
-                                                  "kind": "container",
-                                                  "rows": [
-                                                    {
-                                                      "type": "component",
-                                                      "id": "row-upcoming-week-mini-widget",
-                                                      "component": {
-                                                        "kind": "metric-widget",
-                                                        "entityName": "paymentSchedule",
-                                                        "widgetId": "upcoming-week-snapshot-mini",
-                                                        "styles": [
-                                                          {
-                                                            "property": "width",
-                                                            "value": "100%"
-                                                          },
-                                                          {
-                                                            "property": "height",
-                                                            "value": "100%"
-                                                          }
-                                                        ]
-                                                      }
-                                                    }
-                                                  ],
-                                                  "stackDirection": "column",
-                                                  "styles": [
-                                                    {
-                                                      "property": "width",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "minWidth",
-                                                      "value": "0"
-                                                    },
-                                                    {
-                                                      "property": "height",
-                                                      "value": "100%"
-                                                    }
-                                                  ]
-                                                }
-                                              },
-                                              {
-                                                "type": "component",
-                                                "id": "track-budget-status-mini",
-                                                "component": {
-                                                  "kind": "container",
-                                                  "rows": [
-                                                    {
-                                                      "type": "component",
-                                                      "id": "row-budget-status-mini-widget",
-                                                      "component": {
-                                                        "kind": "metric-widget",
-                                                        "entityName": "paymentSchedule",
-                                                        "widgetId": "budget-status-snapshot-mini",
-                                                        "styles": [
-                                                          {
-                                                            "property": "width",
-                                                            "value": "100%"
-                                                          },
-                                                          {
-                                                            "property": "height",
-                                                            "value": "100%"
-                                                          }
-                                                        ]
-                                                      }
-                                                    }
-                                                  ],
-                                                  "stackDirection": "column",
-                                                  "styles": [
-                                                    {
-                                                      "property": "width",
-                                                      "value": "100%"
-                                                    },
-                                                    {
-                                                      "property": "minWidth",
-                                                      "value": "0"
-                                                    },
-                                                    {
-                                                      "property": "height",
-                                                      "value": "100%"
-                                                    }
-                                                  ]
-                                                }
-                                              }
-                                            ],
-                                            "styles": [
-                                              {
-                                                "property": "width",
-                                                "value": "100%"
-                                              },
-                                              {
-                                                "property": "height",
-                                                "value": "100%"
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "type": "component",
-                                          "id": "row-05364a13-c249-4f4b-840c-98a657d7e05a",
-                                          "component": {
-                                            "kind": "metric-widget",
-                                            "entityName": "transaction",
-                                            "widgetId": "top-expense-category-snapshot",
-                                            "styles": []
-                                          }
-                                        }
-                                      ],
-                                      "stackDirection": "column",
+                                      "kind": "metric-widget",
+                                      "entityName": "paymentSchedule",
+                                      "widgetId": "upcoming-week-snapshot-mini",
                                       "styles": [
                                         {
-                                          "property": "width",
+                                          "property": "height",
                                           "value": "100%"
                                         },
                                         {
-                                          "property": "gap",
-                                          "value": "var(--spacing-comfortable)"
+                                          "property": "maxWidth",
+                                          "value": "190"
+                                        },
+                                        {
+                                          "property": "minWidth",
+                                          "value": "100"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "type": "component",
+                                    "id": "row-34172465-c6de-4558-b37b-e54e85c69697",
+                                    "component": {
+                                      "kind": "metric-widget",
+                                      "entityName": "paymentSchedule",
+                                      "widgetId": "budget-status-snapshot-mini",
+                                      "styles": [
+                                        {
+                                          "property": "height",
+                                          "value": "100%"
+                                        },
+                                        {
+                                          "property": "maxWidth",
+                                          "value": "190"
+                                        },
+                                        {
+                                          "property": "minWidth",
+                                          "value": "100"
                                         }
                                       ]
                                     }
                                   }
                                 ],
-                                "stackDirection": "column",
+                                "stackDirection": "row",
                                 "styles": [
                                   {
-                                    "property": "width",
-                                    "value": "100%"
-                                  },
-                                  {
-                                    "property": "minWidth",
-                                    "value": "0"
+                                    "property": "gap",
+                                    "value": "var(--spacing-compact)"
                                   },
                                   {
                                     "property": "height",
-                                    "value": "423"
+                                    "value": "auto"
                                   }
                                 ]
                               }
                             },
                             {
                               "type": "component",
-                              "id": "track-empty-placeholder",
+                              "id": "row-1638b76d-7b74-490e-9bb9-aeb95d1ac91c",
                               "component": {
-                                "kind": "container",
-                                "rows": [],
-                                "stackDirection": "column",
+                                "kind": "metric-widget",
+                                "entityName": "transaction",
+                                "widgetId": "top-expense-category-snapshot",
                                 "styles": [
                                   {
-                                    "property": "width",
-                                    "value": "100%"
+                                    "property": "maxWidth",
+                                    "value": "100%",
+                                    "valuesByBreakpoint": {
+                                      "base": "50%"
+                                    }
                                   },
                                   {
-                                    "property": "minWidth",
-                                    "value": "0"
+                                    "property": "height",
+                                    "value": "auto"
                                   }
                                 ]
                               }
                             }
                           ],
+                          "stackDirection": "column",
                           "styles": [
                             {
-                              "property": "width",
+                              "property": "gap",
+                              "value": "var(--spacing-compact)"
+                            },
+                            {
+                              "property": "height",
                               "value": "100%"
                             }
                           ]
                         }
                       }
                     ],
+                    "stackDirection": "row",
                     "styles": [
                       {
-                        "property": "marginBottom",
-                        "value": "15"
+                        "property": "flexWrap",
+                        "value": "wrap"
+                      },
+                      {
+                        "property": "gap",
+                        "value": "var(--spacing-comfortable)"
                       }
                     ]
                   }
@@ -333,67 +211,34 @@
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-recent-activity-grid",
+                        "id": "row-d65fade8-6831-43b4-915f-5f55aea91207",
                         "component": {
-                          "kind": "grid",
-                          "gridTemplateColumns": "repeat(2, minmax(0, 1fr))",
-                          "gap": "16",
-                          "alignItems": "stretch",
-                          "rows": [
+                          "kind": "metric-widget",
+                          "entityName": "transaction",
+                          "widgetId": "recent-activity-transactions",
+                          "label": "Transactions · Recent Activity",
+                          "styles": [
                             {
-                              "type": "component",
-                              "id": "track-recent-activity-widget",
-                              "component": {
-                                "kind": "container",
-                                "stackDirection": "column",
-                                "styles": [
-                                  { "property": "width", "value": "100%" },
-                                  { "property": "minWidth", "value": "0" },
-                                  { "property": "height", "value": "100%" }
-                                ],
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-recent-activity-widget",
-                                    "component": {
-                                      "kind": "metric-widget",
-                                      "entityName": "transaction",
-                                      "widgetId": "recent-activity-transactions",
-                                      "label": "Transactions · Recent Activity",
-                                      "styles": [
-                                        {
-                                          "property": "width",
-                                          "value": "100%"
-                                        },
-                                        {
-                                          "property": "height",
-                                          "value": "100%"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
+                              "property": "width",
+                              "value": "50%",
+                              "valuesByBreakpoint": {
+                                "sm": "100%"
                               }
                             },
                             {
-                              "type": "component",
-                              "id": "track-recent-activity-placeholder",
-                              "component": {
-                                "kind": "container",
-                                "stackDirection": "column",
-                                "rows": [],
-                                "styles": [
-                                  { "property": "width", "value": "100%" },
-                                  { "property": "minWidth", "value": "0" }
-                                ]
-                              }
+                              "property": "height",
+                              "value": "100%"
                             }
-                          ],
-                          "styles": [{ "property": "width", "value": "100%" }]
+                          ]
                         }
                       }
                     ],
-                    "styles": [{ "property": "height", "value": "300" }]
+                    "styles": [
+                      {
+                        "property": "height",
+                        "value": "300"
+                      }
+                    ]
                   }
                 }
               ]

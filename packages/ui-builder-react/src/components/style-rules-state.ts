@@ -202,18 +202,38 @@ export function upsertStyleRule(
   const updated: StyleRule =
     patch.property && patch.property !== current.property
       ? {
+          property: patch.property,
+          value:
+            patch.value !== undefined
+              ? patch.value
+              : defaultValueForProperty(patch.property),
+          ...(patch.valuesByBreakpoint !== undefined
+            ? { valuesByBreakpoint: patch.valuesByBreakpoint }
+            : {}),
+        }
+      : {
           ...current,
           ...patch,
-          property: patch.property,
-          value: defaultValueForProperty(patch.property),
-        }
-      : { ...current, ...patch };
+          ...(Object.prototype.hasOwnProperty.call(patch, "valuesByBreakpoint") &&
+          patch.valuesByBreakpoint === undefined
+            ? { valuesByBreakpoint: undefined }
+            : {}),
+        };
 
-  next[index] = updated;
+  // Drop explicit undefined valuesByBreakpoint from the object
+  const cleaned: StyleRule = {
+    property: updated.property,
+    ...(updated.value !== undefined ? { value: updated.value } : {}),
+    ...(updated.valuesByBreakpoint !== undefined
+      ? { valuesByBreakpoint: updated.valuesByBreakpoint }
+      : {}),
+  };
+
+  next[index] = cleaned;
 
   return next.filter(
     (rule, ruleIndex) =>
-      ruleIndex === index || rule.property !== updated.property,
+      ruleIndex === index || rule.property !== cleaned.property,
   );
 }
 
@@ -523,20 +543,41 @@ export function enumOptionsForProperty(
 }
 
 export function formatStyleRuleValuePreview(rule: StyleRule): string {
-  if (isEnumStyleProperty(rule.property)) {
-    const match = enumOptionsForProperty(rule.property).find(
-      (option) => option.value === String(rule.value),
-    );
-    if (match) {
-      return match.label;
+  const parts: string[] = [];
+
+  if (rule.value !== undefined) {
+    if (isEnumStyleProperty(rule.property)) {
+      const match = enumOptionsForProperty(rule.property).find(
+        (option) => option.value === String(rule.value),
+      );
+      parts.push(match?.label ?? String(rule.value));
+    } else {
+      const raw = String(rule.value);
+      parts.push(raw.length > 32 ? `${raw.slice(0, 29)}...` : raw);
     }
   }
 
-  const raw = String(rule.value);
-  if (raw.length > 48) {
-    return `${raw.slice(0, 45)}...`;
+  if (rule.valuesByBreakpoint) {
+    for (const bp of [
+      "base",
+      "sm",
+      "md",
+      "lg",
+      "xl",
+    ] as const) {
+      const bpValue = rule.valuesByBreakpoint[bp];
+      if (bpValue !== undefined) {
+        parts.push(`${bp}:${String(bpValue)}`);
+      }
+    }
   }
-  return raw;
+
+  if (parts.length === 0) {
+    return "—";
+  }
+
+  const preview = parts.join(" · ");
+  return preview.length > 48 ? `${preview.slice(0, 45)}...` : preview;
 }
 
 export function isValidShadowCustomValue(value: string): boolean {

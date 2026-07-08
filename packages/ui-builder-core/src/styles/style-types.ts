@@ -12,6 +12,11 @@ export type ThemeToken =
 
 export type ShadowToken = "none" | "card";
 
+/** Viewport tokens shared with responsive grid / display ranges. */
+export type StyleBreakpoint = "base" | "sm" | "md" | "lg" | "xl";
+
+export type StyleRuleValue = string | ThemeToken | ShadowToken;
+
 export type StylePropertyKey =
   | "marginTop"
   | "marginBottom"
@@ -74,9 +79,15 @@ export type StylePropertyKey =
   | "gridColumn"
   | "gridRow";
 
+/**
+ * Declarative style binding.
+ * `value` is the global fallback; `valuesByBreakpoint` through-overrides apply
+ * from mobile (`base`) through the named breakpoint (see responsive-style-rules).
+ */
 export interface StyleRule {
   readonly property: StylePropertyKey;
-  readonly value: string | ThemeToken | ShadowToken;
+  readonly value?: StyleRuleValue;
+  readonly valuesByBreakpoint?: Partial<Record<StyleBreakpoint, StyleRuleValue>>;
 }
 
 export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [

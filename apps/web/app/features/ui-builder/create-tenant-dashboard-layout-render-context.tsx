@@ -87,7 +87,9 @@ export function createTenantDashboardLayoutRenderContext(
         />
       );
     },
-    lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
+    lucideIconRenderer: (config, atBreakpoint) => (
+      <LayoutLucideIcon config={config} atBreakpoint={atBreakpoint} />
+    ),
     userRenderer: (config: UserComponentConfig) => (
       <LayoutUserDisplay
         config={config}

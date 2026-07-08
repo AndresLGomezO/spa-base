@@ -56,6 +56,7 @@ export {
   RESPONSIVE_GRID_TAILWIND_SAFELIST,
   RESPONSIVE_BREAKPOINT_ORDER,
   RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS,
+  resolveResponsiveBreakpointForWidth,
   MAX_GRID_COLUMNS,
   buildAutoFitGridTemplate,
   buildResponsiveGridClassName,
@@ -385,10 +386,23 @@ export type {
 export type {
   StyleRule,
   StylePropertyKey,
+  StyleBreakpoint,
+  StyleRuleValue,
   ThemeToken,
   ShadowToken,
 } from "./styles/style-types.js";
 export { STYLE_PROPERTY_OPTIONS } from "./styles/style-types.js";
+export {
+  collapseStyleRulesAtBreakpoint,
+  isResponsiveStylePropertyExcluded,
+  mediaMinWidthForBreakpoint,
+  resolveStyleValueAtBreakpoint,
+  resolveStyleValuesAcrossBreakpoints,
+  styleRuleHasBreakpointOverrides,
+  stylesHaveBreakpointOverrides,
+  readStyleRuleValue,
+  tailwindPrefixForBreakpoint,
+} from "./styles/responsive-style-rules.js";
 export {
   isCssColorValue,
   isCssBackgroundFillValue,
@@ -423,6 +437,11 @@ export {
   type ThemeColorRole,
 } from "./styles/theme-token-classes.js";
 export {
+  resolveComponentRenderStyles,
+  RESPONSIVE_FONT_SIZE_CSS_VAR,
+  type ComponentRenderStyles,
+} from "./styles/resolve-component-render-styles.js";
+export {
   applyStyleRules,
   resolveStyleRules,
   resolveRowWrapperStyleRules,
@@ -430,11 +449,13 @@ export {
   spacingStyleFromStyleRules,
   layoutInlineStyleFromStyleRules,
   textInlineStyleFromStyleRules,
+  ruleToClassForValue,
   type LayoutInlineStyle,
   type TextInlineStyle,
   SPACING_STYLE_PROPERTIES,
   splitStyleRuleClasses,
   type ResolvedStyleRules,
+  type ResolveStyleRulesOptions,
   type SpacingInlineStyle,
   parseFlexLayoutFromStyles,
   usesFlexWrapLayout,
@@ -463,7 +484,12 @@ export {
   rowSiblingContainerShellClassName,
   gapPxFromStyles,
   gapStyleFromStyleRules,
+  resolveGapLayoutProps,
+  resolveLayoutSpacingProps,
   resolveGridGapCSSValue,
+  type GapLayoutProps,
+  shouldDeferPropertyToScopedCss,
+  filterStyleRulesForFlatApplication,
   fontSizePxFromStyles,
   FONT_SIZE_STYLE_PROPERTY,
   FLEX_LAYOUT_PROPERTIES,

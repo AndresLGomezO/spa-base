@@ -22,6 +22,7 @@ import {
   readPrimaryMetricNumericValue,
 } from "./format-metric-display-value.js";
 import { resolveMetricKpiValueToneClass } from "@repo/ui-builder-core";
+import { ResponsiveStyleTag } from "@repo/ui-builder-renderer";
 
 type MetricValuePresentation = "card" | "inline";
 
@@ -43,6 +44,7 @@ interface MetricValueDisplayProps {
   readonly valueClassName?: string;
   readonly valueStyle?: CSSProperties;
   readonly textSize?: number;
+  readonly cssText?: string;
   readonly showToneColors?: boolean;
   readonly tonePolarity?: "normal" | "inverted";
 }
@@ -52,26 +54,35 @@ function MetricValueShell({
   children,
   className,
   style,
+  cssText,
 }: {
   readonly presentation: MetricValuePresentation;
   readonly children: ReactNode;
   readonly className?: string;
   readonly style?: CSSProperties;
+  readonly cssText?: string;
 }) {
+  const withResponsiveCss = (node: ReactNode): ReactNode => (
+    <>
+      <ResponsiveStyleTag cssText={cssText} />
+      {node}
+    </>
+  );
+
   if (presentation === "inline") {
     if (!className && !style) {
-      return <>{children}</>;
+      return withResponsiveCss(children);
     }
-    return (
+    return withResponsiveCss(
       <div className={className} style={style}>
         {children}
-      </div>
+      </div>,
     );
   }
-  return (
+  return withResponsiveCss(
     <LayoutCard className={className} style={style}>
       {children}
-    </LayoutCard>
+    </LayoutCard>,
   );
 }
 
@@ -108,7 +119,7 @@ function MetricKpiValueText({
   return (
     <span
       className={valueClassName}
-      style={{ ...valueStyle, ...metricValueTextStyle(textSize) }}
+      style={{ ...metricValueTextStyle(textSize), ...valueStyle }}
     >
       {children}
     </span>
@@ -131,6 +142,7 @@ export function MetricValueDisplay({
   valueClassName,
   valueStyle,
   textSize,
+  cssText,
   showToneColors,
   tonePolarity,
 }: MetricValueDisplayProps) {
@@ -252,6 +264,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.unconfigured")}
@@ -271,6 +284,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.loading")}
@@ -285,6 +299,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.forbidden")}
@@ -299,6 +314,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {activeDefinitionsQuery.isError
@@ -315,6 +331,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.unknown")}
@@ -360,6 +377,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <Text className="text-muted-foreground text-xs">{title}</Text>
         <MetricKpiValueText
@@ -388,6 +406,7 @@ export function MetricValueDisplay({
         presentation={presentation}
         className={className}
         style={style}
+        cssText={cssText}
       >
         <MetricKpiValueText
           valueClassName={valueTextClassName}
@@ -405,6 +424,7 @@ export function MetricValueDisplay({
       presentation={presentation}
       className={className}
       style={style}
+      cssText={cssText}
     >
       <Text className="text-muted-foreground text-xs">{title}</Text>
       <MetricKpiValueText

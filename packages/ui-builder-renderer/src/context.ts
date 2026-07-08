@@ -13,6 +13,7 @@ import type {
   ChartComponentConfig,
   QueryViewerComponentConfig,
   ResolvedComponentClickTarget,
+  ResponsiveGridBreakpoint,
   UserComponentConfig,
   ViewFilterComponentConfig,
   WizardActionsComponentConfig,
@@ -76,7 +77,10 @@ export interface LayoutRenderContext {
     rawValue: unknown,
     options: ImageResolveOptions,
   ) => ReactNode;
-  readonly lucideIconRenderer?: (config: IconComponentConfig) => ReactNode;
+  readonly lucideIconRenderer?: (
+    config: IconComponentConfig,
+    atBreakpoint?: ResponsiveGridBreakpoint,
+  ) => ReactNode;
   readonly userRenderer?: (config: UserComponentConfig) => ReactNode;
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;

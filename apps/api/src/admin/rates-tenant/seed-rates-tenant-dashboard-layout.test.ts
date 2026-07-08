@@ -26,14 +26,17 @@ describe("rates tenant dashboard layout catalog", () => {
     const sectionLayoutJson = JSON.stringify(
       catalog.dashboardSections[0]?.layout,
     );
-    expect(sectionLayoutJson).toMatch(/"kind":"grid"/);
-    expect(sectionLayoutJson).toContain("minmax(400px, 450px) 1fr");
-    expect(sectionLayoutJson).toMatch(/"gap":"15"/);
-    expect(sectionLayoutJson).toMatch(/"gap":"10"/);
+    expect(sectionLayoutJson).toMatch(/"kind":"container"/);
+    expect(sectionLayoutJson).toMatch(/"stackDirection":"row"/);
+    expect(sectionLayoutJson).toContain("var(--spacing-comfortable)");
+    expect(sectionLayoutJson).toContain("var(--spacing-compact)");
+    expect(sectionLayoutJson).toContain('"property":"flexWrap"');
+    expect(sectionLayoutJson).toContain('"value":"wrap"');
     expect(sectionLayoutJson).toMatch(/total-balance-by-month/);
     expect(sectionLayoutJson).toMatch(/income-by-month/);
     expect(sectionLayoutJson).toMatch(/expenses-by-month/);
     expect(sectionLayoutJson).toMatch(/invest-by-month/);
+    expect(sectionLayoutJson).not.toMatch(/"kind":"grid"/);
 
     const balanceIndex = sectionLayoutJson.indexOf("total-balance-by-month");
     const incomeIndex = sectionLayoutJson.indexOf("income-by-month");

@@ -72,6 +72,87 @@ describe("style-rules-state", () => {
     ).toBe("0");
   });
 
+  it("formats breakpoint overrides in the value preview", () => {
+    expect(
+      formatStyleRuleValuePreview({
+        property: "fontSize",
+        value: "16",
+        valuesByBreakpoint: { base: "10" },
+      }),
+    ).toBe("16 · base:10");
+  });
+
+  it("preserves valuesByBreakpoint when upserting value", () => {
+    const next = upsertStyleRule(
+      [
+        {
+          property: "fontSize",
+          value: "16",
+          valuesByBreakpoint: { base: "10" },
+        },
+      ],
+      0,
+      { value: "18" },
+    );
+    expect(next[0]).toEqual({
+      property: "fontSize",
+      value: "18",
+      valuesByBreakpoint: { base: "10" },
+    });
+  });
+
+  it("can clear valuesByBreakpoint via upsert", () => {
+    const next = upsertStyleRule(
+      [
+        {
+          property: "fontSize",
+          value: "16",
+          valuesByBreakpoint: { base: "10" },
+        },
+      ],
+      0,
+      { valuesByBreakpoint: undefined },
+    );
+    expect(next[0]).toEqual({ property: "fontSize", value: "16" });
+  });
+
+  it("clears overrides when confirming a full draft that dropped valuesByBreakpoint", () => {
+    const styles = [
+      {
+        property: "fontSize" as const,
+        value: "20",
+        valuesByBreakpoint: { md: "10" },
+      },
+    ];
+    // CollapsibleStyleRulesEditor confirmEdit must pass valuesByBreakpoint explicitly
+    // (even when undefined) so upsert clears the previous map.
+    const next = upsertStyleRule(styles, 0, {
+      property: "fontSize",
+      value: "20",
+      valuesByBreakpoint: undefined,
+    });
+    expect(next[0]).toEqual({ property: "fontSize", value: "20" });
+  });
+
+  it("keeps overrides when upsert patch omits valuesByBreakpoint key", () => {
+    const next = upsertStyleRule(
+      [
+        {
+          property: "fontSize",
+          value: "20",
+          valuesByBreakpoint: { md: "10" },
+        },
+      ],
+      0,
+      { property: "fontSize", value: "20" },
+    );
+    expect(next[0]).toEqual({
+      property: "fontSize",
+      value: "20",
+      valuesByBreakpoint: { md: "10" },
+    });
+  });
+
   it("treats tenant custom token vars as theme mode colors", () => {
     const customColorOptions = [
       { label: "Widget surface", value: "var(--color-widget)" },

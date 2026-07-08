@@ -202,8 +202,24 @@ describe("seed-local-tenant-ui-slices", () => {
         root: {
           columns: Array<{
             rows: Array<{
+              id?: string;
               component: {
-                rows: Array<{ component: { kind: string; rows: unknown[] } }>;
+                kind?: string;
+                stackDirection?: string;
+                rows: Array<{
+                  id?: string;
+                  component?: {
+                    kind?: string;
+                    widgetId?: string;
+                    entityName?: string;
+                    rows?: unknown[];
+                    styles?: Array<{
+                      property: string;
+                      value: string;
+                      valuesByBreakpoint?: Record<string, string>;
+                    }>;
+                  };
+                }>;
                 styles?: Array<{ property: string; value: string }>;
               };
             }>;
@@ -212,116 +228,135 @@ describe("seed-local-tenant-ui-slices", () => {
       }
     ).root.columns[0]?.rows[0];
 
-    expect(sectionRootRow?.component?.rows).toHaveLength(1);
+    expect(sectionRootRow?.id).toBe("row-823231a6-e0b9-4ea3-885a-b7c2473e1d1f");
+    expect(sectionRootRow?.component?.kind).toBe("container");
+    expect(sectionRootRow?.component?.stackDirection).toBe("row");
+    expect(sectionRootRow?.component?.rows).toHaveLength(2);
     expect(sectionRootRow?.component?.styles).toEqual(
-      expect.arrayContaining([{ property: "marginBottom", value: "15" }]),
-    );
-
-    const gridRow = sectionRootRow?.component.rows[0]?.component;
-
-    expect(gridRow?.kind).toBe("grid");
-    expect(gridRow?.rows).toHaveLength(3);
-
-    const spendingTrack = gridRow?.rows[1] as {
-      component?: {
-        kind?: string;
-        rows?: Array<{
-          id?: string;
-          component?: {
-            kind?: string;
-            rows?: unknown[];
-            styles?: Array<{ property: string; value: string }>;
-          };
-        }>;
-        styles?: Array<{ property: string; value: string }>;
-      };
-    };
-    expect(spendingTrack?.component?.kind).toBe("container");
-    expect(spendingTrack?.component?.rows).toHaveLength(1);
-    expect(spendingTrack?.component?.styles).toEqual(
-      expect.arrayContaining([{ property: "height", value: "423" }]),
-    );
-
-    const spendingContent = spendingTrack?.component?.rows?.[0];
-    expect(spendingContent?.id).toBe("row-spending-snapshot-upper");
-    expect(spendingContent?.component?.rows).toHaveLength(2);
-    expect(spendingContent?.component?.styles).toEqual(
       expect.arrayContaining([
-        { property: "width", value: "100%" },
+        { property: "flexWrap", value: "wrap" },
         { property: "gap", value: "var(--spacing-comfortable)" },
       ]),
     );
 
-    const miniGrid = (
-      spendingContent?.component as {
-        rows?: Array<{ component?: { kind?: string; rows?: unknown[] } }>;
-      }
-    )?.rows?.[0]?.component;
-    expect(miniGrid?.kind).toBe("grid");
-    expect(miniGrid?.rows).toHaveLength(3);
+    const upcomingPayments = sectionRootRow?.component.rows[0]?.component;
+    expect(upcomingPayments?.kind).toBe("metric-widget");
+    expect(upcomingPayments?.widgetId).toBe("upcoming-payments-dashboard");
+    expect(upcomingPayments?.entityName).toBe("paymentSchedule");
+    expect(upcomingPayments?.styles).toEqual(
+      expect.arrayContaining([
+        { property: "height", value: "100%" },
+        { property: "maxWidth", value: "550" },
+      ]),
+    );
 
-    const miniWidgetIds = (miniGrid?.rows ?? []).map((track) => {
-      const container = track as {
-        component?: { rows?: Array<{ component?: { widgetId?: string } }> };
-      };
-      return container.component?.rows?.[0]?.component?.widgetId;
-    });
-    expect(miniWidgetIds).toEqual([
+    const spendingColumn = sectionRootRow?.component.rows[1]?.component as {
+      kind?: string;
+      stackDirection?: string;
+      rows?: Array<{
+        id?: string;
+        component?: {
+          kind?: string;
+          stackDirection?: string;
+          widgetId?: string;
+          entityName?: string;
+          rows?: Array<{ component?: { widgetId?: string } }>;
+          styles?: Array<{
+            property: string;
+            value: string;
+            valuesByBreakpoint?: Record<string, string>;
+          }>;
+        };
+      }>;
+      styles?: Array<{ property: string; value: string }>;
+    };
+    expect(spendingColumn?.kind).toBe("container");
+    expect(spendingColumn?.stackDirection).toBe("column");
+    expect(spendingColumn?.rows).toHaveLength(2);
+    expect(spendingColumn?.styles).toEqual(
+      expect.arrayContaining([
+        { property: "gap", value: "var(--spacing-compact)" },
+        { property: "height", value: "100%" },
+      ]),
+    );
+
+    const miniRow = spendingColumn?.rows?.[0]?.component;
+    expect(miniRow?.kind).toBe("container");
+    expect(miniRow?.stackDirection).toBe("row");
+    expect(miniRow?.rows).toHaveLength(3);
+    expect(
+      (miniRow?.rows ?? []).map((row) => row.component?.widgetId),
+    ).toEqual([
       "due-today-snapshot-mini",
       "upcoming-week-snapshot-mini",
       "budget-status-snapshot-mini",
     ]);
 
-    const topCategoryWidget = (
-      spendingContent?.component as {
-        rows?: Array<{
-          component?: { widgetId?: string; entityName?: string };
-        }>;
-      }
-    )?.rows?.[1]?.component;
+    const topCategoryWidget = spendingColumn?.rows?.[1]?.component;
     expect(topCategoryWidget?.widgetId).toBe("top-expense-category-snapshot");
     expect(topCategoryWidget?.entityName).toBe("transaction");
+    expect(topCategoryWidget?.styles).toEqual(
+      expect.arrayContaining([
+        {
+          property: "maxWidth",
+          value: "100%",
+          valuesByBreakpoint: { base: "50%" },
+        },
+        { property: "height", value: "auto" },
+      ]),
+    );
 
-    const emptyTrack = gridRow?.rows[2] as {
-      id?: string;
-      component?: { rows?: unknown[] };
-    };
-    expect(emptyTrack?.id).toBe("track-empty-placeholder");
-    expect(emptyTrack?.component?.rows).toEqual([]);
-
-    const recentActivityGrid = (
+    const recentActivityRoot = (
       slice.dashboardSections[1]?.layout as {
         root: {
           columns: Array<{
             rows: Array<{
+              id?: string;
               component: {
+                kind?: string;
                 rows: Array<{
-                  component: { kind: string; rows: unknown[] };
+                  component?: {
+                    kind?: string;
+                    widgetId?: string;
+                    entityName?: string;
+                    label?: string;
+                    styles?: Array<{
+                      property: string;
+                      value: string;
+                      valuesByBreakpoint?: Record<string, string>;
+                    }>;
+                  };
                 }>;
+                styles?: Array<{ property: string; value: string }>;
               };
             }>;
           }>;
         };
       }
-    ).root.columns[0]?.rows[0]?.component.rows[0]?.component;
-    expect(recentActivityGrid?.kind).toBe("grid");
-    expect(recentActivityGrid?.rows).toHaveLength(2);
-    const recentActivityWidget = (
-      recentActivityGrid?.rows[0] as {
-        component?: {
-          rows?: Array<{
-            component?: {
-              widgetId?: string;
-              entityName?: string;
-              label?: string;
-            };
-          }>;
-        };
-      }
-    )?.component?.rows?.[0]?.component;
+    ).root.columns[0]?.rows[0];
+
+    expect(recentActivityRoot?.id).toBe("row-recent-activity-section-root");
+    expect(recentActivityRoot?.component?.kind).toBe("container");
+    expect(recentActivityRoot?.component?.rows).toHaveLength(1);
+    expect(recentActivityRoot?.component?.styles).toEqual(
+      expect.arrayContaining([{ property: "height", value: "300" }]),
+    );
+
+    const recentActivityWidget = recentActivityRoot?.component.rows[0]?.component;
+    expect(recentActivityWidget?.kind).toBe("metric-widget");
     expect(recentActivityWidget?.widgetId).toBe("recent-activity-transactions");
     expect(recentActivityWidget?.entityName).toBe("transaction");
     expect(recentActivityWidget?.label).toBe("Transactions · Recent Activity");
+    expect(recentActivityWidget?.styles).toEqual(
+      expect.arrayContaining([
+        {
+          property: "width",
+          value: "50%",
+          valuesByBreakpoint: { sm: "100%" },
+        },
+        { property: "height", value: "100%" },
+      ]),
+    );
   });
 
   it("exports seedLocalTenantUiSlicesIfPresent", () => {

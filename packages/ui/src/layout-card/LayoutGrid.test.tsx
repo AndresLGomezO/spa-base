@@ -29,4 +29,17 @@ describe("LayoutGrid", () => {
       gap: "var(--spacing-comfortable)",
     });
   });
+
+  it("omits inline gap when gap is null and style.gap is unset", () => {
+    const { container } = render(
+      <LayoutGrid gap={null} className="ub-rs-test">
+        <div />
+      </LayoutGrid>,
+    );
+
+    expect(container.firstElementChild).not.toHaveStyle({ gap: "12px" });
+    expect(
+      (container.firstElementChild as HTMLElement | null)?.style.gap,
+    ).toBe("");
+  });
 });

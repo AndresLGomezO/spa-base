@@ -52,6 +52,22 @@ export const RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS: Record<
   xl: 1280,
 };
 
+/**
+ * Largest breakpoint whose min-width (preview width token) is ≤ `widthPx`.
+ * Used by width-slider designer previews so snapped styles / display ranges match the frame.
+ */
+export function resolveResponsiveBreakpointForWidth(
+  widthPx: number,
+): ResponsiveGridBreakpoint {
+  let resolved: ResponsiveGridBreakpoint = "base";
+  for (const bp of RESPONSIVE_BREAKPOINT_ORDER) {
+    if (widthPx >= RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS[bp]) {
+      resolved = bp;
+    }
+  }
+  return resolved;
+}
+
 export interface ResolvedResponsiveGridLayout {
   readonly mode: ResponsiveGridMode;
   readonly className?: string;

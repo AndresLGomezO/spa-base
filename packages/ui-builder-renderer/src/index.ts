@@ -38,3 +38,4 @@ export {
   EmbeddedLayoutRenderer,
   type EmbeddedLayoutRendererProps,
 } from "./layout/EmbeddedLayoutRenderer.js";
+export { ResponsiveStyleTag } from "./layout/ResponsiveStyleTag.js";

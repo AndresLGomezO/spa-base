@@ -962,11 +962,19 @@
       "screenHint": "Previewing a responsive screen",
       "constraintHint": "Previewing a component inside width constraints",
       "width": "Width",
+      "screenSize": "Screen",
       "device": "Device",
       "devices": {
         "mobile": "Mobile",
         "tablet": "Tablet",
         "desktop": "Desktop"
+      },
+      "breakpoints": {
+        "base": "Mobile",
+        "sm": "SM",
+        "md": "MD",
+        "lg": "LG",
+        "xl": "XL"
       }
     },
     "properties": {
@@ -1463,6 +1471,22 @@
       "removeStyleRule": "Remove",
       "styleProperty": "Property",
       "styleValue": "Value",
+      "styleDefaultValue": "Default",
+      "styleBreakpoints": "Screen overrides",
+      "styleBreakpointsHint": "Applies from mobile through the selected screen size.",
+      "styleAddBreakpoint": "Add screen override",
+      "styleEditBreakpoint": "Edit screen override",
+      "styleSaveBreakpoint": "Save override",
+      "styleBreakpointScreen": "Screen",
+      "styleBreakpointEmpty": "No screen-specific overrides",
+      "styleBreakpointCancel": "Cancel",
+      "styleBreakpointBack": "Back",
+      "styleBreakpointClear": "Clear",
+      "styleBreakpointShortBase": "Mobile",
+      "styleBreakpointShortSm": "SM",
+      "styleBreakpointShortMd": "MD",
+      "styleBreakpointShortLg": "LG",
+      "styleBreakpointShortXl": "XL",
       "styleColorTheme": "Theme",
       "styleColorCustom": "Custom",
       "styleColorThemeTokens": "Theme tokens",

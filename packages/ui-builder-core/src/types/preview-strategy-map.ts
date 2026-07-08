@@ -27,12 +27,16 @@ export const MOBILE_DESKTOP_STRATEGY: PreviewStrategy = {
   devices: MOBILE_DESKTOP_DEVICE_SET,
 };
 
+/**
+ * Component/widget preview: width slider with presets through XL so responsive
+ * style overrides and display ranges can be verified (not capped below `md`).
+ */
 export const WIDGET_WIDTH_STRATEGY: PreviewStrategy = {
   type: "width",
   min: 100,
-  max: 600,
+  max: 1280,
   default: 300,
-  presets: [100, 200, 300, 400, 600],
+  presets: [320, 640, 768, 1024, 1280],
 };
 
 export const SECTION_WIDTH_STRATEGY: PreviewStrategy = {
@@ -40,7 +44,7 @@ export const SECTION_WIDTH_STRATEGY: PreviewStrategy = {
   min: 200,
   max: 1600,
   default: 800,
-  presets: [320, 768, 1024, 1600],
+  presets: [320, 640, 768, 1024, 1280, 1600],
 };
 
 export const FORM_WIDTH_STRATEGY: PreviewStrategy = {

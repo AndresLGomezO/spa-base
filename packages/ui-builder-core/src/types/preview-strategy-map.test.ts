@@ -25,14 +25,15 @@ describe("resolvePreviewStrategy", () => {
     }
   });
 
-  it("maps metricWidget to width slider strategy", () => {
+  it("maps metricWidget to width slider strategy covering XL breakpoints", () => {
     const strategy = resolvePreviewStrategy("metricWidget");
     expect(strategy).toEqual(WIDGET_WIDTH_STRATEGY);
     expect(strategy.type).toBe("width");
     if (strategy.type === "width") {
       expect(strategy.min).toBe(100);
-      expect(strategy.max).toBe(600);
+      expect(strategy.max).toBe(1280);
       expect(strategy.default).toBe(300);
+      expect(strategy.presets).toEqual([320, 640, 768, 1024, 1280]);
     }
   });
 
