@@ -1334,8 +1334,6 @@
     "detailLayoutMissing": "No hay un layout de detalle de registro configurado para esta entidad.",
     "detailLayoutMissingAction": "Diseñar layout de Vista detallada",
     "recordsJson": {
-      "exportTrigger": "Exportar JSON",
-      "importTrigger": "Importar JSON",
       "viewTitle": "JSON de registros exportados",
       "viewDescription": "Copia o revisa los registros exportados. La importación acepta un objeto o un arreglo de objetos con la misma forma.",
       "viewCopy": "Copiar JSON",

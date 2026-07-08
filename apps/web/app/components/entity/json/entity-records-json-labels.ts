@@ -1,6 +1,4 @@
 export interface EntityRecordsJsonLabels {
-  readonly exportTrigger: string;
-  readonly importTrigger: string;
   readonly viewTitle: string;
   readonly viewDescription: string;
   readonly viewCopy: string;

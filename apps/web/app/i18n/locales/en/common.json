@@ -1334,8 +1334,6 @@
     "detailLayoutMissing": "No record detail layout is configured for this entity.",
     "detailLayoutMissingAction": "Design Detailed View layout",
     "recordsJson": {
-      "exportTrigger": "Export JSON",
-      "importTrigger": "Import JSON",
       "viewTitle": "Exported records JSON",
       "viewDescription": "Copy or review the exported entity records. Import accepts the same shape as a single object or an array of objects.",
       "viewCopy": "Copy JSON",

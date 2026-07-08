@@ -1,12 +1,18 @@
 import { useMemo, useState } from "react";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { EntityRecordsJsonLabels } from "./entity-records-json-labels.js";
 
 interface EntityRecordsJsonViewDialogProps {
   readonly jsonText: string;
   readonly labels: EntityRecordsJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
   readonly loading?: boolean;
@@ -16,7 +22,7 @@ interface EntityRecordsJsonViewDialogProps {
 export function EntityRecordsJsonViewDialog({
   jsonText,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
   loading = false,
@@ -48,15 +54,11 @@ export function EntityRecordsJsonViewDialog({
   return (
     <>
       {showTrigger ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
-          loading={loading}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
+          disabled={loading}
           onClick={() => setOpen(true)}
-        >
-          {labels.exportTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

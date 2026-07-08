@@ -4,7 +4,11 @@ import {
   type EntityRecordsExportEnvelope,
   type SerializableEntityDefinition,
 } from "@repo/entities";
-import { toast, Button } from "@repo/ui";
+import {
+  JsonActionTriggerGroup,
+  JsonViewTriggerButton,
+  toast,
+} from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { EntityName } from "../../../entities/entity-catalog";
@@ -25,7 +29,6 @@ interface EntityRecordsJsonToolbarProps {
   readonly entityName: EntityName;
   readonly definition: SerializableEntityDefinition;
   readonly exportEnvelope?: EntityRecordsExportEnvelope;
-  readonly triggerSize?: "sm" | "md" | "lg";
   readonly onImportSuccess?: () => void;
 }
 
@@ -42,7 +45,6 @@ export function EntityRecordsJsonToolbar({
   entityName,
   definition,
   exportEnvelope,
-  triggerSize = "sm",
   onImportSuccess,
 }: EntityRecordsJsonToolbarProps) {
   const { t } = useTranslation("common");
@@ -55,8 +57,6 @@ export function EntityRecordsJsonToolbar({
 
   const labels = useMemo<EntityRecordsJsonLabels>(
     () => ({
-      exportTrigger: t("entity.recordsJson.exportTrigger"),
-      importTrigger: t("entity.recordsJson.importTrigger"),
       viewTitle: t("entity.recordsJson.viewTitle"),
       viewDescription: t("entity.recordsJson.viewDescription"),
       viewCopy: t("entity.recordsJson.viewCopy"),
@@ -149,23 +149,11 @@ export function EntityRecordsJsonToolbar({
           buildingCollections={buildingCollections}
         />
       ) : null}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
-          loading={exportLoading}
+      <JsonActionTriggerGroup labels={triggerLabels} showGroupLabel={false}>
+        <JsonViewTriggerButton
+          labels={triggerLabels}
+          disabled={exportLoading}
           onClick={() => void handleExportOpen()}
-        >
-          {labels.exportTrigger}
-        </Button>
-        <EntityRecordsJsonViewDialog
-          jsonText={exportJsonText}
-          labels={labels}
-          loading={exportLoading}
-          open={exportOpen}
-          onOpenChange={setExportOpen}
-          showTrigger={false}
         />
         <EntityRecordsJsonImportDialog
           definition={definition}
@@ -175,7 +163,15 @@ export function EntityRecordsJsonToolbar({
           importDisabled={!isEnvironmentReady}
           onApply={handleImport}
         />
-      </div>
+      </JsonActionTriggerGroup>
+      <EntityRecordsJsonViewDialog
+        jsonText={exportJsonText}
+        labels={labels}
+        loading={exportLoading}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        showTrigger={false}
+      />
     </div>
   );
 }
