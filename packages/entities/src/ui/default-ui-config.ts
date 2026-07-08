@@ -1,6 +1,7 @@
 import { createDefaultFormLayout } from "@repo/ui-builder-core";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import type { EntityUIConfig, ViewConfig } from "./types.js";
+import { createDefaultExpandableTableView } from "./expandable-table-defaults.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
@@ -31,7 +32,7 @@ function buildDefaultFormLayout(entity: AnyDefinedEntity) {
   };
 }
 
-function buildDefaultTableView(entity: AnyDefinedEntity): ViewConfig {
+function buildDefaultTableMetadataView(entity: AnyDefinedEntity): ViewConfig {
   return {
     type: "table",
     name: "default",
@@ -47,9 +48,24 @@ function formatEntityLabel(name: string): string {
 }
 
 export function getDefaultEntityUI(entity: AnyDefinedEntity): EntityUIConfig {
+  const fieldPaths = getDefaultTableFieldNames(entity);
   const formLayout = buildDefaultFormLayout(entity);
+  const fieldLabels = Object.fromEntries(
+    Object.entries(entity.metadata.ui?.fields ?? {}).map(([name, config]) => [
+      name,
+      config?.label,
+    ]),
+  );
+
   return {
-    views: [buildDefaultTableView(entity)],
+    listViewType: "expandableTable",
+    views: [
+      buildDefaultTableMetadataView(entity),
+      createDefaultExpandableTableView(fieldPaths, {
+        fields: entity.metadata.fields,
+        fieldLabels,
+      }),
+    ],
     forms: {
       create: formLayout,
       edit: formLayout,

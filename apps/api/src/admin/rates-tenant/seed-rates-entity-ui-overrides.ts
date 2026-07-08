@@ -50,7 +50,7 @@ const entityUiOverridesCatalogSchema = z
             entityName: z.string().trim().min(1),
             views: z.array(z.unknown()).min(1),
             listViewType: z
-              .enum(["table", "card", "expandableTable", "compact"])
+              .enum(["card", "expandableTable", "compact"])
               .optional(),
             listItem: z.unknown().optional(),
             metricWidgets: z.array(metricWidgetCatalogSchema).optional(),
@@ -62,10 +62,58 @@ const entityUiOverridesCatalogSchema = z
   })
   .strict();
 
+type CatalogListViewType = z.infer<
+  typeof entityUiOverridesCatalogSchema
+>["overrides"][number]["listViewType"];
+
+function normalizeCatalogListViewType(
+  listViewType: unknown,
+): CatalogListViewType {
+  if (listViewType === "table") {
+    return "expandableTable";
+  }
+  if (
+    listViewType === "card" ||
+    listViewType === "expandableTable" ||
+    listViewType === "compact"
+  ) {
+    return listViewType;
+  }
+  return undefined;
+}
+
+function preprocessEntityUiOverridesCatalog(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") {
+    return raw;
+  }
+  const catalog = raw as Record<string, unknown>;
+  if (!Array.isArray(catalog.overrides)) {
+    return raw;
+  }
+  return {
+    ...catalog,
+    overrides: catalog.overrides.map((override) => {
+      if (!override || typeof override !== "object") {
+        return override;
+      }
+      const record = override as Record<string, unknown>;
+      const listViewType = normalizeCatalogListViewType(record.listViewType);
+      if (listViewType === undefined) {
+        const rest = { ...record };
+        delete rest.listViewType;
+        return rest;
+      }
+      return { ...record, listViewType };
+    }),
+  };
+}
+
 export function parseRatesEntityUiOverridesCatalog(
   jsonText: string,
 ): z.infer<typeof entityUiOverridesCatalogSchema> {
-  const parsed = entityUiOverridesCatalogSchema.parse(JSON.parse(jsonText));
+  const parsed = entityUiOverridesCatalogSchema.parse(
+    preprocessEntityUiOverridesCatalog(JSON.parse(jsonText)),
+  );
   for (const override of parsed.overrides) {
     if (override.metricRowLayout) {
       uiLayoutDocumentSchema.parse(override.metricRowLayout);

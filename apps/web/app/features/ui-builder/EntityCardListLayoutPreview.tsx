@@ -61,6 +61,7 @@ export function EntityCardListLayoutPreview({
         getOneToManyCellValue,
         usePreviewPlaceholder: true,
         usePreviewSamples: previewItem === null,
+        relationLinkAppearance: true,
       }),
     [definition, getDefinition, getOneToManyCellValue, locale, previewItem],
   );

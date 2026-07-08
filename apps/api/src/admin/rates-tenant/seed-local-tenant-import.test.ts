@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RATES_GCP_DEMO_OWNER_UID } from "./constants.js";
 import {
+  enrichFinancialItemRecordsWithActorLogos,
   listPresentLocalGeneratedImportSpecs,
   listPresentLocalImportSpecs,
   normalizeLocalImportRecord,
@@ -117,6 +118,51 @@ describe("seed-local-tenant-import", () => {
     );
     expect(readEntityImageFileName(record, "logo")).toBe("actor.png");
     expect(readEntityImageFileName(record, "missing")).toBeNull();
+  });
+
+  it("derives financialItem image refs from linked actor logos", () => {
+    const actorLogoById = new Map([
+      ["86ee2d42-7f39-443d-89c4-e5f4d0de0acb", "visa.png"],
+      ["be666406-f9f4-44e9-9e97-c66675718ef2", "mastercard.png"],
+    ]);
+
+    const enriched = enrichFinancialItemRecordsWithActorLogos(
+      [
+        {
+          id: "b3068c84-4703-45b5-998a-dea3fb9b880a",
+          name: "Visa Signature",
+          actorId: "86ee2d42-7f39-443d-89c4-e5f4d0de0acb",
+        },
+        {
+          id: "9f660323-25ca-413c-86a8-710a375be97f",
+          name: "Mastercard Black",
+          actorId: "be666406-f9f4-44e9-9e97-c66675718ef2",
+        },
+        {
+          id: "no-actor",
+          name: "Cash buffer",
+        },
+        {
+          id: "explicit-image",
+          name: "Custom image",
+          actorId: "86ee2d42-7f39-443d-89c4-e5f4d0de0acb",
+          image: {
+            fileName: "custom.png",
+            contentType: "image/png",
+            storagePath:
+              "tenants/TENANT_ID/entity-files/financialItem/custom.png",
+          },
+        },
+      ],
+      actorLogoById,
+    );
+
+    expect(readEntityImageFileName(enriched[0]!, "image")).toBe("visa.png");
+    expect(readEntityImageFileName(enriched[1]!, "image")).toBe(
+      "mastercard.png",
+    );
+    expect(readEntityImageFileName(enriched[2]!, "image")).toBeNull();
+    expect(readEntityImageFileName(enriched[3]!, "image")).toBe("custom.png");
   });
 });
 

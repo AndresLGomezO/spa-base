@@ -11,13 +11,14 @@ import { formatRecordDisplayLabel } from "./format-record-display-label";
 function getPopulatedDisplayValue(
   item: Record<string, unknown>,
   column: string,
+  displayField?: string,
 ): string | null {
   const populated = item._populated as
     | Record<string, Record<string, unknown> | null>
     | undefined;
   if (!populated || !populated[column]) return null;
   const target = populated[column];
-  return formatRecordDisplayLabel(target);
+  return formatRecordDisplayLabel(target, displayField);
 }
 
 export function getEntityCellRawValue(
@@ -78,13 +79,26 @@ export function resolveEntityCellValue(
     recordId: string,
     columnName: string,
   ) => string | null,
+  options?: {
+    readonly getDefinition?: (
+      entityName: string,
+    ) => { readonly displayField?: string } | undefined;
+  },
 ): string {
   const fieldMeta = definition.fields[column];
   if (
     fieldMeta?.relation?.type === "many-to-one" ||
     fieldMeta?.relation?.type === "one-to-one"
   ) {
-    const displayLabel = getPopulatedDisplayValue(item, column);
+    const targetDefinition =
+      fieldMeta.relation.target && options?.getDefinition
+        ? options.getDefinition(fieldMeta.relation.target)
+        : undefined;
+    const displayLabel = getPopulatedDisplayValue(
+      item,
+      column,
+      targetDefinition?.displayField,
+    );
     if (displayLabel !== null) {
       return displayLabel;
     }

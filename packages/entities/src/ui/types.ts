@@ -87,6 +87,8 @@ export interface ExpandableTableViewConfig extends ViewConfigBase {
   readonly columns: readonly GroupedTableColumn[];
   readonly rowExpandLayout: UiLayoutDocument;
   readonly showActions?: boolean;
+  /** Optional image/logo column rendered before grouped columns. */
+  readonly imageFieldPath?: string;
 }
 
 export type ViewConfig =
@@ -179,7 +181,7 @@ export interface EntityNavConfig {
   readonly icon?: string;
 }
 
-export type EntityListViewType = "table" | "card" | "expandableTable";
+export type EntityListViewType = "card" | "expandableTable";
 
 /** @deprecated Use expandableTable */
 export type LegacyEntityListViewType = EntityListViewType | "compact";

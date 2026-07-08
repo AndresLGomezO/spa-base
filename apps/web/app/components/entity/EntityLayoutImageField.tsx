@@ -1,7 +1,8 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties, type MouseEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { SerializableEntityDefinition } from "@repo/entities";
-import { CardFieldImage } from "@repo/ui";
+import { CardFieldImage, PhotoExpandDialog } from "@repo/ui";
+import { cn } from "@repo/theme/utils";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { formatFieldLabel } from "../../entities/entity-catalog";
@@ -38,6 +39,20 @@ interface EntityLayoutImageFieldProps {
   /** Layout primary field; default image fallback uses this path, not resolved fallbacks. */
   readonly primaryFieldPath?: string;
   readonly usePreviewPlaceholder?: boolean;
+  /** When true, clicking the image opens a full-size preview modal. */
+  readonly expandOnClick?: boolean;
+}
+
+function isExpandableImageSrc(
+  src: string | null,
+  expandOnClick: boolean,
+): src is string {
+  return (
+    expandOnClick &&
+    src !== null &&
+    src.length > 0 &&
+    src !== ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC
+  );
 }
 
 export function EntityLayoutImageField({
@@ -53,7 +68,9 @@ export function EntityLayoutImageField({
   getDefinition,
   primaryFieldPath,
   usePreviewPlaceholder = false,
+  expandOnClick = false,
 }: EntityLayoutImageFieldProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   const rootField = resolveEntityFieldRootName(fieldPath);
   const staticFileRef =
     typeof rawValue === "string" ? parseLayoutStaticImageRef(rawValue) : null;
@@ -170,15 +187,52 @@ export function EntityLayoutImageField({
       ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC)
     : (directUrl ?? fetchedUrl ?? fieldDefaultSrc ?? null);
 
-  return (
+  const canExpand = isExpandableImageSrc(src, expandOnClick);
+
+  const handleExpandClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setPreviewOpen(true);
+  };
+
+  const image = (
     <CardFieldImage
       src={src}
       alt={fileName}
-      className={className}
-      style={style}
+      className={canExpand ? undefined : className}
+      style={canExpand ? undefined : style}
       sizePx={imageSize}
       fillContainer={fillContainer}
       objectFit={objectFit}
     />
+  );
+
+  return (
+    <>
+      {canExpand ? (
+        <button
+          type="button"
+          className={cn(
+            "hover:ring-primary/40 inline-flex shrink-0 cursor-zoom-in rounded-md border-0 bg-transparent p-0 hover:ring-2 focus-visible:ring-2 focus-visible:outline-none",
+            className,
+          )}
+          style={style}
+          aria-label={`View ${fileName}`}
+          onClick={handleExpandClick}
+        >
+          {image}
+        </button>
+      ) : (
+        image
+      )}
+      {canExpand ? (
+        <PhotoExpandDialog
+          open={previewOpen}
+          imageUrl={src}
+          alt={fileName}
+          title={fileName}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }

@@ -46,14 +46,12 @@ export function layoutSystemPresetLabels(
 const BUILTIN_LABEL_KEYS: Record<
   BuiltInComponentTemplateId,
   | "designLayout.systemPresets.builtin.plainForm"
-  | "designLayout.systemPresets.builtin.plainTableList"
   | "designLayout.systemPresets.builtin.cardList"
   | "designLayout.systemPresets.builtin.expandableTableList"
   | "designLayout.systemPresets.builtin.wizardForm"
   | "designLayout.systemPresets.builtin.kpiStrip"
 > = {
   "plain-form": "designLayout.systemPresets.builtin.plainForm",
-  "plain-table-list": "designLayout.systemPresets.builtin.plainTableList",
   "card-list": "designLayout.systemPresets.builtin.cardList",
   "expandable-table-list":
     "designLayout.systemPresets.builtin.expandableTableList",
@@ -65,8 +63,6 @@ const BUILTIN_DESCRIPTION_KEYS: Partial<
   Record<BuiltInComponentTemplateId, string>
 > = {
   "plain-form": "designLayout.systemPresets.builtin.plainFormDescription",
-  "plain-table-list":
-    "designLayout.systemPresets.builtin.plainTableListDescription",
   "card-list": "designLayout.systemPresets.builtin.cardListDescription",
   "expandable-table-list":
     "designLayout.systemPresets.builtin.expandableTableListDescription",

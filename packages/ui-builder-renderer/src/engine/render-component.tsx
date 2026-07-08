@@ -95,6 +95,10 @@ function formatRawDisplayValue(
       .join(", ");
   }
 
+  if (context.formatFieldDisplayValue) {
+    return context.formatFieldDisplayValue(fieldPath, rawValue);
+  }
+
   return formatDisplayValue(rawValue, {
     fieldType: meta.fieldType,
     displayFormat: meta.displayFormat,
@@ -108,6 +112,36 @@ function fieldPathRoot(fieldPath: string): string {
   return fieldPath.includes(".")
     ? (fieldPath.split(".")[0] ?? fieldPath)
     : fieldPath;
+}
+
+function wrapListItemRelationLink(
+  fieldPath: string,
+  node: ReactNode,
+  context: LayoutRenderContext,
+): ReactNode {
+  if (
+    context.mode !== "listItem" ||
+    fieldPath.includes(".") ||
+    !context.resolveComponentClickTarget ||
+    !context.componentClickWrapper
+  ) {
+    return node;
+  }
+
+  const target = context.resolveComponentClickTarget(
+    {
+      type: "entityRecord",
+      target: { relationFieldPath: fieldPathRoot(fieldPath) },
+    },
+    { boundFieldPath: fieldPath },
+  );
+  if (!target || target.kind !== "link") {
+    return node;
+  }
+
+  return context.componentClickWrapper(target, node, {
+    linkAppearance: context.relationLinkAppearance ?? false,
+  });
 }
 
 function labelFromConfig(
@@ -622,20 +656,24 @@ export function renderUiComponent(
     context,
   );
 
-  return withResponsiveCss(
-    <CardFieldValue
-      label={label}
-      value={displayValue}
-      allowEmpty={isSample}
-      className={containerClassName}
-      style={containerStyle}
-      valueClassName={valueClassNameFromStyles(
-        innerStyles,
-        sampleValueClassName(textClassName, isSample),
-      )}
-      textSize={textSize}
-      valueStyle={valueStyle}
-      {...textPropsFromLabel(config)}
-    />,
+  return wrapListItemRelationLink(
+    fieldPath,
+    withResponsiveCss(
+      <CardFieldValue
+        label={label}
+        value={displayValue}
+        allowEmpty={isSample}
+        className={containerClassName}
+        style={containerStyle}
+        valueClassName={valueClassNameFromStyles(
+          innerStyles,
+          sampleValueClassName(textClassName, isSample),
+        )}
+        textSize={textSize}
+        valueStyle={valueStyle}
+        {...textPropsFromLabel(config)}
+      />,
+    ),
+    context,
   );
 }

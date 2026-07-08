@@ -7,7 +7,6 @@ import { registerFieldComponent } from "./field-component-registry";
 import { registerViewComponent } from "./view-component-registry";
 import { EntityLayoutCardView } from "./EntityLayoutCardView";
 import { EntityExpandableTable } from "./EntityExpandableTable";
-import { EntityTable } from "./EntityTable";
 
 export function registerBuiltInEntityComponents(): void {
   registerComponent("input", "input");
@@ -23,7 +22,6 @@ export function registerBuiltInEntityComponents(): void {
   registerFieldComponent("ImageField", ImageField);
   registerFieldComponent("DocumentField", DocumentField);
 
-  registerViewComponent("table", EntityTable);
   registerViewComponent("card", EntityLayoutCardView);
   registerViewComponent("expandableTable", EntityExpandableTable);
 }

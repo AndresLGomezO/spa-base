@@ -4,7 +4,12 @@ import {
   getExpandableTableColumns,
   getExpandableTableRowExpandLayout,
   getExpandableTableShowActions,
+  getExpandableTableViewConfig,
 } from "@repo/ui-builder";
+import {
+  expandableTableHasExpandFieldContent,
+  resolveExpandableTableImageFieldPath,
+} from "@repo/entities";
 import {
   Alert,
   CursorPagination,
@@ -45,11 +50,7 @@ import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import { createEntityLayoutRenderContext } from "../../features/ui-builder";
 import { useEntityReturnNavigation } from "../../routing/entity-navigation";
-import {
-  ExpandableTableRowActions,
-  ExpandableTableRowActionsOverlay,
-  resolveLastVisibleGroupedColumnIndex,
-} from "./ExpandableTableRowActions";
+import { ExpandableTableRowActions } from "./ExpandableTableRowActions";
 import { ExpandableTableRowExpandPanel } from "./ExpandableTableRowExpandPanel";
 
 type EntityListState = Pick<
@@ -106,6 +107,10 @@ export function EntityExpandableTable({
   );
   const { user } = useAuth();
   const permissions = useEntityPermissions(entityName);
+  const expandableView = useMemo(
+    () => getExpandableTableViewConfig(definition),
+    [definition],
+  );
   const groupedColumns = useMemo(
     () => getExpandableTableColumns(definition),
     [definition],
@@ -113,6 +118,24 @@ export function EntityExpandableTable({
   const rowExpandLayout = useMemo(
     () => getExpandableTableRowExpandLayout(definition),
     [definition],
+  );
+  const imageFieldPath = useMemo(
+    () =>
+      resolveExpandableTableImageFieldPath({
+        imageFieldPath: expandableView.imageFieldPath,
+        fieldPaths: expandableView.fields,
+        fields: definition.fields,
+      }),
+    [definition.fields, expandableView.fields, expandableView.imageFieldPath],
+  );
+  const hasExpandFieldContent = useMemo(
+    () =>
+      expandableTableHasExpandFieldContent({
+        rowExpandLayout,
+        columns: groupedColumns,
+        imageFieldPath,
+      }),
+    [groupedColumns, imageFieldPath, rowExpandLayout],
   );
   const [expandedRowIds, setExpandedRowIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -150,7 +173,7 @@ export function EntityExpandableTable({
   }
 
   const currentUserId = user?.uid ?? "";
-  const showActionsColumn =
+  const showRowActions =
     getExpandableTableShowActions(definition) &&
     (permissions.canRead ||
       permissions.canUpdate ||
@@ -173,14 +196,39 @@ export function EntityExpandableTable({
     return permissions.canShare && item.ownerId === currentUserId;
   }
 
-  const columnCount = 1 + groupedColumns.length;
-  const lastVisibleGroupedColumnIndex = resolveLastVisibleGroupedColumnIndex(
-    groupedColumns,
-    (column) => shouldRenderGroupedTableColumn(column),
-  );
+  const leadingColumnCount = 1 + (imageFieldPath ? 1 : 0);
+  const columnCount = leadingColumnCount + groupedColumns.length;
 
   function toggleRow(rowId: string) {
     setExpandedRowIds((current) => toggleExpandedId(current, rowId));
+  }
+
+  function renderRowActions(item: Record<string, unknown>) {
+    if (!showRowActions) {
+      return null;
+    }
+
+    return (
+      <ExpandableTableRowActions
+        canRead={permissions.canRead}
+        canUpdate={permissions.canUpdate}
+        canDelete={permissions.canDelete}
+        canEditRow={canEditRow(item)}
+        canDeleteRow={canDeleteRow(item)}
+        canShareRow={canShareRow(item)}
+        item={item}
+        labels={{
+          view: t("entity.view"),
+          edit: t("entity.edit"),
+          share: t("share.title"),
+          delete: t("entity.delete"),
+        }}
+        onView={(id) => navigateToDetail(id)}
+        onEdit={onRequestEdit}
+        onShare={onRequestShare}
+        onDelete={onRequestDelete}
+      />
+    );
   }
 
   return (
@@ -190,6 +238,9 @@ export function EntityExpandableTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-10 px-2" aria-hidden />
+              {imageFieldPath ? (
+                <TableHead className="w-14 px-2" aria-hidden />
+              ) : null}
               {groupedColumns.map((column, columnIndex) =>
                 shouldRenderGroupedTableColumn(column) ? (
                   <TableHead
@@ -199,6 +250,7 @@ export function EntityExpandableTable({
                     {resolveExpandableTableGroupedColumnDisplayLabel(
                       column,
                       columnIndex,
+                      definition,
                       (oneBasedIndex) =>
                         t("entity.viewSettings.columnTab", {
                           column: oneBasedIndex,
@@ -228,6 +280,7 @@ export function EntityExpandableTable({
                   locale: i18n.language,
                   getOneToManyCellValue,
                   getDefinition,
+                  relationLinkAppearance: true,
                 });
 
                 return (
@@ -259,7 +312,21 @@ export function EntityExpandableTable({
                           />
                         </button>
                       </TableCell>
-                      {groupedColumns.map((column, columnIndex) =>
+                      {imageFieldPath ? (
+                        <TableCell className="w-14 px-2">
+                          {renderContext.resolveImage?.(
+                            imageFieldPath,
+                            item[imageFieldPath],
+                            {
+                              primaryFieldPath: imageFieldPath,
+                              imageSize: 40,
+                              objectFit: "cover",
+                              expandOnClick: true,
+                            },
+                          ) ?? null}
+                        </TableCell>
+                      ) : null}
+                      {groupedColumns.map((column) =>
                         shouldRenderGroupedTableColumn(column) ? (
                           <TableCell
                             key={column.id}
@@ -271,30 +338,6 @@ export function EntityExpandableTable({
                               layout={column.cellLayout}
                               context={renderContext}
                             />
-                            {showActionsColumn &&
-                            columnIndex === lastVisibleGroupedColumnIndex ? (
-                              <ExpandableTableRowActionsOverlay>
-                                <ExpandableTableRowActions
-                                  canRead={permissions.canRead}
-                                  canUpdate={permissions.canUpdate}
-                                  canDelete={permissions.canDelete}
-                                  canEditRow={canEditRow(item)}
-                                  canDeleteRow={canDeleteRow(item)}
-                                  canShareRow={canShareRow(item)}
-                                  item={item}
-                                  labels={{
-                                    view: t("entity.view"),
-                                    edit: t("entity.edit"),
-                                    share: t("share.title"),
-                                    delete: t("entity.delete"),
-                                  }}
-                                  onView={(id) => navigateToDetail(id)}
-                                  onEdit={onRequestEdit}
-                                  onShare={onRequestShare}
-                                  onDelete={onRequestDelete}
-                                />
-                              </ExpandableTableRowActionsOverlay>
-                            ) : null}
                           </TableCell>
                         ) : null,
                       )}
@@ -305,10 +348,24 @@ export function EntityExpandableTable({
                           expanded={isExpanded}
                           contentClassName="bg-muted/30 p-4"
                         >
-                          <RecursiveLayoutRenderer
-                            layout={rowExpandLayout}
-                            context={renderContext}
-                          />
+                          {hasExpandFieldContent ? (
+                            <RecursiveLayoutRenderer
+                              layout={rowExpandLayout}
+                              context={renderContext}
+                            />
+                          ) : null}
+                          {showRowActions ? (
+                            <div
+                              className={cn(
+                                "flex justify-end gap-1",
+                                hasExpandFieldContent &&
+                                  "border-border mt-4 border-t pt-3",
+                              )}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {renderRowActions(item)}
+                            </div>
+                          ) : null}
                         </ExpandableTableRowExpandPanel>
                       </TableCell>
                     </TableRow>

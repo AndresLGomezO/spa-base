@@ -26,7 +26,7 @@ import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-af
 import type { LayoutPresetId } from "./use-layout-system-preset-catalog";
 import { selectionToPresetValue } from "./use-layout-system-preset-catalog";
 
-export type ListPresentationType = "table" | "card" | "expandableTable";
+export type ListPresentationType = "card" | "expandableTable";
 
 function getDefaultFieldPaths(
   definition: ReturnType<typeof useEntityDefinition>,
@@ -36,16 +36,29 @@ function getDefaultFieldPaths(
   );
 }
 
+function buildDefaultExpandableTable(
+  definition: ReturnType<typeof useEntityDefinition>,
+  fieldPaths: readonly string[],
+) {
+  const fieldLabels = Object.fromEntries(
+    Object.entries(definition.ui.fields ?? {}).map(([name, config]) => [
+      name,
+      config?.label,
+    ]),
+  );
+  return createDefaultExpandableTableView(fieldPaths, {
+    fields: definition.fields,
+    fieldLabels,
+  });
+}
+
 function resolvePresentationType(
   listViewType: string | undefined,
 ): ListPresentationType {
   if (listViewType === "card") {
     return "card";
   }
-  if (listViewType === "expandableTable" || listViewType === "compact") {
-    return "expandableTable";
-  }
-  return "table";
+  return "expandableTable";
 }
 
 function resolveInitialPresentation(
@@ -53,16 +66,16 @@ function resolveInitialPresentation(
   layout: UiLayoutDocument,
 ): ListPresentationType {
   const derived = deriveListPresentationFromLayout(layout);
-  if (derived !== "table") {
-    return derived;
+  if (derived === "card") {
+    return "card";
   }
   return resolvePresentationType(listViewType);
 }
 
-function createPlainTableLayout(
+function createDefaultExpandableLayout(
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
-  return applyBuiltInTemplate("plain-table-list", { fieldPaths });
+  return applyBuiltInTemplate("expandable-table-list", { fieldPaths });
 }
 
 export function resolveListLayoutPresetId(
@@ -81,18 +94,24 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   );
   const uiViews = definition.ui.views;
   const listViewType = definition.ui.listViewType;
+  const defaultExpandableView = useMemo(
+    () => buildDefaultExpandableTable(definition, fieldPaths),
+    [definition, fieldPaths],
+  );
 
-  const [viewType, setViewTypeState] = useState<ListPresentationType>("table");
-  const [layoutPresetId, setLayoutPresetId] =
-    useState<LayoutPresetId>("plain-table-list");
+  const [viewType, setViewTypeState] =
+    useState<ListPresentationType>("expandableTable");
+  const [layoutPresetId, setLayoutPresetId] = useState<LayoutPresetId>(
+    "expandable-table-list",
+  );
   const [tableFields, setTableFields] = useState<readonly string[]>(fieldPaths);
   const [tableShowActions, setTableShowActions] = useState(true);
   const [expandableColumns, setExpandableColumns] = useState<
     readonly GroupedTableColumn[]
-  >(() => createDefaultExpandableTableView(fieldPaths).columns);
+  >(() => defaultExpandableView.columns);
   const [expandableShowActions, setExpandableShowActions] = useState(true);
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    createPlainTableLayout(fieldPaths),
+    createDefaultExpandableLayout(fieldPaths),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
@@ -156,7 +175,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       setExpandableColumns([...expandableView.columns]);
       setExpandableShowActions(expandableView.showActions !== false);
     } else {
-      const defaults = createDefaultExpandableTableView(fieldPaths);
+      const defaults = buildDefaultExpandableTable(definition, fieldPaths);
       setExpandableColumns(defaults.columns);
       setExpandableShowActions(true);
     }
@@ -176,12 +195,12 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       return;
     }
 
-    const plainLayout = createPlainTableLayout(fieldPaths);
-    setViewTypeState("table");
-    setLayoutPresetId("plain-table-list");
-    setLayout(plainLayout);
+    const expandableLayout = createDefaultExpandableLayout(fieldPaths);
+    setViewTypeState("expandableTable");
+    setLayoutPresetId("expandable-table-list");
+    setLayout(expandableLayout);
     setLayoutEditorKey((current) => current + 1);
-  }, [definition.ui.listItem, fieldPaths, listViewType, uiViews]);
+  }, [definition, definition.ui.listItem, fieldPaths, listViewType, uiViews]);
 
   const buildExpandableTableView = useCallback(
     (existing?: ExpandableTableViewConfig): ExpandableTableViewConfig => ({
@@ -199,13 +218,25 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       columns:
         expandableColumns.length > 0
           ? expandableColumns
-          : createDefaultExpandableTableView(fieldPaths).columns,
+          : buildDefaultExpandableTable(definition, fieldPaths).columns,
       rowExpandLayout: layout,
       showActions: expandableShowActions,
+      ...(existing?.imageFieldPath
+        ? { imageFieldPath: existing.imageFieldPath }
+        : defaultExpandableView.imageFieldPath
+          ? { imageFieldPath: defaultExpandableView.imageFieldPath }
+          : {}),
       ...(existing?.filters ? { filters: existing.filters } : {}),
       ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
     }),
-    [expandableColumns, expandableShowActions, fieldPaths, layout],
+    [
+      defaultExpandableView.imageFieldPath,
+      definition,
+      expandableColumns,
+      expandableShowActions,
+      fieldPaths,
+      layout,
+    ],
   );
 
   const buildViews = useCallback((): readonly ViewConfig[] => {
@@ -240,11 +271,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       return [tableViewConfig, cardViewConfig];
     }
 
-    if (viewType === "expandableTable") {
-      return [tableViewConfig, buildExpandableTableView(expandableView)];
-    }
-
-    return [tableViewConfig];
+    return [tableViewConfig, buildExpandableTableView(expandableView)];
   }, [
     buildExpandableTableView,
     fieldPaths,

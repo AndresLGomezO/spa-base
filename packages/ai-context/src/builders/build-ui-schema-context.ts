@@ -28,7 +28,7 @@ import { componentAtomId } from "../generate/component-descriptions.js";
 import { SURFACE_VARIANTS } from "../generate/surface-variants.js";
 import { getCombinedStaticFragments } from "../generated/load-generated.js";
 
-export type ListViewType = "table" | "card" | "expandableTable";
+export type ListViewType = "card" | "expandableTable";
 export type FormPresentation = "plain" | "wizard";
 
 export interface UiSchemaContextScope {
@@ -49,13 +49,11 @@ const SURFACE_TO_DESIGN_SURFACE: Record<
 };
 
 const ALL_LIST_VIEW_TYPES: readonly ListViewType[] = [
-  "table",
   "card",
   "expandableTable",
 ];
 
 const LIST_FRAGMENT_BY_TYPE: Record<ListViewType, string> = {
-  table: "ui.surface.list.table",
   card: "ui.surface.list.card",
   expandableTable: "ui.surface.list.expandableTable",
 };
@@ -106,7 +104,7 @@ export function resolveSurfaceFragmentIds(
         (listType) => LIST_FRAGMENT_BY_TYPE[listType],
       );
     }
-    const listType = scope.listViewType ?? "table";
+    const listType = scope.listViewType ?? "expandableTable";
     return [LIST_FRAGMENT_BY_TYPE[listType]];
   }
   if (scope.surface === "forms") {
@@ -129,7 +127,7 @@ export function resolveAllowedComponentKinds(
         ),
       ];
     }
-    const listType = scope.listViewType ?? "table";
+    const listType = scope.listViewType ?? "expandableTable";
     return resolveListComponentKinds(listType);
   }
 

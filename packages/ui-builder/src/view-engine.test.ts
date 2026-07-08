@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { SerializableEntityDefinition } from "@repo/entities";
 
-import { resolveActiveView, resolveCardView } from "./view-engine.js";
+import {
+  resolveActiveView,
+  resolveCardView,
+  resolveExpandableTableView,
+} from "./view-engine.js";
 
 function buildDefinition(
   views: SerializableEntityDefinition["ui"]["views"],
@@ -49,5 +53,29 @@ describe("resolveActiveView", () => {
     ]);
 
     expect(resolveCardView(definition)?.name).toBe("card");
+  });
+});
+
+describe("resolveExpandableTableView", () => {
+  it("synthesizes a default expandable view when only table metadata exists", () => {
+    const definition = buildDefinition([
+      {
+        type: "table",
+        name: "default",
+        fields: ["name", "status", "amount", "description"],
+      },
+    ]);
+
+    const view = resolveExpandableTableView({
+      ...definition,
+      ui: {
+        ...definition.ui,
+        listViewType: "expandableTable",
+      },
+    });
+
+    expect(view.type).toBe("expandableTable");
+    expect(view.columns).toHaveLength(3);
+    expect(view.fields).toEqual(["name", "status", "amount", "description"]);
   });
 });

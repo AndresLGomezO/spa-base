@@ -50,7 +50,7 @@ describe("parseDesignLayoutSliceJson", () => {
   it("parses a valid list slice envelope", () => {
     const layout = createDefaultUiLayout(["name"]);
     const envelope = createDesignLayoutSliceEnvelope("list", {
-      listViewType: "table",
+      listViewType: "expandableTable",
       table: { fields: ["name", "email"], showActions: true },
       expandableTable: {
         columns: [{ id: "col-1", cellLayout: layout }],
@@ -63,7 +63,7 @@ describe("parseDesignLayoutSliceJson", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data).toMatchObject({
-        listViewType: "table",
+        listViewType: "expandableTable",
         table: { fields: ["name", "email"], showActions: true },
       });
     }
@@ -96,7 +96,7 @@ describe("validateDesignLayoutSlice", () => {
   it("rejects list slice with unknown fields", () => {
     const layout = createDefaultUiLayout(["name"]);
     const data = {
-      listViewType: "table" as const,
+      listViewType: "expandableTable" as const,
       table: { fields: ["missingField"] },
       expandableTable: {
         columns: [{ id: "col-1", cellLayout: layout }],
@@ -113,7 +113,7 @@ describe("entityUiConfigToPutOverrideInput", () => {
     const layout = createDefaultUiLayout(["name"]);
     const ui = {
       ...getDefaultEntityUI(entity),
-      listViewType: "table" as const,
+      listViewType: "expandableTable" as const,
       mainPageLayout: layout,
       recordDetailLayout: layout,
       forms: {
@@ -127,7 +127,7 @@ describe("entityUiConfigToPutOverrideInput", () => {
     const input = entityUiConfigToPutOverrideInput(ui);
     expect(input.mainPage).toEqual(layout);
     expect(input.recordDetail).toEqual(layout);
-    expect(input.listViewType).toBe("table");
+    expect(input.listViewType).toBe("expandableTable");
     expect(input.forms?.layout).toEqual(layout);
     expect(input.forms?.presentation).toBe("plain");
     expect(input.forms?.modalSize).toBe("lg");

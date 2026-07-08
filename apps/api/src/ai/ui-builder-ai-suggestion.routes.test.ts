@@ -58,8 +58,8 @@ describe("UI builder AI suggestion routes", () => {
       surface: "list",
       jobId: "aijob_1",
       status: "ready",
-      listViewType: "table",
-      sliceData: { listViewType: "table" },
+      listViewType: "expandableTable",
+      sliceData: { listViewType: "expandableTable" },
       createdBy: authState.uid,
     });
     await uiBuilderAiSuggestionRepository.create("tenant_a", {

@@ -321,7 +321,19 @@ export { normalizeEntityViews } from "./ui/normalize-entity-views.js";
 export {
   createDefaultExpandableTableView,
   expandableTableViewFromListItem,
+  reconcileExpandableTableView,
 } from "./ui/expandable-table-defaults.js";
+export {
+  partitionExpandableListFields,
+  resolveListImageField,
+  type PartitionExpandableListFieldsResult,
+} from "./ui/partition-expandable-list-fields.js";
+export {
+  expandableTableHasExpandContent,
+  expandableTableHasExpandFieldContent,
+  expandableTableExpandFieldPaths,
+  resolveExpandableTableImageFieldPath,
+} from "./ui/expandable-table-runtime.js";
 export {
   migrateListPresentation,
   findExpandableTableView,

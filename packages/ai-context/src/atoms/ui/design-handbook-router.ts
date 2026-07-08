@@ -20,7 +20,7 @@ Human-readable manual: \`docs/ui-design-manual/\`. This fragment is a compact ro
 ## Default presets
 
 - Forms: \`plain-form\`
-- Lists: \`plain-table-list\`
+- Lists: \`expandable-table-list\`
 - Card lists: \`card-list\`
 - Expandable tables: \`expandable-table-list\`
 - Wizards: \`wizard-form\`

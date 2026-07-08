@@ -84,13 +84,11 @@ describe("buildUiSchemaContext", () => {
     const scope = { surface: "list" as const };
     expect(isListPresentationSelectionMode(scope)).toBe(true);
     expect(resolveSurfaceFragmentIds(scope)).toEqual([
-      "ui.surface.list.table",
       "ui.surface.list.card",
       "ui.surface.list.expandableTable",
     ]);
 
     const fragments = buildUiSchemaContext(scope);
-    expect(fragments["ui.surface.list.table"]).toBeDefined();
     expect(fragments["ui.surface.list.card"]).toBeDefined();
     expect(fragments["ui.surface.list.expandableTable"]).toBeDefined();
   });

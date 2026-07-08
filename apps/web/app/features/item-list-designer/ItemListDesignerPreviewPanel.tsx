@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { DockedCardLayoutPreview } from "../ui-builder/DockedCardLayoutPreview";
 import { DockedExpandableTableLayoutPreview } from "../ui-builder/DockedExpandableTableLayoutPreview";
-import { EntityListTableLayoutPreview } from "../ui-builder/EntityListTableLayoutPreview";
 import { UnifiedDesignerPreviewPanel } from "../unified-builder/UnifiedDesignerPreviewPanel";
 import { useItemListDesigner } from "./item-list-designer-context";
 import { useOptionalItemListDesignerStructureSession } from "./ItemListDesignerStructureSession";
@@ -76,17 +75,6 @@ export function ItemListDesignerPreviewPanel({
 
   const previewBody = (() => {
     switch (editor.viewType) {
-      case "table":
-        return (
-          <EntityListTableLayoutPreview
-            definition={editor.definition}
-            tableFields={editor.tableFields}
-            showActions={editor.tableShowActions}
-            previewItem={previewItem}
-            title=""
-            locale={i18n.language}
-          />
-        );
       case "expandableTable":
         if (structureSession) {
           return <ItemListDesignerExpandableTablePreviewBody />;

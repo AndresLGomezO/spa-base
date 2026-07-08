@@ -17,7 +17,7 @@ const sampleViews: CustomViewRecord[] = [
     nav: { label: "Alpha" },
     ui: {
       views: [{ type: "table", name: "default", fields: ["type"] }],
-      listViewType: "table",
+      listViewType: "expandableTable",
     },
     status: "ACTIVE",
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -33,7 +33,7 @@ const sampleViews: CustomViewRecord[] = [
     nav: { label: "Beta" },
     ui: {
       views: [{ type: "table", name: "default", fields: ["name"] }],
-      listViewType: "table",
+      listViewType: "expandableTable",
     },
     status: "PAUSED",
     createdAt: "2026-01-01T00:00:00.000Z",

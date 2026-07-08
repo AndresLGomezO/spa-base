@@ -1,3 +1,4 @@
+import { createDefaultExpandableTableView } from "@repo/entities";
 import type { CustomViewUIConfig } from "./types.js";
 
 const SYSTEM_FIELD_KEYS = new Set(["id", "tenantId", "createdAt", "updatedAt"]);
@@ -7,16 +8,19 @@ export function buildDefaultCustomViewUI(
   fieldNames: readonly string[],
 ): CustomViewUIConfig {
   const fields = fieldNames.filter((name) => !SYSTEM_FIELD_KEYS.has(name));
+  const fieldPaths = fields.length > 0 ? fields : ["id"];
+  const expandableView = createDefaultExpandableTableView(fieldPaths);
 
   return {
     views: [
       {
         type: "table",
         name: "default",
-        fields: fields.length > 0 ? fields : ["id"],
+        fields: fieldPaths,
       },
+      expandableView,
     ],
-    listViewType: "table",
+    listViewType: "expandableTable",
   };
 }
 

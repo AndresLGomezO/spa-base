@@ -74,7 +74,6 @@ import {
   readLayoutSnapshotFromDefinition,
   readSettingsSnapshot,
   readSettingsSnapshotFromDefinition,
-  viewTypeFromLayoutPresetId,
   type ItemListDesignerColumnsSnapshot,
   type ItemListDesignerLayoutSnapshot,
   type ItemListDesignerSettingsSnapshot,
@@ -175,18 +174,9 @@ export function ItemListDesignerProvider({
       readSettingsSnapshotFromDefinition(definition, editor),
     );
   const [savedColumnsBaseline, setSavedColumnsBaseline] =
-    useState<ItemListDesignerColumnsSnapshot>(() => {
-      const settingsBaseline = readSettingsSnapshotFromDefinition(
-        definition,
-        editor,
-      );
-      return readColumnsSnapshotFromDefinition(
-        definition,
-        editor.fieldPaths,
-        editor,
-        viewTypeFromLayoutPresetId(settingsBaseline.layoutPresetId),
-      );
-    });
+    useState<ItemListDesignerColumnsSnapshot>(() =>
+      readColumnsSnapshotFromDefinition(definition, editor),
+    );
   const [savedLayoutBaseline, setSavedLayoutBaseline] =
     useState<ItemListDesignerLayoutSnapshot>(() =>
       readLayoutSnapshotFromDefinition(definition, editor),
@@ -387,12 +377,7 @@ export function ItemListDesignerProvider({
     );
     setSavedSettingsBaseline(settingsBaseline);
     setSavedColumnsBaseline(
-      readColumnsSnapshotFromDefinition(
-        definition,
-        editor.fieldPaths,
-        currentEditor,
-        viewTypeFromLayoutPresetId(settingsBaseline.layoutPresetId),
-      ),
+      readColumnsSnapshotFromDefinition(definition, currentEditor),
     );
     setSavedLayoutBaseline(
       readLayoutSnapshotFromDefinition(definition, currentEditor),
@@ -403,7 +388,6 @@ export function ItemListDesignerProvider({
     if (
       activeTabId === "design" &&
       editor.viewType !== "card" &&
-      editor.viewType !== "table" &&
       editor.viewType !== "expandableTable"
     ) {
       setSearchParams(

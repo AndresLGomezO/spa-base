@@ -167,7 +167,106 @@ const LOCAL_ENTITY_IMAGE_SEED_SPECS = [
     jsonFile: "category.json",
     fieldName: "image",
   },
+  {
+    entityName: "financialItem",
+    jsonFile: "financialItem.json",
+    fieldName: "image",
+  },
 ] as const;
+
+function entityImageFieldName(entityName: string): string | null {
+  switch (entityName) {
+    case "actor":
+      return "logo";
+    case "category":
+    case "financialItem":
+      return "image";
+    default:
+      return null;
+  }
+}
+
+function buildEntityImageFileRef(
+  entityName: string,
+  fileName: string,
+): EntityFileReference {
+  const contentType = resolveEntityImageContentType(fileName) ?? "image/png";
+  return {
+    storagePath: `tenants/TENANT_ID/entity-files/${entityName}/${fileName}`,
+    contentType,
+    fileName,
+  };
+}
+
+function buildActorLogoFileNameById(
+  importDir: string,
+): ReadonlyMap<string, string> {
+  const actorPath = join(importDir, "actor.json");
+  if (!existsSync(actorPath)) {
+    return new Map();
+  }
+
+  const actorLogoById = new Map<string, string>();
+  for (const record of readImportRecords(actorPath)) {
+    const objectId = record.id;
+    if (typeof objectId !== "string" || objectId.trim().length === 0) {
+      continue;
+    }
+
+    const fileName = readEntityImageFileName(record, "logo");
+    if (fileName) {
+      actorLogoById.set(objectId, fileName);
+    }
+  }
+
+  return actorLogoById;
+}
+
+export function enrichFinancialItemRecordsWithActorLogos(
+  records: readonly Record<string, unknown>[],
+  actorLogoById: ReadonlyMap<string, string>,
+): Record<string, unknown>[] {
+  return records.map((record) => {
+    if (readEntityImageFileName(record, "image")) {
+      return record;
+    }
+
+    const actorId = record.actorId;
+    if (typeof actorId !== "string" || actorId.trim().length === 0) {
+      return record;
+    }
+
+    const fileName = actorLogoById.get(actorId);
+    if (!fileName) {
+      return record;
+    }
+
+    return {
+      ...record,
+      image: buildEntityImageFileRef("financialItem", fileName),
+    };
+  });
+}
+
+function resolveEntityImageSeedRecords(
+  importDir: string,
+  spec: (typeof LOCAL_ENTITY_IMAGE_SEED_SPECS)[number],
+): Record<string, unknown>[] {
+  const entityPath = join(importDir, spec.jsonFile);
+  if (!existsSync(entityPath)) {
+    return [];
+  }
+
+  const records = readImportRecords(entityPath);
+  if (spec.entityName !== "financialItem") {
+    return records;
+  }
+
+  return enrichFinancialItemRecordsWithActorLogos(
+    records,
+    buildActorLogoFileNameById(importDir),
+  );
+}
 
 const ENTITY_IMAGE_UPLOAD_CONCURRENCY = 8;
 
@@ -216,12 +315,7 @@ function applyUploadedEntityImage(
     return business;
   }
 
-  const fieldName =
-    entityName === "actor"
-      ? "logo"
-      : entityName === "category"
-        ? "image"
-        : null;
+  const fieldName = entityImageFieldName(entityName);
   if (!fieldName) {
     return business;
   }
@@ -244,12 +338,11 @@ async function uploadEntityImagesFromLocalFiles(
   }
 
   for (const spec of LOCAL_ENTITY_IMAGE_SEED_SPECS) {
-    const entityPath = join(importDir, spec.jsonFile);
-    if (!existsSync(entityPath)) {
+    const records = resolveEntityImageSeedRecords(importDir, spec);
+    if (records.length === 0) {
       continue;
     }
 
-    const records = readImportRecords(entityPath);
     const uploadTargets = records.flatMap((record) => {
       const objectId = record.id;
       if (typeof objectId !== "string" || objectId.trim().length === 0) {

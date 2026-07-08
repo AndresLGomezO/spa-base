@@ -21,7 +21,7 @@ describe("buildMockUiBuilderStepAnswer", () => {
       LIST_STEP_TYPES.SELECT_VIEW_TYPE,
       [{ id: "entity.current", content: "- **Name** (`name`)" }],
     );
-    expect(JSON.parse(rawAnswer)).toEqual({ listViewType: "table" });
+    expect(JSON.parse(rawAnswer)).toEqual({ listViewType: "expandableTable" });
   });
 
   it("returns table fields for table step", () => {
@@ -48,6 +48,6 @@ describe("buildMockUiBuilderListAnswer", () => {
       },
     ]);
 
-    expect(JSON.parse(rawAnswer)).toEqual({ listViewType: "table" });
+    expect(JSON.parse(rawAnswer)).toEqual({ listViewType: "expandableTable" });
   });
 });

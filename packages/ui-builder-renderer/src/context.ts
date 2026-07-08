@@ -44,6 +44,8 @@ export interface ImageResolveOptions {
   readonly objectFit?: "contain" | "cover" | "fill";
   readonly className?: string;
   readonly style?: CSSProperties;
+  /** When true, clicking the image opens a full-size preview modal. */
+  readonly expandOnClick?: boolean;
 }
 
 export type LayoutRenderMode = "listItem" | "detail" | "form" | "mainPage";
@@ -68,6 +70,10 @@ export interface LayoutRenderContext {
   readonly resolveField: (path: string) => unknown;
   readonly resolveFieldMeta?: (path: string) => FieldDisplayMeta;
   readonly resolveFieldLabel?: (path: string) => string | undefined;
+  readonly formatFieldDisplayValue?: (
+    fieldPath: string,
+    rawValue: unknown,
+  ) => string;
   /** Placeholder value when the record has no data (layout design preview). */
   readonly resolvePreviewSampleValue?: (
     fieldPath: string,
@@ -127,6 +133,7 @@ export interface LayoutRenderContext {
   readonly componentClickWrapper?: (
     target: ResolvedComponentClickTarget,
     children: ReactNode,
+    options?: { readonly linkAppearance?: boolean },
   ) => ReactNode;
   readonly navigateComponentClick?: (
     target: ResolvedComponentClickTarget,
@@ -142,6 +149,8 @@ export interface LayoutRenderContext {
     element: HTMLElement | null,
   ) => void;
   readonly wrapPageListScroll?: (listContent: ReactNode) => ReactNode;
+  /** When true, relation field links use primary/underline styling (entity lists only). */
+  readonly relationLinkAppearance?: boolean;
   readonly wizard?: WizardRenderState;
   readonly wizardProgressRenderer?: (
     config: WizardProgressComponentConfig,

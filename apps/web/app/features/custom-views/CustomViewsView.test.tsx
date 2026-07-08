@@ -27,7 +27,7 @@ vi.mock("../../custom-views/custom-view-catalog-context", () => ({
         nav: { label: "Payments" },
         ui: {
           views: [{ type: "table", name: "default", fields: ["type"] }],
-          listViewType: "table",
+          listViewType: "expandableTable",
         },
         status: "ACTIVE",
         createdAt: "2026-01-01T00:00:00.000Z",

@@ -84,6 +84,7 @@ export function EntityExpandableTableLayoutPreview({
         definition,
         locale,
         getDefinition,
+        relationLinkAppearance: true,
       }),
     [definition, getDefinition, locale, previewItem],
   );
@@ -121,6 +122,7 @@ export function EntityExpandableTableLayoutPreview({
                       {resolveExpandableTableGroupedColumnDisplayLabel(
                         column,
                         columnIndex,
+                        definition,
                         (oneBasedIndex) =>
                           t("entity.viewSettings.columnTab", {
                             column: oneBasedIndex,

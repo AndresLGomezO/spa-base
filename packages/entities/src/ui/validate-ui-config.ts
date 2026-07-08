@@ -99,6 +99,7 @@ const expandableTableViewConfigSchema = z
     columns: z.array(groupedTableColumnSchema).min(1),
     rowExpandLayout: uiLayoutDocumentSchema,
     showActions: z.boolean().optional(),
+    imageFieldPath: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -163,9 +164,7 @@ const formLayoutSchema = z
 const entityUISchema = z
   .object({
     views: z.array(viewConfigSchema).min(1),
-    listViewType: z
-      .enum(["table", "card", "expandableTable", "compact"])
-      .optional(),
+    listViewType: z.enum(["card", "expandableTable", "compact"]).optional(),
     listItem: uiLayoutDocumentSchema.optional(),
     mainPageLayout: uiLayoutDocumentSchema.optional(),
     recordDetailLayout: uiLayoutDocumentSchema.optional(),

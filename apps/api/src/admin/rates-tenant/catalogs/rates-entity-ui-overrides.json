@@ -19,7 +19,6 @@
           ]
         }
       ],
-      "listViewType": "table",
       "metricWidgets": [
         {
           "id": "total-balance-by-month",
@@ -36,6 +35,11 @@
                     {
                       "type": "component",
                       "id": "row-main-container",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "stackDirection": "column",
@@ -340,7 +344,10 @@
                                                         },
                                                         {
                                                           "property": "fontSize",
-                                                          "value": "30"
+                                                          "value": "30",
+                                                          "valuesByBreakpoint": {
+                                                            "base": "20"
+                                                          }
                                                         },
                                                         {
                                                           "property": "fontWeight",
@@ -503,6 +510,11 @@
                     {
                       "type": "component",
                       "id": "row-income-card",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "rows": [
@@ -570,7 +582,7 @@
                                         "property": "padding",
                                         "value": "var(--spacing-compact)",
                                         "valuesByBreakpoint": {
-                                          "base": "5"
+                                          "base": "3"
                                         }
                                       },
                                       {
@@ -585,7 +597,7 @@
                                         "property": "fontSize",
                                         "value": "20",
                                         "valuesByBreakpoint": {
-                                          "base": "13"
+                                          "base": "11"
                                         }
                                       },
                                       {
@@ -608,7 +620,7 @@
                                         "property": "fontSize",
                                         "value": "15",
                                         "valuesByBreakpoint": {
-                                          "sm": "12"
+                                          "base": "10"
                                         }
                                       },
                                       {
@@ -666,7 +678,7 @@
                                   "property": "fontSize",
                                   "value": "20",
                                   "valuesByBreakpoint": {
-                                    "base": "12"
+                                    "base": "10"
                                   }
                                 },
                                 {
@@ -870,6 +882,11 @@
                     {
                       "type": "component",
                       "id": "row-expenses-card",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "stackDirection": "column",
@@ -1013,7 +1030,7 @@
                                         "property": "padding",
                                         "value": "var(--spacing-compact)",
                                         "valuesByBreakpoint": {
-                                          "base": "5"
+                                          "base": "3"
                                         }
                                       },
                                       {
@@ -1028,7 +1045,7 @@
                                         "property": "fontSize",
                                         "value": "20",
                                         "valuesByBreakpoint": {
-                                          "base": "13"
+                                          "base": "11"
                                         }
                                       },
                                       {
@@ -1052,7 +1069,7 @@
                                         "property": "fontSize",
                                         "value": "15",
                                         "valuesByBreakpoint": {
-                                          "sm": "12"
+                                          "base": "10"
                                         }
                                       },
                                       {
@@ -1091,7 +1108,7 @@
                                   "property": "fontSize",
                                   "value": "20",
                                   "valuesByBreakpoint": {
-                                    "base": "12"
+                                    "base": "10"
                                   }
                                 },
                                 {
@@ -1237,6 +1254,11 @@
                     {
                       "type": "component",
                       "id": "row-invest-card",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "stackDirection": "column",
@@ -1380,7 +1402,7 @@
                                         "property": "padding",
                                         "value": "var(--spacing-compact)",
                                         "valuesByBreakpoint": {
-                                          "base": "5"
+                                          "base": "3"
                                         }
                                       },
                                       {
@@ -1395,7 +1417,7 @@
                                         "property": "fontSize",
                                         "value": "20",
                                         "valuesByBreakpoint": {
-                                          "base": "13"
+                                          "base": "11"
                                         }
                                       },
                                       {
@@ -1419,7 +1441,7 @@
                                         "property": "fontSize",
                                         "value": "15",
                                         "valuesByBreakpoint": {
-                                          "sm": "12"
+                                          "base": "10"
                                         }
                                       },
                                       {
@@ -1458,7 +1480,7 @@
                                   "property": "fontSize",
                                   "value": "20",
                                   "valuesByBreakpoint": {
-                                    "base": "12"
+                                    "base": "10"
                                   }
                                 },
                                 {
@@ -1864,7 +1886,6 @@
           "fields": ["date", "amount", "type", "categoryId"]
         }
       ],
-      "listViewType": "table",
       "metricWidgets": [
         {
           "id": "top-expense-category-snapshot",
@@ -1881,6 +1902,11 @@
                     {
                       "type": "component",
                       "id": "row-e592cf39-0520-45c0-a614-83e8c2b8dac9",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "rows": [

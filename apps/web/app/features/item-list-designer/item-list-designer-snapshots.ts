@@ -5,27 +5,8 @@ import type { UseEntityListLayoutEditorResult } from "../ui-builder/use-entity-l
 import { resolveListLayoutPresetId } from "../ui-builder/use-entity-list-layout-editor";
 import type { LayoutPresetId } from "../ui-builder/use-layout-system-preset-catalog";
 
-type ListPresentationType = "table" | "card" | "expandableTable";
-
-export function viewTypeFromLayoutPresetId(
-  layoutPresetId: LayoutPresetId,
-): ListPresentationType {
-  if (layoutPresetId === "card-list") {
-    return "card";
-  }
-  if (layoutPresetId === "expandable-table-list") {
-    return "expandableTable";
-  }
-  return "table";
-}
-
 export interface ItemListDesignerSettingsSnapshot {
   readonly layoutPresetId: LayoutPresetId;
-}
-
-export interface ItemListDesignerTableColumnsSnapshot {
-  readonly tableFields: readonly string[];
-  readonly tableShowActions: boolean;
 }
 
 export interface ItemListDesignerExpandableColumnsSnapshot {
@@ -34,15 +15,10 @@ export interface ItemListDesignerExpandableColumnsSnapshot {
   readonly rowExpandLayout: UiLayoutDocument;
 }
 
-export type ItemListDesignerColumnsSnapshot =
-  | {
-      readonly kind: "table";
-      readonly data: ItemListDesignerTableColumnsSnapshot;
-    }
-  | {
-      readonly kind: "expandableTable";
-      readonly data: ItemListDesignerExpandableColumnsSnapshot;
-    };
+export type ItemListDesignerColumnsSnapshot = {
+  readonly kind: "expandableTable";
+  readonly data: ItemListDesignerExpandableColumnsSnapshot;
+};
 
 export interface ItemListDesignerCardLayoutSnapshot {
   readonly layout: UiLayoutDocument;
@@ -53,26 +29,8 @@ export type ItemListDesignerLayoutSnapshot = {
   readonly data: ItemListDesignerCardLayoutSnapshot;
 };
 
-function readTableViewFromDefinition(
-  definition: UseEntityListLayoutEditorResult["definition"],
-  fieldPaths: readonly string[],
-): ItemListDesignerTableColumnsSnapshot {
-  const tableView = definition.ui.views.find((view) => view.type === "table");
-  const fields =
-    tableView && tableView.fields.length > 0
-      ? [...tableView.fields]
-      : fieldPaths;
-
-  return {
-    tableFields: fields,
-    tableShowActions:
-      tableView?.type === "table" ? tableView.showActions !== false : true,
-  };
-}
-
 function readExpandableViewFromDefinition(
   definition: UseEntityListLayoutEditorResult["definition"],
-  fieldPaths: readonly string[],
   editor: Pick<
     UseEntityListLayoutEditorResult,
     "expandableColumns" | "rowExpandLayout" | "expandableShowActions"
@@ -125,18 +83,6 @@ export function areSettingsSnapshotsEqual(
   return left.layoutPresetId === right.layoutPresetId;
 }
 
-function readTableColumnsSnapshot(
-  editor: Pick<
-    UseEntityListLayoutEditorResult,
-    "tableFields" | "tableShowActions"
-  >,
-): ItemListDesignerTableColumnsSnapshot {
-  return {
-    tableFields: [...editor.tableFields],
-    tableShowActions: editor.tableShowActions,
-  };
-}
-
 function readExpandableColumnsSnapshot(
   editor: Pick<
     UseEntityListLayoutEditorResult,
@@ -153,38 +99,22 @@ function readExpandableColumnsSnapshot(
 export function readColumnsSnapshot(
   editor: UseEntityListLayoutEditorResult,
 ): ItemListDesignerColumnsSnapshot {
-  if (editor.viewType === "expandableTable") {
-    return {
-      kind: "expandableTable",
-      data: readExpandableColumnsSnapshot(editor),
-    };
-  }
-
   return {
-    kind: "table",
-    data: readTableColumnsSnapshot(editor),
+    kind: "expandableTable",
+    data: readExpandableColumnsSnapshot(editor),
   };
 }
 
 export function readColumnsSnapshotFromDefinition(
   definition: UseEntityListLayoutEditorResult["definition"],
-  fieldPaths: readonly string[],
   editor: Pick<
     UseEntityListLayoutEditorResult,
     "expandableColumns" | "rowExpandLayout" | "expandableShowActions"
   >,
-  viewType: ListPresentationType,
 ): ItemListDesignerColumnsSnapshot {
-  if (viewType === "expandableTable") {
-    return {
-      kind: "expandableTable",
-      data: readExpandableViewFromDefinition(definition, fieldPaths, editor),
-    };
-  }
-
   return {
-    kind: "table",
-    data: readTableViewFromDefinition(definition, fieldPaths),
+    kind: "expandableTable",
+    data: readExpandableViewFromDefinition(definition, editor),
   };
 }
 
@@ -216,35 +146,17 @@ export function areColumnsSnapshotsEqual(
   left: ItemListDesignerColumnsSnapshot,
   right: ItemListDesignerColumnsSnapshot,
 ): boolean {
-  if (left.kind !== right.kind) {
-    return false;
-  }
-
-  if (left.kind === "table" && right.kind === "table") {
-    return (
-      left.data.tableShowActions === right.data.tableShowActions &&
-      left.data.tableFields.length === right.data.tableFields.length &&
-      left.data.tableFields.every(
-        (field, index) => field === right.data.tableFields[index],
-      )
-    );
-  }
-
-  if (left.kind === "expandableTable" && right.kind === "expandableTable") {
-    return (
-      left.data.expandableShowActions === right.data.expandableShowActions &&
-      areGroupedColumnsEqual(
-        left.data.expandableColumns,
-        right.data.expandableColumns,
-      ) &&
-      areScopedLayoutSnapshotsEqual(
-        left.data.rowExpandLayout,
-        right.data.rowExpandLayout,
-      )
-    );
-  }
-
-  return false;
+  return (
+    left.data.expandableShowActions === right.data.expandableShowActions &&
+    areGroupedColumnsEqual(
+      left.data.expandableColumns,
+      right.data.expandableColumns,
+    ) &&
+    areScopedLayoutSnapshotsEqual(
+      left.data.rowExpandLayout,
+      right.data.rowExpandLayout,
+    )
+  );
 }
 
 export function applySettingsSnapshotToEditor(
@@ -252,11 +164,7 @@ export function applySettingsSnapshotToEditor(
   snapshot: ItemListDesignerSettingsSnapshot,
 ): void {
   const presetId = snapshot.layoutPresetId;
-  if (
-    presetId === "plain-table-list" ||
-    presetId === "card-list" ||
-    presetId === "expandable-table-list"
-  ) {
+  if (presetId === "card-list" || presetId === "expandable-table-list") {
     editor.applyListSystemPreset({ source: "builtin", id: presetId });
   }
 }
@@ -264,20 +172,10 @@ export function applySettingsSnapshotToEditor(
 export function applyColumnsSnapshotToEditor(
   editor: Pick<
     UseEntityListLayoutEditorResult,
-    | "setTableFields"
-    | "setTableShowActions"
-    | "setExpandableColumns"
-    | "setExpandableShowActions"
-    | "setRowExpandLayout"
+    "setExpandableColumns" | "setExpandableShowActions" | "setRowExpandLayout"
   >,
   snapshot: ItemListDesignerColumnsSnapshot,
 ): void {
-  if (snapshot.kind === "table") {
-    editor.setTableFields([...snapshot.data.tableFields]);
-    editor.setTableShowActions(snapshot.data.tableShowActions);
-    return;
-  }
-
   editor.setExpandableColumns([...snapshot.data.expandableColumns]);
   editor.setExpandableShowActions(snapshot.data.expandableShowActions);
   editor.setRowExpandLayout(snapshot.data.rowExpandLayout);

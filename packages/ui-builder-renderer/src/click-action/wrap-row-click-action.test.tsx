@@ -43,6 +43,7 @@ describe("wrapRowWithClickAction", () => {
     expect(wrapper).toHaveBeenCalledWith(
       { kind: "link", href: "/app/order/order-1", external: false },
       content,
+      { linkAppearance: false },
     );
   });
 

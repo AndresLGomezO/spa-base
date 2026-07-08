@@ -67,9 +67,6 @@ export function createConfigureComponentStep(
 export function expandStepsAfterViewType(
   listViewType: ListUiBuilderDraft["listViewType"],
 ): UiBuilderStep[] {
-  if (listViewType === "table") {
-    return [createTableSelectFieldsStep()];
-  }
   if (listViewType === "card") {
     return [createLayoutSkeletonStep("listItem")];
   }

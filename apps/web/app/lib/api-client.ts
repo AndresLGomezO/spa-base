@@ -1632,7 +1632,7 @@ export interface SubmitAiUiBuilderInput {
     | "mainPage"
     | "recordDetail"
     | "metricsRowDesigner";
-  readonly listViewType?: "table" | "card" | "expandableTable";
+  readonly listViewType?: "card" | "expandableTable";
   readonly presentationHint?: "plain" | "wizard";
   readonly formPresentation?: "plain" | "wizard";
   readonly allowCreative?: boolean;
@@ -1658,7 +1658,7 @@ export interface UiBuilderSuggestionRecord {
   readonly tenantId: string;
   readonly entityName: string;
   readonly surface: string;
-  readonly listViewType?: "table" | "card" | "expandableTable";
+  readonly listViewType?: "card" | "expandableTable";
   readonly jobId: string;
   readonly status: UiBuilderSuggestionStatus;
   readonly userContext?: string;

@@ -12,7 +12,7 @@
           "fields": ["financialItemId", "dueDate", "expectedAmount", "status"]
         }
       ],
-      "listViewType": "table",
+      "listViewType": "expandableTable",
       "metricWidgets": [
         {
           "id": "upcoming-payments-dashboard",
@@ -171,7 +171,10 @@
                                       },
                                       {
                                         "property": "fontSize",
-                                        "value": "18"
+                                        "value": "18",
+                                        "valuesByBreakpoint": {
+                                          "base": "15"
+                                        }
                                       }
                                     ]
                                   }
@@ -179,11 +182,36 @@
                                 {
                                   "type": "component",
                                   "id": "row-upcoming-payments-see-all",
-                                  "motion": {
-                                    "hoverSurface": "default",
-                                    "hoverTransform": "none",
-                                    "hoverDurationMs": 150,
-                                    "transition": "all"
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "See all"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "color",
+                                        "value": "primary"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "14",
+                                        "valuesByBreakpoint": {
+                                          "base": "11"
+                                        }
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "medium"
+                                      }
+                                    ]
+                                  },
+                                  "clickAction": {
+                                    "type": "externalUrl",
+                                    "url": {
+                                      "type": "static",
+                                      "value": "/app/views/upcoming-payments"
+                                    }
                                   },
                                   "styles": [
                                     {
@@ -207,33 +235,11 @@
                                       "value": "8"
                                     }
                                   ],
-                                  "clickAction": {
-                                    "type": "externalUrl",
-                                    "url": {
-                                      "type": "static",
-                                      "value": "/app/views/upcoming-payments"
-                                    }
-                                  },
-                                  "component": {
-                                    "kind": "text",
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "See all"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "color",
-                                        "value": "primary"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "14"
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "medium"
-                                      }
-                                    ]
+                                  "motion": {
+                                    "hoverSurface": "default",
+                                    "hoverTransform": "none",
+                                    "hoverDurationMs": 150,
+                                    "transition": "all"
                                   }
                                 }
                               ]
@@ -389,18 +395,6 @@
                                       {
                                         "type": "component",
                                         "id": "row-upcoming-payment-item",
-                                        "motion": {
-                                          "hoverSurface": "glow-border",
-                                          "hoverTransform": "none",
-                                          "hoverDurationMs": 200,
-                                          "transition": "all"
-                                        },
-                                        "clickAction": {
-                                          "type": "entityRecord",
-                                          "target": {
-                                            "relationFieldPath": "financialItemId"
-                                          }
-                                        },
                                         "component": {
                                           "kind": "container",
                                           "stackDirection": "column",
@@ -432,7 +426,7 @@
                                               "id": "row-upcoming-payment-item-grid",
                                               "component": {
                                                 "kind": "grid",
-                                                "gridTemplateColumns": "48px minmax(0, 1fr) minmax(0, auto)",
+                                                "gridTemplateColumns": "auto minmax(0, 1fr) minmax(0, auto)",
                                                 "gap": "12",
                                                 "alignItems": "center",
                                                 "rows": [
@@ -452,13 +446,30 @@
                                                               "path": "financialItem.actor.logo"
                                                             },
                                                             "imageSize": 40,
-                                                            "objectFit": "cover",
+                                                            "displayMode": "overlay",
+                                                            "objectFit": "contain",
                                                             "styles": [
                                                               {
                                                                 "property": "borderRadius",
                                                                 "value": "9999"
                                                               }
                                                             ]
+                                                          }
+                                                        }
+                                                      ],
+                                                      "styles": [
+                                                        {
+                                                          "property": "width",
+                                                          "value": "48",
+                                                          "valuesByBreakpoint": {
+                                                            "base": "30"
+                                                          }
+                                                        },
+                                                        {
+                                                          "property": "height",
+                                                          "value": "48",
+                                                          "valuesByBreakpoint": {
+                                                            "base": "30"
                                                           }
                                                         }
                                                       ]
@@ -496,7 +507,10 @@
                                                               },
                                                               {
                                                                 "property": "fontSize",
-                                                                "value": "15"
+                                                                "value": "15",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "12"
+                                                                }
                                                               }
                                                             ]
                                                           }
@@ -521,7 +535,10 @@
                                                               },
                                                               {
                                                                 "property": "fontSize",
-                                                                "value": "13"
+                                                                "value": "13",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "10"
+                                                                }
                                                               }
                                                             ]
                                                           }
@@ -566,7 +583,10 @@
                                                               },
                                                               {
                                                                 "property": "fontSize",
-                                                                "value": "15"
+                                                                "value": "15",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "12"
+                                                                }
                                                               },
                                                               {
                                                                 "property": "textAlign",
@@ -605,7 +625,10 @@
                                                             "styles": [
                                                               {
                                                                 "property": "fontSize",
-                                                                "value": "12"
+                                                                "value": "12",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "9"
+                                                                }
                                                               },
                                                               {
                                                                 "property": "textAlign",
@@ -621,6 +644,18 @@
                                               }
                                             }
                                           ]
+                                        },
+                                        "clickAction": {
+                                          "type": "entityRecord",
+                                          "target": {
+                                            "relationFieldPath": "financialItemId"
+                                          }
+                                        },
+                                        "motion": {
+                                          "hoverSurface": "glow-border",
+                                          "hoverTransform": "none",
+                                          "hoverDurationMs": 200,
+                                          "transition": "all"
                                         }
                                       }
                                     ]
@@ -653,6 +688,11 @@
                     {
                       "type": "component",
                       "id": "row-due-today-snapshot-mini-shell",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "rows": [
@@ -1098,6 +1138,11 @@
                     {
                       "type": "component",
                       "id": "row-upcoming-week-snapshot-mini-shell",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "rows": [
@@ -1543,6 +1588,11 @@
                     {
                       "type": "component",
                       "id": "row-budget-status-snapshot-mini-shell",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
                       "component": {
                         "kind": "container",
                         "rows": [

@@ -49,7 +49,6 @@ import { getCombinedStaticFragments } from "../generated/load-generated.js";
 import { estimateTokenCount } from "../utils/hash.js";
 
 const LIST_FRAGMENT_BY_TYPE: Record<ListViewType, string> = {
-  table: "ui.surface.list.table",
   card: "ui.surface.list.card",
   expandableTable: "ui.surface.list.expandableTable",
 };

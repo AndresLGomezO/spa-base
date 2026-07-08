@@ -663,9 +663,13 @@ export {
   createDefaultUiLayout,
   createAccountCardSeedLayout,
 } from "./builder/defaults.js";
-export { createDefaultTableCellLayout } from "./builder/table-cell-defaults.js";
+export {
+  createDefaultTableCellLayout,
+  createEmptyTableCellLayout,
+} from "./builder/table-cell-defaults.js";
 export {
   createDefaultRowExpandLayout,
+  createEmptyRowExpandLayout,
   ensureRowExpandContainerRootLayout,
   isRowExpandContainerRootLayout,
 } from "./builder/row-expand-defaults.js";

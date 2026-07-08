@@ -64,6 +64,7 @@ export function CardFieldValue({
 
   const valueElement = (
     <span
+      data-card-field-value=""
       className={cn(
         cardTextColorClassName(textColor),
         resolvedTextSize === undefined && "text-sm",

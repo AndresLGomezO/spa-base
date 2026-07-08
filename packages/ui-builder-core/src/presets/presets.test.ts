@@ -157,12 +157,14 @@ describe("built-in template helpers", () => {
   });
 
   it("resolves list builtin template ids from layout shape", () => {
-    const plain = applyBuiltInTemplate("plain-table-list", {
+    const expandable = applyBuiltInTemplate("expandable-table-list", {
       fieldPaths: ["name"],
     });
     const card = applyBuiltInTemplate("card-list", { fieldPaths: ["name"] });
 
-    expect(resolveListBuiltinTemplateId(plain)).toBe("plain-table-list");
+    expect(resolveListBuiltinTemplateId(expandable)).toBe(
+      "expandable-table-list",
+    );
     expect(resolveListBuiltinTemplateId(card)).toBe("card-list");
   });
 });

@@ -12,7 +12,7 @@ export type DesignLayoutSurfaceInput = z.infer<
   typeof designLayoutSurfaceSchema
 >;
 
-export const listViewTypeSchema = z.enum(["table", "card", "expandableTable"]);
+export const listViewTypeSchema = z.enum(["card", "expandableTable"]);
 
 export const formPresentationSchema = z.enum(["plain", "wizard"]);
 

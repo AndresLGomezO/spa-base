@@ -22,7 +22,7 @@ describe("exportCustomViewFormState", () => {
       status: "ACTIVE",
       ui: {
         views: [{ type: "table", name: "default", fields: ["type", "date"] }],
-        listViewType: "table",
+        listViewType: "expandableTable",
       },
     });
 
@@ -32,7 +32,7 @@ describe("exportCustomViewFormState", () => {
     const imported = importCustomViewFormState(exported);
     expect(imported.name).toBe("Upcoming payments");
     expect(imported.navLabel).toBe("Payments");
-    expect(imported.ui?.listViewType).toBe("table");
+    expect(imported.ui?.listViewType).toBe("expandableTable");
   });
 
   it("resolves query names and ids", () => {

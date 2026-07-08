@@ -3,7 +3,6 @@ import type { UiLayoutDocument } from "../types/layout.js";
 
 export type BuiltInComponentTemplateId =
   | "plain-form"
-  | "plain-table-list"
   | "card-list"
   | "expandable-table-list"
   | "wizard-form"
@@ -31,13 +30,6 @@ export const BUILT_IN_TEMPLATE_DEFINITIONS: readonly BuiltInComponentTemplateDef
       isDefault: true,
     },
     {
-      id: "plain-table-list",
-      label: "Plain table list",
-      description: "Default list item cell with labeled field text.",
-      surfaces: ["listItem"],
-      isDefault: true,
-    },
-    {
       id: "card-list",
       label: "Card list",
       description: "Two-track card layout with actions.",
@@ -48,6 +40,7 @@ export const BUILT_IN_TEMPLATE_DEFINITIONS: readonly BuiltInComponentTemplateDef
       label: "Expandable row",
       description: "Row expand panel for grouped table rows.",
       surfaces: ["listItem", "tableRowExpand"],
+      isDefault: true,
     },
     {
       id: "wizard-form",

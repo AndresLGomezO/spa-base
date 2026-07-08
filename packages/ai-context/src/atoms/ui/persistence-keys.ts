@@ -10,7 +10,7 @@ Layouts persist on **entity UI overrides** (\`entity_ui_overrides\`) and tenant 
 | Key | Surface | Description |
 |-----|---------|-------------|
 | \`listItem\` | Item list (card) | Per-record card layout |
-| \`listViewType\` | List | \`table\` \\| \`card\` \\| \`expandableTable\` |
+| \`listViewType\` | List | \`card\` \\| \`expandableTable\` |
 | \`mainPage\` | Main view | page-header, page-toolbar, page-metrics, page-list slots |
 | \`recordDetail\` | Detail view | Record detail layout |
 | \`forms.presentation\` | Forms | \`plain\` or \`wizard\` (derived from preset) |
@@ -18,7 +18,7 @@ Layouts persist on **entity UI overrides** (\`entity_ui_overrides\`) and tenant 
 | \`forms.wizard\` | Forms | Wizard shell + steps |
 | \`metricWidgets\` | Metrics row | Reusable metric widget definitions |
 | \`metricRowLayout\` | Metrics row | Row with metric-widget refs |
-| \`views[].fields\` | Table list | Column field paths (table view only) |
+| \`views[].fields\` | List toolbar | Column/filter field paths (table view config) |
 | \`views[].columns\` | Expandable table | Grouped columns with \`cellLayout\` |
 | \`views[].rowExpandLayout\` | Expandable table | Expanded row panel |
 

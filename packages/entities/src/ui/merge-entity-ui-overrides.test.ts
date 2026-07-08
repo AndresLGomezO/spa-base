@@ -26,6 +26,24 @@ const baseDefinition: SerializableEntityDefinition = {
 };
 
 describe("mergeEntityUiOverrides", () => {
+  it("seeds expandableTable view when base UI has listViewType but no expandable view", () => {
+    const merged = mergeEntityUiOverrides(
+      {
+        ...baseDefinition,
+        ui: {
+          ...baseDefinition.ui,
+          listViewType: "expandableTable",
+        },
+      },
+      null,
+    );
+
+    const expandable = merged.ui.views.find(
+      (view) => view.type === "expandableTable",
+    );
+    expect(expandable?.type).toBe("expandableTable");
+  });
+
   it("keeps base table view when override only defines card layout", () => {
     const merged = mergeEntityUiOverrides(baseDefinition, {
       entityName: "account",

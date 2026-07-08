@@ -12,7 +12,7 @@ import {
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 
-type ActiveListViewType = "table" | "card" | "expandableTable";
+type ActiveListViewType = "card" | "expandableTable";
 
 function entityFieldPaths(
   entity: DefinedEntity<string, FieldDefinitions>,
@@ -41,7 +41,10 @@ function normalizeListViewType(value: unknown): ActiveListViewType | undefined {
   if (value === "compact") {
     return "expandableTable";
   }
-  if (value === "table" || value === "card" || value === "expandableTable") {
+  if (value === "table" || value === "compact") {
+    return "expandableTable";
+  }
+  if (value === "card" || value === "expandableTable") {
     return value;
   }
   return undefined;
@@ -55,7 +58,7 @@ function buildListSliceStub(
   const layout = createDefaultUiLayout([columnFields[0] ?? "name"]);
 
   return {
-    listViewType: "table",
+    listViewType: "expandableTable",
     table: { fields: [...columnFields], showActions: true },
     expandableTable: {
       columns: [
@@ -148,15 +151,14 @@ export function normalizeAiListSliceSuggestion(
 
   const merged: ListSliceData = {
     listViewType,
-    table:
-      listViewType === "table" && partial.table
-        ? {
-            fields: [...sanitizeTableFields(entity, partial.table.fields)],
-            ...(partial.table.showActions !== undefined
-              ? { showActions: partial.table.showActions }
-              : {}),
-          }
-        : fallback.table,
+    table: partial.table
+      ? {
+          fields: [...sanitizeTableFields(entity, partial.table.fields)],
+          ...(partial.table.showActions !== undefined
+            ? { showActions: partial.table.showActions }
+            : {}),
+        }
+      : fallback.table,
     expandableTable:
       listViewType === "expandableTable" && partial.expandableTable
         ? {

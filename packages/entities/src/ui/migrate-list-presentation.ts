@@ -6,6 +6,8 @@ import type {
 import {
   createDefaultExpandableTableView,
   expandableTableViewFromListItem,
+  reconcileExpandableTableView,
+  type CreateDefaultExpandableTableViewOptions,
 } from "./expandable-table-defaults.js";
 import { normalizeEntityViews } from "./normalize-entity-views.js";
 import { normalizeListItemLayout } from "./normalize-list-item-layout.js";
@@ -17,6 +19,9 @@ export type EntityUiConfigWithLegacyPresentation = Omit<
 > & {
   readonly listViewType?: LegacyEntityListViewType;
 };
+
+export type MigrateListPresentationOptions =
+  CreateDefaultExpandableTableViewOptions;
 
 function resolveListViewType(
   listViewType: LegacyEntityListViewType | undefined,
@@ -45,9 +50,25 @@ function getQueryableFieldPaths(ui: EntityUIConfig): readonly string[] {
   return [];
 }
 
+function seedExpandableTableView(
+  ui: EntityUIConfig,
+  fieldPaths: readonly string[],
+  options?: MigrateListPresentationOptions,
+) {
+  const listItem = normalizeListItemLayout(ui);
+  if (listItem) {
+    return expandableTableViewFromListItem(listItem, fieldPaths, options);
+  }
+  return createDefaultExpandableTableView(
+    fieldPaths.length > 0 ? fieldPaths : ["name"],
+    options,
+  );
+}
+
 /** Migrates legacy compact presentation and seeds expandableTable view when needed. */
 export function migrateListPresentation(
   ui: EntityUiConfigWithLegacyPresentation,
+  options?: MigrateListPresentationOptions,
 ): EntityUIConfig {
   const { listViewType: legacyListViewType, ...rest } = ui;
   const listViewType = resolveListViewType(legacyListViewType);
@@ -57,15 +78,19 @@ export function migrateListPresentation(
 
   let views = rest.views;
 
-  if (listViewType === "expandableTable" && !hasExpandableView) {
+  if (listViewType === "expandableTable") {
     const fieldPaths = getQueryableFieldPaths(rest);
-    const listItem = normalizeListItemLayout(rest);
-    const expandableView = listItem
-      ? expandableTableViewFromListItem(listItem, fieldPaths)
-      : createDefaultExpandableTableView(
-          fieldPaths.length > 0 ? fieldPaths : ["name"],
+    if (fieldPaths.length > 0) {
+      if (!hasExpandableView) {
+        views = [...views, seedExpandableTableView(rest, fieldPaths, options)];
+      } else {
+        views = views.map((view) =>
+          view.type === "expandableTable" && isExpandableTableViewConfig(view)
+            ? reconcileExpandableTableView(view, fieldPaths, options)
+            : view,
         );
-    views = [...views, expandableView];
+      }
+    }
   }
 
   return {

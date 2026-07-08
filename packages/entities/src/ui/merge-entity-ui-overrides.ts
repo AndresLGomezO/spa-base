@@ -65,7 +65,18 @@ export function mergeEntityUiOverrides(
   if (!override || override.views.length === 0) {
     return {
       ...definition,
-      ui: migrateMetricStripToMetricsRow(definition.ui, definition.name),
+      ui: migrateMetricStripToMetricsRow(
+        migrateListPresentation(definition.ui, {
+          fields: definition.fields,
+          fieldLabels: Object.fromEntries(
+            Object.entries(definition.ui.fields ?? {}).map(([name, config]) => [
+              name,
+              config?.label,
+            ]),
+          ),
+        }),
+        definition.name,
+      ),
     };
   }
 
@@ -116,39 +127,50 @@ export function mergeEntityUiOverrides(
   const recordDetailLayout =
     override.recordDetail ?? override.detail ?? undefined;
 
-  const mergedUi = migrateListPresentation({
-    ...definition.ui,
-    views: normalizeEntityViews(mergedViews),
-    ...(override.listViewType !== undefined
-      ? { listViewType: override.listViewType }
-      : {}),
-    ...(listItem ? { listItem } : {}),
-    ...(override.mainPage ? { mainPageLayout: override.mainPage } : {}),
-    ...(recordDetailLayout
-      ? {
-          recordDetailLayout,
-          detailLayout: recordDetailLayout,
-        }
-      : {}),
-    ...(override.metricWidgets
-      ? { metricWidgets: override.metricWidgets }
-      : {}),
-    ...(override.metricRowLayout
-      ? { metricRowLayout: override.metricRowLayout }
-      : {}),
-    forms: mergeFormConfig(definition.ui.forms, override.forms),
-    ...(override.formDesigns !== undefined
-      ? { formDesigns: override.formDesigns }
-      : {}),
-    ...(override.entityPageCreateFormDesignId !== undefined
-      ? {
-          entityPageCreateFormDesignId: override.entityPageCreateFormDesignId,
-        }
-      : {}),
-    ...(override.entityPageEditFormDesignId !== undefined
-      ? { entityPageEditFormDesignId: override.entityPageEditFormDesignId }
-      : {}),
-  });
+  const mergedUi = migrateListPresentation(
+    {
+      ...definition.ui,
+      views: normalizeEntityViews(mergedViews),
+      ...(override.listViewType !== undefined
+        ? { listViewType: override.listViewType }
+        : {}),
+      ...(listItem ? { listItem } : {}),
+      ...(override.mainPage ? { mainPageLayout: override.mainPage } : {}),
+      ...(recordDetailLayout
+        ? {
+            recordDetailLayout,
+            detailLayout: recordDetailLayout,
+          }
+        : {}),
+      ...(override.metricWidgets
+        ? { metricWidgets: override.metricWidgets }
+        : {}),
+      ...(override.metricRowLayout
+        ? { metricRowLayout: override.metricRowLayout }
+        : {}),
+      forms: mergeFormConfig(definition.ui.forms, override.forms),
+      ...(override.formDesigns !== undefined
+        ? { formDesigns: override.formDesigns }
+        : {}),
+      ...(override.entityPageCreateFormDesignId !== undefined
+        ? {
+            entityPageCreateFormDesignId: override.entityPageCreateFormDesignId,
+          }
+        : {}),
+      ...(override.entityPageEditFormDesignId !== undefined
+        ? { entityPageEditFormDesignId: override.entityPageEditFormDesignId }
+        : {}),
+    },
+    {
+      fields: definition.fields,
+      fieldLabels: Object.fromEntries(
+        Object.entries(definition.ui.fields ?? {}).map(([name, config]) => [
+          name,
+          config?.label,
+        ]),
+      ),
+    },
+  );
 
   return {
     ...definition,

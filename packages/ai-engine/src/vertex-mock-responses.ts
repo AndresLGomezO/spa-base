@@ -172,7 +172,7 @@ export function buildMockUiBuilderStepAnswer(
 
   if (stepId === LIST_STEP_TYPES.SELECT_VIEW_TYPE) {
     return JSON.stringify({
-      listViewType: fields.length > 8 ? "table" : "table",
+      listViewType: "expandableTable",
     });
   }
 
@@ -378,7 +378,7 @@ export function buildMockUiBuilderStepAnswer(
     });
   }
 
-  return JSON.stringify({ listViewType: "table" });
+  return JSON.stringify({ listViewType: "expandableTable" });
 }
 
 /** @deprecated Use buildMockUiBuilderStepAnswer */

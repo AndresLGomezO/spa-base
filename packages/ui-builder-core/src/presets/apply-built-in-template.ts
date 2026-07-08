@@ -5,7 +5,6 @@ import {
 } from "../builder/mutations.js";
 import { createDefaultListCardLayout } from "../builder/list-card-defaults.js";
 import { createDefaultRowExpandLayout } from "../builder/row-expand-defaults.js";
-import { createDefaultTableCellLayout } from "../builder/table-cell-defaults.js";
 import { beginContainerRootLayout } from "../layout/ensure-container-root.js";
 import { createDefaultWizardShellLayout } from "../layout/default-wizard-form-layout.js";
 import type { DesignSurface } from "../types/design-surface.js";
@@ -20,7 +19,7 @@ export interface BuiltInTemplateContext {
   readonly fieldPaths: readonly string[];
 }
 
-export type ListPresentationKind = "table" | "card" | "expandableTable";
+export type ListPresentationKind = "card" | "expandableTable";
 
 const DEFAULT_FIELD_PATHS = ["name"] as const;
 
@@ -45,14 +44,6 @@ function createPlainFormLayout(
   );
 }
 
-function createPlainTableListLayout(
-  fieldPaths: readonly string[],
-): UiLayoutDocument {
-  return createDefaultTableCellLayout(
-    fieldPaths.length > 0 ? fieldPaths : ["name"],
-  );
-}
-
 function createKpiStripLayout(fieldPaths: readonly string[]): UiLayoutDocument {
   const primaryField = fieldPaths[0] ?? "name";
   return addComponentRowAt(
@@ -67,8 +58,6 @@ const TEMPLATE_FACTORIES: Record<
   (context: BuiltInTemplateContext) => UiLayoutDocument
 > = {
   "plain-form": ({ fieldPaths }) => createPlainFormLayout(fieldPaths),
-  "plain-table-list": ({ fieldPaths }) =>
-    createPlainTableListLayout(fieldPaths),
   "card-list": ({ fieldPaths }) => createDefaultListCardLayout(fieldPaths),
   "expandable-table-list": ({ fieldPaths }) =>
     createDefaultRowExpandLayout(fieldPaths),
@@ -139,8 +128,6 @@ export function resolveBuiltInTemplatePresentation(
   id: BuiltInComponentTemplateId,
 ): ListPresentationKind | undefined {
   switch (id) {
-    case "plain-table-list":
-      return "table";
     case "card-list":
       return "card";
     case "expandable-table-list":
@@ -176,9 +163,6 @@ export function resolveListBuiltinTemplateId(
   if (derived === "expandableTable") {
     return "expandable-table-list";
   }
-  if (derived === "table") {
-    return "plain-table-list";
-  }
   if (listViewType === "card") {
     return "card-list";
   }
@@ -202,5 +186,5 @@ export function deriveListPresentationFromLayout(
     return "expandableTable";
   }
 
-  return "table";
+  return "expandableTable";
 }

@@ -576,6 +576,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
       const columnLabel = resolveExpandableTableGroupedColumnDisplayLabel(
         column,
         columnIndex,
+        editor.definition,
         (oneBasedIndex) =>
           t("entity.viewSettings.columnTab", { column: oneBasedIndex }),
       );
@@ -604,6 +605,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
     },
     [
       createColumnTreeHandlers,
+      editor.definition,
       editor.expandableColumns,
       expandedColumnIds,
       handleInsertColumn,
@@ -652,6 +654,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
           const columnLabel = resolveExpandableTableGroupedColumnDisplayLabel(
             column,
             columnIndex,
+            editor.definition,
             (oneBasedIndex) =>
               t("entity.viewSettings.columnTab", { column: oneBasedIndex }),
           );

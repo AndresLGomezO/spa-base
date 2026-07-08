@@ -5,3 +5,4 @@ export {
   type PhotoCropFrame,
   type PhotoCropShape,
 } from "./PhotoUpload";
+export { PhotoExpandDialog } from "./PhotoExpandDialog";

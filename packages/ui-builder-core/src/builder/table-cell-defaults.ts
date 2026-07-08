@@ -7,9 +7,15 @@ import {
   resolveLayoutRootColumns,
 } from "../layout/layout-root-adapters.js";
 
+export interface DefaultTableCellLayoutOptions {
+  readonly showLabel?: boolean;
+}
+
 export function createDefaultTableCellLayout(
   fieldPaths: readonly string[],
+  options: DefaultTableCellLayoutOptions = {},
 ): UiLayoutDocument {
+  const showLabel = options.showLabel ?? false;
   const layout = createEmptyLayout(1);
   const rows = fieldPaths.map((fieldPath) => ({
     type: "component" as const,
@@ -17,7 +23,7 @@ export function createDefaultTableCellLayout(
     component: {
       kind: "text" as const,
       primary: { type: "field" as const, path: fieldPath },
-      label: { show: true },
+      label: { show: showLabel },
     },
   }));
 
@@ -33,4 +39,8 @@ export function createDefaultTableCellLayout(
       columns: [{ ...column, rows }],
     },
   });
+}
+
+export function createEmptyTableCellLayout(): UiLayoutDocument {
+  return ensureContainerRoot(createEmptyLayout(1));
 }

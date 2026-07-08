@@ -133,7 +133,8 @@ export function UiBuilderAiResultPopover({
                         : "",
                     })
                   : t("itemListDesigner.ai.resultReady" as never, {
-                      listViewType: suggestion?.listViewType ?? "table",
+                      listViewType:
+                        suggestion?.listViewType ?? "expandableTable",
                     })}
             </Text>
             <div className="flex justify-end gap-2">

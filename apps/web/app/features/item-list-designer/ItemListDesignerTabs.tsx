@@ -26,11 +26,7 @@ export function ItemListDesignerTabs() {
       },
     ];
 
-    if (
-      editor.viewType === "table" ||
-      editor.viewType === "expandableTable" ||
-      editor.viewType === "card"
-    ) {
+    if (editor.viewType === "expandableTable" || editor.viewType === "card") {
       items.push({
         id: "design",
         label: t("itemListDesigner.tabs.design"),
@@ -45,7 +41,6 @@ export function ItemListDesignerTabs() {
   const effectiveActiveTabId =
     activeTabId === "design" &&
     editor.viewType !== "card" &&
-    editor.viewType !== "table" &&
     editor.viewType !== "expandableTable"
       ? "settings"
       : activeTabId;

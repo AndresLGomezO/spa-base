@@ -72,7 +72,7 @@ describe("normalizeAiListSliceSuggestion", () => {
   it("preserves fallback branches for non-selected presentation", () => {
     const fallbackLayout = createDefaultUiLayout(["name"]);
     const fallbackEnvelope = createDesignLayoutSliceEnvelope("list", {
-      listViewType: "table",
+      listViewType: "expandableTable",
       table: { fields: ["name"], showActions: false },
       expandableTable: {
         columns: [{ id: "col-fallback", cellLayout: fallbackLayout }],
@@ -84,7 +84,7 @@ describe("normalizeAiListSliceSuggestion", () => {
     const normalized = normalizeAiListSliceSuggestion(
       entity,
       {
-        listViewType: "table",
+        listViewType: "expandableTable",
         table: { fields: ["name", "email"], showActions: true },
       },
       JSON.stringify(fallbackEnvelope),
@@ -131,7 +131,7 @@ describe("normalizeAiListSliceSuggestion", () => {
     }) as unknown as AnyDefinedEntity;
 
     const normalized = normalizeAiListSliceSuggestion(contractEntity, {
-      listViewType: "table",
+      listViewType: "expandableTable",
       table: {
         fields: ["contract", "name", "contractType", "categoryId"],
         showActions: true,
@@ -243,7 +243,7 @@ describe("parseUiBuilderListSuggestion", () => {
         surface: "list",
         version: 1,
         data: {
-          listViewType: "table",
+          listViewType: "expandableTable",
           table: { fields: ["name", "email"], showActions: true },
         },
       }),
@@ -251,7 +251,7 @@ describe("parseUiBuilderListSuggestion", () => {
     );
 
     expect(result.status).toBe("ready");
-    expect(result.listViewType).toBe("table");
+    expect(result.listViewType).toBe("expandableTable");
     expect(result.sliceData?.table?.fields).toEqual(["name", "email"]);
   });
 
@@ -319,7 +319,7 @@ describe("parseUiBuilderListSuggestion", () => {
         surface: "list",
         version: 1,
         data: {
-          listViewType: "table",
+          listViewType: "expandableTable",
           table: {
             fields: ["contract", "name", "contractType", "categoryId"],
             showActions: true,

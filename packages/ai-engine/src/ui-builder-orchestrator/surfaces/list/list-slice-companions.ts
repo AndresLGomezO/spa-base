@@ -45,7 +45,7 @@ export function buildListSliceStub(
   const layout = createDefaultUiLayout([columnFields[0] ?? "name"]);
 
   return {
-    listViewType: "table",
+    listViewType: "expandableTable",
     table: { fields: [...columnFields], showActions: true },
     expandableTable: {
       columns: [
@@ -103,17 +103,14 @@ export function mergeListSliceWithCompanions(
 
   const merged: ListSliceData = {
     listViewType,
-    table:
-      listViewType === "table" && activePartial.table
-        ? {
-            fields: [
-              ...sanitizeTableFields(entity, activePartial.table.fields),
-            ],
-            ...(activePartial.table.showActions !== undefined
-              ? { showActions: activePartial.table.showActions }
-              : {}),
-          }
-        : fallback.table,
+    table: activePartial.table
+      ? {
+          fields: [...sanitizeTableFields(entity, activePartial.table.fields)],
+          ...(activePartial.table.showActions !== undefined
+            ? { showActions: activePartial.table.showActions }
+            : {}),
+        }
+      : fallback.table,
     expandableTable:
       listViewType === "expandableTable" && activePartial.expandableTable
         ? {

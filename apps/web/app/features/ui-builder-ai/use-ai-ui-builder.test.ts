@@ -79,7 +79,11 @@ describe("resolveLastUiBuilderRunDisplay", () => {
 
   it("returns the matching ready suggestion for completed runs", () => {
     const suggestions = [
-      suggestion({ jobId: "aijob_1", status: "ready", listViewType: "table" }),
+      suggestion({
+        jobId: "aijob_1",
+        status: "ready",
+        listViewType: "expandableTable",
+      }),
     ];
 
     expect(

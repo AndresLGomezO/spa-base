@@ -47,4 +47,23 @@ describe("migrateListPresentation", () => {
       expect(expandable.rowExpandLayout).toBeDefined();
     }
   });
+
+  it("seeds expandableTable view when listViewType is expandableTable and only table view exists", () => {
+    const migrated = migrateListPresentation(
+      baseUi({
+        listViewType: "expandableTable",
+        views: [
+          { type: "table", name: "default", fields: ["name", "balance"] },
+        ],
+      }),
+    );
+
+    const expandable = migrated.views.find(
+      (view) => view.type === "expandableTable",
+    );
+    expect(expandable?.type).toBe("expandableTable");
+    if (expandable?.type === "expandableTable") {
+      expect(expandable.columns).toHaveLength(3);
+    }
+  });
 });

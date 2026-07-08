@@ -54,7 +54,7 @@ const groupedTableColumnSchema = z
 
 const listSliceDataSchema = z
   .object({
-    listViewType: z.enum(["table", "card", "expandableTable", "compact"]),
+    listViewType: z.enum(["card", "expandableTable", "compact"]),
     table: z
       .object({
         fields: z.array(z.string().trim().min(1)).min(1),
@@ -92,7 +92,7 @@ const metricsRowDesignerSliceDataSchema = z
   .strict();
 
 export interface ListSliceData {
-  readonly listViewType: "table" | "card" | "expandableTable" | "compact";
+  readonly listViewType: "card" | "expandableTable" | "compact";
   readonly table: {
     readonly fields: readonly string[];
     readonly showActions?: boolean;
@@ -193,7 +193,7 @@ export function createDesignLayoutSliceSkeleton(
   const emptyLayout = createDefaultUiLayout(["name"]);
   const skeletons: Record<DesignLayoutSurface, DesignLayoutSliceData> = {
     list: {
-      listViewType: "table",
+      listViewType: "expandableTable",
       table: { fields: ["name"], showActions: true },
       expandableTable: {
         columns: [

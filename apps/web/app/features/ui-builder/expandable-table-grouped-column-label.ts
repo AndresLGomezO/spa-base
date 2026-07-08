@@ -27,11 +27,17 @@ function resolveFirstFieldPathFromCellLayout(
 export function resolveExpandableTableGroupedColumnDisplayLabel(
   column: GroupedTableColumn,
   columnIndex: number,
+  definition: EntityCatalogEntry,
   formatIndexedColumnLabel: (oneBasedIndex: number) => string,
 ): string {
   const explicitLabel = column.label?.trim();
   if (explicitLabel) {
     return explicitLabel;
+  }
+
+  const fieldPath = resolveFirstFieldPathFromCellLayout(column.cellLayout);
+  if (fieldPath) {
+    return formatFieldLabel(fieldPath, definition);
   }
 
   return formatIndexedColumnLabel(columnIndex + 1);

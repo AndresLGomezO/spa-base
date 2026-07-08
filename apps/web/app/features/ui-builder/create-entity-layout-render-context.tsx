@@ -1,5 +1,6 @@
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
+import { formatDisplayValue } from "@repo/ui";
 import type { TFunction } from "i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
@@ -57,6 +58,8 @@ export function createEntityLayoutRenderContext(options: {
   /** When true, empty field values show the field label as sample text. */
   readonly usePreviewSamples?: boolean;
   readonly t?: TFunction;
+  /** When true, relation field links use primary/underline styling. */
+  readonly relationLinkAppearance?: boolean;
 }): LayoutRenderContext {
   const {
     item,
@@ -73,6 +76,7 @@ export function createEntityLayoutRenderContext(options: {
     usePreviewPlaceholder = false,
     usePreviewSamples = false,
     t,
+    relationLinkAppearance = false,
   } = options;
 
   const resolvePreviewSampleValue = usePreviewSamples
@@ -91,11 +95,53 @@ export function createEntityLayoutRenderContext(options: {
     mode: "listItem",
     data: item,
     locale,
+    relationLinkAppearance,
     resolveField,
     resolveFieldMeta: (path) =>
       resolveLayoutSlotDisplayMeta(path, definition, getDefinition),
     resolveFieldLabel: (path) =>
       resolveLayoutSlotLabel(path, definition, getDefinition),
+    formatFieldDisplayValue: (fieldPath, rawValue) => {
+      const rootField = fieldPath.includes(".")
+        ? (fieldPath.split(".")[0] ?? fieldPath)
+        : fieldPath;
+      const fieldMeta = definition.fields[rootField];
+      if (
+        fieldMeta?.relation?.type === "many-to-one" ||
+        fieldMeta?.relation?.type === "one-to-one"
+      ) {
+        if (!fieldPath.includes(".")) {
+          return resolveEntityCellValue(
+            item,
+            rootField,
+            definition,
+            getOneToManyCellValue,
+            { getDefinition },
+          );
+        }
+      }
+      if (
+        fieldMeta?.relation?.type === "one-to-many" &&
+        !fieldPath.includes(".")
+      ) {
+        const relatedValue = getOneToManyCellValue(String(item.id), rootField);
+        if (relatedValue !== null) {
+          return relatedValue;
+        }
+      }
+      const meta = resolveLayoutSlotDisplayMeta(
+        fieldPath,
+        definition,
+        getDefinition,
+      );
+      return formatDisplayValue(rawValue, {
+        fieldType: meta.fieldType,
+        displayFormat: meta.displayFormat,
+        dateDisplayFormat: meta.dateDisplayFormat,
+        fieldName: rootField,
+        locale,
+      });
+    },
     resolvePreviewSampleValue,
     resolveCurrencyCode: () =>
       definition.fields.currencyId
@@ -170,6 +216,7 @@ export function createEntityLayoutRenderContext(options: {
         className={imageOptions.className}
         style={imageOptions.style}
         usePreviewPlaceholder={usePreviewPlaceholder}
+        expandOnClick={imageOptions.expandOnClick}
       />
     ),
     metricKpiRenderer: (config, presentation) => (

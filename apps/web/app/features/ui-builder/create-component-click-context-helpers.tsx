@@ -72,10 +72,12 @@ export function createComponentClickContextHelpers(options: {
     componentClickWrapper: (
       target: ResolvedComponentClickTarget,
       children: ReactNode,
+      options?: { readonly linkAppearance?: boolean },
     ) =>
       createElement(ComponentClickTargetWrapper, {
         target,
         children,
+        linkAppearance: options?.linkAppearance,
       }),
     navigateComponentClick,
   };

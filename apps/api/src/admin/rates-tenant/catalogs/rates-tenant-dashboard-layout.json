@@ -177,7 +177,7 @@
                                   },
                                   {
                                     "property": "minWidth",
-                                    "value": "110"
+                                    "value": "100"
                                   }
                                 ]
                               }
@@ -196,7 +196,7 @@
                                   },
                                   {
                                     "property": "minWidth",
-                                    "value": "110"
+                                    "value": "100"
                                   },
                                   {
                                     "property": "maxWidth",
@@ -223,7 +223,7 @@
                                   },
                                   {
                                     "property": "minWidth",
-                                    "value": "110"
+                                    "value": "100"
                                   }
                                 ]
                               }

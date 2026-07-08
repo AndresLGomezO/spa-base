@@ -42,10 +42,7 @@ function resolvePresentationType(
   if (listViewType === "card") {
     return "card";
   }
-  if (listViewType === "expandableTable" || listViewType === "compact") {
-    return "expandableTable";
-  }
-  return "table";
+  return "expandableTable";
 }
 
 function resolveInitialPresentation(
@@ -53,16 +50,16 @@ function resolveInitialPresentation(
   layout: UiLayoutDocument,
 ): ListPresentationType {
   const derived = deriveListPresentationFromLayout(layout);
-  if (derived !== "table") {
-    return derived;
+  if (derived === "card") {
+    return "card";
   }
   return resolvePresentationType(listViewType);
 }
 
-function createPlainTableLayout(
+function createDefaultExpandableLayout(
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
-  return applyBuiltInTemplate("plain-table-list", { fieldPaths });
+  return applyBuiltInTemplate("expandable-table-list", { fieldPaths });
 }
 
 export function useCustomViewListLayoutEditor(viewId?: string) {
@@ -79,9 +76,11 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
   );
   const listViewType = definition?.ui.listViewType;
 
-  const [viewType, setViewTypeState] = useState<ListPresentationType>("table");
-  const [layoutPresetId, setLayoutPresetId] =
-    useState<LayoutPresetId>("plain-table-list");
+  const [viewType, setViewTypeState] =
+    useState<ListPresentationType>("expandableTable");
+  const [layoutPresetId, setLayoutPresetId] = useState<LayoutPresetId>(
+    "expandable-table-list",
+  );
   const [tableFields, setTableFields] = useState<readonly string[]>(fieldPaths);
   const [tableShowActions, setTableShowActions] = useState(true);
   const [expandableColumns, setExpandableColumns] = useState<
@@ -89,7 +88,7 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
   >(() => createDefaultExpandableTableView(fieldPaths).columns);
   const [expandableShowActions, setExpandableShowActions] = useState(true);
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    createPlainTableLayout(fieldPaths),
+    createDefaultExpandableLayout(fieldPaths),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
@@ -176,9 +175,9 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
       return;
     }
 
-    const plainLayout = createPlainTableLayout(fieldPaths);
-    setViewTypeState("table");
-    setLayoutPresetId("plain-table-list");
+    const plainLayout = createDefaultExpandableLayout(fieldPaths);
+    setViewTypeState("expandableTable");
+    setLayoutPresetId("expandable-table-list");
     setLayout(plainLayout);
     setLayoutEditorKey((current) => current + 1);
   }, [definition, fieldPaths, listViewType, uiViews]);
@@ -240,11 +239,7 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
       return [tableViewConfig, cardViewConfig];
     }
 
-    if (viewType === "expandableTable") {
-      return [tableViewConfig, buildExpandableTableView(expandableView)];
-    }
-
-    return [tableViewConfig];
+    return [tableViewConfig, buildExpandableTableView(expandableView)];
   }, [
     buildExpandableTableView,
     fieldPaths,

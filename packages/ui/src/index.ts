@@ -57,6 +57,7 @@ export {
 } from "./modal/Modal";
 export {
   PhotoUpload,
+  PhotoExpandDialog,
   type PhotoUploadLabels,
   type PhotoUploadProps,
   type PhotoCropFrame,

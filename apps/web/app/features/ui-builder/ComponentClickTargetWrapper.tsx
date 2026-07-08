@@ -8,16 +8,25 @@ import {
   isEntityFormModalClickTarget,
 } from "./handle-component-click-target.js";
 
+/** Styles relation field values without affecting labels or non-relation click targets. */
+const RELATION_LINK_WRAPPER_CLASS =
+  "contents cursor-pointer [&_[data-card-field-value]]:text-primary [&_[data-card-field-value]]:underline-offset-4 hover:[&_[data-card-field-value]]:underline";
+
 interface ComponentClickTargetWrapperProps {
   readonly target: ResolvedComponentClickTarget;
   readonly children: ReactNode;
+  readonly linkAppearance?: boolean;
 }
 
 export function ComponentClickTargetWrapper({
   target,
   children,
+  linkAppearance = false,
 }: ComponentClickTargetWrapperProps) {
   const modalContext = useOptionalEntityFormModal();
+  const linkWrapperClassName = linkAppearance
+    ? RELATION_LINK_WRAPPER_CLASS
+    : "contents";
 
   if (isEntityFormModalClickTarget(target)) {
     return (
@@ -53,7 +62,7 @@ export function ComponentClickTargetWrapper({
         href={target.href}
         target={target.openInNewTab ? "_blank" : undefined}
         rel={target.openInNewTab ? "noopener noreferrer" : undefined}
-        className="contents"
+        className={linkWrapperClassName}
       >
         {children}
       </a>
@@ -61,7 +70,11 @@ export function ComponentClickTargetWrapper({
   }
 
   return (
-    <Link to={target.href} state={target.state} className="contents">
+    <Link
+      to={target.href}
+      state={target.state}
+      className={linkWrapperClassName}
+    >
       {children}
     </Link>
   );

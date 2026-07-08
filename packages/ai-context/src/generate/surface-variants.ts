@@ -28,16 +28,6 @@ export interface SurfaceVariantSpec {
 
 export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
   {
-    fragmentId: "ui.surface.list.table",
-    title: "Item list — table",
-    designSurface: "tableColumnCell",
-    designLayoutSurface: "list",
-    description:
-      "Flat column table. Field paths in `views[].fields` (not layout tree).",
-    extraNotes:
-      'Set `listViewType: "table"`. Default preset: `plain-table-list`. Columns are field path strings. Optional `showActions`.',
-  },
-  {
     fragmentId: "ui.surface.list.card",
     title: "Item list — card",
     designSurface: "listItem",
@@ -77,7 +67,39 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     description:
       "Grouped columns with per-column `cellLayout` and `rowExpandLayout`.",
     extraNotes:
-      'Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. Each column has `cellLayout: UiLayoutDocument`. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses container + grid for expanded row content.',
+      'Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. Each column has `cellLayout: UiLayoutDocument`. Optional `imageFieldPath` for a dedicated logo/photo column. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses a 3-column grid for expanded row content. `table.fields` carries toolbar/filter field metadata.',
+    buildSkeleton: () =>
+      stabilizeLayoutJson(
+        JSON.stringify(
+          createDesignLayoutSliceEnvelope("list", {
+            listViewType: "expandableTable",
+            table: { fields: ["name", "status", "amount"], showActions: true },
+            expandableTable: {
+              columns: [
+                {
+                  id: "col-1",
+                  label: "Name",
+                  cellLayout: createDefaultUiLayout(["name"]),
+                },
+                {
+                  id: "col-2",
+                  label: "Status",
+                  cellLayout: createDefaultUiLayout(["status"]),
+                },
+                {
+                  id: "col-3",
+                  label: "Amount",
+                  cellLayout: createDefaultUiLayout(["amount"]),
+                },
+              ],
+              rowExpandLayout: createDefaultUiLayout(["name"]),
+              showActions: true,
+            },
+          }),
+          null,
+          2,
+        ),
+      ),
   },
   {
     fragmentId: "ui.surface.forms.plain",

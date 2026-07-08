@@ -203,7 +203,7 @@ function summarizeListCompletedStep(
       id: stepId,
       status: "done",
       title: t("uiBuilderAi.progress.listViewTypeSelected", {
-        viewType: draft.listViewType ?? "table",
+        viewType: draft.listViewType ?? "expandableTable",
       }),
     };
   }
@@ -365,17 +365,6 @@ function appendListPendingItems(
 ): void {
   const listViewType = draft.listViewType;
   if (!listViewType) {
-    return;
-  }
-
-  if (listViewType === "table") {
-    if (!hasCompletedStep(completedStepIds, "list.tableSelectFields")) {
-      items.push({
-        id: "pending:list.tableSelectFields",
-        status: "pending",
-        title: t("uiBuilderAi.progress.pendingTableColumns"),
-      });
-    }
     return;
   }
 

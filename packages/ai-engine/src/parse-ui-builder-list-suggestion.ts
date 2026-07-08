@@ -10,7 +10,7 @@ import { normalizeAiListSliceSuggestion } from "./normalize-ai-list-slice-sugges
 export interface ParseUiBuilderListSuggestionResult {
   readonly status: "ready" | "failed";
   readonly sliceData?: ListSliceData;
-  readonly listViewType?: "table" | "card" | "expandableTable";
+  readonly listViewType?: "card" | "expandableTable";
   readonly validationErrors?: readonly DesignLayoutSliceError[];
   readonly rawAnswer?: string;
 }
@@ -39,7 +39,7 @@ export function parseUiBuilderListSuggestion(
           {
             path: "listViewType",
             message:
-              "AI output must include a valid listViewType (table, card, or expandableTable).",
+              "AI output must include a valid listViewType (card or expandableTable).",
           },
         ],
         rawAnswer,

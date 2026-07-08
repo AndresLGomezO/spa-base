@@ -125,6 +125,24 @@ describe("rates entity UI overrides catalog", () => {
       ]),
     );
   });
+
+  it("normalizes legacy listViewType table to expandableTable", () => {
+    const catalog = parseRatesEntityUiOverridesCatalog(
+      JSON.stringify({
+        kind: "entity-ui-overrides-catalog",
+        version: 1,
+        overrides: [
+          {
+            entityName: "paymentSchedule",
+            views: [{ type: "table", name: "default", fields: ["dueDate"] }],
+            listViewType: "table",
+          },
+        ],
+      }),
+    );
+
+    expect(catalog.overrides[0]?.listViewType).toBe("expandableTable");
+  });
 });
 
 function findComponentById(layout: unknown, id: string): unknown {

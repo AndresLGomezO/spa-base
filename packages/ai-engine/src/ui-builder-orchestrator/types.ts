@@ -8,7 +8,7 @@ import type { ResponsiveGridBreakpoint } from "@repo/ui-builder-core";
 
 import type { OrchestratorProgress } from "./progress.js";
 
-export type ListViewTypeChoice = "table" | "card" | "expandableTable";
+export type ListViewTypeChoice = "card" | "expandableTable";
 
 export interface ExpandableColumnMeta {
   readonly id: string;

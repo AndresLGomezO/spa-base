@@ -4,9 +4,15 @@ import type {
   SerializableEntityDefinition,
   ViewConfig,
 } from "@repo/entities";
+import {
+  createDefaultExpandableTableView,
+  expandableTableViewFromListItem,
+  normalizeListItemLayout,
+  reconcileExpandableTableView,
+} from "@repo/entities";
 import { deriveListPresentationFromLayout } from "@repo/ui-builder-core";
 
-export type ListPresentationKind = "table" | "card" | "expandableTable";
+export type ListPresentationKind = "card" | "expandableTable";
 
 function resolveListPresentation(
   definition: SerializableEntityDefinition,
@@ -19,10 +25,7 @@ function resolveListPresentation(
   if (listViewType === "card") {
     return "card";
   }
-  if (listViewType === "expandableTable") {
-    return "expandableTable";
-  }
-  return "table";
+  return "expandableTable";
 }
 
 function isExpandableTableView(
@@ -36,6 +39,78 @@ function findViewByType(
   type: ViewConfig["type"],
 ): ViewConfig | undefined {
   return definition.ui.views.find((entry) => entry.type === type);
+}
+
+const SYSTEM_FIELD_NAMES = new Set([
+  "id",
+  "tenantId",
+  "createdAt",
+  "updatedAt",
+]);
+
+function resolveExpandableFieldPaths(
+  definition: SerializableEntityDefinition,
+): readonly string[] {
+  const tableView = findViewByType(definition, "table");
+  if (tableView && tableView.fields.length > 0) {
+    return tableView.fields;
+  }
+
+  const expandableView = findViewByType(definition, "expandableTable");
+  if (expandableView && expandableView.fields.length > 0) {
+    return expandableView.fields;
+  }
+
+  const cardView = findViewByType(definition, "card");
+  if (cardView && cardView.fields.length > 0) {
+    return cardView.fields;
+  }
+
+  const businessFields = Object.keys(definition.fields).filter(
+    (fieldName) =>
+      !SYSTEM_FIELD_NAMES.has(fieldName) &&
+      definition.fields[fieldName]?.type !== "document",
+  );
+  return businessFields.length > 0 ? businessFields : ["name"];
+}
+
+function buildExpandableTableOptions(definition: SerializableEntityDefinition) {
+  return {
+    fields: definition.fields,
+    fieldLabels: Object.fromEntries(
+      Object.entries(definition.ui.fields ?? {}).map(([name, config]) => [
+        name,
+        config?.label,
+      ]),
+    ),
+  };
+}
+
+function synthesizeExpandableTableView(
+  definition: SerializableEntityDefinition,
+): ExpandableTableViewConfig {
+  const fieldPaths = resolveExpandableFieldPaths(definition);
+  const options = buildExpandableTableOptions(definition);
+  const listItem = normalizeListItemLayout(definition.ui);
+  if (listItem) {
+    return expandableTableViewFromListItem(listItem, fieldPaths, options);
+  }
+  return createDefaultExpandableTableView(fieldPaths, options);
+}
+
+function normalizeExpandableTableView(
+  view: ExpandableTableViewConfig,
+  definition: SerializableEntityDefinition,
+): ExpandableTableViewConfig {
+  const fieldPaths =
+    view.fields.length > 0
+      ? view.fields
+      : resolveExpandableFieldPaths(definition);
+  return reconcileExpandableTableView(
+    view,
+    fieldPaths,
+    buildExpandableTableOptions(definition),
+  );
 }
 
 export function resolveTableView(
@@ -73,19 +148,17 @@ export function resolveExpandableTableView(
 ): ExpandableTableViewConfig {
   const expandableView = findViewByType(definition, "expandableTable");
   if (expandableView && isExpandableTableView(expandableView)) {
-    return expandableView;
+    return normalizeExpandableTableView(expandableView, definition);
   }
 
   const namedView = definition.ui.views.find(
     (entry) => entry.name === viewName,
   );
   if (namedView && isExpandableTableView(namedView)) {
-    return namedView;
+    return normalizeExpandableTableView(namedView, definition);
   }
 
-  throw new Error(
-    `Entity "${definition.name}" has no expandableTable view configured.`,
-  );
+  return synthesizeExpandableTableView(definition);
 }
 
 export function getExpandableTableColumns(
@@ -107,6 +180,21 @@ export function getExpandableTableShowActions(
   viewName?: string,
 ): boolean {
   return resolveExpandableTableView(definition, viewName).showActions !== false;
+}
+
+export function getExpandableTableImageFieldPath(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+): string | undefined {
+  const view = resolveExpandableTableView(definition, viewName);
+  return view.imageFieldPath;
+}
+
+export function getExpandableTableViewConfig(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+): ExpandableTableViewConfig {
+  return resolveExpandableTableView(definition, viewName);
 }
 
 /** Toolbar sort/filter/search fields for the active list presentation. */

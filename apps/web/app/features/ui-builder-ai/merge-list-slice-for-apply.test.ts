@@ -8,7 +8,7 @@ import { mergeListSliceForApply } from "./merge-list-slice-for-apply";
 function slice(overrides: Partial<ListSliceData> = {}): ListSliceData {
   const layout = createDefaultUiLayout(["name"]);
   return {
-    listViewType: "table",
+    listViewType: "expandableTable",
     table: { fields: ["name", "status"], showActions: true },
     expandableTable: {
       columns: [{ id: "col-1", cellLayout: layout }],
@@ -22,7 +22,7 @@ function slice(overrides: Partial<ListSliceData> = {}): ListSliceData {
 describe("mergeListSliceForApply", () => {
   it("preserves current table config when applying a card suggestion", () => {
     const current = slice({
-      listViewType: "table",
+      listViewType: "expandableTable",
       table: { fields: ["name", "status", "amount"], showActions: false },
     });
     const incoming = slice({

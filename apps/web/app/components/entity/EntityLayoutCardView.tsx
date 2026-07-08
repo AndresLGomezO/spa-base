@@ -307,6 +307,7 @@ export function EntityLayoutCardView({
                     getDefinition,
                     listFilters,
                     routeParams,
+                    relationLinkAppearance: true,
                   })}
                 />
               </LayoutCard>

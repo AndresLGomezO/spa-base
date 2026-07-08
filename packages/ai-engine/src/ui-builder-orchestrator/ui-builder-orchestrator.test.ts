@@ -96,7 +96,7 @@ describe("list orchestrator plan", () => {
       surface: "list",
       entityName: "widget",
       userPrompt: "table",
-      listViewType: "table",
+      listViewType: "expandableTable",
       table: { fields: ["name", "email"], showActions: true },
       layoutTargets: {},
       completedStepIds: [],
@@ -104,13 +104,13 @@ describe("list orchestrator plan", () => {
     const slice = assembleListSliceData(entity, draft);
     const validated = validateDesignLayoutSlice(entity, "list", slice);
     expect(validated.ok).toBe(true);
-    expect(slice.listViewType).toBe("table");
-    expect(slice.table.fields).toEqual(["name", "email"]);
+    expect(slice.listViewType).toBe("expandableTable");
+    expect(slice.table.fields).toEqual(["name", "email", "status"]);
   });
 });
 
-describe("runOrchestrator mock vertex table flow", () => {
-  it("completes selectViewType and tableSelectFields steps", async () => {
+describe("runOrchestrator mock vertex expandable flow", () => {
+  it("completes selectViewType and expandableDefineColumns steps", async () => {
     const initialDraft: ListUiBuilderDraft = {
       surface: "list",
       entityName: "widget",
@@ -141,13 +141,11 @@ describe("runOrchestrator mock vertex table flow", () => {
       },
     });
 
-    expect(result.output.stepCount).toBe(2);
-    expect(draft.listViewType).toBe("table");
-    expect(draft.table?.fields.length).toBeGreaterThan(0);
-    expect(progressLabels).toEqual([
-      "Selecting list presentation",
-      "Choosing table columns",
-    ]);
+    expect(result.output.stepCount).toBeGreaterThan(2);
+    expect(draft.listViewType).toBe("expandableTable");
+    expect(draft.expandableColumns?.length).toBeGreaterThan(0);
+    expect(progressLabels[0]).toBe("Selecting list presentation");
+    expect(progressLabels[1]).toBe("Defining grouped columns");
 
     const slice = assembleListSliceData(entity, draft);
     expect(validateDesignLayoutSlice(entity, "list", slice).ok).toBe(true);

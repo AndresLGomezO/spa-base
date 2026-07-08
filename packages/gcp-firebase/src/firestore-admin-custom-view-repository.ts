@@ -102,7 +102,7 @@ export function createFirestoreAdminCustomViewRepository(
         nav: parsed.nav,
         ui: parsed.ui ?? {
           views: [{ type: "table", name: "default", fields: ["id"] }],
-          listViewType: "table",
+          listViewType: "expandableTable",
         },
         createdAt: now,
         updatedAt: now,

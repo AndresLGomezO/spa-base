@@ -25,7 +25,7 @@ const baseRecord: CustomViewRecord = {
   nav: { label: "Payments", icon: "calendar" },
   ui: {
     views: [{ type: "table", name: "default", fields: ["type", "date"] }],
-    listViewType: "table",
+    listViewType: "expandableTable",
   },
   status: "ACTIVE",
   createdAt: "2026-01-01T00:00:00.000Z",

@@ -2,7 +2,7 @@
 
 Grouped columns with per-column `cellLayout` and `rowExpandLayout`.
 
-Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. Each column has `cellLayout: UiLayoutDocument`. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses container + grid for expanded row content.
+Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. Each column has `cellLayout: UiLayoutDocument`. Optional `imageFieldPath` for a dedicated logo/photo column. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses a 3-column grid for expanded row content. `table.fields` carries toolbar/filter field metadata.
 
 ## Allowed component kinds
 - `text`
@@ -22,10 +22,12 @@ Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. 
   "surface": "list",
   "version": 1,
   "data": {
-    "listViewType": "table",
+    "listViewType": "expandableTable",
     "table": {
       "fields": [
-        "name"
+        "name",
+        "status",
+        "amount"
       ],
       "showActions": true
     },
@@ -33,7 +35,7 @@ Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. 
       "columns": [
         {
           "id": "col-example",
-          "label": "Column",
+          "label": "Name",
           "cellLayout": {
             "root": {
               "type": "root",
@@ -93,6 +95,182 @@ Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. 
                                           "primary": {
                                             "type": "field",
                                             "path": "name"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        {
+          "id": "col-example",
+          "label": "Status",
+          "cellLayout": {
+            "root": {
+              "type": "root",
+              "id": "root-example",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-example",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-example",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "grid",
+                              "gridTemplateColumns": "repeat(2, 1fr)",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "status"
+                                          },
+                                          "label": {
+                                            "show": true
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "status"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        {
+          "id": "col-example",
+          "label": "Amount",
+          "cellLayout": {
+            "root": {
+              "type": "root",
+              "id": "root-example",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-example",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-example",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "grid",
+                              "gridTemplateColumns": "repeat(2, 1fr)",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "amount"
+                                          },
+                                          "label": {
+                                            "show": true
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "amount"
                                           },
                                           "styles": [
                                             {

@@ -42,7 +42,7 @@ import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useEntityFilterOptions } from "../../hooks/useEntityFilterOptions";
 import { WebDataViewToolbar } from "../data-view/WebDataViewToolbar";
-import { EntityTable } from "../entity/EntityTable";
+import { EntityExpandableTable } from "../entity/EntityExpandableTable";
 import { ShareDialog } from "../entity/ShareDialog";
 import { resolveViewComponent } from "../entity/view-component-registry";
 import { resolveRelationFilterValues } from "../entity/resolve-relation-filter-values";
@@ -159,19 +159,13 @@ function CustomViewPageContent({
   const canConfigureView = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   );
-  const listPresentation = definition.ui.listViewType ?? "table";
+  const listPresentation = definition.ui.listViewType ?? "expandableTable";
 
   const ViewComponent = (() => {
     if (listPresentation === "card") {
-      return resolveViewComponent("card") ?? EntityTable;
+      return resolveViewComponent("card") ?? EntityExpandableTable;
     }
-    if (
-      listPresentation === "expandableTable" ||
-      listPresentation === ("compact" as typeof listPresentation)
-    ) {
-      return resolveViewComponent("expandableTable") ?? EntityTable;
-    }
-    return resolveViewComponent("table") ?? EntityTable;
+    return resolveViewComponent("expandableTable") ?? EntityExpandableTable;
   })();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);

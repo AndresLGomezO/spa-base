@@ -20,7 +20,6 @@ import type {
 import {
   buildListSliceStub,
   mergeListSliceWithCompanions,
-  sanitizeTableFields,
 } from "./list-slice-companions.js";
 import { repairListLayoutDocument } from "./repair-list-layout-document.js";
 import { sanitizeListComponentConfig } from "./sanitize-list-component-config.js";
@@ -141,17 +140,7 @@ export function assembleListSliceData(
   const stub = buildListSliceStub(entity);
   let activePartial: Partial<ListSliceData>;
 
-  if (draft.listViewType === "table") {
-    activePartial = {
-      listViewType: "table",
-      table: {
-        fields: [
-          ...sanitizeTableFields(entity, draft.table?.fields ?? ["name"]),
-        ],
-        showActions: draft.table?.showActions ?? true,
-      },
-    };
-  } else if (draft.listViewType === "card") {
+  if (draft.listViewType === "card") {
     const listItemTarget = draft.layoutTargets.listItem;
     activePartial = {
       listViewType: "card",

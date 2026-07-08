@@ -58,7 +58,7 @@ export function CustomViewDefinitionJsonImportDialog({
             views: [
               { type: "table", name: "default", fields: ["type", "date"] },
             ],
-            listViewType: "table",
+            listViewType: "expandableTable",
           },
         }),
         null,

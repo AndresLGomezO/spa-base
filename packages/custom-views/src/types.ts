@@ -37,7 +37,7 @@ export const customViewNavConfigSchema = z
 export const customViewUIConfigSchema = z
   .object({
     views: z.array(z.unknown()).min(1),
-    listViewType: z.enum(["table", "card", "expandableTable"]).optional(),
+    listViewType: z.enum(["card", "expandableTable"]).optional(),
     listItem: uiLayoutDocumentSchema.optional(),
     mainPageLayout: uiLayoutDocumentSchema.optional(),
     metricRowLayout: uiLayoutDocumentSchema.optional(),

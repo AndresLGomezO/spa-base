@@ -1,6 +1,6 @@
 import type { ListSliceData } from "@repo/entities";
 
-type ActiveListViewType = "table" | "card" | "expandableTable";
+type ActiveListViewType = "card" | "expandableTable";
 
 function normalizeViewType(
   listViewType: ListSliceData["listViewType"],
@@ -16,7 +16,7 @@ export function mergeListSliceForApply(
 
   return {
     listViewType: active,
-    table: active === "table" ? incoming.table : current.table,
+    table: current.table,
     expandableTable:
       active === "expandableTable"
         ? incoming.expandableTable
