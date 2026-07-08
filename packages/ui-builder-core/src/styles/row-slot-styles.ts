@@ -1,4 +1,8 @@
-import type { StyleBreakpoint, StylePropertyKey, StyleRule } from "./style-types.js";
+import type {
+  StyleBreakpoint,
+  StylePropertyKey,
+  StyleRule,
+} from "./style-types.js";
 import {
   resolveRowWrapperStyleRules,
   type ResolvedStyleRules,

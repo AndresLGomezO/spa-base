@@ -214,8 +214,10 @@ export function upsertStyleRule(
       : {
           ...current,
           ...patch,
-          ...(Object.prototype.hasOwnProperty.call(patch, "valuesByBreakpoint") &&
-          patch.valuesByBreakpoint === undefined
+          ...(Object.prototype.hasOwnProperty.call(
+            patch,
+            "valuesByBreakpoint",
+          ) && patch.valuesByBreakpoint === undefined
             ? { valuesByBreakpoint: undefined }
             : {}),
         };
@@ -558,13 +560,7 @@ export function formatStyleRuleValuePreview(rule: StyleRule): string {
   }
 
   if (rule.valuesByBreakpoint) {
-    for (const bp of [
-      "base",
-      "sm",
-      "md",
-      "lg",
-      "xl",
-    ] as const) {
+    for (const bp of ["base", "sm", "md", "lg", "xl"] as const) {
       const bpValue = rule.valuesByBreakpoint[bp];
       if (bpValue !== undefined) {
         parts.push(`${bp}:${String(bpValue)}`);

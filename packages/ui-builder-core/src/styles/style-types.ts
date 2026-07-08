@@ -87,7 +87,9 @@ export type StylePropertyKey =
 export interface StyleRule {
   readonly property: StylePropertyKey;
   readonly value?: StyleRuleValue;
-  readonly valuesByBreakpoint?: Partial<Record<StyleBreakpoint, StyleRuleValue>>;
+  readonly valuesByBreakpoint?: Partial<
+    Record<StyleBreakpoint, StyleRuleValue>
+  >;
 }
 
 export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [

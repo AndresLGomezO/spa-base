@@ -78,10 +78,10 @@ export function buildModelFieldTypesAtom(): string {
 | date | string (ISO 8601) | e.g. \`"2026-06-13T12:00:00.000Z"\`; supports \`isArray\`. |
 | enum | string | Must be one of \`enumValues\`; supports \`isArray\`. |
 | relation | string (id) or string[] | Requires \`relation\` config; **cannot** be sensitive or array. |
-| image | EntityFileReference | JPEG/PNG/WebP; max size via \`maxSizeBytes\`. |
-| document | EntityFileReference | PDF only; max size via \`maxSizeBytes\`. |
+| image | EntityFileReference | JPEG/PNG/WebP; max size via \`maxSizeBytes\`; supports \`isArray\`. |
+| document | EntityFileReference | PDF only; max size via \`maxSizeBytes\`; supports \`isArray\`. |
 
-**Array eligibility:** only \`string\`, \`number\`, \`boolean\`, \`date\`, \`enum\` may set \`isArray: true\`.
+**Array eligibility:** only \`string\`, \`number\`, \`boolean\`, \`date\`, \`enum\`, \`image\`, \`document\` may set \`isArray: true\`. Relation fields cannot be arrays.
 `;
 }
 
@@ -98,7 +98,7 @@ export function buildModelFieldPropertiesAtom(): string {
 | type | FieldType | One of the closed field types. |
 | required | boolean | When true, value must be present on create. Default: optional. |
 | sensitive | boolean | Encrypted at rest; omit from AI display contexts. **Not allowed** on relation, image, or document fields. |
-| isArray | boolean | Store multiple values. Only for string/number/boolean/date/enum. |
+| isArray | boolean | Store multiple values. Only for string/number/boolean/date/enum/image/document. |
 | ui | FieldUi | Presentation and list-query flags (see \`model.field.ui\`). |
 
 ## Type-specific
@@ -203,6 +203,8 @@ export function buildModelFilesAtom(): string {
 - Override with \`maxSizeBytes\` (max cap **50MB**).
 - Image fields may include \`defaultImage\` (same reference shape).
 - File fields cannot be \`sensitive\`.
+- Image and document fields may set \`isArray: true\` to store multiple files.
+- Image arrays cannot include \`defaultImage\`.
 `;
 }
 

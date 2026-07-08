@@ -18,6 +18,24 @@ function isFileFieldMeta(meta: NormalizedFieldMeta): boolean {
   return meta.type === "image" || meta.type === "document";
 }
 
+async function enrichFileReferenceForRead(
+  config: FirebaseAdminConfig,
+  value: EntityFileReference,
+): Promise<EntityFileReference & { downloadUrl?: string }> {
+  try {
+    const downloadUrl = await createEntityFileDownloadUrl({
+      config,
+      storagePath: value.storagePath,
+    });
+    return {
+      ...value,
+      downloadUrl,
+    };
+  } catch {
+    return value;
+  }
+}
+
 export function sanitizeFileFieldsForWrite(
   entity: AnyDefinedEntity,
   record: Record<string, unknown>,
@@ -28,7 +46,14 @@ export function sanitizeFileFieldsForWrite(
     if (!isFileFieldMeta(meta) || !(fieldName in next)) {
       continue;
     }
-    next[fieldName] = stripDownloadUrlFromFileReference(next[fieldName]);
+    const value = next[fieldName];
+    if (meta.isArray === true && Array.isArray(value)) {
+      next[fieldName] = value.map((item) =>
+        stripDownloadUrlFromFileReference(item),
+      );
+      continue;
+    }
+    next[fieldName] = stripDownloadUrlFromFileReference(value);
   }
 
   return next;
@@ -47,22 +72,26 @@ export async function enrichFileFieldsForRead(
     }
 
     const value = next[fieldName];
+    if (meta.isArray === true) {
+      if (!Array.isArray(value)) {
+        continue;
+      }
+      next[fieldName] = await Promise.all(
+        value.map(async (item) => {
+          if (!isEntityFileReference(item)) {
+            return item;
+          }
+          return enrichFileReferenceForRead(config, item);
+        }),
+      );
+      continue;
+    }
+
     if (!isEntityFileReference(value)) {
       continue;
     }
 
-    try {
-      const downloadUrl = await createEntityFileDownloadUrl({
-        config,
-        storagePath: value.storagePath,
-      });
-      next[fieldName] = {
-        ...value,
-        downloadUrl,
-      } satisfies EntityFileReference & { downloadUrl: string };
-    } catch {
-      next[fieldName] = value;
-    }
+    next[fieldName] = await enrichFileReferenceForRead(config, value);
   }
 
   return next;
@@ -104,8 +133,14 @@ export function fileReferenceMatchesRecordField(
   storagePath: string,
 ): boolean {
   const value = record[fieldName];
+  const trimmedPath = storagePath.trim();
+  if (Array.isArray(value)) {
+    return value.some(
+      (item) =>
+        isEntityFileReference(item) && item.storagePath.trim() === trimmedPath,
+    );
+  }
   return (
-    isEntityFileReference(value) &&
-    value.storagePath.trim() === storagePath.trim()
+    isEntityFileReference(value) && value.storagePath.trim() === trimmedPath
   );
 }

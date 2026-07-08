@@ -8,7 +8,7 @@
 | type | FieldType | One of the closed field types. |
 | required | boolean | When true, value must be present on create. Default: optional. |
 | sensitive | boolean | Encrypted at rest; omit from AI display contexts. **Not allowed** on relation, image, or document fields. |
-| isArray | boolean | Store multiple values. Only for string/number/boolean/date/enum. |
+| isArray | boolean | Store multiple values. Only for string/number/boolean/date/enum/image/document. |
 | ui | FieldUi | Presentation and list-query flags (see `model.field.ui`). |
 
 ## Type-specific

@@ -650,6 +650,9 @@ importers:
       '@repo/metrics-engine':
         specifier: workspace:*
         version: link:../../packages/metrics-engine
+      cron-parser:
+        specifier: 'catalog:'
+        version: 4.9.0
       firebase-admin:
         specifier: 'catalog:'
         version: 13.10.0

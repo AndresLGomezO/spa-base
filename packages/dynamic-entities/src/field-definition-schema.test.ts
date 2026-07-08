@@ -79,6 +79,41 @@ describe("fieldDefinitionSchema array fields", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts isArray on document fields", () => {
+    const parsed = fieldDefinitionSchema.safeParse({
+      name: "documents",
+      type: "document",
+      isArray: true,
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it("accepts isArray on image fields", () => {
+    const parsed = fieldDefinitionSchema.safeParse({
+      name: "photos",
+      type: "image",
+      isArray: true,
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects defaultImage on image arrays", () => {
+    const parsed = fieldDefinitionSchema.safeParse({
+      name: "photos",
+      type: "image",
+      isArray: true,
+      defaultImage: {
+        storagePath: "tenants/t1/entity-files/item/default.png",
+        contentType: "image/png",
+        fileName: "default.png",
+      },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
   it("rejects isArray on relation fields", () => {
     const parsed = fieldDefinitionSchema.safeParse({
       name: "related",

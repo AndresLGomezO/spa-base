@@ -18,8 +18,10 @@ export interface CardFieldCurrencyProps {
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly valueClassName?: string;
+  readonly valueStyle?: CSSProperties;
   readonly labelClassName?: string;
   readonly textSize?: number;
+  readonly showToneColors?: boolean;
 }
 
 const toneClasses: Record<CardCurrencyTone, string> = {
@@ -70,8 +72,10 @@ export function CardFieldCurrency({
   className,
   style,
   valueClassName,
+  valueStyle,
   labelClassName,
   textSize,
+  showToneColors = false,
 }: CardFieldCurrencyProps) {
   const displayAmount =
     amount === null || amount === undefined || amount === "" ? "—" : amount;
@@ -94,15 +98,18 @@ export function CardFieldCurrency({
       <span
         className={cn(
           "font-bold tracking-tight",
-          resolvedTextSize === undefined && "text-lg",
-          toneClasses[tone],
+          resolvedTextSize === undefined &&
+            valueStyle?.fontSize === undefined &&
+            "text-lg",
+          showToneColors && toneClasses[tone],
           valueClassName,
         )}
-        style={
-          resolvedTextSize !== undefined
+        style={{
+          ...(resolvedTextSize !== undefined
             ? { fontSize: resolvedTextSize }
-            : undefined
-        }
+            : {}),
+          ...valueStyle,
+        }}
       >
         {displayAmount}
       </span>

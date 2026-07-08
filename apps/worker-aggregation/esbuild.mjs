@@ -12,6 +12,8 @@ const npmExternals = [
   "@google/genai",
   "google-auth-library",
   "firebase-admin",
+  "cron-parser",
+  "luxon",
   "zod",
 ];
 
@@ -22,6 +24,8 @@ const forceExternalPlugin = {
     build.onResolve({ filter: /^@google-cloud\// }, markExternal);
     build.onResolve({ filter: /^@google\/genai/ }, markExternal);
     build.onResolve({ filter: /^google-auth-library/ }, markExternal);
+    build.onResolve({ filter: /^cron-parser/ }, markExternal);
+    build.onResolve({ filter: /^luxon/ }, markExternal);
   },
 };
 

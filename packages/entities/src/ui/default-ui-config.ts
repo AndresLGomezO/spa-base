@@ -11,6 +11,15 @@ function getEditableFieldNames(entity: AnyDefinedEntity): string[] {
     if (SYSTEM_FIELD_KEYS.has(fieldName)) {
       return false;
     }
+    return true;
+  });
+}
+
+function getDefaultTableFieldNames(entity: AnyDefinedEntity): string[] {
+  return Object.keys(entity.metadata.fields).filter((fieldName) => {
+    if (SYSTEM_FIELD_KEYS.has(fieldName)) {
+      return false;
+    }
     return entity.metadata.fields[fieldName]?.type !== "document";
   });
 }
@@ -26,7 +35,7 @@ function buildDefaultTableView(entity: AnyDefinedEntity): ViewConfig {
   return {
     type: "table",
     name: "default",
-    fields: getEditableFieldNames(entity),
+    fields: getDefaultTableFieldNames(entity),
   };
 }
 

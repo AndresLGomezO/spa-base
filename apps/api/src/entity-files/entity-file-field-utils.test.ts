@@ -8,6 +8,7 @@ import {
 
 import {
   enrichFileFieldsForRead,
+  fileReferenceMatchesRecordField,
   sanitizeFileFieldsForWrite,
 } from "./entity-file-field-utils.js";
 
@@ -19,6 +20,7 @@ describe("entity-file-field-utils", () => {
     fields: {
       logo: { type: "image", required: true },
       brochure: { type: "document" },
+      documents: { type: "document", isArray: true },
       name: { type: "string", required: true },
     },
   }) as unknown as AnyDefinedEntity;
@@ -32,6 +34,14 @@ describe("entity-file-field-utils", () => {
         fileName: "logo.png",
         downloadUrl: "https://example.com/logo",
       },
+      documents: [
+        {
+          storagePath: "tenants/t1/entity-files/company/doc-id.pdf",
+          contentType: "application/pdf",
+          fileName: "statement.pdf",
+          downloadUrl: "https://example.com/statement",
+        },
+      ],
     });
 
     expect(sanitized.logo).toEqual({
@@ -39,6 +49,13 @@ describe("entity-file-field-utils", () => {
       contentType: "image/png",
       fileName: "logo.png",
     });
+    expect(sanitized.documents).toEqual([
+      {
+        storagePath: "tenants/t1/entity-files/company/doc-id.pdf",
+        contentType: "application/pdf",
+        fileName: "statement.pdf",
+      },
+    ]);
   });
 
   it("adds downloadUrl on read when storage helper succeeds", async () => {
@@ -62,5 +79,37 @@ describe("entity-file-field-utils", () => {
     expect(enriched.logo).toMatchObject({
       fileName: "logo.png",
     });
+  });
+
+  it("matches file references inside document arrays", () => {
+    const record = {
+      documents: [
+        {
+          storagePath: "tenants/t1/entity-files/company/doc-a.pdf",
+          contentType: "application/pdf",
+          fileName: "a.pdf",
+        },
+        {
+          storagePath: "tenants/t1/entity-files/company/doc-b.pdf",
+          contentType: "application/pdf",
+          fileName: "b.pdf",
+        },
+      ],
+    };
+
+    expect(
+      fileReferenceMatchesRecordField(
+        record,
+        "documents",
+        "tenants/t1/entity-files/company/doc-b.pdf",
+      ),
+    ).toBe(true);
+    expect(
+      fileReferenceMatchesRecordField(
+        record,
+        "documents",
+        "tenants/t1/entity-files/company/missing.pdf",
+      ),
+    ).toBe(false);
   });
 });

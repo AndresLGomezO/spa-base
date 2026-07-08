@@ -77,12 +77,14 @@ function serializableFieldToConfig(meta: SerializableFieldMeta): FieldConfig {
         type: "image",
         required: meta.required,
         ...(meta.maxSizeBytes ? { maxSizeBytes: meta.maxSizeBytes } : {}),
+        ...(meta.isArray ? { isArray: true } : {}),
       };
     case "document":
       return {
         type: "document",
         required: meta.required,
         ...(meta.maxSizeBytes ? { maxSizeBytes: meta.maxSizeBytes } : {}),
+        ...(meta.isArray ? { isArray: true } : {}),
       };
     default:
       return {

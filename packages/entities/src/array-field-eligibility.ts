@@ -6,6 +6,8 @@ export const ARRAY_ELIGIBLE_FIELD_TYPES = [
   "boolean",
   "date",
   "enum",
+  "image",
+  "document",
 ] as const satisfies readonly Phase1FieldType[];
 
 export type ArrayEligibleFieldType =

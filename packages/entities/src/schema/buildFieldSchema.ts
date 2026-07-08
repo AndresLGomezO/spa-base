@@ -157,13 +157,14 @@ const enumFieldBuilder: FieldSchemaBuilder = {
 function fileFieldBuilder(schema: z.ZodTypeAny): FieldSchemaBuilder {
   return {
     buildCreateFieldSchema(config) {
-      return applyOptional(schema, config);
+      return applyOptional(wrapAsArray(schema, config), config);
     },
     buildFullFieldSchema(config) {
+      const base = wrapAsArray(schema, config);
       if (config.required === true) {
-        return schema;
+        return base;
       }
-      return schema.optional();
+      return base.optional();
     },
   };
 }

@@ -271,7 +271,7 @@ describe("entity-definition-json", () => {
     }
 
     expect(parsed.data.entityCategories).toHaveLength(5);
-    expect(parsed.data.entityDefinitions).toHaveLength(13);
+    expect(parsed.data.entityDefinitions).toHaveLength(14);
     expect(parsed.data.entityDefinitions.map((entity) => entity.name)).toEqual([
       "actor",
       "account",
@@ -286,6 +286,7 @@ describe("entity-definition-json", () => {
       "transaction",
       "paymentSchedule",
       "balanceSnapshot",
+      "attachment",
     ]);
 
     for (const definition of parsed.data.entityDefinitions) {

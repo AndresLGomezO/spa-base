@@ -28,7 +28,7 @@ function renderWidthPreview() {
 }
 
 describe("PreviewFrame width strategy", () => {
-  it("sizes the preview shell to the slider width instead of a fixed breakpoint frame", () => {
+  it("sizes the preview shell to the slider width without a fixed breakpoint frame", () => {
     renderWidthPreview();
 
     const content = screen.getByTestId("preview-content");
@@ -37,12 +37,14 @@ describe("PreviewFrame width strategy", () => {
     ) as HTMLElement | null;
 
     expect(widthShell).not.toBeNull();
+    expect(widthShell?.style.maxWidth).toBe("300px");
 
     const framedViewport = content.closest(
       ".border-dashed",
     ) as HTMLElement | null;
-    expect(framedViewport).not.toBeNull();
-    expect(framedViewport?.style.width).toBe("");
-    expect(framedViewport?.className).toContain("w-full");
+    expect(framedViewport).toBeNull();
+
+    const viewport = content.parentElement;
+    expect(viewport?.className).toContain("w-full");
   });
 });

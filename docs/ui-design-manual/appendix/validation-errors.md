@@ -90,7 +90,7 @@ Refer to the [README surface table](../README.md#surface--allowed-component-fami
 |-----------------|-----|
 | `Invalid formPlain form field path "bank.name" for entity "…".` | Use `bankId` (FK field name), not dot notation |
 | `Invalid formPlain entity field selector path "name" for entity "…".` | Selectors require enum or relation fields — use `accountTypeId`, `bankId`, etc. |
-| `Invalid … form field path "document" for entity "…".` | Document-type fields cannot be form fields |
+| `Invalid … form field path "unknownField" for entity "…".` | Field must exist on the entity definition |
 
 ---
 

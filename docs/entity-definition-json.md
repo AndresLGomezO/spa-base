@@ -139,7 +139,7 @@ Invalid JSON, wrong `kind`, or schema violations are shown in the import dialog 
 | `name` | `string` | yes | Field identifier (camelCase) |
 | `type` | see below | yes | Field type |
 | `required` | `boolean` | no | Default optional if omitted |
-| `isArray` | `boolean` | no | Store as JSON array. Only `string`, `number`, `boolean`, `date`, `enum` |
+| `isArray` | `boolean` | no | Store as JSON array. Only `string`, `number`, `boolean`, `date`, `enum`, `image`, `document` |
 | `sensitive` | `boolean` | no | Encrypt at rest. Not allowed on `relation`, `image`, `document` |
 | `relation` | object | if `type: "relation"` | See [§7](#7-relation-fields) |
 | `enumValues` | `string[]` | if `type: "enum"` | At least one non-empty value |
@@ -363,6 +363,8 @@ For schema-only handoffs, **omit** `defaultImage` unless files are already uploa
 
 `maxSizeBytes` cap: **52428800** (50 MB) per field definition.
 
+Image and document fields may set `isArray: true` to store multiple file references. Image arrays cannot include `defaultImage`.
+
 ---
 
 ## 9. Navigation and display metadata
@@ -393,7 +395,7 @@ Include navigation categories in the same catalog file under `entityCategories`.
 | `numberKind` only on number fields | yes |
 | `maxSizeBytes` only on image/document | yes |
 | `defaultImage` only on image fields | yes |
-| `isArray` only on string/number/boolean/date/enum | yes |
+| `isArray` only on string/number/boolean/date/enum/image/document | yes |
 
 ### Entity-level
 

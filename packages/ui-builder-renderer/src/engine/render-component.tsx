@@ -536,6 +536,8 @@ export function renderUiComponent(
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
+        valueStyle={valueStyle}
+        showToneColors={showToneColors}
         {...textPropsFromLabel(config)}
       />,
     );

@@ -1645,12 +1645,7 @@
         {
           "type": "table",
           "name": "default",
-          "fields": [
-            "date",
-            "amount",
-            "type",
-            "categoryId"
-          ]
+          "fields": ["date", "amount", "type", "categoryId"]
         }
       ],
       "listViewType": "table",
@@ -1676,7 +1671,6 @@
                           {
                             "type": "component",
                             "id": "row-7eeb8a61-2d1f-46b9-994e-2be68299eb77",
-                            "name": "Card Title",
                             "component": {
                               "kind": "container",
                               "rows": [
@@ -1707,7 +1701,7 @@
                                 },
                                 {
                                   "type": "component",
-                                  "id": "row-706b58dc-3ff9-4625-aaeb-b7496a361b11",
+                                  "id": "row-d6fcefe6-3539-460d-837e-fdec3f92ba59",
                                   "component": {
                                     "primary": {
                                       "type": "static",
@@ -1716,31 +1710,39 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "11"
+                                        "value": "12"
+                                      },
+                                      {
+                                        "property": "paddingTop",
+                                        "value": "4"
+                                      },
+                                      {
+                                        "property": "paddingBottom",
+                                        "value": "4"
+                                      },
+                                      {
+                                        "property": "paddingLeft",
+                                        "value": "12"
+                                      },
+                                      {
+                                        "property": "paddingRight",
+                                        "value": "12"
+                                      },
+                                      {
+                                        "property": "borderRadius",
+                                        "value": "9999"
+                                      },
+                                      {
+                                        "property": "backgroundColor",
+                                        "value": "var(--color-muted)"
+                                      },
+                                      {
+                                        "property": "backdropFilter",
+                                        "value": "blur(8px)"
                                       },
                                       {
                                         "property": "color",
                                         "value": "#9ca3af"
-                                      },
-                                      {
-                                        "property": "padding",
-                                        "value": "4px 10px"
-                                      },
-                                      {
-                                        "property": "borderRadius",
-                                        "value": "999"
-                                      },
-                                      {
-                                        "property": "borderWidth",
-                                        "value": "1"
-                                      },
-                                      {
-                                        "property": "borderColor",
-                                        "value": "var(--color-border)"
-                                      },
-                                      {
-                                        "property": "borderStyle",
-                                        "value": "solid"
                                       }
                                     ],
                                     "kind": "text"
@@ -1766,7 +1768,8 @@
                                   "value": "auto"
                                 }
                               ]
-                            }
+                            },
+                            "name": "Card Title"
                           },
                           {
                             "type": "component",
@@ -1796,7 +1799,6 @@
                                             {
                                               "type": "component",
                                               "id": "row-a0d76c01-1394-4323-8952-dee0fc183ca9",
-                                              "name": "Category Image",
                                               "component": {
                                                 "primary": {
                                                   "type": "field",
@@ -1821,13 +1823,17 @@
                                                 "displayMode": "overlay",
                                                 "objectFit": "contain"
                                               },
-                                              "styles": []
+                                              "styles": [],
+                                              "name": "Category Image"
                                             }
                                           ],
                                           "styles": [
                                             {
                                               "property": "width",
-                                              "value": "90"
+                                              "value": "90",
+                                              "valuesByBreakpoint": {
+                                                "base": "50"
+                                              }
                                             },
                                             {
                                               "property": "height",
@@ -1853,7 +1859,10 @@
                                                 "styles": [
                                                   {
                                                     "property": "fontSize",
-                                                    "value": "16"
+                                                    "value": "16",
+                                                    "valuesByBreakpoint": {
+                                                      "base": "13"
+                                                    }
                                                   },
                                                   {
                                                     "property": "fontWeight",
@@ -1878,7 +1887,10 @@
                                                 "styles": [
                                                   {
                                                     "property": "fontSize",
-                                                    "value": "20"
+                                                    "value": "25",
+                                                    "valuesByBreakpoint": {
+                                                      "base": "17"
+                                                    }
                                                   }
                                                 ],
                                                 "kind": "numeric",
@@ -1916,7 +1928,10 @@
                                                       "styles": [
                                                         {
                                                           "property": "fontSize",
-                                                          "value": "13"
+                                                          "value": "13",
+                                                          "valuesByBreakpoint": {
+                                                            "base": "10"
+                                                          }
                                                         },
                                                         {
                                                           "property": "fontWeight",
@@ -1937,7 +1952,10 @@
                                                       "styles": [
                                                         {
                                                           "property": "fontSize",
-                                                          "value": "12"
+                                                          "value": "12",
+                                                          "valuesByBreakpoint": {
+                                                            "base": "8"
+                                                          }
                                                         },
                                                         {
                                                           "property": "fontWeight",
@@ -2090,23 +2108,684 @@
                       "id": "row-recent-activity-shell",
                       "component": {
                         "kind": "container",
-                        "stackDirection": "column",
-                        "styles": [
-                          {
-                            "property": "width",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "height",
-                            "value": "300"
-                          }
-                        ],
                         "rows": [
                           {
                             "type": "component",
                             "id": "row-recent-activity-card",
                             "component": {
                               "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-recent-activity-header",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-recent-activity-title",
+                                        "component": {
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "Recent Activity"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            },
+                                            {
+                                              "property": "fontSize",
+                                              "value": "18"
+                                            }
+                                          ],
+                                          "kind": "text"
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-recent-activity-see-all",
+                                        "component": {
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "See all"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "color",
+                                              "value": "primary"
+                                            },
+                                            {
+                                              "property": "fontSize",
+                                              "value": "14"
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "medium"
+                                            }
+                                          ],
+                                          "kind": "text"
+                                        },
+                                        "clickAction": {
+                                          "type": "externalUrl",
+                                          "url": {
+                                            "type": "static",
+                                            "value": "/app/views/transactions-this-month"
+                                          }
+                                        },
+                                        "styles": [
+                                          {
+                                            "property": "paddingTop",
+                                            "value": "4"
+                                          },
+                                          {
+                                            "property": "paddingBottom",
+                                            "value": "4"
+                                          },
+                                          {
+                                            "property": "paddingLeft",
+                                            "value": "8"
+                                          },
+                                          {
+                                            "property": "paddingRight",
+                                            "value": "8"
+                                          },
+                                          {
+                                            "property": "borderRadius",
+                                            "value": "8"
+                                          }
+                                        ],
+                                        "motion": {
+                                          "hoverSurface": "default",
+                                          "hoverTransform": "none",
+                                          "hoverDurationMs": 150,
+                                          "transition": "all"
+                                        }
+                                      }
+                                    ],
+                                    "stackDirection": "row",
+                                    "styles": [
+                                      {
+                                        "property": "height",
+                                        "value": "auto"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "between"
+                                      },
+                                      {
+                                        "property": "alignItems",
+                                        "value": "center"
+                                      },
+                                      {
+                                        "property": "marginBottom",
+                                        "value": "16"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-recent-activity-body",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-recent-activity-query",
+                                        "component": {
+                                          "kind": "query-viewer",
+                                          "entityQueryDefinitionId": "Transactions this month",
+                                          "parameterBindings": {
+                                            "period": {
+                                              "type": "dashboardDateFilter"
+                                            }
+                                          },
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-recent-activity-item",
+                                              "component": {
+                                                "kind": "container",
+                                                "rows": [
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-recent-activity-item-grid",
+                                                    "component": {
+                                                      "kind": "grid",
+                                                      "gridTemplateColumns": "minmax(0, auto) 1fr minmax(0, auto)",
+                                                      "gap": "12",
+                                                      "alignItems": "center",
+                                                      "rows": [
+                                                        {
+                                                          "type": "component",
+                                                          "id": "row-recent-activity-logo",
+                                                          "component": {
+                                                            "kind": "container",
+                                                            "rows": [
+                                                              {
+                                                                "type": "component",
+                                                                "id": "row-recent-activity-logo-image",
+                                                                "component": {
+                                                                  "primary": {
+                                                                    "type": "field",
+                                                                    "path": "financialItem.actor.logo"
+                                                                  },
+                                                                  "styles": [
+                                                                    {
+                                                                      "property": "borderRadius",
+                                                                      "value": "9999"
+                                                                    },
+                                                                    {
+                                                                      "property": "width",
+                                                                      "value": "100%"
+                                                                    },
+                                                                    {
+                                                                      "property": "height",
+                                                                      "value": "100%"
+                                                                    }
+                                                                  ],
+                                                                  "kind": "image",
+                                                                  "displayMode": "overlay",
+                                                                  "objectFit": "cover"
+                                                                }
+                                                              }
+                                                            ],
+                                                            "styles": [
+                                                              {
+                                                                "property": "width",
+                                                                "value": "50",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "35"
+                                                                }
+                                                              },
+                                                              {
+                                                                "property": "height",
+                                                                "value": "50",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "35"
+                                                                }
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "type": "component",
+                                                          "id": "row-recent-activity-labels",
+                                                          "component": {
+                                                            "kind": "container",
+                                                            "rows": [
+                                                              {
+                                                                "type": "component",
+                                                                "id": "row-recent-activity-item-name",
+                                                                "component": {
+                                                                  "primary": {
+                                                                    "type": "field",
+                                                                    "path": "financialItem.name"
+                                                                  },
+                                                                  "label": {
+                                                                    "show": false
+                                                                  },
+                                                                  "styles": [
+                                                                    {
+                                                                      "property": "fontWeight",
+                                                                      "value": "bold"
+                                                                    },
+                                                                    {
+                                                                      "property": "fontSize",
+                                                                      "value": "15",
+                                                                      "valuesByBreakpoint": {
+                                                                        "base": "12"
+                                                                      }
+                                                                    },
+                                                                    {
+                                                                      "property": "width",
+                                                                      "value": "100%"
+                                                                    }
+                                                                  ],
+                                                                  "kind": "text"
+                                                                }
+                                                              },
+                                                              {
+                                                                "type": "component",
+                                                                "id": "row-recent-activity-actor-name",
+                                                                "component": {
+                                                                  "primary": {
+                                                                    "type": "field",
+                                                                    "path": "financialItem.actor.name"
+                                                                  },
+                                                                  "styles": [
+                                                                    {
+                                                                      "property": "fontWeight",
+                                                                      "value": "thin"
+                                                                    },
+                                                                    {
+                                                                      "property": "fontSize",
+                                                                      "value": "12",
+                                                                      "valuesByBreakpoint": {
+                                                                        "base": "10"
+                                                                      }
+                                                                    }
+                                                                  ],
+                                                                  "kind": "text"
+                                                                }
+                                                              },
+                                                              {
+                                                                "type": "component",
+                                                                "id": "row-079f4856-4382-4c21-9946-e3080122af1d",
+                                                                "component": {
+                                                                  "primary": {
+                                                                    "type": "field",
+                                                                    "path": "type"
+                                                                  },
+                                                                  "styles": [
+                                                                    {
+                                                                      "property": "fontSize",
+                                                                      "value": "10",
+                                                                      "valuesByBreakpoint": {
+                                                                        "base": "6"
+                                                                      }
+                                                                    },
+                                                                    {
+                                                                      "property": "width",
+                                                                      "value": "auto"
+                                                                    },
+                                                                    {
+                                                                      "property": "justifyContent",
+                                                                      "value": "start"
+                                                                    }
+                                                                  ],
+                                                                  "conditionalStyles": [
+                                                                    {
+                                                                      "matchValue": "INCOME",
+                                                                      "badgeVariant": "success"
+                                                                    },
+                                                                    {
+                                                                      "matchValue": "EXPENSE",
+                                                                      "badgeVariant": "danger"
+                                                                    },
+                                                                    {
+                                                                      "matchValue": "PAYMENT",
+                                                                      "badgeVariant": "danger"
+                                                                    },
+                                                                    {
+                                                                      "matchValue": "INVESTMENT",
+                                                                      "badgeVariant": "info"
+                                                                    }
+                                                                  ],
+                                                                  "kind": "badge"
+                                                                },
+                                                                "displayFrom": "base",
+                                                                "displayTo": "base"
+                                                              }
+                                                            ],
+                                                            "stackDirection": "column",
+                                                            "styles": [
+                                                              {
+                                                                "property": "gap",
+                                                                "value": "2",
+                                                                "valuesByBreakpoint": {
+                                                                  "base": "0"
+                                                                }
+                                                              }
+                                                            ]
+                                                          }
+                                                        },
+                                                        {
+                                                          "type": "component",
+                                                          "id": "row-recent-activity-amounts",
+                                                          "component": {
+                                                            "kind": "container",
+                                                            "rows": [
+                                                              {
+                                                                "type": "component",
+                                                                "id": "row-recent-activity-type-amount",
+                                                                "component": {
+                                                                  "kind": "container",
+                                                                  "rows": [
+                                                                    {
+                                                                      "type": "component",
+                                                                      "id": "row-recent-activity-type-badge",
+                                                                      "component": {
+                                                                        "primary": {
+                                                                          "type": "field",
+                                                                          "path": "type"
+                                                                        },
+                                                                        "styles": [
+                                                                          {
+                                                                            "property": "fontSize",
+                                                                            "value": "10"
+                                                                          },
+                                                                          {
+                                                                            "property": "width",
+                                                                            "value": "auto"
+                                                                          }
+                                                                        ],
+                                                                        "conditionalStyles": [
+                                                                          {
+                                                                            "matchValue": "INCOME",
+                                                                            "badgeVariant": "success"
+                                                                          },
+                                                                          {
+                                                                            "matchValue": "EXPENSE",
+                                                                            "badgeVariant": "danger"
+                                                                          },
+                                                                          {
+                                                                            "matchValue": "PAYMENT",
+                                                                            "badgeVariant": "danger"
+                                                                          },
+                                                                          {
+                                                                            "matchValue": "INVESTMENT",
+                                                                            "badgeVariant": "info"
+                                                                          }
+                                                                        ],
+                                                                        "kind": "badge"
+                                                                      },
+                                                                      "displayFrom": "sm",
+                                                                      "displayTo": "xl"
+                                                                    },
+                                                                    {
+                                                                      "type": "component",
+                                                                      "id": "row-recent-activity-amount",
+                                                                      "component": {
+                                                                        "primary": {
+                                                                          "type": "field",
+                                                                          "path": "amount"
+                                                                        },
+                                                                        "label": {
+                                                                          "show": false
+                                                                        },
+                                                                        "styles": [
+                                                                          {
+                                                                            "property": "fontWeight",
+                                                                            "value": "bold"
+                                                                          },
+                                                                          {
+                                                                            "property": "fontSize",
+                                                                            "value": "15",
+                                                                            "valuesByBreakpoint": {
+                                                                              "base": "11"
+                                                                            }
+                                                                          },
+                                                                          {
+                                                                            "property": "textAlign",
+                                                                            "value": "right"
+                                                                          },
+                                                                          {
+                                                                            "property": "width",
+                                                                            "value": "auto"
+                                                                          }
+                                                                        ],
+                                                                        "kind": "numeric",
+                                                                        "displayFormat": "currency",
+                                                                        "showToneColors": false
+                                                                      }
+                                                                    }
+                                                                  ],
+                                                                  "stackDirection": "row",
+                                                                  "styles": [
+                                                                    {
+                                                                      "property": "gap",
+                                                                      "value": "var(--spacing-compact)",
+                                                                      "valuesByBreakpoint": {
+                                                                        "base": "0"
+                                                                      }
+                                                                    },
+                                                                    {
+                                                                      "property": "height",
+                                                                      "value": "auto"
+                                                                    },
+                                                                    {
+                                                                      "property": "justifyContent",
+                                                                      "value": "start",
+                                                                      "valuesByBreakpoint": {
+                                                                        "base": "end"
+                                                                      }
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              },
+                                                              {
+                                                                "type": "component",
+                                                                "id": "row-recent-activity-date",
+                                                                "component": {
+                                                                  "primary": {
+                                                                    "type": "field",
+                                                                    "path": "date"
+                                                                  },
+                                                                  "label": {
+                                                                    "show": false
+                                                                  },
+                                                                  "styles": [
+                                                                    {
+                                                                      "property": "fontSize",
+                                                                      "value": "12",
+                                                                      "valuesByBreakpoint": {
+                                                                        "base": "10"
+                                                                      }
+                                                                    },
+                                                                    {
+                                                                      "property": "textAlign",
+                                                                      "value": "right"
+                                                                    },
+                                                                    {
+                                                                      "property": "width",
+                                                                      "value": "auto"
+                                                                    }
+                                                                  ],
+                                                                  "conditionalStyles": [
+                                                                    {
+                                                                      "matchValue": "<2",
+                                                                      "textColor": "danger"
+                                                                    },
+                                                                    {
+                                                                      "matchValue": "<5",
+                                                                      "textColor": "warning"
+                                                                    },
+                                                                    {
+                                                                      "matchValue": ">=5",
+                                                                      "textColor": "success"
+                                                                    }
+                                                                  ],
+                                                                  "kind": "date",
+                                                                  "dateDisplayFormat": "date"
+                                                                }
+                                                              }
+                                                            ],
+                                                            "stackDirection": "column",
+                                                            "styles": [
+                                                              {
+                                                                "property": "alignItems",
+                                                                "value": "end"
+                                                              },
+                                                              {
+                                                                "property": "gap",
+                                                                "value": "5"
+                                                              },
+                                                              {
+                                                                "property": "height",
+                                                                "value": "100%"
+                                                              },
+                                                              {
+                                                                "property": "justifyContent",
+                                                                "value": "center"
+                                                              }
+                                                            ]
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ],
+                                                "stackDirection": "column",
+                                                "styles": [
+                                                  {
+                                                    "property": "paddingTop",
+                                                    "value": "12"
+                                                  },
+                                                  {
+                                                    "property": "paddingBottom",
+                                                    "value": "12"
+                                                  },
+                                                  {
+                                                    "property": "paddingLeft",
+                                                    "value": "8"
+                                                  },
+                                                  {
+                                                    "property": "paddingRight",
+                                                    "value": "8"
+                                                  },
+                                                  {
+                                                    "property": "borderRadius",
+                                                    "value": "12"
+                                                  }
+                                                ]
+                                              },
+                                              "clickAction": {
+                                                "type": "entityRecord",
+                                                "target": {
+                                                  "relationFieldPath": "financialItemId"
+                                                }
+                                              },
+                                              "motion": {
+                                                "hoverSurface": "muted",
+                                                "hoverTransform": "none",
+                                                "hoverDurationMs": 150,
+                                                "transition": "all"
+                                              }
+                                            }
+                                          ],
+                                          "emptyStateRows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-recent-activity-empty",
+                                              "component": {
+                                                "kind": "container",
+                                                "rows": [
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-recent-activity-empty-icon",
+                                                    "component": {
+                                                      "kind": "icon",
+                                                      "iconName": "CheckCircle2",
+                                                      "iconSize": 32,
+                                                      "styles": [
+                                                        {
+                                                          "property": "color",
+                                                          "value": "success"
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-recent-activity-empty-title",
+                                                    "component": {
+                                                      "primary": {
+                                                        "type": "static",
+                                                        "value": "You're all caught up"
+                                                      },
+                                                      "styles": [
+                                                        {
+                                                          "property": "fontWeight",
+                                                          "value": "semibold"
+                                                        },
+                                                        {
+                                                          "property": "fontSize",
+                                                          "value": "16"
+                                                        },
+                                                        {
+                                                          "property": "textAlign",
+                                                          "value": "center"
+                                                        }
+                                                      ],
+                                                      "kind": "text"
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "row-recent-activity-empty-subtitle",
+                                                    "component": {
+                                                      "primary": {
+                                                        "type": "static",
+                                                        "value": "No transactions this month"
+                                                      },
+                                                      "styles": [
+                                                        {
+                                                          "property": "color",
+                                                          "value": "muted"
+                                                        },
+                                                        {
+                                                          "property": "fontSize",
+                                                          "value": "14"
+                                                        },
+                                                        {
+                                                          "property": "textAlign",
+                                                          "value": "center"
+                                                        }
+                                                      ],
+                                                      "kind": "text"
+                                                    }
+                                                  }
+                                                ],
+                                                "stackDirection": "column",
+                                                "styles": [
+                                                  {
+                                                    "property": "alignItems",
+                                                    "value": "center"
+                                                  },
+                                                  {
+                                                    "property": "justifyContent",
+                                                    "value": "center"
+                                                  },
+                                                  {
+                                                    "property": "padding",
+                                                    "value": "24"
+                                                  },
+                                                  {
+                                                    "property": "gap",
+                                                    "value": "8"
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ],
+                                          "stackDirection": "column",
+                                          "styles": [
+                                            {
+                                              "property": "gap",
+                                              "value": "0"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "stackDirection": "column",
+                                    "styles": [
+                                      {
+                                        "property": "flex",
+                                        "value": "1"
+                                      },
+                                      {
+                                        "property": "width",
+                                        "value": "100%"
+                                      },
+                                      {
+                                        "property": "minWidth",
+                                        "value": "0"
+                                      },
+                                      {
+                                        "property": "overflowY",
+                                        "value": "auto"
+                                      },
+                                      {
+                                        "property": "overflowX",
+                                        "value": "hidden"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
                               "stackDirection": "column",
                               "styles": [
                                 {
@@ -2157,543 +2836,19 @@
                                   "property": "position",
                                   "value": "relative"
                                 }
-                              ],
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-recent-activity-header",
-                                  "component": {
-                                    "kind": "container",
-                                    "stackDirection": "row",
-                                    "styles": [
-                                      {
-                                        "property": "height",
-                                        "value": "auto"
-                                      },
-                                      {
-                                        "property": "justifyContent",
-                                        "value": "between"
-                                      },
-                                      {
-                                        "property": "alignItems",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "marginBottom",
-                                        "value": "16"
-                                      }
-                                    ],
-                                    "rows": [
-                                      {
-                                        "type": "component",
-                                        "id": "row-recent-activity-title",
-                                        "component": {
-                                          "kind": "text",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "Recent Activity"
-                                          },
-                                          "styles": [
-                                            {
-                                              "property": "fontWeight",
-                                              "value": "bold"
-                                            },
-                                            {
-                                              "property": "fontSize",
-                                              "value": "18"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "type": "component",
-                                        "id": "row-recent-activity-see-all",
-                                        "motion": {
-                                          "hoverSurface": "default",
-                                          "hoverTransform": "none",
-                                          "hoverDurationMs": 150,
-                                          "transition": "all"
-                                        },
-                                        "styles": [
-                                          {
-                                            "property": "paddingTop",
-                                            "value": "4"
-                                          },
-                                          {
-                                            "property": "paddingBottom",
-                                            "value": "4"
-                                          },
-                                          {
-                                            "property": "paddingLeft",
-                                            "value": "8"
-                                          },
-                                          {
-                                            "property": "paddingRight",
-                                            "value": "8"
-                                          },
-                                          {
-                                            "property": "borderRadius",
-                                            "value": "8"
-                                          }
-                                        ],
-                                        "clickAction": {
-                                          "type": "externalUrl",
-                                          "url": {
-                                            "type": "static",
-                                            "value": "/app/views/transactions-this-month"
-                                          }
-                                        },
-                                        "component": {
-                                          "kind": "text",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "See all"
-                                          },
-                                          "styles": [
-                                            {
-                                              "property": "color",
-                                              "value": "primary"
-                                            },
-                                            {
-                                              "property": "fontSize",
-                                              "value": "14"
-                                            },
-                                            {
-                                              "property": "fontWeight",
-                                              "value": "medium"
-                                            }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-recent-activity-body",
-                                  "component": {
-                                    "kind": "container",
-                                    "stackDirection": "column",
-                                    "styles": [
-                                      {
-                                        "property": "flex",
-                                        "value": "1"
-                                      },
-                                      {
-                                        "property": "width",
-                                        "value": "100%"
-                                      },
-                                      {
-                                        "property": "minWidth",
-                                        "value": "0"
-                                      },
-                                      {
-                                        "property": "overflowY",
-                                        "value": "auto"
-                                      },
-                                      {
-                                        "property": "overflowX",
-                                        "value": "hidden"
-                                      }
-                                    ],
-                                    "rows": [
-                                      {
-                                        "type": "component",
-                                        "id": "row-recent-activity-query",
-                                        "component": {
-                                          "kind": "query-viewer",
-                                          "entityQueryDefinitionId": "Transactions this month",
-                                          "parameterBindings": {
-                                            "period": {
-                                              "type": "dashboardDateFilter"
-                                            }
-                                          },
-                                          "stackDirection": "column",
-                                          "styles": [
-                                            {
-                                              "property": "gap",
-                                              "value": "0"
-                                            }
-                                          ],
-                                          "rows": [
-                                            {
-                                              "type": "component",
-                                              "id": "row-recent-activity-item",
-                                              "clickAction": {
-                                                "type": "entityRecord",
-                                                "target": {
-                                                  "relationFieldPath": "financialItemId"
-                                                }
-                                              },
-                                              "motion": {
-                                                "hoverSurface": "muted",
-                                                "hoverTransform": "none",
-                                                "hoverDurationMs": 150,
-                                                "transition": "all"
-                                              },
-                                              "component": {
-                                                "kind": "container",
-                                                "stackDirection": "column",
-                                                "styles": [
-                                                  {
-                                                    "property": "paddingTop",
-                                                    "value": "12"
-                                                  },
-                                                  {
-                                                    "property": "paddingBottom",
-                                                    "value": "12"
-                                                  },
-                                                  {
-                                                    "property": "paddingLeft",
-                                                    "value": "8"
-                                                  },
-                                                  {
-                                                    "property": "paddingRight",
-                                                    "value": "8"
-                                                  },
-                                                  {
-                                                    "property": "borderRadius",
-                                                    "value": "12"
-                                                  }
-                                                ],
-                                                "rows": [
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-recent-activity-item-grid",
-                                                    "component": {
-                                                      "kind": "grid",
-                                                      "gridTemplateColumns": "48px minmax(0, 1fr) minmax(0, auto)",
-                                                      "gap": "12",
-                                                      "alignItems": "center",
-                                                      "rows": [
-                                                        {
-                                                          "type": "component",
-                                                          "id": "row-recent-activity-logo",
-                                                          "component": {
-                                                            "kind": "container",
-                                                            "rows": [
-                                                              {
-                                                                "type": "component",
-                                                                "id": "row-recent-activity-logo-image",
-                                                                "component": {
-                                                                  "kind": "image",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "financialItem.actor.logo"
-                                                                  },
-                                                                  "imageSize": 40,
-                                                                  "objectFit": "cover",
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "borderRadius",
-                                                                      "value": "9999"
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "type": "component",
-                                                          "id": "row-recent-activity-labels",
-                                                          "component": {
-                                                            "kind": "container",
-                                                            "stackDirection": "column",
-                                                            "styles": [
-                                                              {
-                                                                "property": "gap",
-                                                                "value": "2"
-                                                              }
-                                                            ],
-                                                            "rows": [
-                                                              {
-                                                                "type": "component",
-                                                                "id": "row-recent-activity-item-name",
-                                                                "component": {
-                                                                  "kind": "text",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "financialItem.name"
-                                                                  },
-                                                                  "label": {
-                                                                    "show": false
-                                                                  },
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "fontWeight",
-                                                                      "value": "semibold"
-                                                                    },
-                                                                    {
-                                                                      "property": "fontSize",
-                                                                      "value": "15"
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              },
-                                                              {
-                                                                "type": "component",
-                                                                "id": "row-recent-activity-actor-name",
-                                                                "component": {
-                                                                  "kind": "text",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "financialItem.actor.name"
-                                                                  },
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "fontWeight",
-                                                                      "value": "thin"
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              }
-                                                            ]
-                                                          }
-                                                        },
-                                                        {
-                                                          "type": "component",
-                                                          "id": "row-recent-activity-amounts",
-                                                          "component": {
-                                                            "kind": "container",
-                                                            "stackDirection": "column",
-                                                            "styles": [
-                                                              {
-                                                                "property": "alignItems",
-                                                                "value": "end"
-                                                              },
-                                                              {
-                                                                "property": "gap",
-                                                                "value": "2"
-                                                              }
-                                                            ],
-                                                            "rows": [
-                                                              {
-                                                                "type": "component",
-                                                                "id": "row-recent-activity-type-amount",
-                                                                "component": {
-                                                                  "kind": "container",
-                                                                  "stackDirection": "row",
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "gap",
-                                                                      "value": "var(--spacing-compact)"
-                                                                    }
-                                                                  ],
-                                                                  "rows": [
-                                                                    {
-                                                                      "type": "component",
-                                                                      "id": "row-recent-activity-type-badge",
-                                                                      "component": {
-                                                                        "kind": "badge",
-                                                                        "primary": {
-                                                                          "type": "field",
-                                                                          "path": "type"
-                                                                        },
-                                                                        "conditionalStyles": [
-                                                                          {
-                                                                            "matchValue": "INCOME",
-                                                                            "badgeVariant": "success"
-                                                                          },
-                                                                          {
-                                                                            "matchValue": "EXPENSE",
-                                                                            "badgeVariant": "danger"
-                                                                          },
-                                                                          {
-                                                                            "matchValue": "PAYMENT",
-                                                                            "badgeVariant": "danger"
-                                                                          },
-                                                                          {
-                                                                            "matchValue": "INVESTMENT",
-                                                                            "badgeVariant": "info"
-                                                                          }
-                                                                        ]
-                                                                      }
-                                                                    },
-                                                                    {
-                                                                      "type": "component",
-                                                                      "id": "row-recent-activity-amount",
-                                                                      "component": {
-                                                                        "kind": "numeric",
-                                                                        "primary": {
-                                                                          "type": "field",
-                                                                          "path": "amount"
-                                                                        },
-                                                                        "label": {
-                                                                          "show": false
-                                                                        },
-                                                                        "displayFormat": "currency",
-                                                                        "showToneColors": false,
-                                                                        "styles": [
-                                                                          {
-                                                                            "property": "fontWeight",
-                                                                            "value": "bold"
-                                                                          },
-                                                                          {
-                                                                            "property": "fontSize",
-                                                                            "value": "15"
-                                                                          },
-                                                                          {
-                                                                            "property": "textAlign",
-                                                                            "value": "right"
-                                                                          }
-                                                                        ]
-                                                                      }
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              },
-                                                              {
-                                                                "type": "component",
-                                                                "id": "row-recent-activity-date",
-                                                                "component": {
-                                                                  "kind": "date",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "date"
-                                                                  },
-                                                                  "label": {
-                                                                    "show": false
-                                                                  },
-                                                                  "dateDisplayFormat": "date",
-                                                                  "conditionalStyles": [
-                                                                    {
-                                                                      "matchValue": "<2",
-                                                                      "textColor": "danger"
-                                                                    },
-                                                                    {
-                                                                      "matchValue": "<5",
-                                                                      "textColor": "warning"
-                                                                    },
-                                                                    {
-                                                                      "matchValue": ">=5",
-                                                                      "textColor": "success"
-                                                                    }
-                                                                  ],
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "fontSize",
-                                                                      "value": "12"
-                                                                    },
-                                                                    {
-                                                                      "property": "textAlign",
-                                                                      "value": "right"
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              }
-                                                            ]
-                                                          }
-                                                        }
-                                                      ]
-                                                    }
-                                                  }
-                                                ]
-                                              }
-                                            }
-                                          ],
-                                          "emptyStateRows": [
-                                            {
-                                              "type": "component",
-                                              "id": "row-recent-activity-empty",
-                                              "component": {
-                                                "kind": "container",
-                                                "stackDirection": "column",
-                                                "styles": [
-                                                  {
-                                                    "property": "alignItems",
-                                                    "value": "center"
-                                                  },
-                                                  {
-                                                    "property": "justifyContent",
-                                                    "value": "center"
-                                                  },
-                                                  {
-                                                    "property": "padding",
-                                                    "value": "24"
-                                                  },
-                                                  {
-                                                    "property": "gap",
-                                                    "value": "8"
-                                                  }
-                                                ],
-                                                "rows": [
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-recent-activity-empty-icon",
-                                                    "component": {
-                                                      "kind": "icon",
-                                                      "iconName": "CheckCircle2",
-                                                      "iconSize": 32,
-                                                      "styles": [
-                                                        {
-                                                          "property": "color",
-                                                          "value": "success"
-                                                        }
-                                                      ]
-                                                    }
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-recent-activity-empty-title",
-                                                    "component": {
-                                                      "kind": "text",
-                                                      "primary": {
-                                                        "type": "static",
-                                                        "value": "You're all caught up"
-                                                      },
-                                                      "styles": [
-                                                        {
-                                                          "property": "fontWeight",
-                                                          "value": "semibold"
-                                                        },
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "16"
-                                                        },
-                                                        {
-                                                          "property": "textAlign",
-                                                          "value": "center"
-                                                        }
-                                                      ]
-                                                    }
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-recent-activity-empty-subtitle",
-                                                    "component": {
-                                                      "kind": "text",
-                                                      "primary": {
-                                                        "type": "static",
-                                                        "value": "No transactions this month"
-                                                      },
-                                                      "styles": [
-                                                        {
-                                                          "property": "color",
-                                                          "value": "muted"
-                                                        },
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "14"
-                                                        },
-                                                        {
-                                                          "property": "textAlign",
-                                                          "value": "center"
-                                                        }
-                                                      ]
-                                                    }
-                                                  }
-                                                ]
-                                              }
-                                            }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  }
-                                }
                               ]
                             }
+                          }
+                        ],
+                        "stackDirection": "column",
+                        "styles": [
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "height",
+                            "value": "300"
                           }
                         ]
                       }

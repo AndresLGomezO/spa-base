@@ -49,9 +49,7 @@ import { selectionToPresetValue } from "./use-layout-system-preset-catalog";
 function getDefaultFieldPaths(
   definition: ReturnType<typeof useEntityDefinition>,
 ) {
-  return Object.keys(definition.fields).filter(
-    (field) => definition.fields[field]?.type !== "document",
-  );
+  return Object.keys(definition.fields);
 }
 
 function preserveViews(definition: ReturnType<typeof useEntityDefinition>) {

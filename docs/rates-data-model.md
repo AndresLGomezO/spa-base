@@ -137,7 +137,7 @@ erDiagram
 | **My Money** | `account`, `actor` | Wallet |
 | **Commitments** | `financialItem` | FileText |
 | **Details** | `loanDetails`, `incomeDetails`, `investmentDetails`, `serviceDetails` | Puzzle |
-| **Movements** | `transaction`, `paymentSchedule`, `balanceSnapshot` | ArrowLeftRight |
+| **Movements** | `transaction`, `paymentSchedule`, `balanceSnapshot`, `attachment` | ArrowLeftRight |
 | **Classification** | `category` | FolderTree |
 
 Technical collection names and UI labels both use English (platform convention).
@@ -273,6 +273,9 @@ The sheet row, generalized. Every commitment, income source, transfer rule, or i
 | `scheduleHorizonMonths` | integer | How many months of `paymentSchedule` rows to generate (default 12) |
 | `description` | string | Free text |
 | `tags` | string[] | Optional labels |
+| `image` | image | Optional cover / product image |
+
+PDF attachments use the global `attachment` entity (see §4.9), linked via RelatedRecords on the item detail page.
 
 #### `flowKind` enum (Wizard Level 1)
 
@@ -537,6 +540,52 @@ Create a snapshot on migration for each row that has Current Balance > 0, using 
 
 ---
 
+### 4.9 `attachment` — global PDF documents
+
+Tenant-wide document store for statements, receipts, contracts, and other PDFs. Each row holds one file and links to **exactly one** parent record via optional FK fields (enforced by convention; API hook optional).
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string | Yes | Display title, e.g. "Mortgage contract", "Jan 2026 statement" |
+| `documentType` | enum | Yes | See enum below — primary filter beyond parent link |
+| `file` | document | Yes | Single PDF |
+| `documentDate` | date | No | Statement/receipt date or period end |
+| `description` | string | No | Free text |
+| `financialItemId` | relation → `financialItem` | No* | Contracts, recurring bill PDFs |
+| `transactionId` | relation → `transaction` | No* | Receipts, payment proofs |
+| `accountId` | relation → `account` | No* | Monthly bank statements |
+| `balanceSnapshotId` | relation → `balanceSnapshot` | No* | Evidence for a balance entry |
+| `paymentScheduleId` | relation → `paymentSchedule` | No* | Invoice for a scheduled payment |
+
+\*Exactly **one** parent FK must be set per row.
+
+**`documentType` enum:** `STATEMENT`, `RECEIPT`, `CONTRACT`, `INVOICE`, `SUPPORT`, `OTHER`
+
+| Value | Typical use |
+|---|---|
+| `STATEMENT` | Bank/card/account statements |
+| `RECEIPT` | Transaction receipts, payment confirmations |
+| `CONTRACT` | Loan, lease, service contracts |
+| `INVOICE` | Bills, invoices tied to schedules |
+| `SUPPORT` | Generic supporting document |
+| `OTHER` | Catch-all |
+
+**Parent ↔ attachment mapping:**
+
+| Parent | FK on `attachment` | Example documents |
+|---|---|---|
+| `financialItem` | `financialItemId` | Mortgage contract, utility bill template |
+| `transaction` | `transactionId` | Expense receipt, transfer confirmation |
+| `account` | `accountId` | Monthly bank statement |
+| `balanceSnapshot` | `balanceSnapshotId` | Statement extract for balance on a date |
+| `paymentSchedule` | `paymentScheduleId` | Invoice for an upcoming/past due payment |
+
+Parent FKs use `onDelete: restrict` — delete attachments before deleting the parent, or reassign the link.
+
+Attachments appear on parent detail pages via **RelatedRecords** (no parent-side relation field). Filter lists by `documentType` and `documentDate` when browsing attachments for a parent.
+
+---
+
 ## 5. Derived classifications
 
 Users never see "asset", "liability", or "balance sheet role" in forms. The system derives `balanceSheetRole` from `itemType` at write time (hook or client-side default).
@@ -713,7 +762,7 @@ Recommended sections on `financialItem` detail view:
 3. **Details** — embedded related extension record (loan/income/investment/service)
 4. **Upcoming payments** — related `paymentSchedule` list
 5. **Movements** — related `transaction` list
-6. **Files** — attachments (future `file` entity, optional Phase D)
+6. **Files** — optional `image` on the item; related `attachment` rows (PDFs) via RelatedRecords
 
 Enrichment never blocks the list view or monthly control dashboard.
 
@@ -863,7 +912,7 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 | **Multi-currency** | USD accounts + exchange rate conversion | `exchangeRate` snapshot; display currency on tenant settings |
 | **Household sharing** | Spouse/family sees subset of items | Tenant RBAC field-level permissions (existing `@repo/rbac`) |
 | **Property registry** | Full real estate asset with valuation | `propertyDetails` extension; `marketValue` separate from `currentBalance` |
-| **File attachments** | Statement PDFs, receipts | `file` entity with parentType = FINANCIAL_ITEM |
+| **File attachments** | Statement PDFs, receipts | Global `attachment` entity with `documentType` enum and parent FK (`financialItem`, `transaction`, `account`, `balanceSnapshot`, `paymentSchedule`) |
 | **Auto-import** | Bank CSV / email parsing | Hook on file upload → draft `transaction` rows |
 | **Budget targets** | Monthly caps per category | `budget` entity linked to `category` |
 | **Alerts** | Due date reminders, debt ratio warnings | Notification hooks on `paymentSchedule` |
@@ -913,7 +962,7 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 ### Phase D — Enrichment + files (optional)
 
 - Post-save enrichment prompts
-- `file` entity for attachments
+- `attachment` entity for PDF documents (implemented in entity catalog)
 - Property consolidated P&L view
 
 ### Relationship to existing codebase

@@ -92,12 +92,14 @@ export interface ImageFieldConfig {
   readonly required?: boolean;
   readonly maxSizeBytes?: number;
   readonly defaultImage?: EntityFileReference;
+  readonly isArray?: boolean;
 }
 
 export interface DocumentFieldConfig {
   readonly type: "document";
   readonly required?: boolean;
   readonly maxSizeBytes?: number;
+  readonly isArray?: boolean;
 }
 
 export type FieldConfig =

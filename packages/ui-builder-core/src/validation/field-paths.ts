@@ -347,10 +347,7 @@ export function listFormFieldOptions(
 ): readonly string[] {
   const options: string[] = [];
 
-  for (const [fieldName, meta] of Object.entries(definition.fields)) {
-    if (meta.type === "document") {
-      continue;
-    }
+  for (const [fieldName] of Object.entries(definition.fields)) {
     options.push(fieldName);
   }
 
@@ -361,7 +358,16 @@ export function listFormFieldOptions(
 export function listTableColumnFieldOptions(
   definition: FieldPathValidationDefinition,
 ): readonly string[] {
-  return listFormFieldOptions(definition);
+  const options: string[] = [];
+
+  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+    if (meta.type === "document") {
+      continue;
+    }
+    options.push(fieldName);
+  }
+
+  return options.sort((a, b) => a.localeCompare(b));
 }
 
 export function isValidTableColumnFieldPath(
@@ -443,7 +449,7 @@ export function isValidFormFieldPath(
     return false;
   }
 
-  return meta.type !== "document";
+  return true;
 }
 
 export function isValidEntityFieldSelectorFieldPath(

@@ -284,13 +284,13 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(miniRow?.kind).toBe("container");
     expect(miniRow?.stackDirection).toBe("row");
     expect(miniRow?.rows).toHaveLength(3);
-    expect(
-      (miniRow?.rows ?? []).map((row) => row.component?.widgetId),
-    ).toEqual([
-      "due-today-snapshot-mini",
-      "upcoming-week-snapshot-mini",
-      "budget-status-snapshot-mini",
-    ]);
+    expect((miniRow?.rows ?? []).map((row) => row.component?.widgetId)).toEqual(
+      [
+        "due-today-snapshot-mini",
+        "upcoming-week-snapshot-mini",
+        "budget-status-snapshot-mini",
+      ],
+    );
 
     const topCategoryWidget = spendingColumn?.rows?.[1]?.component;
     expect(topCategoryWidget?.widgetId).toBe("top-expense-category-snapshot");
@@ -342,7 +342,8 @@ describe("seed-local-tenant-ui-slices", () => {
       expect.arrayContaining([{ property: "height", value: "300" }]),
     );
 
-    const recentActivityWidget = recentActivityRoot?.component.rows[0]?.component;
+    const recentActivityWidget =
+      recentActivityRoot?.component.rows[0]?.component;
     expect(recentActivityWidget?.kind).toBe("metric-widget");
     expect(recentActivityWidget?.widgetId).toBe("recent-activity-transactions");
     expect(recentActivityWidget?.entityName).toBe("transaction");

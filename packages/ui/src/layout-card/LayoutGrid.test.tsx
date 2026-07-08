@@ -38,8 +38,8 @@ describe("LayoutGrid", () => {
     );
 
     expect(container.firstElementChild).not.toHaveStyle({ gap: "12px" });
-    expect(
-      (container.firstElementChild as HTMLElement | null)?.style.gap,
-    ).toBe("");
+    expect((container.firstElementChild as HTMLElement | null)?.style.gap).toBe(
+      "",
+    );
   });
 });

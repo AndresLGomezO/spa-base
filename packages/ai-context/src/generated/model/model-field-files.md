@@ -22,3 +22,5 @@
 - Override with `maxSizeBytes` (max cap **50MB**).
 - Image fields may include `defaultImage` (same reference shape).
 - File fields cannot be `sensitive`.
+- Image and document fields may set `isArray: true` to store multiple files.
+- Image arrays cannot include `defaultImage`.

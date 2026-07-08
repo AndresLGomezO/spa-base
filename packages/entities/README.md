@@ -85,7 +85,7 @@ Developers must **not** define these in `fields`. TypeScript rejects configs tha
 | `date`     | ISO datetime **string** | `isoDatetimeStringSchema`                     |
 | `relation` | `string` (FK id)        | `z.string().trim().min(1)` for FK relations   |
 
-Scalar fields (`string`, `number`, `boolean`, `date`, `enum`) may set `isArray: true` to store `T[]` (for example tags). Relation, image, and document fields cannot be arrays. Array fields use Firestore `array-contains` for filters; `string[]` and `enum[]` support normalized token search mirrors.
+Scalar fields (`string`, `number`, `boolean`, `date`, `enum`) and file fields (`image`, `document`) may set `isArray: true` to store `T[]` (for example tags or multiple attachments). Relation fields cannot be arrays. Array fields use Firestore `array-contains` for filters; `string[]` and `enum[]` support normalized token search mirrors.
 
 See [Relational Data System Guide](../../docs/relational-data-system-guide.md) for relation config (`target`, `type`, `onDelete`, join collections).
 

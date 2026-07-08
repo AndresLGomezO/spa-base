@@ -5,7 +5,11 @@ import type {
 import { isContainerComponent } from "../types/component.js";
 import type { RowNode, UiLayoutDocument } from "../types/layout.js";
 import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
-import type { StyleRule, StylePropertyKey, StyleBreakpoint } from "../styles/style-types.js";
+import type {
+  StyleRule,
+  StylePropertyKey,
+  StyleBreakpoint,
+} from "../styles/style-types.js";
 import {
   layoutInlineStyleFromStyleRules,
   stylesIncludeFlexGrow,

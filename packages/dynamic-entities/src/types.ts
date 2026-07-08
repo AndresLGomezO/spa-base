@@ -148,8 +148,19 @@ export const fieldDefinitionSchema = z
       ctx.addIssue({
         code: "custom",
         message:
-          "Only string, number, boolean, date, and enum fields may be stored as arrays.",
+          "Only string, number, boolean, date, enum, image, and document fields may be stored as arrays.",
         path: ["isArray"],
+      });
+    }
+    if (
+      field.type === "image" &&
+      field.isArray === true &&
+      field.defaultImage !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Image arrays cannot include defaultImage.",
+        path: ["defaultImage"],
       });
     }
   });

@@ -628,56 +628,17 @@
                       "id": "row-due-today-snapshot-mini-shell",
                       "component": {
                         "kind": "container",
-                        "stackDirection": "column",
-                        "styles": [
-                          {
-                            "property": "backgroundColor",
-                            "value": "color-mix(in oklch, var(--color-destructive) 14%, transparent)"
-                          },
-                          {
-                            "property": "width",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "borderRadius",
-                            "value": "16"
-                          },
-                          {
-                            "property": "padding",
-                            "value": "16"
-                          },
-                          {
-                            "property": "boxShadow",
-                            "value": "0 4px 16px rgba(0,0,0,0.06)"
-                          },
-                          {
-                            "property": "overflowY",
-                            "value": "hidden"
-                          }
-                        ],
                         "rows": [
                           {
                             "type": "component",
                             "id": "row-due-today-snapshot-mini-header",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
                                   "id": "row-due-today-snapshot-mini-title",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "Due Today"
@@ -689,17 +650,17 @@
                                       },
                                       {
                                         "property": "fontSize",
-                                        "value": "14"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "color",
                                         "value": "var(--color-destructive)"
-                                      },
-                                      {
-                                        "property": "minWidth",
-                                        "value": "0"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
                                 },
                                 {
@@ -708,13 +669,16 @@
                                   "component": {
                                     "kind": "metric-kpi",
                                     "metricDefinitionId": "Due Today Count",
-                                    "label": "",
                                     "groupBindings": {},
                                     "dimensionBindings": {},
+                                    "label": "",
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -734,10 +698,32 @@
                                       },
                                       {
                                         "property": "padding",
-                                        "value": "var(--spacing-compact)"
+                                        "value": "var(--spacing-compact)",
+                                        "valuesByBreakpoint": {
+                                          "base": "4"
+                                        }
                                       }
                                     ]
                                   }
+                                }
+                              ],
+                              "stackDirection": "row",
+                              "styles": [
+                                {
+                                  "property": "justifyContent",
+                                  "value": "between"
+                                },
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "height",
+                                  "value": "100%"
                                 }
                               ]
                             }
@@ -747,25 +733,6 @@
                             "id": "row-due-today-snapshot-mini-body",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "column",
-                              "styles": [
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "marginBottom",
-                                  "value": "10"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
@@ -773,11 +740,17 @@
                                   "component": {
                                     "kind": "icon",
                                     "iconName": "Folder",
-                                    "iconSize": 28,
                                     "styles": [
                                       {
                                         "property": "color",
                                         "value": "var(--color-destructive)"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "28",
+                                        "valuesByBreakpoint": {
+                                          "base": "18"
+                                        }
                                       }
                                     ]
                                   }
@@ -788,13 +761,16 @@
                                   "component": {
                                     "kind": "metric-kpi",
                                     "metricDefinitionId": "Due Today Total",
-                                    "label": "",
                                     "groupBindings": {},
                                     "dimensionBindings": {},
+                                    "label": "",
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "22"
+                                        "value": "22",
+                                        "valuesByBreakpoint": {
+                                          "base": "12"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -819,7 +795,6 @@
                                   "type": "component",
                                   "id": "row-due-today-snapshot-mini-subtext",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "Payment due"
@@ -827,7 +802,10 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -841,8 +819,28 @@
                                         "property": "color",
                                         "value": "var(--color-card-foreground)"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
+                                }
+                              ],
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "justifyContent",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "marginBottom",
+                                  "value": "10"
                                 }
                               ]
                             }
@@ -850,14 +848,53 @@
                           {
                             "type": "component",
                             "id": "row-due-today-snapshot-mini-action",
-                            "motion": {
-                              "hoverSurface": "destructive",
-                              "hoverTransform": "none",
-                              "hoverDurationMs": 150,
-                              "transition": "all"
-                            },
                             "component": {
                               "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-due-today-snapshot-mini-action-label",
+                                  "component": {
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Pay now"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "13",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-destructive)"
+                                      }
+                                    ],
+                                    "kind": "text"
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-due-today-snapshot-mini-action-chevron",
+                                  "component": {
+                                    "kind": "icon",
+                                    "iconName": "ChevronRight",
+                                    "iconSize": 16,
+                                    "styles": [
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-destructive)"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
                               "stackDirection": "row",
                               "styles": [
                                 {
@@ -896,48 +933,6 @@
                                   "property": "width",
                                   "value": "100%"
                                 }
-                              ],
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-due-today-snapshot-mini-action-label",
-                                  "component": {
-                                    "kind": "text",
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Pay now"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "13"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-destructive)"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-due-today-snapshot-mini-action-chevron",
-                                  "component": {
-                                    "kind": "icon",
-                                    "iconName": "ChevronRight",
-                                    "iconSize": 16,
-                                    "styles": [
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-destructive)"
-                                      }
-                                    ]
-                                  }
-                                }
                               ]
                             },
                             "clickAction": {
@@ -946,7 +941,40 @@
                                 "type": "static",
                                 "value": "/app/views/due-today"
                               }
+                            },
+                            "motion": {
+                              "hoverSurface": "destructive",
+                              "hoverTransform": "none",
+                              "hoverDurationMs": 150,
+                              "transition": "all"
                             }
+                          }
+                        ],
+                        "stackDirection": "column",
+                        "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "color-mix(in oklch, var(--color-destructive) 14%, transparent)"
+                          },
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "16"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "16"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
                           }
                         ]
                       }
@@ -974,56 +1002,17 @@
                       "id": "row-upcoming-week-snapshot-mini-shell",
                       "component": {
                         "kind": "container",
-                        "stackDirection": "column",
-                        "styles": [
-                          {
-                            "property": "backgroundColor",
-                            "value": "color-mix(in oklch, var(--color-warning) 14%, transparent)"
-                          },
-                          {
-                            "property": "width",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "borderRadius",
-                            "value": "16"
-                          },
-                          {
-                            "property": "padding",
-                            "value": "16"
-                          },
-                          {
-                            "property": "boxShadow",
-                            "value": "0 4px 16px rgba(0,0,0,0.06)"
-                          },
-                          {
-                            "property": "overflowY",
-                            "value": "hidden"
-                          }
-                        ],
                         "rows": [
                           {
                             "type": "component",
                             "id": "row-upcoming-week-snapshot-mini-header",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
                                   "id": "row-upcoming-week-snapshot-mini-title",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "Upcoming"
@@ -1035,17 +1024,17 @@
                                       },
                                       {
                                         "property": "fontSize",
-                                        "value": "14"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "color",
                                         "value": "var(--color-warning)"
-                                      },
-                                      {
-                                        "property": "minWidth",
-                                        "value": "0"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
                                 },
                                 {
@@ -1054,13 +1043,16 @@
                                   "component": {
                                     "kind": "metric-kpi",
                                     "metricDefinitionId": "Upcoming This Week Count",
-                                    "label": "",
                                     "groupBindings": {},
                                     "dimensionBindings": {},
+                                    "label": "",
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -1080,10 +1072,32 @@
                                       },
                                       {
                                         "property": "padding",
-                                        "value": "var(--spacing-compact)"
+                                        "value": "var(--spacing-compact)",
+                                        "valuesByBreakpoint": {
+                                          "base": "4"
+                                        }
                                       }
                                     ]
                                   }
+                                }
+                              ],
+                              "stackDirection": "row",
+                              "styles": [
+                                {
+                                  "property": "justifyContent",
+                                  "value": "between"
+                                },
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "height",
+                                  "value": "100%"
                                 }
                               ]
                             }
@@ -1093,25 +1107,6 @@
                             "id": "row-upcoming-week-snapshot-mini-body",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "column",
-                              "styles": [
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "marginBottom",
-                                  "value": "10"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
@@ -1119,11 +1114,17 @@
                                   "component": {
                                     "kind": "icon",
                                     "iconName": "Calendar",
-                                    "iconSize": 28,
                                     "styles": [
                                       {
                                         "property": "color",
                                         "value": "var(--color-warning)"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "28",
+                                        "valuesByBreakpoint": {
+                                          "base": "18"
+                                        }
                                       }
                                     ]
                                   }
@@ -1134,13 +1135,16 @@
                                   "component": {
                                     "kind": "metric-kpi",
                                     "metricDefinitionId": "Upcoming This Week Total",
-                                    "label": "",
                                     "groupBindings": {},
                                     "dimensionBindings": {},
+                                    "label": "",
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "22"
+                                        "value": "22",
+                                        "valuesByBreakpoint": {
+                                          "base": "12"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -1165,7 +1169,6 @@
                                   "type": "component",
                                   "id": "row-upcoming-week-snapshot-mini-subtext",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "This week"
@@ -1173,7 +1176,10 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -1187,8 +1193,28 @@
                                         "property": "color",
                                         "value": "var(--color-card-foreground)"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
+                                }
+                              ],
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "justifyContent",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "marginBottom",
+                                  "value": "10"
                                 }
                               ]
                             }
@@ -1196,14 +1222,53 @@
                           {
                             "type": "component",
                             "id": "row-upcoming-week-snapshot-mini-action",
-                            "motion": {
-                              "hoverSurface": "warning",
-                              "hoverTransform": "none",
-                              "hoverDurationMs": 150,
-                              "transition": "all"
-                            },
                             "component": {
                               "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-upcoming-week-snapshot-mini-action-label",
+                                  "component": {
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "See all"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "13",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-warning)"
+                                      }
+                                    ],
+                                    "kind": "text"
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-upcoming-week-snapshot-mini-action-chevron",
+                                  "component": {
+                                    "kind": "icon",
+                                    "iconName": "ChevronRight",
+                                    "iconSize": 16,
+                                    "styles": [
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-warning)"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
                               "stackDirection": "row",
                               "styles": [
                                 {
@@ -1242,48 +1307,6 @@
                                   "property": "width",
                                   "value": "100%"
                                 }
-                              ],
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-action-label",
-                                  "component": {
-                                    "kind": "text",
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "See all"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "13"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-warning)"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-action-chevron",
-                                  "component": {
-                                    "kind": "icon",
-                                    "iconName": "ChevronRight",
-                                    "iconSize": 16,
-                                    "styles": [
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-warning)"
-                                      }
-                                    ]
-                                  }
-                                }
                               ]
                             },
                             "clickAction": {
@@ -1292,7 +1315,40 @@
                                 "type": "static",
                                 "value": "/app/views/upcoming-payments"
                               }
+                            },
+                            "motion": {
+                              "hoverSurface": "warning",
+                              "hoverTransform": "none",
+                              "hoverDurationMs": 150,
+                              "transition": "all"
                             }
+                          }
+                        ],
+                        "stackDirection": "column",
+                        "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "color-mix(in oklch, var(--color-warning) 14%, transparent)"
+                          },
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "16"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "16"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
                           }
                         ]
                       }
@@ -1320,56 +1376,17 @@
                       "id": "row-budget-status-snapshot-mini-shell",
                       "component": {
                         "kind": "container",
-                        "stackDirection": "column",
-                        "styles": [
-                          {
-                            "property": "backgroundColor",
-                            "value": "color-mix(in oklch, var(--color-success) 14%, transparent)"
-                          },
-                          {
-                            "property": "width",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "borderRadius",
-                            "value": "16"
-                          },
-                          {
-                            "property": "padding",
-                            "value": "16"
-                          },
-                          {
-                            "property": "boxShadow",
-                            "value": "0 4px 16px rgba(0,0,0,0.06)"
-                          },
-                          {
-                            "property": "overflowY",
-                            "value": "hidden"
-                          }
-                        ],
                         "rows": [
                           {
                             "type": "component",
                             "id": "row-budget-status-snapshot-mini-header",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
                                   "id": "row-budget-status-snapshot-mini-title",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "Payment Progress"
@@ -1381,18 +1398,37 @@
                                       },
                                       {
                                         "property": "fontSize",
-                                        "value": "14"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "color",
                                         "value": "var(--color-success)"
-                                      },
-                                      {
-                                        "property": "minWidth",
-                                        "value": "0"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
+                                }
+                              ],
+                              "stackDirection": "row",
+                              "styles": [
+                                {
+                                  "property": "justifyContent",
+                                  "value": "between"
+                                },
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "height",
+                                  "value": "100%"
                                 }
                               ]
                             }
@@ -1402,25 +1438,6 @@
                             "id": "row-budget-status-snapshot-mini-body",
                             "component": {
                               "kind": "container",
-                              "stackDirection": "column",
-                              "styles": [
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "marginBottom",
-                                  "value": "10"
-                                }
-                              ],
                               "rows": [
                                 {
                                   "type": "component",
@@ -1442,7 +1459,10 @@
                                           "styles": [
                                             {
                                               "property": "height",
-                                              "value": "85"
+                                              "value": "85",
+                                              "valuesByBreakpoint": {
+                                                "base": "60"
+                                              }
                                             }
                                           ]
                                         }
@@ -1460,7 +1480,6 @@
                                   "type": "component",
                                   "id": "row-budget-status-snapshot-mini-subtext",
                                   "component": {
-                                    "kind": "text",
                                     "primary": {
                                       "type": "static",
                                       "value": "Paid so far"
@@ -1468,7 +1487,10 @@
                                     "styles": [
                                       {
                                         "property": "fontSize",
-                                        "value": "12"
+                                        "value": "12",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
                                       },
                                       {
                                         "property": "fontWeight",
@@ -1482,8 +1504,28 @@
                                         "property": "color",
                                         "value": "var(--color-card-foreground)"
                                       }
-                                    ]
+                                    ],
+                                    "kind": "text"
                                   }
+                                }
+                              ],
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "justifyContent",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "marginBottom",
+                                  "value": "10"
                                 }
                               ]
                             }
@@ -1491,14 +1533,53 @@
                           {
                             "type": "component",
                             "id": "row-budget-status-snapshot-mini-action",
-                            "motion": {
-                              "hoverSurface": "success",
-                              "hoverTransform": "none",
-                              "hoverDurationMs": 150,
-                              "transition": "all"
-                            },
                             "component": {
                               "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-budget-status-snapshot-mini-action-label",
+                                  "component": {
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "See all"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "13",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-success)"
+                                      }
+                                    ],
+                                    "kind": "text"
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-budget-status-snapshot-mini-action-chevron",
+                                  "component": {
+                                    "kind": "icon",
+                                    "iconName": "ChevronRight",
+                                    "iconSize": 16,
+                                    "styles": [
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-success)"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
                               "stackDirection": "row",
                               "styles": [
                                 {
@@ -1537,48 +1618,6 @@
                                   "property": "width",
                                   "value": "100%"
                                 }
-                              ],
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-budget-status-snapshot-mini-action-label",
-                                  "component": {
-                                    "kind": "text",
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "See all"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "13"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-success)"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-budget-status-snapshot-mini-action-chevron",
-                                  "component": {
-                                    "kind": "icon",
-                                    "iconName": "ChevronRight",
-                                    "iconSize": 16,
-                                    "styles": [
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-success)"
-                                      }
-                                    ]
-                                  }
-                                }
                               ]
                             },
                             "clickAction": {
@@ -1587,7 +1626,40 @@
                                 "type": "static",
                                 "value": "/app/views/payments-due-this-month"
                               }
+                            },
+                            "motion": {
+                              "hoverSurface": "success",
+                              "hoverTransform": "none",
+                              "hoverDurationMs": 150,
+                              "transition": "all"
                             }
+                          }
+                        ],
+                        "stackDirection": "column",
+                        "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "color-mix(in oklch, var(--color-success) 14%, transparent)"
+                          },
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "16"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "16"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
                           }
                         ]
                       }

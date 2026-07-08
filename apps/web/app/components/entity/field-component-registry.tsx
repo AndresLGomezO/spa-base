@@ -14,6 +14,7 @@ export interface FieldComponentProps {
   readonly maxSizeBytes?: number;
   readonly defaultImageUrl?: string | null;
   readonly hideLabel?: boolean;
+  readonly isArray?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 

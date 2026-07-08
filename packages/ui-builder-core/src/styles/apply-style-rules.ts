@@ -213,9 +213,7 @@ export function filterStyleRulesForFlatApplication(
     return collapseStyleRulesAtBreakpoint(styles, atBreakpoint);
   }
 
-  return (styles ?? []).filter(
-    (rule) => !shouldDeferPropertyToScopedCss(rule),
-  );
+  return (styles ?? []).filter((rule) => !shouldDeferPropertyToScopedCss(rule));
 }
 
 function ruleToClass(rule: StyleRule): string | undefined {
@@ -543,7 +541,25 @@ export function usesFlexWrapLayout(
   atBreakpoint?: StyleBreakpoint,
 ): boolean {
   const wrap = parseFlexLayoutFromStyles(styles, atBreakpoint).wrap;
-  return wrap === "wrap" || wrap === "wrap-reverse";
+  if (wrap === "wrap" || wrap === "wrap-reverse") {
+    return true;
+  }
+
+  if (atBreakpoint !== undefined) {
+    return false;
+  }
+
+  const flexWrapRule = (styles ?? []).find(
+    (rule) => rule.property === "flexWrap",
+  );
+  if (!flexWrapRule || !shouldDeferPropertyToScopedCss(flexWrapRule)) {
+    return false;
+  }
+
+  const across = resolveStyleValuesAcrossBreakpoints(flexWrapRule);
+  return Object.values(across).some(
+    (value) => value === "wrap" || value === "wrap-reverse",
+  );
 }
 
 export function flexWrapClassFromStyles(
@@ -875,8 +891,12 @@ export function flexWrapRowItemClassName(
       readonly styles?: readonly StyleRule[];
     };
   },
+  atBreakpoint?: StyleBreakpoint,
 ): string {
-  if (parentStackDirection !== "row" || !usesFlexWrapLayout(parentStyles)) {
+  if (
+    parentStackDirection !== "row" ||
+    !usesFlexWrapLayout(parentStyles, atBreakpoint)
+  ) {
     return "";
   }
 
@@ -908,16 +928,21 @@ export function flexWrapRowItemClassName(
 export function isFlexWrapRowStack(
   stackDirection: "column" | "row",
   styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
 ): boolean {
-  return stackDirection === "row" && usesFlexWrapLayout(styles);
+  return stackDirection === "row" && usesFlexWrapLayout(styles, atBreakpoint);
 }
 
 /** Width class for layout stacks; avoids forcing full width when children should hug content. */
 export function stackShellWidthClassName(
   styles: readonly StyleRule[] | undefined,
   stackDirection: "column" | "row",
+  atBreakpoint?: StyleBreakpoint,
 ): string {
-  const { align, justify, wrap } = parseFlexLayoutFromStyles(styles);
+  const { align, justify, wrap } = parseFlexLayoutFromStyles(
+    styles,
+    atBreakpoint,
+  );
 
   if (
     stackDirection === "row" &&
@@ -1067,7 +1092,11 @@ export function textInlineStyleFromStyleRules(
   }
 
   const colorRule = flat.find((rule) => rule.property === "color");
-  if (colorRule && colorRule.value !== undefined && isCustomColorRule(colorRule)) {
+  if (
+    colorRule &&
+    colorRule.value !== undefined &&
+    isCustomColorRule(colorRule)
+  ) {
     style.color = String(colorRule.value).trim();
   }
 
@@ -1168,6 +1197,16 @@ export interface GapLayoutProps {
 /** @deprecated Prefer {@link resolveLayoutSpacingProps}. */
 export type LayoutSpacingProps = GapLayoutProps;
 
+function deferredLayoutContainerRules(
+  styles: readonly StyleRule[] | undefined,
+): StyleRule[] {
+  return (styles ?? []).filter(
+    (rule) =>
+      LAYOUT_CONTAINER_PROPERTIES.has(rule.property) &&
+      shouldDeferPropertyToScopedCss(rule),
+  );
+}
+
 /**
  * Spacing props for LayoutGrid/Stack. When gap (or other deferred layout props)
  * need scoped CSS, returns `gap: null` + cssText instead of locking inline px.
@@ -1185,12 +1224,18 @@ export function resolveLayoutSpacingProps(
     return { gap: gapPxFromStyles(flat, atBreakpoint) };
   }
 
-  const gapRule = gapRuleFromStyles(styles);
-  if (gapRule && shouldDeferPropertyToScopedCss(gapRule)) {
-    const gapOnly = styles?.filter((rule) => rule.property === "gap") ?? [];
-    const resolved = resolveStyleRules(gapOnly);
+  const deferredLayoutRules = deferredLayoutContainerRules(styles);
+  if (deferredLayoutRules.length > 0) {
+    const resolved = resolveStyleRules(deferredLayoutRules);
+    const gapRule = gapRuleFromStyles(styles);
+    const gapDeferred =
+      gapRule !== undefined && shouldDeferPropertyToScopedCss(gapRule);
+    const gapCss = gapDeferred ? undefined : gapStyleFromStyleRules(styles);
+
     return {
-      gap: null,
+      gap: gapDeferred ? null : gapPxFromStyles(styles),
+      style:
+        gapCss && isCssLengthTokenValue(gapCss) ? { gap: gapCss } : undefined,
       className: resolved.styleScopeClassName,
       cssText: resolved.cssText,
     };
@@ -1263,7 +1308,10 @@ export function spacingStyleFromStyleRules(
   const style: SpacingInlineStyle = {};
 
   for (const rule of filterStyleRulesForFlatApplication(styles, atBreakpoint)) {
-    if (!SPACING_STYLE_PROPERTIES.has(rule.property) || rule.value === undefined) {
+    if (
+      !SPACING_STYLE_PROPERTIES.has(rule.property) ||
+      rule.value === undefined
+    ) {
       continue;
     }
 
@@ -1972,7 +2020,9 @@ function emitProductionResponsiveStyleRules(
   }
 
   return {
-    className: [flatResolved.className, scopeClassName].filter(Boolean).join(" "),
+    className: [flatResolved.className, scopeClassName]
+      .filter(Boolean)
+      .join(" "),
     style: flatResolved.style,
     styleScopeClassName: scopeClassName,
     cssText: cssParts.join(""),
@@ -1985,9 +2035,7 @@ function resolveStyleRulesInternal(
   options?: ResolveStyleRulesOptions | string,
 ): ResolvedStyleRules {
   const normalized: ResolveStyleRulesOptions =
-    typeof options === "string"
-      ? { baseClassName: options }
-      : (options ?? {});
+    typeof options === "string" ? { baseClassName: options } : (options ?? {});
   const { atBreakpoint, baseClassName } = normalized;
 
   if (atBreakpoint !== undefined) {

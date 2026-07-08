@@ -58,6 +58,7 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
       return {
         type: "image",
         ...req,
+        ...arr,
         ...(field.maxSizeBytes !== undefined
           ? { maxSizeBytes: field.maxSizeBytes }
           : {}),
@@ -67,6 +68,7 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
       return {
         type: "document",
         ...req,
+        ...arr,
         ...(field.maxSizeBytes !== undefined
           ? { maxSizeBytes: field.maxSizeBytes }
           : {}),

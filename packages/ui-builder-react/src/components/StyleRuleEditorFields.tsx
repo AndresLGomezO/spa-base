@@ -148,9 +148,7 @@ function StyleRuleValueInput({
         step={1}
         value={String(editorRule.value ?? "")}
         onChange={(event) =>
-          patchValue(
-            coerceNumericStyleValue(rule.property, event.target.value),
-          )
+          patchValue(coerceNumericStyleValue(rule.property, event.target.value))
         }
       />
     );
@@ -300,8 +298,7 @@ export function StyleRuleEditorFields({
   const showBreakpoints = supportsResponsiveValues(rule.property);
   const defaultLabel = labels.styleDefaultValue ?? labels.styleValue;
   const breakpointsLabel = labels.styleBreakpoints ?? "Screen overrides";
-  const addBreakpointLabel =
-    labels.styleAddBreakpoint ?? "Add screen override";
+  const addBreakpointLabel = labels.styleAddBreakpoint ?? "Add screen override";
   const editBreakpointLabel =
     labels.styleEditBreakpoint ?? "Edit screen override";
   const screenLabel = labels.styleBreakpointScreen ?? "Screen";
@@ -373,8 +370,7 @@ export function StyleRuleEditorFields({
     }
     nextMap[draft.breakpoint] = draft.value;
     onChange({
-      valuesByBreakpoint:
-        Object.keys(nextMap).length > 0 ? nextMap : undefined,
+      valuesByBreakpoint: Object.keys(nextMap).length > 0 ? nextMap : undefined,
     });
     setDraftAndNotify(null);
   };

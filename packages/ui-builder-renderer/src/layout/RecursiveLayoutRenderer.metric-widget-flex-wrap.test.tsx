@@ -182,7 +182,7 @@ describe("RecursiveLayoutRenderer metric-widget flex wrap", () => {
     );
 
     expect(markup).toContain("flex-wrap");
-    expect(markup).toContain('min-width:500px');
+    expect(markup).toContain("min-width:500px");
     expect(markup).toContain("flex-[1_1_auto]");
     expect(markup).toContain("basis-auto");
     expect(markup).not.toContain("flex-[1_1_0]");

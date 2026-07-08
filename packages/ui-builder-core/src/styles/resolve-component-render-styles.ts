@@ -43,7 +43,8 @@ function stripFontSize(style: TextInlineStyle): TextInlineStyle {
   if (style.fontSize === undefined) {
     return style;
   }
-  const { fontSize: _fontSize, ...rest } = style;
+  const rest = { ...style };
+  delete rest.fontSize;
   return rest;
 }
 

@@ -93,12 +93,33 @@ export function EntityField({
       : undefined;
   const defaultImageUrl =
     meta.type === "image" &&
+    !meta.isArray &&
     meta.defaultImage &&
     "downloadUrl" in meta.defaultImage
       ? (meta.defaultImage.downloadUrl ?? null)
       : null;
 
   if (meta.isArray) {
+    if ((meta.type === "document" || meta.type === "image") && CustomField) {
+      return (
+        <CustomField
+          entityName={entityName}
+          fieldName={fieldName}
+          value={value}
+          label={label}
+          required={meta.required}
+          error={error}
+          readOnly={readOnly}
+          recordId={recordId}
+          maxSizeBytes={fileFieldMaxSizeBytes}
+          defaultImageUrl={defaultImageUrl}
+          hideLabel={hideLabel}
+          isArray
+          onChange={onChange}
+        />
+      );
+    }
+
     return (
       <ArrayEntityField
         fieldName={fieldName}

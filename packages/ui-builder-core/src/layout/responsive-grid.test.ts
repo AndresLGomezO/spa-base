@@ -249,9 +249,8 @@ describe("resolveResponsiveGridLayout atBreakpoint", () => {
 
 describe("resolveResponsiveBreakpointForWidth", () => {
   it("maps preview widths to the largest matching breakpoint", async () => {
-    const { resolveResponsiveBreakpointForWidth } = await import(
-      "./responsive-grid.js"
-    );
+    const { resolveResponsiveBreakpointForWidth } =
+      await import("./responsive-grid.js");
     expect(resolveResponsiveBreakpointForWidth(320)).toBe("base");
     expect(resolveResponsiveBreakpointForWidth(390)).toBe("base");
     expect(resolveResponsiveBreakpointForWidth(640)).toBe("sm");

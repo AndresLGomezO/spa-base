@@ -6,6 +6,7 @@ export interface EntityFileDownloadTarget {
   readonly entityName: string;
   readonly recordId: string;
   readonly fieldName: string;
+  readonly storagePath?: string;
 }
 
 interface EntityFileReferenceWithDownload extends EntityFileReference {
@@ -53,6 +54,7 @@ export async function fetchEntityFileDownloadUrl(
         entityName: target.entityName,
         recordId: target.recordId,
         fieldName: target.fieldName,
+        ...(target.storagePath ? { storagePath: target.storagePath } : {}),
       },
     },
   );

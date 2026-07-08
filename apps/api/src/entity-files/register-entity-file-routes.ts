@@ -66,6 +66,7 @@ const downloadQuerySchema = z.object({
   entityName: z.string().trim().min(1),
   recordId: z.string().trim().min(1),
   fieldName: z.string().trim().min(1),
+  storagePath: z.string().trim().min(1).optional(),
 });
 
 interface RegisterEntityFileRoutesOptions {
@@ -557,28 +558,48 @@ export function registerEntityFileRoutes(
       }
 
       const fieldValue = recordData[query.fieldName];
-      if (
-        typeof fieldValue !== "object" ||
-        fieldValue === null ||
-        !("storagePath" in fieldValue) ||
-        typeof (fieldValue as { storagePath: unknown }).storagePath !== "string"
+      let storagePath: string | null = null;
+      if (query.storagePath) {
+        if (
+          !fileReferenceMatchesRecordField(
+            recordData,
+            query.fieldName,
+            query.storagePath,
+          )
+        ) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "File not found.",
+          );
+        }
+        storagePath = query.storagePath;
+      } else if (
+        typeof fieldValue === "object" &&
+        fieldValue !== null &&
+        !Array.isArray(fieldValue) &&
+        "storagePath" in fieldValue &&
+        typeof (fieldValue as { storagePath: unknown }).storagePath === "string"
       ) {
-        return replyWithError(
-          reply,
-          404,
-          ApiErrorCode.NOT_FOUND,
-          "File not found.",
-        );
+        storagePath = (fieldValue as { storagePath: string }).storagePath;
+        if (
+          !fileReferenceMatchesRecordField(
+            recordData,
+            query.fieldName,
+            storagePath,
+          )
+        ) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "File not found.",
+          );
+        }
       }
 
-      const storagePath = (fieldValue as { storagePath: string }).storagePath;
-      if (
-        !fileReferenceMatchesRecordField(
-          recordData,
-          query.fieldName,
-          storagePath,
-        )
-      ) {
+      if (!storagePath) {
         return replyWithError(
           reply,
           404,

@@ -517,9 +517,8 @@ describe("applyStyleRules", () => {
   });
 
   it("resolveComponentRenderStyles uses CSS var for responsive fontSize", async () => {
-    const { resolveComponentRenderStyles } = await import(
-      "./resolve-component-render-styles.js"
-    );
+    const { resolveComponentRenderStyles } =
+      await import("./resolve-component-render-styles.js");
     const rendered = resolveComponentRenderStyles([
       {
         property: "fontSize",
@@ -586,10 +585,40 @@ describe("applyStyleRules", () => {
     ).toBe("20px");
   });
 
+  it("snaps flexWrap at preview breakpoint and emits CSS for production", async () => {
+    const {
+      resolveLayoutSpacingProps,
+      flexWrapClassFromStyles,
+      usesFlexWrapLayout,
+    } = await import("./apply-style-rules.js");
+    const rule = {
+      property: "flexWrap" as const,
+      value: "wrap",
+      valuesByBreakpoint: { md: "nowrap" },
+    };
+
+    expect(flexWrapClassFromStyles([rule], "base")).toBe("");
+    expect(flexWrapClassFromStyles([rule], "md")).toBe("");
+    expect(flexWrapClassFromStyles([rule], "lg")).toBe("flex-wrap");
+    expect(flexWrapClassFromStyles([rule])).toBe("");
+    expect(usesFlexWrapLayout([rule], "md")).toBe(false);
+    expect(usesFlexWrapLayout([rule], "lg")).toBe(true);
+    expect(usesFlexWrapLayout([rule])).toBe(true);
+
+    const preview = resolveLayoutSpacingProps([rule], "md");
+    expect(preview.gap).toBe(0);
+    expect(preview.cssText).toBeUndefined();
+
+    const production = resolveLayoutSpacingProps([rule]);
+    expect(production.cssText).toContain("flex-wrap:nowrap");
+    expect(production.cssText).toContain("@media (min-width:1024px)");
+    expect(production.cssText).toContain("flex-wrap:wrap");
+    expect(production.className).toMatch(/ub-rs-/);
+  });
+
   it("snaps gap at preview breakpoint and emits CSS for production", async () => {
-    const { resolveGapLayoutProps, resolveLayoutSpacingProps } = await import(
-      "./apply-style-rules.js"
-    );
+    const { resolveGapLayoutProps, resolveLayoutSpacingProps } =
+      await import("./apply-style-rules.js");
     const rule = {
       property: "gap" as const,
       value: "20",

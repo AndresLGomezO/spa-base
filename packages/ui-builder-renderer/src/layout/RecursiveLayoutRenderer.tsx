@@ -104,6 +104,7 @@ function resolveRowShellLayoutOptions(options: {
   readonly row: RowNode;
   readonly parentColumn?: ColumnNode;
   readonly stackDirection: ColumnStackDirection;
+  readonly atBreakpoint?: ResponsiveGridBreakpoint;
 }) {
   const parentStackDirection = options.parentColumn
     ? resolveColumnStackDirection(options.parentColumn)
@@ -112,10 +113,17 @@ function resolveRowShellLayoutOptions(options: {
   return {
     parentStackDirection,
     parentStackAlign: options.parentColumn
-      ? parseFlexLayoutFromStyles(options.parentColumn.styles).align
+      ? parseFlexLayoutFromStyles(
+          options.parentColumn.styles,
+          options.atBreakpoint,
+        ).align
       : undefined,
     parentUsesFlexWrap: options.parentColumn
-      ? isFlexWrapRowStack(parentStackDirection, options.parentColumn.styles)
+      ? isFlexWrapRowStack(
+          parentStackDirection,
+          options.parentColumn.styles,
+          options.atBreakpoint,
+        )
       : false,
     parentStackStyles: options.parentColumn?.styles,
     row: options.row,
@@ -148,12 +156,17 @@ function stackShellClassForRender(
   styles: readonly import("@repo/ui-builder-core").StyleRule[] | undefined,
   stackDirection: ColumnStackDirection,
   useProductionShellLayout: boolean,
+  atBreakpoint?: ResponsiveGridBreakpoint,
 ): string {
   if (!useProductionShellLayout) {
     return stackShellLayoutClasses(styles, stackDirection);
   }
 
-  const widthClass = stackShellWidthClassName(styles, stackDirection);
+  const widthClass = stackShellWidthClassName(
+    styles,
+    stackDirection,
+    atBreakpoint,
+  );
   const neutralWidthClass =
     widthClass === "w-full" ? "min-w-0 max-w-full" : widthClass;
   const minWidthClass = neutralWidthClass.includes("w-fit")
@@ -399,7 +412,7 @@ function renderRows(
   columnGridOptions?: ColumnGridRenderOptions,
 ): ReactNode {
   const stackDirection = resolveColumnStackDirection(column);
-  const columnFlex = parseFlexLayoutFromStyles(column.styles);
+  const columnFlex = parseFlexLayoutFromStyles(column.styles, atBreakpoint);
   const isMainPage = context.mode === "mainPage";
   const isWizardForm = isWizardFormContext(context);
   const isWizardStepContent = isWizardStepContentContext(context);
@@ -419,6 +432,7 @@ function renderRows(
         column.styles,
         stackDirection,
         useProductionShellLayout,
+        atBreakpoint,
       );
 
   return (
@@ -448,7 +462,7 @@ function renderRows(
         stackDirection === "row" &&
           columnFlex.align === undefined &&
           "items-stretch",
-        flexWrapClassFromStyles(column.styles),
+        flexWrapClassFromStyles(column.styles, atBreakpoint),
       ]
         .filter(Boolean)
         .join(" ")}
@@ -699,7 +713,11 @@ function renderLayoutColumnGrid(
         display="grid"
         gap={gridGapProps.gap}
         align="stretch"
-        className={[stretchClass, responsiveLayout.className, gridGapProps.className]
+        className={[
+          stretchClass,
+          responsiveLayout.className,
+          gridGapProps.className,
+        ]
           .filter(Boolean)
           .join(" ")}
         style={{ ...proportionalStyle, ...gridGapProps.style }}
@@ -720,7 +738,9 @@ function renderLayoutColumnGrid(
         gap={gridGapProps.gap}
         columns={responsiveLayout.columnsTemplate}
         align="stretch"
-        className={[stretchClass, gridGapProps.className].filter(Boolean).join(" ")}
+        className={[stretchClass, gridGapProps.className]
+          .filter(Boolean)
+          .join(" ")}
         style={gridGapProps.style}
       >
         <ResponsiveStyleTag cssText={gridGapProps.cssText} />
@@ -743,7 +763,9 @@ function renderLayoutColumnGrid(
         )
       }
       align="stretch"
-      className={[stretchClass, gridGapProps.className].filter(Boolean).join(" ")}
+      className={[stretchClass, gridGapProps.className]
+        .filter(Boolean)
+        .join(" ")}
       style={gridGapProps.style}
     >
       <ResponsiveStyleTag cssText={gridGapProps.cssText} />
@@ -787,7 +809,7 @@ function renderWrappedColumns(
       className={[
         isListOrDetailSurface(context) ? "flex min-w-0" : "flex w-full min-w-0",
         columnFlags.stretchColumn && "h-full min-h-0",
-        flexWrapClassFromStyles(styles),
+        flexWrapClassFromStyles(styles, atBreakpoint),
         wrappedGapProps.className,
       ]
         .filter(Boolean)
@@ -865,7 +887,11 @@ function renderRow(
     ? resolveColumnStackDirection(parentColumn)
     : stackDirection;
   const parentIsFlexWrapRow = parentColumn
-    ? isFlexWrapRowStack(parentStackDirection, parentColumn.styles)
+    ? isFlexWrapRowStack(
+        parentStackDirection,
+        parentColumn.styles,
+        atBreakpoint,
+      )
     : false;
   const usesPreviewRowWrapper = Boolean(columnGridOptions?.rowWrapper);
   const useProductionShellLayout = shouldUseProductionRowShellLayout(
@@ -874,7 +900,12 @@ function renderRow(
   );
   const rowShellLayout = useProductionShellLayout
     ? resolveRowShellLayoutForRender(
-        resolveRowShellLayoutOptions({ row, parentColumn, stackDirection }),
+        resolveRowShellLayoutOptions({
+          row,
+          parentColumn,
+          stackDirection,
+          atBreakpoint,
+        }),
       )
     : undefined;
   const flexWrapRowItemClass =
@@ -884,6 +915,7 @@ function renderRow(
           parentStackDirection,
           parentColumn.styles,
           row,
+          atBreakpoint,
         );
   const motionPreset =
     row.type === "component"
@@ -895,7 +927,8 @@ function renderRow(
         atBreakpoint,
       });
       const gridInlineStyle = gridStyles.style ?? {};
-      const { gap: _responsiveGap, ...gridStyleWithoutGap } = gridInlineStyle;
+      const gridStyleWithoutGap = { ...gridInlineStyle };
+      delete gridStyleWithoutGap.gap;
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-grid`,
         rows: row.component.rows,
@@ -975,9 +1008,12 @@ function renderRow(
       const containerOverlayContext = createContainerOverlayContext(
         row.component.rows,
       );
-      const containerStyles = resolveRowWrapperStyleRules(row.component.styles, {
-        atBreakpoint,
-      });
+      const containerStyles = resolveRowWrapperStyleRules(
+        row.component.styles,
+        {
+          atBreakpoint,
+        },
+      );
       const containerShellStyle = resolveContainerShellLayoutStyle(
         row.component.styles,
         row.component.rows,
@@ -1053,6 +1089,7 @@ function renderRow(
           : stackShellWidthClassName(
               row.component.styles,
               containerStackDirection,
+              atBreakpoint,
             );
       const containerShellExtraClassName =
         useProductionShellLayout &&
@@ -1394,7 +1431,7 @@ export function RecursiveLayoutRenderer({
             const explicitGap = screenRoot.gap?.trim()
               ? resolveGridGapCSSValue(screenRoot.gap, undefined)
               : undefined;
-                const styleGap =
+            const styleGap =
               explicitGap === undefined
                 ? resolveLayoutSpacingProps(screenRoot.styles, atBreakpoint)
                 : undefined;
@@ -1413,7 +1450,9 @@ export function RecursiveLayoutRenderer({
                   gridTemplateColumns: normalizeGridTemplateColumnsForCss(
                     screenRoot.gridTemplateColumns,
                   ),
-                  ...(gapStyleValue !== undefined ? { gap: gapStyleValue } : {}),
+                  ...(gapStyleValue !== undefined
+                    ? { gap: gapStyleValue }
+                    : {}),
                   alignItems: screenRoot.alignItems,
                 }}
               >
@@ -1472,7 +1511,7 @@ export function RecursiveLayoutRenderer({
 
   if (
     !usesResponsiveGridLayout(layout.root.styles, layout.root.columnCount) &&
-    usesFlexWrapLayout(layout.root.styles)
+    usesFlexWrapLayout(layout.root.styles, atBreakpoint)
   ) {
     return (
       <LayoutRenderOptionsProvider value={columnGridOptions}>
