@@ -26,7 +26,9 @@ describe("theme import/export", () => {
       "#0b0d14",
     );
     expect(reimported.effects?.shadowCard?.light).toContain("4px 20px");
+    expect(reimported.effects?.cardGlow?.green).toContain("52, 211, 153");
     expect(reimported.chartColors?.chart2).toBe("#10b981");
+    expect(reimported.chartColors?.glow1).toBe("#818cf8");
     expect(reimported.radiusSm).toBe("0.5rem");
     expect(reimported.spacingScale?.base).toBe("1.5rem");
     expect(reimported.spacingScale?.md).toBe("1rem");
@@ -61,6 +63,8 @@ describe("theme import/export", () => {
     expect(lightVars["--shadow-card"]).toContain("4px 20px");
     expect(lightVars["--gradient-primary"]).toContain("8c6fe6");
     expect(lightVars["--color-chart-1"]).toBe("#6B4EFF");
+    expect(lightVars["--color-chart-glow-1"]).toBe("#818cf8");
+    expect(lightVars["--gradient-card-glow-green"]).toContain("52, 211, 153");
     expect(lightVars["--radius-lg"]).toBe("1rem");
     expect(lightVars["--radius-sm"]).toBe("0.5rem");
     expect(lightVars["--spacing-macro"]).toBe("1.5rem");
@@ -70,7 +74,8 @@ describe("theme import/export", () => {
     expect(lightVars["--gradient-hero"]).toContain("8c6fe6");
 
     expect(darkVars["--color-background"]).toBe("#0b0d14");
-    expect(darkVars["--shadow-card"]).toBe("none");
+    expect(darkVars["--shadow-card"]).toContain("inset");
+    expect(darkVars["--color-card-border"]).toBe("#ffffff1a");
     expect(darkVars["--color-sidebar"]).toBe("#0b0d14");
     expect(darkVars["--color-accent-foreground"]).toBe("#c7b8f3");
     expect(darkVars["--color-widget"]).toBe("#1a1a2e");
@@ -120,7 +125,7 @@ describe("theme import/export", () => {
     const valid = validateTenantThemeImport(createTenantThemeSkeleton());
     expect(valid.ok).toBe(true);
     if (valid.ok) {
-      expect(valid.data.palettes?.primary?.anchorColor).toBe("#6B4EFF");
+      expect(valid.data.palettes?.primary?.anchorColor).toBe("#00a1e5");
     }
   });
 });

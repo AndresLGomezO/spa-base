@@ -79,8 +79,10 @@ const SEMANTIC_COLOR_CSS_VARS = [
   "--color-border-muted",
   "--color-card",
   "--color-card-foreground",
+  "--color-card-border",
   "--color-popover",
   "--color-popover-foreground",
+  "--color-popover-border",
   "--color-backdrop",
   "--color-hover",
   "--color-active",
@@ -165,6 +167,25 @@ export function buildEffectColorOptions(): readonly UiBuilderStyleTokenOption[] 
     }
     if (cssVar === "--gradient-primary") {
       return cssVarOption(cssVar, "Gradient primary");
+    }
+    if (cssVar === "--gradient-background") {
+      return cssVarOption(cssVar, "App background gradient");
+    }
+    if (cssVar === "--gradient-glow-border") {
+      return cssVarOption(cssVar, "Neon glow border gradient");
+    }
+    if (cssVar === "--shadow-glow-border") {
+      return cssVarOption(cssVar, "Neon glow border shadow");
+    }
+    if (cssVar === "--backdrop-filter-card") {
+      return cssVarOption(cssVar, "Card backdrop filter");
+    }
+    if (cssVar.startsWith("--gradient-card-glow-")) {
+      const color = cssVar.replace("--gradient-card-glow-", "");
+      return cssVarOption(
+        cssVar,
+        `Card glow ${color.charAt(0).toUpperCase()}${color.slice(1)}`,
+      );
     }
     return cssVarOption(cssVar);
   });

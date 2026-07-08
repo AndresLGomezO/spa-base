@@ -28,11 +28,15 @@
                   "rows": [
                     {
                       "type": "component",
-                      "id": "row-upcoming-payments-shell",
+                      "id": "row-upcoming-payments-card",
                       "component": {
                         "kind": "container",
                         "stackDirection": "column",
                         "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "var(--color-card)"
+                          },
                           {
                             "property": "width",
                             "value": "100%"
@@ -40,549 +44,572 @@
                           {
                             "property": "height",
                             "value": "423"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "var(--radius-lg)"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "20"
+                          },
+                          {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-card-border)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "var(--shadow-card)"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "position",
+                            "value": "relative"
+                          },
+                          {
+                            "property": "backdropFilter",
+                            "value": "var(--backdrop-filter-card)"
                           }
                         ],
                         "rows": [
                           {
                             "type": "component",
-                            "id": "row-upcoming-payments-card",
+                            "id": "row-upcoming-payments-card-glow",
                             "component": {
                               "kind": "container",
                               "stackDirection": "column",
                               "styles": [
                                 {
-                                  "property": "backgroundColor",
-                                  "value": "color-mix(in oklch, var(--color-info) 14%, transparent)"
+                                  "property": "position",
+                                  "value": "absolute"
                                 },
                                 {
-                                  "property": "width",
-                                  "value": "100%"
+                                  "property": "top",
+                                  "value": "0"
                                 },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "var(--gradient-card-glow-neutral)"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ],
+                              "rows": []
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-upcoming-payments-header",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "row",
+                              "styles": [
                                 {
                                   "property": "height",
-                                  "value": "100%"
+                                  "value": "auto"
                                 },
                                 {
-                                  "property": "borderRadius",
-                                  "value": "24"
+                                  "property": "justifyContent",
+                                  "value": "between"
                                 },
                                 {
-                                  "property": "padding",
-                                  "value": "20"
+                                  "property": "alignItems",
+                                  "value": "center"
                                 },
                                 {
-                                  "property": "borderWidth",
-                                  "value": "1"
-                                },
-                                {
-                                  "property": "borderColor",
-                                  "value": "var(--color-card)"
-                                },
-                                {
-                                  "property": "borderStyle",
-                                  "value": "solid"
-                                },
-                                {
-                                  "property": "boxShadow",
-                                  "value": "0 10px 30px rgba(0,0,0,0.08)"
-                                },
-                                {
-                                  "property": "overflowY",
-                                  "value": "hidden"
-                                },
-                                {
-                                  "property": "overflowX",
-                                  "value": "hidden"
-                                },
-                                {
-                                  "property": "position",
-                                  "value": "relative"
+                                  "property": "marginBottom",
+                                  "value": "16"
                                 }
                               ],
                               "rows": [
                                 {
                                   "type": "component",
-                                  "id": "row-upcoming-payments-header",
+                                  "id": "row-upcoming-payments-title",
                                   "component": {
-                                    "kind": "container",
-                                    "stackDirection": "row",
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Upcoming Payments"
+                                    },
                                     "styles": [
                                       {
-                                        "property": "height",
-                                        "value": "auto"
+                                        "property": "fontWeight",
+                                        "value": "bold"
                                       },
                                       {
-                                        "property": "justifyContent",
-                                        "value": "between"
-                                      },
-                                      {
-                                        "property": "alignItems",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "marginBottom",
-                                        "value": "16"
-                                      }
-                                    ],
-                                    "rows": [
-                                      {
-                                        "type": "component",
-                                        "id": "row-upcoming-payments-title",
-                                        "component": {
-                                          "kind": "text",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "Upcoming Payments"
-                                          },
-                                          "styles": [
-                                            {
-                                              "property": "fontWeight",
-                                              "value": "bold"
-                                            },
-                                            {
-                                              "property": "fontSize",
-                                              "value": "18"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "type": "component",
-                                        "id": "row-upcoming-payments-see-all",
-                                        "motion": {
-                                          "hoverSurface": "default",
-                                          "hoverTransform": "none",
-                                          "hoverDurationMs": 150,
-                                          "transition": "all"
-                                        },
-                                        "styles": [
-                                          {
-                                            "property": "paddingTop",
-                                            "value": "4"
-                                          },
-                                          {
-                                            "property": "paddingBottom",
-                                            "value": "4"
-                                          },
-                                          {
-                                            "property": "paddingLeft",
-                                            "value": "8"
-                                          },
-                                          {
-                                            "property": "paddingRight",
-                                            "value": "8"
-                                          },
-                                          {
-                                            "property": "borderRadius",
-                                            "value": "8"
-                                          }
-                                        ],
-                                        "clickAction": {
-                                          "type": "externalUrl",
-                                          "url": {
-                                            "type": "static",
-                                            "value": "/app/views/upcoming-payments"
-                                          }
-                                        },
-                                        "component": {
-                                          "kind": "text",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "See all"
-                                          },
-                                          "styles": [
-                                            {
-                                              "property": "color",
-                                              "value": "primary"
-                                            },
-                                            {
-                                              "property": "fontSize",
-                                              "value": "14"
-                                            },
-                                            {
-                                              "property": "fontWeight",
-                                              "value": "medium"
-                                            }
-                                          ]
-                                        }
+                                        "property": "fontSize",
+                                        "value": "18"
                                       }
                                     ]
                                   }
                                 },
                                 {
                                   "type": "component",
-                                  "id": "row-upcoming-payments-body",
+                                  "id": "row-upcoming-payments-see-all",
+                                  "motion": {
+                                    "hoverSurface": "default",
+                                    "hoverTransform": "none",
+                                    "hoverDurationMs": 150,
+                                    "transition": "all"
+                                  },
+                                  "styles": [
+                                    {
+                                      "property": "paddingTop",
+                                      "value": "4"
+                                    },
+                                    {
+                                      "property": "paddingBottom",
+                                      "value": "4"
+                                    },
+                                    {
+                                      "property": "paddingLeft",
+                                      "value": "8"
+                                    },
+                                    {
+                                      "property": "paddingRight",
+                                      "value": "8"
+                                    },
+                                    {
+                                      "property": "borderRadius",
+                                      "value": "8"
+                                    }
+                                  ],
+                                  "clickAction": {
+                                    "type": "externalUrl",
+                                    "url": {
+                                      "type": "static",
+                                      "value": "/app/views/upcoming-payments"
+                                    }
+                                  },
                                   "component": {
-                                    "kind": "container",
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "See all"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "color",
+                                        "value": "primary"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "14"
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "medium"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-upcoming-payments-body",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "flex",
+                                  "value": "1"
+                                },
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "minWidth",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "overflowY",
+                                  "value": "auto"
+                                },
+                                {
+                                  "property": "overflowX",
+                                  "value": "hidden"
+                                }
+                              ],
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-upcoming-payments-query",
+                                  "component": {
+                                    "kind": "query-viewer",
+                                    "entityQueryDefinitionId": "Upcoming payments (dashboard)",
+                                    "parameterBindings": {
+                                      "period": {
+                                        "type": "relativePeriod",
+                                        "field": "dueDate",
+                                        "anchor": "dashboardDateFilter",
+                                        "offset": 0,
+                                        "unit": "month"
+                                      }
+                                    },
                                     "stackDirection": "column",
                                     "styles": [
                                       {
-                                        "property": "flex",
-                                        "value": "1"
-                                      },
-                                      {
-                                        "property": "width",
-                                        "value": "100%"
-                                      },
-                                      {
-                                        "property": "minWidth",
+                                        "property": "gap",
                                         "value": "0"
-                                      },
-                                      {
-                                        "property": "overflowY",
-                                        "value": "auto"
-                                      },
-                                      {
-                                        "property": "overflowX",
-                                        "value": "hidden"
                                       }
                                     ],
-                                    "rows": [
+                                    "emptyStateRows": [
                                       {
                                         "type": "component",
-                                        "id": "row-upcoming-payments-query",
+                                        "id": "row-upcoming-payments-empty",
                                         "component": {
-                                          "kind": "query-viewer",
-                                          "entityQueryDefinitionId": "Upcoming payments (dashboard)",
-                                          "parameterBindings": {
-                                            "period": {
-                                              "type": "relativePeriod",
-                                              "field": "dueDate",
-                                              "anchor": "dashboardDateFilter",
-                                              "offset": 0,
-                                              "unit": "month"
-                                            }
-                                          },
+                                          "kind": "container",
                                           "stackDirection": "column",
                                           "styles": [
                                             {
-                                              "property": "gap",
-                                              "value": "0"
-                                            }
-                                          ],
-                                          "emptyStateRows": [
+                                              "property": "alignItems",
+                                              "value": "center"
+                                            },
                                             {
-                                              "type": "component",
-                                              "id": "row-upcoming-payments-empty",
-                                              "component": {
-                                                "kind": "container",
-                                                "stackDirection": "column",
-                                                "styles": [
-                                                  {
-                                                    "property": "alignItems",
-                                                    "value": "center"
-                                                  },
-                                                  {
-                                                    "property": "justifyContent",
-                                                    "value": "center"
-                                                  },
-                                                  {
-                                                    "property": "padding",
-                                                    "value": "24"
-                                                  },
-                                                  {
-                                                    "property": "gap",
-                                                    "value": "8"
-                                                  }
-                                                ],
-                                                "rows": [
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-upcoming-payments-empty-icon",
-                                                    "component": {
-                                                      "kind": "icon",
-                                                      "iconName": "CheckCircle2",
-                                                      "iconSize": 32,
-                                                      "styles": [
-                                                        {
-                                                          "property": "color",
-                                                          "value": "success"
-                                                        }
-                                                      ]
-                                                    }
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-upcoming-payments-empty-title",
-                                                    "component": {
-                                                      "kind": "text",
-                                                      "primary": {
-                                                        "type": "static",
-                                                        "value": "You're all caught up"
-                                                      },
-                                                      "styles": [
-                                                        {
-                                                          "property": "fontWeight",
-                                                          "value": "semibold"
-                                                        },
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "16"
-                                                        },
-                                                        {
-                                                          "property": "textAlign",
-                                                          "value": "center"
-                                                        }
-                                                      ]
-                                                    }
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-upcoming-payments-empty-subtitle",
-                                                    "component": {
-                                                      "kind": "text",
-                                                      "primary": {
-                                                        "type": "static",
-                                                        "value": "No pending payments this month"
-                                                      },
-                                                      "styles": [
-                                                        {
-                                                          "property": "color",
-                                                          "value": "muted"
-                                                        },
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "14"
-                                                        },
-                                                        {
-                                                          "property": "textAlign",
-                                                          "value": "center"
-                                                        }
-                                                      ]
-                                                    }
-                                                  }
-                                                ]
-                                              }
+                                              "property": "justifyContent",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "padding",
+                                              "value": "24"
+                                            },
+                                            {
+                                              "property": "gap",
+                                              "value": "8"
                                             }
                                           ],
                                           "rows": [
                                             {
                                               "type": "component",
-                                              "id": "row-upcoming-payment-item",
-                                              "motion": {
-                                                "hoverSurface": "info",
-                                                "hoverTransform": "none",
-                                                "hoverDurationMs": 150,
-                                                "transition": "all"
-                                              },
-                                              "clickAction": {
-                                                "type": "entityRecord",
-                                                "target": {
-                                                  "relationFieldPath": "financialItemId"
-                                                }
-                                              },
+                                              "id": "row-upcoming-payments-empty-icon",
                                               "component": {
-                                                "kind": "container",
-                                                "stackDirection": "column",
+                                                "kind": "icon",
+                                                "iconName": "CheckCircle2",
+                                                "iconSize": 32,
                                                 "styles": [
                                                   {
-                                                    "property": "paddingTop",
-                                                    "value": "12"
-                                                  },
-                                                  {
-                                                    "property": "paddingBottom",
-                                                    "value": "12"
-                                                  },
-                                                  {
-                                                    "property": "paddingLeft",
-                                                    "value": "8"
-                                                  },
-                                                  {
-                                                    "property": "paddingRight",
-                                                    "value": "8"
-                                                  },
-                                                  {
-                                                    "property": "borderRadius",
-                                                    "value": "12"
+                                                    "property": "color",
+                                                    "value": "success"
                                                   }
-                                                ],
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "type": "component",
+                                              "id": "row-upcoming-payments-empty-title",
+                                              "component": {
+                                                "kind": "text",
+                                                "primary": {
+                                                  "type": "static",
+                                                  "value": "You're all caught up"
+                                                },
+                                                "styles": [
+                                                  {
+                                                    "property": "fontWeight",
+                                                    "value": "semibold"
+                                                  },
+                                                  {
+                                                    "property": "fontSize",
+                                                    "value": "16"
+                                                  },
+                                                  {
+                                                    "property": "textAlign",
+                                                    "value": "center"
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "type": "component",
+                                              "id": "row-upcoming-payments-empty-subtitle",
+                                              "component": {
+                                                "kind": "text",
+                                                "primary": {
+                                                  "type": "static",
+                                                  "value": "No pending payments this month"
+                                                },
+                                                "styles": [
+                                                  {
+                                                    "property": "color",
+                                                    "value": "muted"
+                                                  },
+                                                  {
+                                                    "property": "fontSize",
+                                                    "value": "14"
+                                                  },
+                                                  {
+                                                    "property": "textAlign",
+                                                    "value": "center"
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-upcoming-payment-item",
+                                        "motion": {
+                                          "hoverSurface": "glow-border",
+                                          "hoverTransform": "none",
+                                          "hoverDurationMs": 200,
+                                          "transition": "all"
+                                        },
+                                        "clickAction": {
+                                          "type": "entityRecord",
+                                          "target": {
+                                            "relationFieldPath": "financialItemId"
+                                          }
+                                        },
+                                        "component": {
+                                          "kind": "container",
+                                          "stackDirection": "column",
+                                          "styles": [
+                                            {
+                                              "property": "paddingTop",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "paddingBottom",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "paddingLeft",
+                                              "value": "8"
+                                            },
+                                            {
+                                              "property": "paddingRight",
+                                              "value": "8"
+                                            },
+                                            {
+                                              "property": "borderRadius",
+                                              "value": "12"
+                                            }
+                                          ],
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-upcoming-payment-item-grid",
+                                              "component": {
+                                                "kind": "grid",
+                                                "gridTemplateColumns": "48px minmax(0, 1fr) minmax(0, auto)",
+                                                "gap": "12",
+                                                "alignItems": "center",
                                                 "rows": [
                                                   {
                                                     "type": "component",
-                                                    "id": "row-upcoming-payment-item-grid",
+                                                    "id": "track-upcoming-payment-icon",
                                                     "component": {
-                                                      "kind": "grid",
-                                                      "gridTemplateColumns": "48px minmax(0, 1fr) minmax(0, auto)",
-                                                      "gap": "12",
-                                                      "alignItems": "center",
+                                                      "kind": "container",
                                                       "rows": [
                                                         {
                                                           "type": "component",
-                                                          "id": "track-upcoming-payment-icon",
+                                                          "id": "row-upcoming-payment-logo",
                                                           "component": {
-                                                            "kind": "container",
-                                                            "rows": [
+                                                            "kind": "image",
+                                                            "primary": {
+                                                              "type": "field",
+                                                              "path": "financialItem.actor.logo"
+                                                            },
+                                                            "imageSize": 40,
+                                                            "objectFit": "cover",
+                                                            "styles": [
                                                               {
-                                                                "type": "component",
-                                                                "id": "row-upcoming-payment-logo",
-                                                                "component": {
-                                                                  "kind": "image",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "financialItem.actor.logo"
-                                                                  },
-                                                                  "imageSize": 40,
-                                                                  "objectFit": "cover",
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "borderRadius",
-                                                                      "value": "9999"
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "property": "borderRadius",
+                                                                "value": "9999"
+                                                              }
+                                                            ]
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "track-upcoming-payment-primary",
+                                                    "component": {
+                                                      "kind": "container",
+                                                      "stackDirection": "column",
+                                                      "styles": [
+                                                        {
+                                                          "property": "gap",
+                                                          "value": "2"
+                                                        }
+                                                      ],
+                                                      "rows": [
+                                                        {
+                                                          "type": "component",
+                                                          "id": "row-upcoming-payment-name",
+                                                          "component": {
+                                                            "kind": "text",
+                                                            "primary": {
+                                                              "type": "field",
+                                                              "path": "financialItem.name"
+                                                            },
+                                                            "label": {
+                                                              "show": false
+                                                            },
+                                                            "styles": [
+                                                              {
+                                                                "property": "fontWeight",
+                                                                "value": "semibold"
+                                                              },
+                                                              {
+                                                                "property": "fontSize",
+                                                                "value": "15"
                                                               }
                                                             ]
                                                           }
                                                         },
                                                         {
                                                           "type": "component",
-                                                          "id": "track-upcoming-payment-primary",
+                                                          "id": "row-upcoming-payment-due-date",
                                                           "component": {
-                                                            "kind": "container",
-                                                            "stackDirection": "column",
+                                                            "kind": "date",
+                                                            "primary": {
+                                                              "type": "field",
+                                                              "path": "dueDate"
+                                                            },
+                                                            "dateDisplayFormat": "date",
+                                                            "label": {
+                                                              "show": false
+                                                            },
                                                             "styles": [
                                                               {
-                                                                "property": "gap",
-                                                                "value": "2"
-                                                              }
-                                                            ],
-                                                            "rows": [
-                                                              {
-                                                                "type": "component",
-                                                                "id": "row-upcoming-payment-name",
-                                                                "component": {
-                                                                  "kind": "text",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "financialItem.name"
-                                                                  },
-                                                                  "label": {
-                                                                    "show": false
-                                                                  },
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "fontWeight",
-                                                                      "value": "semibold"
-                                                                    },
-                                                                    {
-                                                                      "property": "fontSize",
-                                                                      "value": "15"
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "property": "color",
+                                                                "value": "muted"
                                                               },
                                                               {
-                                                                "type": "component",
-                                                                "id": "row-upcoming-payment-due-date",
-                                                                "component": {
-                                                                  "kind": "date",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "dueDate"
-                                                                  },
-                                                                  "dateDisplayFormat": "date",
-                                                                  "label": {
-                                                                    "show": false
-                                                                  },
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "color",
-                                                                      "value": "muted"
-                                                                    },
-                                                                    {
-                                                                      "property": "fontSize",
-                                                                      "value": "13"
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "property": "fontSize",
+                                                                "value": "13"
+                                                              }
+                                                            ]
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "component",
+                                                    "id": "track-upcoming-payment-amount",
+                                                    "component": {
+                                                      "kind": "container",
+                                                      "stackDirection": "column",
+                                                      "styles": [
+                                                        {
+                                                          "property": "alignItems",
+                                                          "value": "end"
+                                                        },
+                                                        {
+                                                          "property": "gap",
+                                                          "value": "2"
+                                                        }
+                                                      ],
+                                                      "rows": [
+                                                        {
+                                                          "type": "component",
+                                                          "id": "row-upcoming-payment-amount-value",
+                                                          "component": {
+                                                            "kind": "numeric",
+                                                            "primary": {
+                                                              "type": "field",
+                                                              "path": "expectedAmount"
+                                                            },
+                                                            "displayFormat": "currency",
+                                                            "label": {
+                                                              "show": false
+                                                            },
+                                                            "styles": [
+                                                              {
+                                                                "property": "fontWeight",
+                                                                "value": "bold"
+                                                              },
+                                                              {
+                                                                "property": "fontSize",
+                                                                "value": "15"
+                                                              },
+                                                              {
+                                                                "property": "textAlign",
+                                                                "value": "right"
                                                               }
                                                             ]
                                                           }
                                                         },
                                                         {
                                                           "type": "component",
-                                                          "id": "track-upcoming-payment-amount",
+                                                          "id": "row-upcoming-payment-due-label",
                                                           "component": {
-                                                            "kind": "container",
-                                                            "stackDirection": "column",
-                                                            "styles": [
+                                                            "kind": "date",
+                                                            "primary": {
+                                                              "type": "field",
+                                                              "path": "dueDate"
+                                                            },
+                                                            "dateDisplayFormat": "daysRemaining",
+                                                            "label": {
+                                                              "show": false
+                                                            },
+                                                            "conditionalStyles": [
                                                               {
-                                                                "property": "alignItems",
-                                                                "value": "end"
+                                                                "matchValue": "<2",
+                                                                "textColor": "danger"
                                                               },
                                                               {
-                                                                "property": "gap",
-                                                                "value": "2"
+                                                                "matchValue": "<5",
+                                                                "textColor": "warning"
+                                                              },
+                                                              {
+                                                                "matchValue": ">=5",
+                                                                "textColor": "success"
                                                               }
                                                             ],
-                                                            "rows": [
+                                                            "styles": [
                                                               {
-                                                                "type": "component",
-                                                                "id": "row-upcoming-payment-amount-value",
-                                                                "component": {
-                                                                  "kind": "numeric",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "expectedAmount"
-                                                                  },
-                                                                  "displayFormat": "currency",
-                                                                  "label": {
-                                                                    "show": false
-                                                                  },
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "fontWeight",
-                                                                      "value": "bold"
-                                                                    },
-                                                                    {
-                                                                      "property": "fontSize",
-                                                                      "value": "15"
-                                                                    },
-                                                                    {
-                                                                      "property": "textAlign",
-                                                                      "value": "right"
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "property": "fontSize",
+                                                                "value": "12"
                                                               },
                                                               {
-                                                                "type": "component",
-                                                                "id": "row-upcoming-payment-due-label",
-                                                                "component": {
-                                                                  "kind": "date",
-                                                                  "primary": {
-                                                                    "type": "field",
-                                                                    "path": "dueDate"
-                                                                  },
-                                                                  "dateDisplayFormat": "daysRemaining",
-                                                                  "label": {
-                                                                    "show": false
-                                                                  },
-                                                                  "conditionalStyles": [
-                                                                    {
-                                                                      "matchValue": "<2",
-                                                                      "textColor": "danger"
-                                                                    },
-                                                                    {
-                                                                      "matchValue": "<5",
-                                                                      "textColor": "warning"
-                                                                    },
-                                                                    {
-                                                                      "matchValue": ">=5",
-                                                                      "textColor": "success"
-                                                                    }
-                                                                  ],
-                                                                  "styles": [
-                                                                    {
-                                                                      "property": "fontSize",
-                                                                      "value": "12"
-                                                                    },
-                                                                    {
-                                                                      "property": "textAlign",
-                                                                      "value": "right"
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "property": "textAlign",
+                                                                "value": "right"
                                                               }
                                                             ]
                                                           }
@@ -629,6 +656,49 @@
                       "component": {
                         "kind": "container",
                         "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-due-today-snapshot-mini-glow",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "position",
+                                  "value": "absolute"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "var(--gradient-card-glow-danger)"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ],
+                              "rows": []
+                            }
+                          },
                           {
                             "type": "component",
                             "id": "row-due-today-snapshot-mini-header",
@@ -954,7 +1024,7 @@
                         "styles": [
                           {
                             "property": "backgroundColor",
-                            "value": "color-mix(in oklch, var(--color-destructive) 14%, transparent)"
+                            "value": "var(--color-card)"
                           },
                           {
                             "property": "width",
@@ -969,12 +1039,40 @@
                             "value": "16"
                           },
                           {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-card-border)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
                             "property": "boxShadow",
-                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                            "value": "var(--shadow-card)"
                           },
                           {
                             "property": "overflowY",
                             "value": "hidden"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "position",
+                            "value": "relative"
+                          },
+                          {
+                            "property": "backdropFilter",
+                            "value": "var(--backdrop-filter-card)"
+                          },
+                          {
+                            "property": "gap",
+                            "value": "var(--spacing-comfortable)"
                           }
                         ]
                       }
@@ -1005,6 +1103,49 @@
                         "rows": [
                           {
                             "type": "component",
+                            "id": "row-upcoming-week-snapshot-mini-glow",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "position",
+                                  "value": "absolute"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "var(--gradient-card-glow-neutral)"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ],
+                              "rows": []
+                            }
+                          },
+                          {
+                            "type": "component",
                             "id": "row-upcoming-week-snapshot-mini-header",
                             "component": {
                               "kind": "container",
@@ -1031,7 +1172,7 @@
                                       },
                                       {
                                         "property": "color",
-                                        "value": "var(--color-warning)"
+                                        "value": "var(--color-primary)"
                                       }
                                     ],
                                     "kind": "text"
@@ -1060,11 +1201,11 @@
                                       },
                                       {
                                         "property": "color",
-                                        "value": "var(--color-warning)"
+                                        "value": "var(--color-primary)"
                                       },
                                       {
                                         "property": "backgroundColor",
-                                        "value": "color-mix(in oklch, var(--color-warning) 20%, transparent)"
+                                        "value": "color-mix(in oklch, var(--color-primary) 20%, transparent)"
                                       },
                                       {
                                         "property": "borderRadius",
@@ -1117,7 +1258,7 @@
                                     "styles": [
                                       {
                                         "property": "color",
-                                        "value": "var(--color-warning)"
+                                        "value": "var(--color-primary)"
                                       },
                                       {
                                         "property": "fontSize",
@@ -1247,7 +1388,7 @@
                                       },
                                       {
                                         "property": "color",
-                                        "value": "var(--color-warning)"
+                                        "value": "var(--color-primary)"
                                       }
                                     ],
                                     "kind": "text"
@@ -1263,7 +1404,7 @@
                                     "styles": [
                                       {
                                         "property": "color",
-                                        "value": "var(--color-warning)"
+                                        "value": "var(--color-primary)"
                                       }
                                     ]
                                   }
@@ -1281,7 +1422,7 @@
                                 },
                                 {
                                   "property": "backgroundColor",
-                                  "value": "color-mix(in oklch, var(--color-warning) 24%, transparent)"
+                                  "value": "color-mix(in oklch, var(--color-primary) 24%, transparent)"
                                 },
                                 {
                                   "property": "borderRadius",
@@ -1317,7 +1458,7 @@
                               }
                             },
                             "motion": {
-                              "hoverSurface": "warning",
+                              "hoverSurface": "accent",
                               "hoverTransform": "none",
                               "hoverDurationMs": 150,
                               "transition": "all"
@@ -1328,7 +1469,7 @@
                         "styles": [
                           {
                             "property": "backgroundColor",
-                            "value": "color-mix(in oklch, var(--color-warning) 14%, transparent)"
+                            "value": "var(--color-card)"
                           },
                           {
                             "property": "width",
@@ -1343,12 +1484,40 @@
                             "value": "16"
                           },
                           {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-card-border)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
                             "property": "boxShadow",
-                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                            "value": "var(--shadow-card)"
                           },
                           {
                             "property": "overflowY",
                             "value": "hidden"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "position",
+                            "value": "relative"
+                          },
+                          {
+                            "property": "backdropFilter",
+                            "value": "var(--backdrop-filter-card)"
+                          },
+                          {
+                            "property": "gap",
+                            "value": "var(--spacing-comfortable)"
                           }
                         ]
                       }
@@ -1379,6 +1548,49 @@
                         "rows": [
                           {
                             "type": "component",
+                            "id": "row-budget-status-snapshot-mini-glow",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "position",
+                                  "value": "absolute"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "var(--gradient-card-glow-blue)"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ],
+                              "rows": []
+                            }
+                          },
+                          {
+                            "type": "component",
                             "id": "row-budget-status-snapshot-mini-header",
                             "component": {
                               "kind": "container",
@@ -1405,7 +1617,7 @@
                                       },
                                       {
                                         "property": "color",
-                                        "value": "var(--color-success)"
+                                        "value": "var(--color-primary-400)"
                                       }
                                     ],
                                     "kind": "text"
@@ -1558,7 +1770,7 @@
                                       },
                                       {
                                         "property": "color",
-                                        "value": "var(--color-success)"
+                                        "value": "var(--color-primary-400)"
                                       }
                                     ],
                                     "kind": "text"
@@ -1574,7 +1786,7 @@
                                     "styles": [
                                       {
                                         "property": "color",
-                                        "value": "var(--color-success)"
+                                        "value": "var(--color-primary-400)"
                                       }
                                     ]
                                   }
@@ -1592,7 +1804,7 @@
                                 },
                                 {
                                   "property": "backgroundColor",
-                                  "value": "color-mix(in oklch, var(--color-success) 24%, transparent)"
+                                  "value": "color-mix(in oklch, var(--color-primary-400) 24%, transparent)"
                                 },
                                 {
                                   "property": "borderRadius",
@@ -1628,7 +1840,7 @@
                               }
                             },
                             "motion": {
-                              "hoverSurface": "success",
+                              "hoverSurface": "accent",
                               "hoverTransform": "none",
                               "hoverDurationMs": 150,
                               "transition": "all"
@@ -1639,7 +1851,7 @@
                         "styles": [
                           {
                             "property": "backgroundColor",
-                            "value": "color-mix(in oklch, var(--color-success) 14%, transparent)"
+                            "value": "var(--color-card)"
                           },
                           {
                             "property": "width",
@@ -1654,12 +1866,40 @@
                             "value": "16"
                           },
                           {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-card-border)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
                             "property": "boxShadow",
-                            "value": "0 4px 16px rgba(0,0,0,0.06)"
+                            "value": "var(--shadow-card)"
                           },
                           {
                             "property": "overflowY",
                             "value": "hidden"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "position",
+                            "value": "relative"
+                          },
+                          {
+                            "property": "backdropFilter",
+                            "value": "var(--backdrop-filter-card)"
+                          },
+                          {
+                            "property": "gap",
+                            "value": "var(--spacing-comfortable)"
                           }
                         ]
                       }

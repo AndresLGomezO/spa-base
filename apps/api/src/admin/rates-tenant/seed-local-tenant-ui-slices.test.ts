@@ -129,11 +129,11 @@ describe("seed-local-tenant-ui-slices", () => {
       ]),
     );
 
-    const upcomingWidget = override?.metricWidgets?.find(
+    const upcomingPaymentsWidget = override?.metricWidgets?.find(
       (widget) => widget.id === "upcoming-payments-dashboard",
     );
 
-    const layout = upcomingWidget?.layout as {
+    const layout = upcomingPaymentsWidget?.layout as {
       root?: {
         columns?: Array<{ rows?: Array<{ component?: { kind?: string } }> }>;
       };
@@ -166,17 +166,75 @@ describe("seed-local-tenant-ui-slices", () => {
 
     expect(queryViewer?.component?.emptyStateRows?.length).toBeGreaterThan(0);
 
-    const shellStyles = (
+    const cardStyles = (
       layout.root?.columns?.[0]?.rows?.[0]?.component as {
         styles?: Array<{ property: string; value: string }>;
       }
     )?.styles;
-    expect(shellStyles).toEqual(
+    expect(cardStyles).toEqual(
       expect.arrayContaining([
         { property: "width", value: "100%" },
         { property: "height", value: "423" },
+        { property: "backgroundColor", value: "var(--color-card)" },
+        { property: "backdropFilter", value: "var(--backdrop-filter-card)" },
+        { property: "boxShadow", value: "var(--shadow-card)" },
       ]),
     );
+
+    for (const [widgetId, expectedGlowId] of [
+      ["due-today-snapshot-mini", "row-due-today-snapshot-mini-glow"],
+      ["upcoming-week-snapshot-mini", "row-upcoming-week-snapshot-mini-glow"],
+      ["budget-status-snapshot-mini", "row-budget-status-snapshot-mini-glow"],
+    ] as const) {
+      const miniWidget = override?.metricWidgets?.find(
+        (widget) => widget.id === widgetId,
+      );
+      const shell = (
+        miniWidget?.layout as {
+          root?: {
+            columns?: Array<{
+              rows?: Array<{
+                id?: string;
+                component?: {
+                  styles?: Array<{ property: string; value: string }>;
+                  rows?: Array<{ id?: string }>;
+                };
+              }>;
+            }>;
+          };
+        }
+      )?.root?.columns?.[0]?.rows?.[0]?.component;
+      expect(shell?.styles).toEqual(
+        expect.arrayContaining([
+          { property: "backgroundColor", value: "var(--color-card)" },
+          { property: "backdropFilter", value: "var(--backdrop-filter-card)" },
+          { property: "boxShadow", value: "var(--shadow-card)" },
+          { property: "borderRadius", value: "16" },
+          { property: "gap", value: "var(--spacing-comfortable)" },
+        ]),
+      );
+      expect(shell?.rows?.some((row) => row.id === expectedGlowId)).toBe(true);
+    }
+
+    const upcomingWeekWidget = override?.metricWidgets?.find(
+      (widget) => widget.id === "upcoming-week-snapshot-mini",
+    );
+    const upcomingTitleColor = findStyleValueInWidget(
+      upcomingWeekWidget?.layout,
+      "row-upcoming-week-snapshot-mini-title",
+      "color",
+    );
+    expect(upcomingTitleColor).toBe("var(--color-primary)");
+
+    const paymentProgressWidget = override?.metricWidgets?.find(
+      (widget) => widget.id === "budget-status-snapshot-mini",
+    );
+    const paymentProgressTitleColor = findStyleValueInWidget(
+      paymentProgressWidget?.layout,
+      "row-budget-status-snapshot-mini-title",
+      "color",
+    );
+    expect(paymentProgressTitleColor).toBe("var(--color-primary-400)");
   });
 
   it("parses local financial snapshot dashboard section slice", () => {
@@ -364,3 +422,65 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(typeof seedLocalTenantUiSlicesIfPresent).toBe("function");
   });
 });
+
+function findStyleValueInWidget(
+  layout: unknown,
+  rowId: string,
+  property: string,
+): string | undefined {
+  const row = findRowById(layout, rowId) as
+    | {
+        readonly component?: {
+          readonly styles?: readonly {
+            readonly property: string;
+            readonly value: string;
+          }[];
+        };
+      }
+    | undefined;
+  return row?.component?.styles?.find((rule) => rule.property === property)
+    ?.value;
+}
+
+function findRowById(layout: unknown, id: string): unknown {
+  const typedLayout = layout as
+    | { readonly root?: { readonly columns?: readonly unknown[] } }
+    | undefined;
+  const columns = typedLayout?.root?.columns;
+  if (!Array.isArray(columns)) {
+    return undefined;
+  }
+  for (const column of columns) {
+    const found = walkRowsForId(
+      (column as { rows?: readonly unknown[] }).rows,
+      id,
+    );
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
+}
+
+function walkRowsForId(
+  rows: readonly unknown[] | undefined,
+  id: string,
+): unknown {
+  if (!Array.isArray(rows)) {
+    return undefined;
+  }
+  for (const row of rows) {
+    const typed = row as {
+      readonly id?: string;
+      readonly component?: { readonly rows?: readonly unknown[] };
+    };
+    if (typed.id === id) {
+      return row;
+    }
+    const nested = walkRowsForId(typed.component?.rows, id);
+    if (nested) {
+      return nested;
+    }
+  }
+  return undefined;
+}

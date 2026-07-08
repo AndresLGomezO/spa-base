@@ -15,6 +15,7 @@ import {
   stylesIncludeFlexGrow,
   type LayoutInlineStyle,
 } from "../styles/apply-style-rules.js";
+import { isCssGradientBackgroundValue } from "../styles/color-values.js";
 
 export interface ContainerOverlayContext {
   readonly hasOverlayImage: boolean;
@@ -270,6 +271,58 @@ function isOverlayDecorativeComponent(
   return isOverlayChartComponent(component);
 }
 
+export function isCardGlowOverlayContainerRow(row: RowNode): boolean {
+  if (row.type !== "component" || !isContainerComponent(row.component)) {
+    return false;
+  }
+
+  if (row.component.rows.length > 0) {
+    return false;
+  }
+
+  const styles = row.component.styles ?? [];
+  if (readStylePropertyValue(styles, "position") !== "absolute") {
+    return false;
+  }
+
+  if (readStylePropertyValue(styles, "pointerEvents") !== "none") {
+    return false;
+  }
+
+  const background = readStylePropertyValue(styles, "backgroundColor");
+  if (background === undefined) {
+    return false;
+  }
+
+  return (
+    isCssGradientBackgroundValue(background) ||
+    background.includes("--gradient-card-glow")
+  );
+}
+
+export function isOverlayDecorativeRow(row: RowNode): boolean {
+  return isOverlayImageRow(row) || isCardGlowOverlayContainerRow(row);
+}
+
+export function collectOverlayDecorativeRowIds(
+  rows: readonly RowNode[],
+): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (isOverlayDecorativeRow(row)) {
+      ids.add(row.id);
+    }
+  }
+  return ids;
+}
+
+/** @deprecated Prefer {@link collectOverlayDecorativeRowIds}. */
+export function collectOverlayImageRowIds(
+  rows: readonly RowNode[],
+): ReadonlySet<string> {
+  return collectOverlayDecorativeRowIds(rows);
+}
+
 export function isOverlayImageRow(row: RowNode): boolean {
   if (row.type !== "component") {
     return false;
@@ -284,18 +337,6 @@ export function isOverlayImageRow(row: RowNode): boolean {
   }
 
   return false;
-}
-
-export function collectOverlayImageRowIds(
-  rows: readonly RowNode[],
-): ReadonlySet<string> {
-  const ids = new Set<string>();
-  for (const row of rows) {
-    if (isOverlayImageRow(row)) {
-      ids.add(row.id);
-    }
-  }
-  return ids;
 }
 
 export function containerHasOverlayImage(rows: readonly RowNode[]): boolean {
@@ -379,7 +420,7 @@ export function resolveContainerContentLayerRowStyles(
   overlayContext: ContainerOverlayContext,
   row: RowNode,
 ): readonly StyleRule[] | undefined {
-  if (!overlayContext.hasOverlayImage || isOverlayImageRow(row)) {
+  if (!overlayContext.hasOverlayImage || isOverlayDecorativeRow(row)) {
     return rowStyles;
   }
 

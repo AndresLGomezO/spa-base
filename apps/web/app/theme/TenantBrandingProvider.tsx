@@ -11,6 +11,7 @@ import {
 } from "./tenant-appearance-cache";
 
 const APPLIED_VARS = new Set<string>();
+let appliedBackground = false;
 
 /** Legacy tenant themes wrote the macro spacing value to Tailwind's multiplier. */
 const LEGACY_TENANT_CSS_VARS = ["--spacing"] as const;
@@ -23,6 +24,12 @@ function clearAppliedVars(root: HTMLElement) {
 
   for (const cssVar of LEGACY_TENANT_CSS_VARS) {
     root.style.removeProperty(cssVar);
+  }
+
+  if (appliedBackground) {
+    root.style.removeProperty("background");
+    root.style.removeProperty("background-attachment");
+    appliedBackground = false;
   }
 }
 
@@ -40,6 +47,13 @@ function applyAppearance(
       root.style.setProperty(cssVar, value);
       APPLIED_VARS.add(cssVar);
     }
+  }
+
+  const backgroundGradient = vars["--gradient-background"]?.trim();
+  if (backgroundGradient) {
+    root.style.background = backgroundGradient;
+    root.style.backgroundAttachment = "fixed";
+    appliedBackground = true;
   }
 }
 

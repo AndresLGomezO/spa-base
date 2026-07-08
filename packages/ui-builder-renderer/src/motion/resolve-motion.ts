@@ -14,8 +14,12 @@ const ENTRANCE_CLASS: Record<NonNullable<MotionPreset["entrance"]>, string> = {
 };
 
 export const MOTION_HOVER_INTERACTIVE_CLASS = "ui-motion-hover-interactive";
+export const MOTION_HOVER_GLOW_BORDER_CLASS = "ui-motion-hover-glow-border";
 
-const HOVER_SURFACE_BG: Record<Exclude<MotionHoverSurface, "none">, string> = {
+const HOVER_SURFACE_BG: Record<
+  Exclude<MotionHoverSurface, "none" | "glow-border">,
+  string
+> = {
   default: "var(--color-hover)",
   accent: "var(--color-accent-hover)",
   muted: "var(--color-muted)",
@@ -125,7 +129,7 @@ function resolveInteractiveHoverStyle(
     "--motion-hover-duration": `${durationMs}ms`,
   };
 
-  if (surface !== "none") {
+  if (surface !== "none" && surface !== "glow-border") {
     style["--motion-hover-bg"] = HOVER_SURFACE_BG[surface];
   }
 
@@ -156,6 +160,9 @@ export function resolveMotionPreset(
 
   if (hasInteractiveHover(preset)) {
     classes.push(MOTION_HOVER_INTERACTIVE_CLASS);
+    if (resolveEffectiveHoverSurface(preset) === "glow-border") {
+      classes.push(MOTION_HOVER_GLOW_BORDER_CLASS);
+    }
   }
 
   if (preset.transition === "layout") {

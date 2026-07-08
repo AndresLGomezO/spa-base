@@ -43,7 +43,9 @@ import {
 } from "./semantics/semantic-vars.js";
 import { applyCustomTokens } from "./custom-tokens.js";
 
-export const TENANT_THEME_EXPORT_VERSION = 1;
+export const TENANT_THEME_EXPORT_VERSION = 1.2;
+
+export const SUPPORTED_TENANT_THEME_EXPORT_VERSIONS = [1, 1.2] as const;
 
 export const PRIMARY_SCALE_STEPS = COLOR_SCALE_STEPS;
 export const NEUTRAL_SCALE_STEPS = COLOR_SCALE_STEPS;
@@ -121,6 +123,17 @@ export const TENANT_OVERRIDE_GROUPS = {
   ],
 } as const satisfies Record<string, readonly TenantOverridableCssVar[]>;
 
+export interface TenantCardGlowLike {
+  readonly blue?: string;
+  readonly green?: string;
+  readonly red?: string;
+  readonly gold?: string;
+  readonly neutral?: string;
+  readonly success?: string;
+  readonly danger?: string;
+  readonly warning?: string;
+}
+
 export interface TenantAppearanceEffectsLike {
   readonly shadowCard?: {
     readonly light?: string;
@@ -130,13 +143,48 @@ export interface TenantAppearanceEffectsLike {
     readonly light?: string;
     readonly dark?: string;
   };
+  readonly backgroundApp?: {
+    readonly light?: string;
+    readonly dark?: string;
+  };
+  readonly gradientGlowBorder?: {
+    readonly light?: string;
+    readonly dark?: string;
+  };
+  readonly shadowGlowBorder?: {
+    readonly light?: string;
+    readonly dark?: string;
+  };
+  readonly backdropFilterCard?: {
+    readonly light?: string;
+    readonly dark?: string;
+  };
+  readonly cardGlow?: TenantCardGlowLike;
 }
+
+const CARD_GLOW_LEGACY_TO_SEMANTIC = {
+  blue: "neutral",
+  green: "success",
+  red: "danger",
+  gold: "warning",
+} as const;
+
+const CARD_GLOW_SEMANTIC_TO_LEGACY = {
+  neutral: "blue",
+  success: "green",
+  danger: "red",
+  warning: "gold",
+} as const;
 
 export interface TenantChartColorsLike {
   readonly chart1?: string;
   readonly chart2?: string;
   readonly chart3?: string;
   readonly chart4?: string;
+  readonly glow1?: string;
+  readonly glow2?: string;
+  readonly glow3?: string;
+  readonly glow4?: string;
 }
 
 export interface TenantAppearanceLike {
@@ -227,6 +275,66 @@ function applyEffects(
   if (gradientValue) {
     vars["--gradient-primary"] = gradientValue;
   }
+
+  const backgroundApp =
+    appearance.effects?.backgroundApp?.[colorScheme]?.trim();
+  if (backgroundApp) {
+    vars["--gradient-background"] = backgroundApp;
+  }
+
+  const gradientGlowBorder =
+    appearance.effects?.gradientGlowBorder?.[colorScheme]?.trim();
+  if (gradientGlowBorder) {
+    vars["--gradient-glow-border"] = gradientGlowBorder;
+  }
+
+  const shadowGlowBorder =
+    appearance.effects?.shadowGlowBorder?.[colorScheme]?.trim();
+  if (shadowGlowBorder) {
+    vars["--shadow-glow-border"] = shadowGlowBorder;
+  }
+
+  const backdropFilterCard =
+    appearance.effects?.backdropFilterCard?.[colorScheme]?.trim();
+  if (backdropFilterCard) {
+    vars["--backdrop-filter-card"] = backdropFilterCard;
+  }
+
+  applyCardGlowEffects(appearance.effects?.cardGlow, vars);
+}
+
+function applyCardGlowEffects(
+  cardGlow: TenantCardGlowLike | undefined,
+  vars: Record<string, string>,
+): void {
+  if (!cardGlow) {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(cardGlow)) {
+    const trimmed = value?.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    vars[`--gradient-card-glow-${key}`] = trimmed;
+
+    const semanticAlias =
+      CARD_GLOW_LEGACY_TO_SEMANTIC[
+        key as keyof typeof CARD_GLOW_LEGACY_TO_SEMANTIC
+      ];
+    if (semanticAlias) {
+      vars[`--gradient-card-glow-${semanticAlias}`] = trimmed;
+    }
+
+    const legacyAlias =
+      CARD_GLOW_SEMANTIC_TO_LEGACY[
+        key as keyof typeof CARD_GLOW_SEMANTIC_TO_LEGACY
+      ];
+    if (legacyAlias) {
+      vars[`--gradient-card-glow-${legacyAlias}`] = trimmed;
+    }
+  }
 }
 
 function resolveSpacingScale(
@@ -287,6 +395,18 @@ function applyChartColors(
   }
   if (chartColors.chart4?.trim()) {
     vars["--color-chart-4"] = chartColors.chart4.trim();
+  }
+  if (chartColors.glow1?.trim()) {
+    vars["--color-chart-glow-1"] = chartColors.glow1.trim();
+  }
+  if (chartColors.glow2?.trim()) {
+    vars["--color-chart-glow-2"] = chartColors.glow2.trim();
+  }
+  if (chartColors.glow3?.trim()) {
+    vars["--color-chart-glow-3"] = chartColors.glow3.trim();
+  }
+  if (chartColors.glow4?.trim()) {
+    vars["--color-chart-glow-4"] = chartColors.glow4.trim();
   }
 }
 

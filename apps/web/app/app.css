@@ -44,6 +44,45 @@
   box-shadow: var(--motion-hover-shadow, none);
 }
 
+.ui-motion-hover-glow-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.ui-motion-hover-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: var(--gradient-glow-border);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--motion-hover-duration, 150ms) ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ui-motion-hover-glow-border:hover::before {
+  opacity: 1;
+}
+
+.ui-motion-hover-glow-border:hover {
+  background-color: color-mix(
+    in oklch,
+    var(--color-card) 55%,
+    var(--color-foreground) 10%
+  );
+  box-shadow: var(--shadow-glow-border);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ui-motion-entrance-fade,
   .ui-motion-entrance-slide-up,

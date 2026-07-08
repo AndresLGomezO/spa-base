@@ -903,6 +903,7 @@ describe("applyStyleRules", () => {
       zIndex: "3",
       opacity: "0.8",
       backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
     });
   });
 

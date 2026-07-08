@@ -300,6 +300,8 @@ export {
   isOverlayChartComponent,
   isOverlayImageComponent,
   isOverlayImageRow,
+  isCardGlowOverlayContainerRow,
+  isOverlayDecorativeRow,
   readStylePropertyValue,
   readPercentSplitLength,
   resolveChartComponentRowStyles,

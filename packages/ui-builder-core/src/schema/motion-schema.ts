@@ -23,6 +23,7 @@ export const motionPresetSchema = z
         "destructive",
         "warning",
         "success",
+        "glow-border",
       ])
       .optional(),
     hoverTransform: z

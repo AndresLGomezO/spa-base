@@ -81,6 +81,26 @@ interface ColorsBySchemeState {
 interface EffectsState {
   readonly shadowCard: { readonly light: string; readonly dark: string };
   readonly gradientPrimary: { readonly light: string; readonly dark: string };
+  readonly backgroundApp: { readonly light: string; readonly dark: string };
+  readonly gradientGlowBorder: {
+    readonly light: string;
+    readonly dark: string;
+  };
+  readonly shadowGlowBorder: { readonly light: string; readonly dark: string };
+  readonly backdropFilterCard: {
+    readonly light: string;
+    readonly dark: string;
+  };
+  readonly cardGlow: {
+    readonly blue: string;
+    readonly green: string;
+    readonly red: string;
+    readonly gold: string;
+    readonly neutral: string;
+    readonly success: string;
+    readonly danger: string;
+    readonly warning: string;
+  };
 }
 
 interface ChartColorsState {
@@ -88,6 +108,10 @@ interface ChartColorsState {
   readonly chart2: string;
   readonly chart3: string;
   readonly chart4: string;
+  readonly glow1: string;
+  readonly glow2: string;
+  readonly glow3: string;
+  readonly glow4: string;
 }
 
 interface CustomTokenRowState {
@@ -137,20 +161,53 @@ const CHART_COLOR_KEYS = [
   { key: "chart4" as const, cssVar: "--color-chart-4" },
 ];
 
-const SELECTABLE_THEME_PRESETS = APPEARANCE_PRESETS.filter(
-  (id): id is Exclude<AppearancePreset, "default"> => id !== "default",
-);
+const CHART_GLOW_COLOR_KEYS = [
+  { key: "glow1" as const, cssVar: "--color-chart-glow-1" },
+  { key: "glow2" as const, cssVar: "--color-chart-glow-2" },
+  { key: "glow3" as const, cssVar: "--color-chart-glow-3" },
+  { key: "glow4" as const, cssVar: "--color-chart-glow-4" },
+];
+
+const CARD_GLOW_LEGACY_KEYS = ["blue", "green", "red", "gold"] as const;
+const CARD_GLOW_SEMANTIC_KEYS = [
+  "neutral",
+  "success",
+  "danger",
+  "warning",
+] as const;
 
 const EMPTY_EFFECTS: EffectsState = {
   shadowCard: { light: "", dark: "" },
   gradientPrimary: { light: "", dark: "" },
+  backgroundApp: { light: "", dark: "" },
+  gradientGlowBorder: { light: "", dark: "" },
+  shadowGlowBorder: { light: "", dark: "" },
+  backdropFilterCard: { light: "", dark: "" },
+  cardGlow: {
+    blue: "",
+    green: "",
+    red: "",
+    gold: "",
+    neutral: "",
+    success: "",
+    danger: "",
+    warning: "",
+  },
 };
+
+const SELECTABLE_THEME_PRESETS = APPEARANCE_PRESETS.filter(
+  (id): id is Exclude<AppearancePreset, "default"> => id !== "default",
+);
 
 const EMPTY_CHART_COLORS: ChartColorsState = {
   chart1: "",
   chart2: "",
   chart3: "",
   chart4: "",
+  glow1: "",
+  glow2: "",
+  glow3: "",
+  glow4: "",
 };
 
 function createCustomTokenRow(token?: TenantCustomToken): CustomTokenRowState {
@@ -224,6 +281,32 @@ function loadEffects(appearance: TenantAppearance | undefined): EffectsState {
       light: appearance?.effects?.gradientPrimary?.light ?? "",
       dark: appearance?.effects?.gradientPrimary?.dark ?? "",
     },
+    backgroundApp: {
+      light: appearance?.effects?.backgroundApp?.light ?? "",
+      dark: appearance?.effects?.backgroundApp?.dark ?? "",
+    },
+    gradientGlowBorder: {
+      light: appearance?.effects?.gradientGlowBorder?.light ?? "",
+      dark: appearance?.effects?.gradientGlowBorder?.dark ?? "",
+    },
+    shadowGlowBorder: {
+      light: appearance?.effects?.shadowGlowBorder?.light ?? "",
+      dark: appearance?.effects?.shadowGlowBorder?.dark ?? "",
+    },
+    backdropFilterCard: {
+      light: appearance?.effects?.backdropFilterCard?.light ?? "",
+      dark: appearance?.effects?.backdropFilterCard?.dark ?? "",
+    },
+    cardGlow: {
+      blue: appearance?.effects?.cardGlow?.blue ?? "",
+      green: appearance?.effects?.cardGlow?.green ?? "",
+      red: appearance?.effects?.cardGlow?.red ?? "",
+      gold: appearance?.effects?.cardGlow?.gold ?? "",
+      neutral: appearance?.effects?.cardGlow?.neutral ?? "",
+      success: appearance?.effects?.cardGlow?.success ?? "",
+      danger: appearance?.effects?.cardGlow?.danger ?? "",
+      warning: appearance?.effects?.cardGlow?.warning ?? "",
+    },
   };
 }
 
@@ -235,6 +318,10 @@ function loadChartColors(
     chart2: appearance?.chartColors?.chart2 ?? "",
     chart3: appearance?.chartColors?.chart3 ?? "",
     chart4: appearance?.chartColors?.chart4 ?? "",
+    glow1: appearance?.chartColors?.glow1 ?? "",
+    glow2: appearance?.chartColors?.glow2 ?? "",
+    glow3: appearance?.chartColors?.glow3 ?? "",
+    glow4: appearance?.chartColors?.glow4 ?? "",
   };
 }
 
@@ -300,10 +387,77 @@ function buildEffectsForSave(
       ? { dark: effects.gradientPrimary.dark.trim() }
       : {}),
   };
+  const backgroundApp = {
+    ...(effects.backgroundApp.light.trim()
+      ? { light: effects.backgroundApp.light.trim() }
+      : {}),
+    ...(effects.backgroundApp.dark.trim()
+      ? { dark: effects.backgroundApp.dark.trim() }
+      : {}),
+  };
+  const gradientGlowBorder = {
+    ...(effects.gradientGlowBorder.light.trim()
+      ? { light: effects.gradientGlowBorder.light.trim() }
+      : {}),
+    ...(effects.gradientGlowBorder.dark.trim()
+      ? { dark: effects.gradientGlowBorder.dark.trim() }
+      : {}),
+  };
+  const shadowGlowBorder = {
+    ...(effects.shadowGlowBorder.light.trim()
+      ? { light: effects.shadowGlowBorder.light.trim() }
+      : {}),
+    ...(effects.shadowGlowBorder.dark.trim()
+      ? { dark: effects.shadowGlowBorder.dark.trim() }
+      : {}),
+  };
+  const backdropFilterCard = {
+    ...(effects.backdropFilterCard.light.trim()
+      ? { light: effects.backdropFilterCard.light.trim() }
+      : {}),
+    ...(effects.backdropFilterCard.dark.trim()
+      ? { dark: effects.backdropFilterCard.dark.trim() }
+      : {}),
+  };
+  const cardGlow = {
+    ...(effects.cardGlow.blue.trim()
+      ? { blue: effects.cardGlow.blue.trim() }
+      : {}),
+    ...(effects.cardGlow.green.trim()
+      ? { green: effects.cardGlow.green.trim() }
+      : {}),
+    ...(effects.cardGlow.red.trim()
+      ? { red: effects.cardGlow.red.trim() }
+      : {}),
+    ...(effects.cardGlow.gold.trim()
+      ? { gold: effects.cardGlow.gold.trim() }
+      : {}),
+    ...(effects.cardGlow.neutral.trim()
+      ? { neutral: effects.cardGlow.neutral.trim() }
+      : {}),
+    ...(effects.cardGlow.success.trim()
+      ? { success: effects.cardGlow.success.trim() }
+      : {}),
+    ...(effects.cardGlow.danger.trim()
+      ? { danger: effects.cardGlow.danger.trim() }
+      : {}),
+    ...(effects.cardGlow.warning.trim()
+      ? { warning: effects.cardGlow.warning.trim() }
+      : {}),
+  };
 
   const next = {
     ...(Object.keys(shadowCard).length > 0 ? { shadowCard } : {}),
     ...(Object.keys(gradientPrimary).length > 0 ? { gradientPrimary } : {}),
+    ...(Object.keys(backgroundApp).length > 0 ? { backgroundApp } : {}),
+    ...(Object.keys(gradientGlowBorder).length > 0
+      ? { gradientGlowBorder }
+      : {}),
+    ...(Object.keys(shadowGlowBorder).length > 0 ? { shadowGlowBorder } : {}),
+    ...(Object.keys(backdropFilterCard).length > 0
+      ? { backdropFilterCard }
+      : {}),
+    ...(Object.keys(cardGlow).length > 0 ? { cardGlow } : {}),
   };
 
   return Object.keys(next).length > 0 ? next : undefined;
@@ -317,6 +471,10 @@ function buildChartColorsForSave(
     ...(chartColors.chart2.trim() ? { chart2: chartColors.chart2.trim() } : {}),
     ...(chartColors.chart3.trim() ? { chart3: chartColors.chart3.trim() } : {}),
     ...(chartColors.chart4.trim() ? { chart4: chartColors.chart4.trim() } : {}),
+    ...(chartColors.glow1.trim() ? { glow1: chartColors.glow1.trim() } : {}),
+    ...(chartColors.glow2.trim() ? { glow2: chartColors.glow2.trim() } : {}),
+    ...(chartColors.glow3.trim() ? { glow3: chartColors.glow3.trim() } : {}),
+    ...(chartColors.glow4.trim() ? { glow4: chartColors.glow4.trim() } : {}),
   };
   return Object.keys(next).length > 0 ? next : undefined;
 }
@@ -756,7 +914,35 @@ export function TenantAppearanceEditor({
   const effectFieldLabels = {
     shadowCard: t("platform.appearance.effectsFields.shadowCard"),
     gradientPrimary: t("platform.appearance.effectsFields.gradientPrimary"),
+    backgroundApp: t("platform.appearance.effectsFields.backgroundApp"),
+    gradientGlowBorder: t(
+      "platform.appearance.effectsFields.gradientGlowBorder",
+    ),
+    shadowGlowBorder: t("platform.appearance.effectsFields.shadowGlowBorder"),
+    backdropFilterCard: t(
+      "platform.appearance.effectsFields.backdropFilterCard",
+    ),
   } as const;
+
+  const cardGlowLegacyFieldLabels: Record<
+    (typeof CARD_GLOW_LEGACY_KEYS)[number],
+    string
+  > = {
+    blue: t("platform.appearance.effectsFields.cardGlowBlue"),
+    green: t("platform.appearance.effectsFields.cardGlowGreen"),
+    red: t("platform.appearance.effectsFields.cardGlowRed"),
+    gold: t("platform.appearance.effectsFields.cardGlowGold"),
+  };
+
+  const cardGlowSemanticFieldLabels: Record<
+    (typeof CARD_GLOW_SEMANTIC_KEYS)[number],
+    string
+  > = {
+    neutral: t("platform.appearance.effectsFields.cardGlowNeutral"),
+    success: t("platform.appearance.effectsFields.cardGlowSuccess"),
+    danger: t("platform.appearance.effectsFields.cardGlowDanger"),
+    warning: t("platform.appearance.effectsFields.cardGlowWarning"),
+  };
 
   if (isLoading) {
     return <SettingsPanelSkeleton variant="appearance" />;
@@ -1061,7 +1247,16 @@ export function TenantAppearanceEditor({
               <Text className="text-muted-foreground text-sm">
                 {t("platform.appearance.effectsHint")}
               </Text>
-              {(["shadowCard", "gradientPrimary"] as const).map((effectKey) => (
+              {(
+                [
+                  "shadowCard",
+                  "gradientPrimary",
+                  "backgroundApp",
+                  "gradientGlowBorder",
+                  "shadowGlowBorder",
+                  "backdropFilterCard",
+                ] as const
+              ).map((effectKey) => (
                 <div key={effectKey} className="grid gap-2">
                   <Text className="text-sm font-medium">
                     {effectFieldLabels[effectKey]}
@@ -1094,6 +1289,58 @@ export function TenantAppearanceEditor({
                   ))}
                 </div>
               ))}
+              <div className="grid gap-2">
+                <Text className="text-sm font-medium">
+                  {t("platform.appearance.effectsFields.cardGlowLegacy")}
+                </Text>
+                {CARD_GLOW_LEGACY_KEYS.map((glowKey) => (
+                  <div key={glowKey} className="flex flex-col gap-1">
+                    <FieldLabel htmlFor={`cardGlow-${glowKey}`}>
+                      {cardGlowLegacyFieldLabels[glowKey]}
+                    </FieldLabel>
+                    <Input
+                      id={`cardGlow-${glowKey}`}
+                      value={effects.cardGlow[glowKey]}
+                      placeholder={t("platform.appearance.placeholder")}
+                      onChange={(event) =>
+                        setEffects((current) => ({
+                          ...current,
+                          cardGlow: {
+                            ...current.cardGlow,
+                            [glowKey]: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="grid gap-2">
+                <Text className="text-sm font-medium">
+                  {t("platform.appearance.effectsFields.cardGlowSemantic")}
+                </Text>
+                {CARD_GLOW_SEMANTIC_KEYS.map((glowKey) => (
+                  <div key={glowKey} className="flex flex-col gap-1">
+                    <FieldLabel htmlFor={`cardGlow-${glowKey}`}>
+                      {cardGlowSemanticFieldLabels[glowKey]}
+                    </FieldLabel>
+                    <Input
+                      id={`cardGlow-${glowKey}`}
+                      value={effects.cardGlow[glowKey]}
+                      placeholder={t("platform.appearance.placeholder")}
+                      onChange={(event) =>
+                        setEffects((current) => ({
+                          ...current,
+                          cardGlow: {
+                            ...current.cardGlow,
+                            [glowKey]: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
             </section>
 
             <section className="border-border grid gap-3 rounded-lg border p-4">
@@ -1104,6 +1351,26 @@ export function TenantAppearanceEditor({
                 {t("platform.appearance.chartColorsHint")}
               </Text>
               {CHART_COLOR_KEYS.map(({ key, cssVar }) => (
+                <SemanticColorField
+                  key={key}
+                  cssVar={cssVar}
+                  value={chartColors[key]}
+                  placeholder={t("platform.appearance.placeholder")}
+                  onChange={(nextValue) =>
+                    setChartColors((current) => ({
+                      ...current,
+                      [key]: nextValue,
+                    }))
+                  }
+                />
+              ))}
+              <Text className="pt-2 text-sm font-medium">
+                {t("platform.appearance.chartGlowColors")}
+              </Text>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.chartGlowColorsHint")}
+              </Text>
+              {CHART_GLOW_COLOR_KEYS.map(({ key, cssVar }) => (
                 <SemanticColorField
                   key={key}
                   cssVar={cssVar}

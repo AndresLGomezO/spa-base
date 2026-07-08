@@ -12,7 +12,7 @@ Build a **compact themed snapshot card** (header + body + action) for dashboard 
 
 ## Step-by-step
 
-1. **Single card container at root** — `metricWidget.root.columns[0].rows[0]` is one column `container` (`row-*-shell`) that holds **all card chrome** (tinted `backgroundColor`, `borderRadius`, `padding`, `boxShadow`, `overflowY: hidden`). Do **not** add a second nested `*-card` wrapper inside a sizing shell.
+1. **Single card container at root** — `metricWidget.root.columns[0].rows[0]` is one column `container` (`row-*-shell`) that holds **all card chrome** (glass `--color-card` fill, `backdropFilter`, themed glow overlay child, `borderRadius: 16`, `padding`, `--shadow-card`, `overflowY: hidden`). Do **not** add a second nested `*-card` wrapper inside a sizing shell.
 2. **Section spacing with `gap`** — on the shell container set `gap: var(--spacing-comfortable)` and stack exactly three child rows: **header**, **body**, **action**.
 3. **Header row** — `stackDirection: row`, `justifyContent: between`, `alignItems: center`:
    - Left: `text` title (`fontSize: 14`, theme color, `minWidth: 0`).
@@ -55,6 +55,16 @@ Use semantic theme colors with `color-mix` tints:
 | Text / icons | `var(--color-destructive)` |
 
 Swap `destructive` → `warning` or `success` for other cards.
+
+On the Rates Financial Snapshot dashboard, mini cards use **glass v2 surfaces** (same frosted `--color-card` + `backdropFilter` as metric cards) but stay visually distinct via compact layout (header / body / CTA), smaller `borderRadius: 16`, and unique accent + glow pairings:
+
+| Widget | Accent token | Glow overlay |
+|--------|--------------|--------------|
+| Due Today | `--color-destructive` | `--gradient-card-glow-danger` |
+| Upcoming | `--color-primary` | `--gradient-card-glow-neutral` |
+| Payment Progress | `--color-primary-400` (cyan) | `--gradient-card-glow-blue` |
+
+Use themed `color-mix` tints on count pills and action bars (20% / 24%) — not on the card shell fill. Metric KPI cards (Income / Expenses / Invest) use the same glass base but fill a larger row with chart overlays and different glow semantics (success / danger / warning).
 
 ## Reference (local Rates slice)
 

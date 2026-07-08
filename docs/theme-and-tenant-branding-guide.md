@@ -259,9 +259,36 @@ const vars = appearanceToCssVariables({
 
 Listed in `SEMANTIC_OVERRIDABLE_CSS_VARS` ([semantic-vars.ts](../packages/theme/src/semantics/semantic-vars.ts)):
 
-`--color-background`, `--color-foreground`, `--color-primary`, `--color-primary-foreground`, `--color-primary-hover`, `--color-primary-active`, `--color-muted`, `--color-muted-foreground`, `--color-border`, `--color-border-muted`, `--color-card`, `--color-card-foreground`, `--color-popover`, `--color-popover-foreground`, `--color-backdrop`, `--color-hover`, `--color-active`, `--color-accent`, `--color-accent-foreground`.
+`--color-background`, `--color-foreground`, `--color-primary`, `--color-primary-foreground`, `--color-primary-hover`, `--color-primary-active`, `--color-muted`, `--color-muted-foreground`, `--color-border`, `--color-border-muted`, `--color-card`, `--color-card-foreground`, `--color-card-border`, `--color-popover`, `--color-popover-foreground`, `--color-popover-border`, `--color-backdrop`, `--color-hover`, `--color-active`, `--color-accent`, `--color-accent-foreground`.
 
 Full semantic set (including success/warning/info) lives in [semantics.css](../packages/theme/src/semantics.css); only the subset above is exposed for tenant override in v1.
+
+### Glass-glow theme tokens (tenant appearance)
+
+Glassmorphism is **opt-in per tenant** via appearance JSON (import/export version `1.2`). Do not hardcode rates-branded effect defaults in global `tokens.css` — seed catalogs such as [rates-tenant-appearance.json](../apps/api/src/admin/rates-tenant/catalogs/rates-tenant-appearance.json) provide the reference values.
+
+| JSON field | CSS variable | Usage |
+|------------|--------------|--------|
+| `effects.backgroundApp.dark` | `--gradient-background` | Deep app gradient applied on `<html>` via `TenantBrandingProvider` |
+| `effects.backdropFilterCard.dark` | `--backdrop-filter-card` | Frosted card blur — UI builder widgets use `var(--backdrop-filter-card)` |
+| `semantics.dark.--color-card` | `--color-card` | Semi-transparent card fill |
+| `semantics.*.--color-card-border` | `--color-card-border` | Glass edge |
+| `effects.cardGlow.neutral/success/danger/warning/blue/…` | `--gradient-card-glow-*` | Semantic corner glow overlays |
+| `effects.shadowCard.dark` | `--shadow-card` | Outer depth + inset top-edge highlight |
+| `effects.gradientGlowBorder.dark` | `--gradient-glow-border` | Neon list-row hover ring gradient |
+| `effects.shadowGlowBorder.dark` | `--shadow-glow-border` | Neon list-row hover ring shadow |
+| `chartColors.glow1–4` | `--color-chart-glow-1..4` | Neon chart strokes with SVG glow filter |
+
+**Component glass (opt-in)** ([`card-glass.ts`](../packages/ui/src/card/card-glass.ts)):
+
+- Shared `Card` / `LayoutCard` / `TableCard` default to **opaque** surfaces.
+- Use `variant="glass"` or tenant `effects.backdropFilterCard` with UI-builder `backdropFilter: var(--backdrop-filter-card)`.
+- Glass shell: `background-color: var(--color-card)`, `border: 1px solid var(--color-card-border)`, `box-shadow: var(--shadow-card)`, `backdrop-filter: var(--backdrop-filter-card)`.
+- Layered glow: `background-image: var(--gradient-card-glow-success), linear-gradient(var(--color-card), var(--color-card))` via `resolveCardGlowBackground()` in [`card-glow.ts`](../packages/ui/src/card/card-glow.ts).
+
+**List row neon highlight** — set `motion.hoverSurface: "glow-border"` on query-viewer item rows. Uses tenant tokens `--gradient-glow-border` and `--shadow-glow-border`.
+
+Example catalog: [rates-tenant-appearance.json](../apps/api/src/admin/rates-tenant/catalogs/rates-tenant-appearance.json).
 
 ---
 

@@ -42,6 +42,7 @@ describe("LineAreaChart", () => {
     expect(html).toContain('stop-opacity="0.18"');
     expect(html).toMatch(/chart-area-gradient-[^"]+-default/);
     expect(html).toContain('color="rgba(34, 197, 94, 1)"');
+    expect(html).toContain('stroke="rgba(34, 197, 94, 0.95)"');
     expect(html).toContain('fill="url(#');
   });
 

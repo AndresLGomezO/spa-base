@@ -11,8 +11,18 @@
 
     --color-card: var(--color-neutral-900);
     --color-card-foreground: var(--color-neutral-50);
+    --color-card-border: color-mix(
+      in oklch,
+      var(--color-foreground) 10%,
+      transparent
+    );
     --color-popover: var(--color-neutral-900);
     --color-popover-foreground: var(--color-neutral-50);
+    --color-popover-border: color-mix(
+      in oklch,
+      var(--color-foreground) 10%,
+      transparent
+    );
 
     --color-muted: var(--color-neutral-900);
     --color-muted-foreground: var(--color-neutral-400);

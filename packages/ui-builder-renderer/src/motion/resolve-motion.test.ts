@@ -94,6 +94,16 @@ describe("resolveMotionPreset", () => {
     );
   });
 
+  it("maps glow-border hover to neon gradient border class", () => {
+    const resolved = resolveMotionPreset({
+      hoverSurface: "glow-border",
+      hoverDurationMs: 200,
+    });
+    expect(resolved.className).toContain("ui-motion-hover-interactive");
+    expect(resolved.className).toContain("ui-motion-hover-glow-border");
+    expect(motionStyleVar(resolved.style, "--motion-hover-bg")).toBeUndefined();
+  });
+
   it("maps legacy hover glow to ring shadow", () => {
     const resolved = resolveMotionPreset({ hover: "glow" });
 

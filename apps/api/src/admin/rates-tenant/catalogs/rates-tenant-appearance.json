@@ -1,6 +1,5 @@
 {
-  "version": 1,
-  "preset": "sophisticated",
+  "version": 1.2,
   "logoUrl": "https://firebasestorage.googleapis.com/v0/b/entitysystem-development.appspot.com/o/tenants%2Frates_dev%2Fimages%2F804c94e9-8eff-406f-9443-ba13f5180962.png?alt=media&token=1a5f9d95-041c-41fa-9669-0f6785403537",
   "palettes": {
     "primary": {
@@ -51,8 +50,10 @@
       "--color-border": "#e2e8f0",
       "--color-border-muted": "#f1f5f9",
       "--color-card": "#ffffff",
+      "--color-card-border": "transparent",
       "--color-card-foreground": "#0f172a",
       "--color-popover": "#ffffff",
+      "--color-popover-border": "transparent",
       "--color-popover-foreground": "#0f172a",
       "--color-backdrop": "#0f172a80",
       "--color-hover": "#f8fafc",
@@ -69,15 +70,17 @@
       "--color-primary-active": "#aa94ec",
       "--color-muted": "#1e293b",
       "--color-muted-foreground": "#94a3b8",
-      "--color-border": "#1e293b",
+      "--color-border": "#ffffff1a",
       "--color-border-muted": "#151822",
-      "--color-card": "#151822",
+      "--color-card": "#15182299",
+      "--color-card-border": "#ffffff1a",
       "--color-card-foreground": "#f8fafc",
-      "--color-popover": "#151822",
+      "--color-popover": "#151822cc",
+      "--color-popover-border": "#ffffff1a",
       "--color-popover-foreground": "#f8fafc",
       "--color-backdrop": "#00000099",
-      "--color-hover": "#1e293b",
-      "--color-active": "#334155",
+      "--color-hover": "#ffffff0d",
+      "--color-active": "#ffffff1a",
       "--color-accent": "#1e1466",
       "--color-accent-foreground": "#c7b8f3"
     }
@@ -96,15 +99,15 @@
       "--color-badge-info-foreground": "#0369a1"
     },
     "dark": {
-      "--color-badge-default": "#1e293b",
+      "--color-badge-default": "#ffffff1a",
       "--color-badge-default-foreground": "#cbd5e1",
-      "--color-badge-success": "#064e3b",
+      "--color-badge-success": "#0596694d",
       "--color-badge-success-foreground": "#34d399",
-      "--color-badge-warning": "#713f12",
+      "--color-badge-warning": "#78350f4d",
       "--color-badge-warning-foreground": "#facc15",
-      "--color-badge-danger": "#7f1d1d",
+      "--color-badge-danger": "#7f1d1d4d",
       "--color-badge-danger-foreground": "#f87171",
-      "--color-badge-info": "#0c4a6e",
+      "--color-badge-info": "#0759854d",
       "--color-badge-info-foreground": "#38bdf8"
     }
   },
@@ -130,20 +133,43 @@
     }
   },
   "effects": {
+    "backgroundApp": {
+      "dark": "linear-gradient(to bottom right, #1e1466, #0b0d14)"
+    },
     "shadowCard": {
       "light": "0px 4px 20px rgba(0, 0, 0, 0.03)",
-      "dark": "none"
+      "dark": "0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0px 1px 1px 0px rgba(255, 255, 255, 0.1)"
     },
     "gradientPrimary": {
       "light": "linear-gradient(135deg, #9D7CFA 0%, #6644F8 100%)",
       "dark": "linear-gradient(135deg, #25185A 0%, #110B29 100%)"
+    },
+    "cardGlow": {
+      "blue": "radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), transparent 60%)",
+      "neutral": "radial-gradient(circle at top left, rgba(107, 78, 255, 0.15), transparent 50%)",
+      "success": "radial-gradient(circle at top left, rgba(52, 211, 153, 0.2), transparent 50%)",
+      "danger": "radial-gradient(circle at top left, rgba(248, 113, 113, 0.2), transparent 50%)",
+      "warning": "radial-gradient(circle at top left, rgba(250, 204, 21, 0.2), transparent 50%)"
+    },
+    "backdropFilterCard": {
+      "dark": "blur(20px) saturate(180%)"
+    },
+    "gradientGlowBorder": {
+      "dark": "linear-gradient(135deg, #22d3ee 0%, #8b5cf6 52%, #ec4899 100%)"
+    },
+    "shadowGlowBorder": {
+      "dark": "0 0 18px rgba(34, 211, 238, 0.45), 0 0 36px rgba(139, 92, 246, 0.35)"
     }
   },
   "chartColors": {
-    "chart1": "#6B4EFF",
-    "chart2": "#10b981",
-    "chart3": "#f59e0b",
-    "chart4": "#ef4444"
+    "chart1": "#a78bfa",
+    "chart2": "#4ade80",
+    "chart3": "#fbbf24",
+    "chart4": "#f87171",
+    "glow1": "#c4b5fd",
+    "glow2": "#86efac",
+    "glow3": "#fcd34d",
+    "glow4": "#fca5a5"
   },
   "typography": {
     "fontFamily": "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
@@ -151,8 +177,8 @@
     "headingSize": "1.5rem"
   },
   "layout": {
-    "radiusLg": "1rem",
-    "radiusSm": "0.5rem",
+    "radiusLg": "1.5rem",
+    "radiusSm": "0.75rem",
     "spacingXs": "0.25rem",
     "spacingSm": "0.5rem",
     "spacingMd": "1rem",

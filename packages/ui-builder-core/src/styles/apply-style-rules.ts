@@ -1535,7 +1535,9 @@ function applyBoxLayoutStyleRules(
     }
 
     if (rule.property === "backdropFilter" && isCssBackdropFilterValue(raw)) {
-      style.backdropFilter = raw.trim();
+      const value = raw.trim();
+      style.backdropFilter = value;
+      (style as Record<string, string>)["WebkitBackdropFilter"] = value;
     }
   }
 }

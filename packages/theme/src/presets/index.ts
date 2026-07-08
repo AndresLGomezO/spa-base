@@ -17,6 +17,12 @@ const LEGACY_PRESET_ALIASES: Record<string, AppearancePreset> = {
   instagram: "soft",
 };
 
+/** Removed Rates glass presets — appearance tokens are stored directly on the tenant. */
+const LEGACY_REMOVED_PRESET_IDS = new Set([
+  "sophisticated-glass-glow",
+  "sophisticated-glass-glow-v2",
+]);
+
 export function isAppearancePreset(value: string): value is AppearancePreset {
   return (APPEARANCE_PRESETS as readonly string[]).includes(value);
 }
@@ -25,6 +31,9 @@ export function normalizeAppearancePreset(
   preset: string | undefined,
 ): AppearancePreset {
   if (!preset || preset === "default") {
+    return "default";
+  }
+  if (LEGACY_REMOVED_PRESET_IDS.has(preset)) {
     return "default";
   }
   if (isAppearancePreset(preset)) {

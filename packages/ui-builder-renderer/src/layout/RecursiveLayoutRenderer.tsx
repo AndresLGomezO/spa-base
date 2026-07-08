@@ -9,6 +9,7 @@ import {
   containerUsesPercentFillHeight,
   containerUsesPercentSplitHeight,
   columnStackHasPercentSplitContainer,
+  isCardGlowOverlayContainerRow,
   resolvePercentSplitSiblingContainerClass,
   flexWrapClassFromStyles,
   hasExplicitColumnWidthPercents,
@@ -1002,6 +1003,25 @@ function renderRow(
         wrapRowWithClickAction(row, neutralInner, context),
         columnGridOptions,
       );
+    }
+
+    if (
+      row.type === "component" &&
+      isContainerComponent(row.component) &&
+      isCardGlowOverlayContainerRow(row)
+    ) {
+      const overlayStyles = resolveRowWrapperStyleRules(row.component.styles, {
+        atBreakpoint,
+      });
+      const overlayInner = (
+        <div
+          aria-hidden
+          key={row.id}
+          className={overlayStyles.className}
+          style={overlayStyles.style}
+        />
+      );
+      return wrapRowContent(row, rowLocator, overlayInner, columnGridOptions);
     }
 
     if (isContainerComponent(row.component)) {

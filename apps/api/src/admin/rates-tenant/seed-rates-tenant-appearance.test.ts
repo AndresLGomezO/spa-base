@@ -12,28 +12,42 @@ const catalogPath = join(
 );
 
 describe("rates tenant appearance catalog", () => {
-  it("imports the sophisticated violet theme with logo and palettes", () => {
+  it("imports the sophisticated glass glow v2 theme with logo and palettes", () => {
     const appearance = parseRatesTenantAppearanceCatalog(
       readFileSync(catalogPath, "utf8"),
     );
 
-    expect(appearance.preset).toBe("sophisticated");
+    expect(appearance.preset).toBeUndefined();
     expect(appearance.logoUrl).toContain(
       "entitysystem-development.appspot.com",
     );
     expect(appearance.palettes?.primary?.anchorColor).toBe("#6B4EFF");
-    expect(appearance.semanticsByScheme?.light?.["--color-primary"]).toBe(
-      "#6B4EFF",
+    expect(appearance.semanticsByScheme?.light?.["--color-card-border"]).toBe(
+      "transparent",
+    );
+    expect(appearance.semanticsByScheme?.dark?.["--color-card-border"]).toBe(
+      "#ffffff1a",
+    );
+    expect(appearance.semanticsByScheme?.dark?.["--color-card"]).toBe(
+      "#15182299",
     );
     expect(appearance.colorsByScheme?.light?.["--color-sidebar"]).toBe(
       "#ffffff",
     );
+    expect(appearance.effects?.backgroundApp?.dark).toContain("#1e1466");
     expect(appearance.effects?.gradientPrimary?.light).toBe(
       "linear-gradient(135deg, #9D7CFA 0%, #6644F8 100%)",
     );
+    expect(appearance.effects?.shadowCard?.dark).toContain("inset");
+    expect(appearance.effects?.cardGlow?.success).toContain("52, 211, 153");
+    expect(appearance.effects?.cardGlow?.neutral).toContain("107, 78, 255");
+    expect(appearance.effects?.backdropFilterCard?.dark).toBe(
+      "blur(20px) saturate(180%)",
+    );
     expect(appearance.fontFamily).toContain("Plus Jakarta Sans");
-    expect(appearance.radius).toBe("1rem");
+    expect(appearance.radius).toBe("1.5rem");
     expect(appearance.spacingScale?.base).toBe("1.5rem");
-    expect(appearance.chartColors?.chart1).toBe("#6B4EFF");
+    expect(appearance.chartColors?.chart1).toBe("#a78bfa");
+    expect(appearance.chartColors?.glow1).toBe("#c4b5fd");
   });
 });

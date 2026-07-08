@@ -37,9 +37,11 @@
 
   --color-card: var(--color-white);
   --color-card-foreground: var(--color-foreground);
+  --color-card-border: var(--color-border);
 
   --color-popover: var(--color-white);
   --color-popover-foreground: var(--color-foreground);
+  --color-popover-border: var(--color-border);
 
   --color-backdrop: color-mix(
     in oklch,

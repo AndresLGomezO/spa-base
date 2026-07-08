@@ -78,10 +78,30 @@ export const tenantColorsBySchemeSchema = z
 
 export type TenantColorsByScheme = z.infer<typeof tenantColorsBySchemeSchema>;
 
+export const tenantCardGlowSchema = z
+  .object({
+    blue: z.string().trim().min(1).optional(),
+    green: z.string().trim().min(1).optional(),
+    red: z.string().trim().min(1).optional(),
+    gold: z.string().trim().min(1).optional(),
+    neutral: z.string().trim().min(1).optional(),
+    success: z.string().trim().min(1).optional(),
+    danger: z.string().trim().min(1).optional(),
+    warning: z.string().trim().min(1).optional(),
+  })
+  .partial();
+
+export type TenantCardGlow = z.infer<typeof tenantCardGlowSchema>;
+
 export const tenantAppearanceEffectsSchema = z
   .object({
     shadowCard: colorSchemeValuesSchema.optional(),
     gradientPrimary: colorSchemeValuesSchema.optional(),
+    backgroundApp: colorSchemeValuesSchema.optional(),
+    gradientGlowBorder: colorSchemeValuesSchema.optional(),
+    shadowGlowBorder: colorSchemeValuesSchema.optional(),
+    backdropFilterCard: colorSchemeValuesSchema.optional(),
+    cardGlow: tenantCardGlowSchema.optional(),
   })
   .partial();
 
@@ -95,6 +115,10 @@ export const tenantChartColorsSchema = z
     chart2: z.string().trim().min(1).optional(),
     chart3: z.string().trim().min(1).optional(),
     chart4: z.string().trim().min(1).optional(),
+    glow1: z.string().trim().min(1).optional(),
+    glow2: z.string().trim().min(1).optional(),
+    glow3: z.string().trim().min(1).optional(),
+    glow4: z.string().trim().min(1).optional(),
   })
   .partial();
 
@@ -146,11 +170,31 @@ export const APPEARANCE_PRESETS = [
   "frutigerAero",
 ] as const;
 
-export const appearancePresetSchema = z
-  .union([z.enum(APPEARANCE_PRESETS), z.literal("instagram")])
-  .transform((value) => (value === "instagram" ? "soft" : value));
+/** Removed preset ids still accepted when reading persisted tenant appearance. */
+export const LEGACY_REMOVED_APPEARANCE_PRESETS = [
+  "sophisticated-glass-glow",
+  "sophisticated-glass-glow-v2",
+] as const;
 
-export type AppearancePreset = z.infer<typeof appearancePresetSchema>;
+export type AppearancePreset = (typeof APPEARANCE_PRESETS)[number];
+
+export const appearancePresetSchema = z
+  .union([
+    z.enum(APPEARANCE_PRESETS),
+    z.literal("instagram"),
+    z.enum(LEGACY_REMOVED_APPEARANCE_PRESETS),
+  ])
+  .transform((value): AppearancePreset | undefined => {
+    if (value === "instagram") {
+      return "soft";
+    }
+    if (
+      (LEGACY_REMOVED_APPEARANCE_PRESETS as readonly string[]).includes(value)
+    ) {
+      return undefined;
+    }
+    return value as AppearancePreset;
+  });
 
 export const tenantAppearanceSchema = z
   .object({

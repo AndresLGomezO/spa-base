@@ -10,6 +10,11 @@ import { cn } from "@repo/theme/utils";
 
 import { ChartContainer } from "./ChartContainer.js";
 import { ChartLegend } from "./ChartLegend.js";
+import {
+  ChartGlowFilters,
+  resolveChartGlowFilterId,
+  resolveChartGlowStrokeColor,
+} from "./chart-glow-filter.js";
 import { resolveChartInsets } from "./chart-layout.js";
 import type { ChartRenderSeries, LineAreaChartProps } from "./types.js";
 
@@ -17,6 +22,7 @@ interface PreparedSeries {
   readonly id: string;
   readonly label: string;
   readonly color: string;
+  readonly strokeColor: string;
   readonly strokeWidth: number;
   readonly showAreaFill: boolean;
   readonly areaFillColor: string;
@@ -37,7 +43,7 @@ function prepareSeries(
   chartType: LineAreaChartProps["chartType"],
 ): PreparedSeries[] {
   const prepared: PreparedSeries[] = [];
-  for (const entry of series) {
+  for (const [seriesIndex, entry] of series.entries()) {
     const xLabels = entry.points.map((point, index) =>
       String(point.x ?? index),
     );
@@ -50,7 +56,9 @@ function prepareSeries(
       continue;
     }
 
-    const strokeColor = entry.color ?? "var(--color-primary, #6366f1)";
+    const strokeColor =
+      entry.color ??
+      resolveChartGlowStrokeColor(seriesIndex, "var(--color-primary, #6366f1)");
     const areaFillColor =
       entry.areaFillColor ?? entry.color ?? "var(--color-primary, #6366f1)";
 
@@ -58,6 +66,7 @@ function prepareSeries(
       id: entry.id,
       label: entry.label,
       color: strokeColor,
+      strokeColor,
       strokeWidth: entry.strokeWidth ?? 2,
       showAreaFill: chartType === "area" ? true : (entry.showAreaFill ?? false),
       areaFillColor,
@@ -158,6 +167,10 @@ function ChartSvg({
 
   return (
     <svg width={width} height={height} className="block">
+      <ChartGlowFilters
+        instanceId={instanceId}
+        seriesCount={preparedSeries.length}
+      />
       <Group top={insets.top} left={insets.left}>
         {grid?.visible ? (
           <GridRows
@@ -169,8 +182,12 @@ function ChartSvg({
           />
         ) : null}
 
-        {preparedSeries.map((entry) => {
+        {preparedSeries.map((entry, seriesIndex) => {
           const gradientId = `chart-area-gradient-${instanceId}-${entry.id}`;
+          const glowFilterId = resolveChartGlowFilterId(
+            instanceId,
+            seriesIndex,
+          );
           const mapped = entry.points.map((point, index) => ({
             x: resolvePointX(point, index, entry.xLabels, innerWidth),
             y: yScale(point.y),
@@ -205,12 +222,13 @@ function ChartSvg({
                 data={mapped}
                 x={(point) => point.x}
                 y={(point) => point.y}
-                stroke={entry.color}
+                stroke={entry.strokeColor}
                 strokeWidth={entry.strokeWidth}
                 curve={curveMonotoneX}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                filter={`url(#${glowFilterId})`}
               />
             </Group>
           );

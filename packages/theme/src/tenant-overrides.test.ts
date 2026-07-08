@@ -65,9 +65,14 @@ describe("appearanceToCssVariables hybrid merge", () => {
           gradientPrimary: {
             dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
           },
+          cardGlow: {
+            green:
+              "radial-gradient(circle at top left, rgba(52, 211, 153, 0.15), transparent 60%)",
+          },
         },
         chartColors: {
           chart1: "#6B4EFF",
+          glow1: "#818cf8",
         },
       },
       { colorScheme: "light" },
@@ -80,6 +85,9 @@ describe("appearanceToCssVariables hybrid merge", () => {
     expect(vars["--spacing"]).toBeUndefined();
     expect(vars["--shadow-card"]).toContain("4px 20px");
     expect(vars["--color-chart-1"]).toBe("#6B4EFF");
+    expect(vars["--color-chart-glow-1"]).toBe("#818cf8");
+    expect(vars["--gradient-card-glow-green"]).toContain("52, 211, 153");
+    expect(vars["--gradient-card-glow-success"]).toContain("52, 211, 153");
 
     const darkVars = appearanceToCssVariables(
       {
@@ -87,12 +95,36 @@ describe("appearanceToCssVariables hybrid merge", () => {
           gradientPrimary: {
             dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
           },
+          backgroundApp: {
+            dark: "linear-gradient(to bottom right, #1e1466, #0b0d14)",
+          },
+          cardGlow: {
+            neutral:
+              "radial-gradient(circle at top left, rgba(107, 78, 255, 0.15), transparent 50%)",
+          },
         },
       },
       { colorScheme: "dark" },
     );
 
     expect(darkVars["--gradient-primary"]).toContain("#422db3");
+    expect(darkVars["--gradient-background"]).toContain("#1e1466");
+    expect(darkVars["--gradient-card-glow-neutral"]).toContain("107, 78, 255");
+    expect(darkVars["--gradient-card-glow-blue"]).toContain("107, 78, 255");
+
+    const backdropVars = appearanceToCssVariables(
+      {
+        effects: {
+          backdropFilterCard: {
+            dark: "blur(20px) saturate(180%)",
+          },
+        },
+      },
+      { colorScheme: "dark" },
+    );
+    expect(backdropVars["--backdrop-filter-card"]).toBe(
+      "blur(20px) saturate(180%)",
+    );
   });
 
   it("maps legacy spacing to --spacing-macro without overriding Tailwind multiplier", () => {

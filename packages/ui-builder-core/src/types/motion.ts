@@ -15,7 +15,8 @@ export type MotionHoverSurface =
   | "info"
   | "destructive"
   | "warning"
-  | "success";
+  | "success"
+  | "glow-border";
 
 export type MotionHoverTransform =
   | "none"

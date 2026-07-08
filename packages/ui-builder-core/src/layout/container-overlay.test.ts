@@ -14,6 +14,8 @@ import {
   resolvePercentSplitSiblingContainerClass,
   resolveChartComponentRowStyles,
   isOverlayImageRow,
+  isCardGlowOverlayContainerRow,
+  createContainerOverlayContext,
 } from "@repo/ui-builder-core";
 import type { ChartComponentConfig } from "../types/component.js";
 import type { ComponentRowNode } from "../types/layout.js";
@@ -282,5 +284,33 @@ describe("container height style helpers", () => {
         (rule) => rule.property === "top" && rule.value === "0",
       ),
     ).toBe(true);
+  });
+
+  it("detects card glow overlay containers and includes them in overlay context", () => {
+    const glowRow: ComponentRowNode = {
+      type: "component",
+      id: "row-income-card-glow",
+      component: {
+        kind: "container",
+        stackDirection: "column",
+        styles: [
+          { property: "position", value: "absolute" },
+          { property: "top", value: "0" },
+          { property: "right", value: "0" },
+          { property: "bottom", value: "0" },
+          { property: "left", value: "0" },
+          {
+            property: "backgroundColor",
+            value: "var(--gradient-card-glow-success)",
+          },
+          { property: "pointerEvents", value: "none" },
+          { property: "zIndex", value: "0" },
+        ],
+        rows: [],
+      },
+    };
+
+    expect(isCardGlowOverlayContainerRow(glowRow)).toBe(true);
+    expect(createContainerOverlayContext([glowRow]).hasOverlayImage).toBe(true);
   });
 });

@@ -9,6 +9,13 @@ import {
 
 import { cn } from "@repo/theme/utils";
 
+import { CardGlowOverlay } from "../card/CardGlowOverlay.js";
+import {
+  type CardGlowColor,
+  resolveCardGlowBackground,
+} from "../card/card-glow.js";
+import { cardOpaqueSurfaceClasses } from "../card/card-glass.js";
+
 /** Matches `--animate-layout-card-sweep` duration in theme tokens. */
 export const LAYOUT_CARD_FLASH_SWEEP_MS = 1400;
 
@@ -20,6 +27,7 @@ export interface LayoutCardProps extends HTMLAttributes<HTMLDivElement> {
   readonly actions?: ReactNode;
   readonly interactive?: boolean;
   readonly variant?: "default" | "gradient";
+  readonly glow?: CardGlowColor;
   /**
    * When set, a tap that triggers the sweep waits this long before calling `onClick`.
    * Pair with navigation handlers so route changes do not unmount the card mid-flash.
@@ -56,8 +64,10 @@ export function LayoutCard({
   actions,
   interactive = false,
   variant = "default",
+  glow,
   clickActivationDelayMs,
   className,
+  style,
   onClick,
   onPointerDown,
   ...props
@@ -202,17 +212,24 @@ export function LayoutCard({
   return (
     <article
       className={cn(
-        "border-border bg-card relative flex flex-col gap-3 overflow-hidden rounded-lg border p-macro shadow-card transition-all duration-200",
+        cardOpaqueSurfaceClasses,
+        "relative flex flex-col gap-3 overflow-hidden p-macro transition-all duration-200",
         variant === "gradient" &&
           "border-0 text-primary-foreground [background:var(--gradient-primary)]",
         interactive &&
-          "hover:border-border/80 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.995]",
+          "hover:border-card-border/80 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.995]",
         className,
       )}
+      style={
+        glow && variant !== "gradient"
+          ? { ...style, backgroundImage: resolveCardGlowBackground(glow) }
+          : style
+      }
       onPointerDown={handlePointerDown}
       onClick={handleClick}
       {...props}
     >
+      {glow ? <CardGlowOverlay glow={glow} /> : null}
       {interactive && flashTick > 0 ? (
         <div
           aria-hidden
@@ -229,7 +246,7 @@ export function LayoutCard({
           {actions}
         </div>
       ) : null}
-      <div className="min-h-0 w-full min-w-0">{children}</div>
+      <div className="relative z-10 min-h-0 w-full min-w-0">{children}</div>
     </article>
   );
 }

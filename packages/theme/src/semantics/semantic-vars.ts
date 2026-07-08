@@ -1,6 +1,22 @@
+const CARD_GLOW_CSS_VARS = [
+  "--gradient-card-glow-blue",
+  "--gradient-card-glow-green",
+  "--gradient-card-glow-red",
+  "--gradient-card-glow-gold",
+  "--gradient-card-glow-neutral",
+  "--gradient-card-glow-success",
+  "--gradient-card-glow-danger",
+  "--gradient-card-glow-warning",
+] as const;
+
 export const EFFECT_SEMANTIC_CSS_VARS = [
   "--shadow-card",
   "--gradient-primary",
+  "--gradient-background",
+  "--gradient-glow-border",
+  "--shadow-glow-border",
+  "--backdrop-filter-card",
+  ...CARD_GLOW_CSS_VARS,
 ] as const;
 
 export const CHART_COLOR_CSS_VARS = [
@@ -8,6 +24,10 @@ export const CHART_COLOR_CSS_VARS = [
   "--color-chart-2",
   "--color-chart-3",
   "--color-chart-4",
+  "--color-chart-glow-1",
+  "--color-chart-glow-2",
+  "--color-chart-glow-3",
+  "--color-chart-glow-4",
 ] as const;
 
 export const LAYOUT_RADIUS_CSS_VARS = ["--radius-sm", "--radius-lg"] as const;
@@ -55,8 +75,10 @@ export const SEMANTIC_OVERRIDABLE_CSS_VARS = [
   "--color-border-muted",
   "--color-card",
   "--color-card-foreground",
+  "--color-card-border",
   "--color-popover",
   "--color-popover-foreground",
+  "--color-popover-border",
   "--color-backdrop",
   "--color-hover",
   "--color-active",

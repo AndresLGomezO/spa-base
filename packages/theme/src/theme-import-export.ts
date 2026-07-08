@@ -6,6 +6,7 @@ import {
 import {
   BADGE_SEMANTIC_CSS_VARS,
   TENANT_OVERRIDE_GROUPS,
+  SUPPORTED_TENANT_THEME_EXPORT_VERSIONS,
   TENANT_THEME_EXPORT_VERSION,
   sanitizeCustomTokens,
   type TenantAppearanceLike,
@@ -334,9 +335,13 @@ function parseTenantThemeDocument(json: string): TenantThemeExportDocument {
 
   const document = parsed as TenantThemeExportDocument;
 
-  if (document.version !== TENANT_THEME_EXPORT_VERSION) {
+  if (
+    !(SUPPORTED_TENANT_THEME_EXPORT_VERSIONS as readonly number[]).includes(
+      document.version,
+    )
+  ) {
     throw new Error(
-      `Unsupported theme version ${String(document.version)}. Expected ${TENANT_THEME_EXPORT_VERSION}.`,
+      `Unsupported theme version ${String(document.version)}. Expected ${SUPPORTED_TENANT_THEME_EXPORT_VERSIONS.join(" or ")}.`,
     );
   }
 
@@ -349,76 +354,31 @@ export function createTenantThemeSkeleton(): string {
     palettes: {
       primary: {
         anchorStep: "500",
-        anchorColor: "#6B4EFF",
-        shadeOverrides: {
-          "500": "#6B4EFF",
-        },
+        anchorColor: "#00a1e5",
       },
       neutral: {
         anchorStep: "50",
-        anchorColor: "#f8fafc",
+        anchorColor: "#f7f7f8",
       },
     },
     semantics: {
-      light: {
-        "--color-background": "#f8fafc",
-        "--color-foreground": "#0f172a",
-      },
-      dark: {
-        "--color-background": "#0b0d14",
-        "--color-foreground": "#f8fafc",
-      },
+      light: {},
+      dark: {},
     },
     sidebar: {
-      light: {
-        "--color-sidebar": "#ffffff",
-      },
-      dark: {
-        "--color-sidebar": "#0b0d14",
-      },
+      light: {},
+      dark: {},
     },
     badges: {
-      light: {
-        "--color-badge-success": "#dcfce7",
-      },
-      dark: {
-        "--color-badge-success": "#064e3b",
-      },
+      light: {},
+      dark: {},
     },
-    effects: {
-      shadowCard: {
-        light: "0px 4px 20px rgba(0, 0, 0, 0.03)",
-        dark: "none",
-      },
-      gradientPrimary: {
-        light: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
-        dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
-      },
-    },
-    chartColors: {
-      chart1: "#6B4EFF",
-      chart2: "#10b981",
-      chart3: "#f59e0b",
-      chart4: "#ef4444",
-    },
-    customTokens: [
-      {
-        kind: "color",
-        name: "widget",
-        label: "Widget surface",
-        light: "#ffffff",
-        dark: "#1a1a2e",
-      },
-      {
-        kind: "gradient",
-        name: "hero",
-        light: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
-        dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
-      },
-    ],
+    effects: {},
+    chartColors: {},
+    customTokens: [],
     typography: {
-      fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
-      bodySize: "0.875rem",
+      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+      bodySize: "1rem",
       headingSize: "1.5rem",
     },
     layout: {
@@ -429,7 +389,7 @@ export function createTenantThemeSkeleton(): string {
       spacingMd: "1rem",
       spacingBase: "1.5rem",
       spacingLg: "2rem",
-      sidebarWidth: "260px",
+      sidebarWidth: "16rem",
     },
   };
 
@@ -564,24 +524,26 @@ export const EXAMPLE_VIOLET_DASHBOARD_THEME_JSON = exportTenantTheme({
       "--color-muted-foreground": "#94a3b8",
       "--color-border": "#1e293b",
       "--color-border-muted": "#151822",
-      "--color-card": "#151822",
+      "--color-card": "#151822cc",
       "--color-card-foreground": "#f8fafc",
-      "--color-popover": "#151822",
+      "--color-card-border": "#ffffff1a",
+      "--color-popover": "#151822cc",
       "--color-popover-foreground": "#f8fafc",
+      "--color-popover-border": "#ffffff1a",
       "--color-backdrop": "#00000099",
-      "--color-hover": "#1e293b",
-      "--color-active": "#334155",
+      "--color-hover": "#ffffff0d",
+      "--color-active": "#ffffff1a",
       "--color-accent": "#1e1466",
       "--color-accent-foreground": "#c7b8f3",
       "--color-badge-default": "#1e293b",
       "--color-badge-default-foreground": "#cbd5e1",
-      "--color-badge-success": "#064e3b",
+      "--color-badge-success": "#05966933",
       "--color-badge-success-foreground": "#34d399",
-      "--color-badge-warning": "#713f12",
+      "--color-badge-warning": "#78350f33",
       "--color-badge-warning-foreground": "#facc15",
-      "--color-badge-danger": "#7f1d1d",
+      "--color-badge-danger": "#7f1d1d33",
       "--color-badge-danger-foreground": "#f87171",
-      "--color-badge-info": "#0c4a6e",
+      "--color-badge-info": "#07598533",
       "--color-badge-info-foreground": "#38bdf8",
     },
   },
@@ -610,11 +572,38 @@ export const EXAMPLE_VIOLET_DASHBOARD_THEME_JSON = exportTenantTheme({
   effects: {
     shadowCard: {
       light: "0px 4px 20px rgba(0, 0, 0, 0.03)",
-      dark: "none",
+      dark: "0px 8px 24px -4px rgba(0, 0, 0, 0.2), 0px 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0px 1px 1px #ffffff1a",
     },
     gradientPrimary: {
       light: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
       dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
+    },
+    backgroundApp: {
+      dark: "linear-gradient(to bottom right, #1e1466, #0b0d14)",
+    },
+    gradientGlowBorder: {
+      dark: "linear-gradient(135deg, #22d3ee 0%, #8b5cf6 52%, #ec4899 100%)",
+    },
+    shadowGlowBorder: {
+      dark: "0 0 18px rgba(34, 211, 238, 0.45), 0 0 36px rgba(139, 92, 246, 0.35)",
+    },
+    backdropFilterCard: {
+      dark: "blur(20px) saturate(180%)",
+    },
+    cardGlow: {
+      blue: "radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), transparent 60%)",
+      green:
+        "radial-gradient(circle at top left, rgba(52, 211, 153, 0.15), transparent 60%)",
+      red: "radial-gradient(circle at top left, rgba(248, 113, 113, 0.15), transparent 60%)",
+      gold: "radial-gradient(circle at top left, rgba(250, 204, 21, 0.15), transparent 60%)",
+      neutral:
+        "radial-gradient(circle at top left, rgba(107, 78, 255, 0.15), transparent 50%)",
+      success:
+        "radial-gradient(circle at top left, rgba(52, 211, 153, 0.2), transparent 50%)",
+      danger:
+        "radial-gradient(circle at top left, rgba(248, 113, 113, 0.2), transparent 50%)",
+      warning:
+        "radial-gradient(circle at top left, rgba(250, 204, 21, 0.2), transparent 50%)",
     },
   },
   chartColors: {
@@ -622,6 +611,10 @@ export const EXAMPLE_VIOLET_DASHBOARD_THEME_JSON = exportTenantTheme({
     chart2: "#10b981",
     chart3: "#f59e0b",
     chart4: "#ef4444",
+    glow1: "#818cf8",
+    glow2: "#34d399",
+    glow3: "#fbbf24",
+    glow4: "#f87171",
   },
   customTokens: [
     {

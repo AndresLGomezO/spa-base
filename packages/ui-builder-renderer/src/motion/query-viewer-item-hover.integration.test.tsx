@@ -39,17 +39,6 @@ function findQueryViewerComponent(
   return undefined;
 }
 
-function motionStyleVar(
-  style: ReturnType<typeof resolveMotionPreset>["style"],
-  key: string,
-): string | undefined {
-  if (!style) {
-    return undefined;
-  }
-
-  return (style as Record<string, string | undefined>)[key];
-}
-
 function findRowById(
   rows: readonly ComponentRowNode[] | undefined,
   rowId: string,
@@ -96,13 +85,11 @@ describe("query viewer item row hover", () => {
     const itemRow = queryViewer!.rows[0] as ComponentRowNode & {
       motion?: MotionPreset;
     };
-    expect(itemRow.motion?.hoverSurface).toBe("info");
+    expect(itemRow.motion?.hoverSurface).toBe("glow-border");
 
     const motion = resolveMotionPreset(itemRow.motion);
     expect(motion.className).toContain("ui-motion-hover-interactive");
-    expect(motionStyleVar(motion.style, "--motion-hover-bg")).toBe(
-      "color-mix(in oklch, var(--color-info) 24%, transparent)",
-    );
+    expect(motion.className).toContain("ui-motion-hover-glow-border");
 
     const itemLayout: UiLayoutDocument = {
       root: {
@@ -123,7 +110,7 @@ describe("query viewer item row hover", () => {
     );
 
     expect(html).toContain("ui-motion-hover-interactive");
-    expect(html).toContain("--motion-hover-bg");
+    expect(html).toContain("ui-motion-hover-glow-border");
   });
 
   it("renders tinted mini-widget action buttons with rest/hover background vars", () => {
