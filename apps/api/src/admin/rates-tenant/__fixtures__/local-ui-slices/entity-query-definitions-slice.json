@@ -1,0 +1,198 @@
+{
+  "kind": "entity-query-definitions-catalog",
+  "version": 1,
+  "exportedAt": "2026-07-06T20:00:00.000Z",
+  "description": "Local Rates tenant — dashboard queries for upcoming payments, mini-widget metrics, and top expense category.",
+  "entityQueryDefinitions": [
+    {
+      "name": "Upcoming payments (dashboard)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Due today (metrics)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfDay"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfDay"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Upcoming this week (metrics)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfWeek"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfWeek"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Top outflow category (period)",
+      "sourceEntity": "transaction",
+      "queryMode": "aggregated",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "in",
+            "value": {
+              "type": "static",
+              "value": ["EXPENSE", "PAYMENT"]
+            }
+          }
+        ]
+      },
+      "sort": [],
+      "groupBy": ["categoryId"],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "groupSort": [
+        {
+          "field": "sum_amount",
+          "direction": "desc"
+        }
+      ],
+      "groupLimit": 1,
+      "limitMode": "all",
+      "status": "ACTIVE"
+    }
+  ]
+}

@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { parseEntityQueryDefinitionsCatalogJson } from "@repo/entity-queries";
@@ -12,25 +14,27 @@ import {
 } from "./seed-local-tenant-ui-slices.js";
 import { parseRatesEntityUiOverridesCatalog } from "./seed-rates-entity-ui-overrides.js";
 
-const REPO_ROOT = join(
+const FIXTURES_UI_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
+  "__fixtures__",
+  "local-ui-slices",
 );
-const LOCAL_UI_DIR = join(REPO_ROOT, ".local/tenant-import/ui");
 
 describe("seed-local-tenant-ui-slices", () => {
   it("detects local UI slice files when present", () => {
-    expect(hasLocalTenantUiSlices(LOCAL_UI_DIR)).toBe(true);
+    expect(hasLocalTenantUiSlices(FIXTURES_UI_DIR)).toBe(true);
+  });
+
+  it("returns false when UI slice directory is empty", () => {
+    const uiDir = join(mkdtempSync(join(tmpdir(), "local-ui-empty-")), "ui");
+    mkdirSync(uiDir, { recursive: true });
+    expect(hasLocalTenantUiSlices(uiDir)).toBe(false);
   });
 
   it("parses local query definitions slice", () => {
     const parsed = parseEntityQueryDefinitionsCatalogJson(
       readFileSync(
-        join(LOCAL_UI_DIR, "entity-query-definitions-slice.json"),
+        join(FIXTURES_UI_DIR, "entity-query-definitions-slice.json"),
         "utf8",
       ),
     );
@@ -109,7 +113,7 @@ describe("seed-local-tenant-ui-slices", () => {
   it("parses local paymentSchedule widget override slice", () => {
     const catalog = parseRatesEntityUiOverridesCatalog(
       readFileSync(
-        join(LOCAL_UI_DIR, "paymentSchedule-entity-ui-overrides.json"),
+        join(FIXTURES_UI_DIR, "paymentSchedule-entity-ui-overrides.json"),
         "utf8",
       ),
     );
@@ -178,7 +182,7 @@ describe("seed-local-tenant-ui-slices", () => {
   it("parses local financial snapshot dashboard section slice", () => {
     const slice = JSON.parse(
       readFileSync(
-        join(LOCAL_UI_DIR, "tenant-dashboard-layout-slice.json"),
+        join(FIXTURES_UI_DIR, "tenant-dashboard-layout-slice.json"),
         "utf8",
       ),
     ) as {
