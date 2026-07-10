@@ -71,11 +71,14 @@ export function formDesignerComponentsLabels(
     "metric-derived-kpi": t("metricsRowDesigner.components.metricDerivedKpi"),
     "metric-widget": t("metricsRowDesigner.components.metricWidget"),
     "query-viewer": t("metricsRowDesigner.components.queryViewer"),
-    "view-filter": t("viewFilterComponents.searchAndFilters"),
+    "view-search": t("viewFilterComponents.search"),
+    "view-filters": t("viewFilterComponents.filters"),
+    "view-date-filter": t("viewFilterComponents.dateFilter"),
     "dashboard-section": t(
       "dashboardLayoutDesigner.components.dashboardSection",
     ),
     user: t("dashboardLayoutDesigner.components.user"),
+    "notification-bell": t("dashboardLayoutDesigner.components.notificationBell"),
     chart: t("formDesigner.components.options.chart"),
     "related-records": t("detailViewDesigner.components.relatedRecords"),
   };

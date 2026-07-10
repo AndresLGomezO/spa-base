@@ -7,6 +7,7 @@ import {
   type DatePickerLabels,
 } from "@repo/ui";
 import type { ViewFilterDateGranularity } from "@repo/ui-builder-core";
+import type { CSSProperties } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -18,6 +19,8 @@ interface ViewFilterDateFieldProps {
   readonly onChange: (value: string) => void;
   readonly locale: string;
   readonly isExplicit?: boolean;
+  readonly inputClassName?: string;
+  readonly inputStyle?: CSSProperties;
 }
 
 function bucketToIsoDate(value: string): string | undefined {
@@ -57,6 +60,8 @@ export function ViewFilterDateField({
   onChange,
   locale,
   isExplicit = false,
+  inputClassName,
+  inputStyle,
 }: ViewFilterDateFieldProps) {
   const { t } = useTranslation("common");
 
@@ -88,30 +93,23 @@ export function ViewFilterDateField({
     clearAriaLabel,
   };
 
+  const pickerProps = {
+    value,
+    onChange,
+    locale,
+    labels,
+    compact: true as const,
+    inputClassName,
+    inputStyle,
+    ...clearProps,
+  };
+
   if (granularity === "year") {
-    return (
-      <YearPicker
-        value={value}
-        onChange={onChange}
-        locale={locale}
-        labels={labels}
-        compact
-        {...clearProps}
-      />
-    );
+    return <YearPicker {...pickerProps} />;
   }
 
   if (granularity === "month") {
-    return (
-      <MonthYearPicker
-        value={value}
-        onChange={onChange}
-        locale={locale}
-        labels={labels}
-        compact
-        {...clearProps}
-      />
-    );
+    return <MonthYearPicker {...pickerProps} />;
   }
 
   return (
@@ -127,6 +125,8 @@ export function ViewFilterDateField({
       locale={locale}
       labels={labels}
       compact
+      inputClassName={inputClassName}
+      inputStyle={inputStyle}
       {...clearProps}
     />
   );

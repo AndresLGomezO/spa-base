@@ -8,6 +8,7 @@ import {
   isMetricDerivedKpiComponent,
   isMetricWidgetComponent,
   isUserComponent,
+  isNotificationBellComponent,
   isChartComponent,
 } from "../types/component.js";
 import type { UiComponentConfig } from "../types/component.js";
@@ -173,6 +174,7 @@ function collectComponentPaths(
     isMetricWidgetComponent(component) ||
     isDashboardSectionComponent(component) ||
     isUserComponent(component) ||
+    isNotificationBellComponent(component) ||
     isChartComponent(component)
   ) {
     return [];
@@ -190,6 +192,7 @@ function collectComponentPaths(
     isRowHolderComponent(component) ||
     component.kind === "form-section" ||
     component.kind === "icon" ||
+    component.kind === "notification-bell" ||
     component.kind === "form-actions" ||
     component.kind === "wizard-progress" ||
     component.kind === "wizard-step-host" ||
@@ -200,7 +203,8 @@ function collectComponentPaths(
     component.kind === "page-metrics" ||
     component.kind === "page-list" ||
     component.kind === "view-search" ||
-    component.kind === "view-filter"
+    component.kind === "view-filters" ||
+    component.kind === "view-date-filter"
   ) {
     return [];
   }

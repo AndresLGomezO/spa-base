@@ -8,6 +8,8 @@ import { useTranslation } from "react-i18next";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
 import type { PreviewFocusState } from "./preview-focus-state";
 import {
+  resolveParentGridAlignItems,
+  resolveParentIsGrid,
   resolveParentStackAlign,
   resolveParentStackDirection,
   resolveParentStackUsesFlexWrap,
@@ -69,11 +71,20 @@ export function FormDesignerComponentRowChrome({
   const parentStackStyles = layout
     ? resolveParentStackStyles(layout, rowRef.locator)
     : undefined;
+  const parentIsGrid = layout
+    ? resolveParentIsGrid(layout, rowRef.locator)
+    : false;
+  const parentGridAlignItems =
+    layout && parentIsGrid
+      ? resolveParentGridAlignItems(layout, rowRef.locator)
+      : undefined;
   const layoutClasses = resolvePreviewRowChromeLayoutClasses({
     parentStackDirection,
     parentStackAlign,
     parentUsesFlexWrap,
     parentStackStyles,
+    parentIsGrid,
+    parentGridAlignItems,
     row,
     isStructuralRow,
     preferFlexGrow: rowPrefersFlexGrow(row),

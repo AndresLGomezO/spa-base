@@ -697,6 +697,7 @@ export function inlineFlexGrowStretchClassName(
   if (
     component.kind !== "text" &&
     component.kind !== "user" &&
+    component.kind !== "notification-bell" &&
     component.kind !== "image" &&
     component.kind !== "metric-kpi" &&
     component.kind !== "metric-derived-kpi"
@@ -845,7 +846,9 @@ export function prefersInlineContentWidth(component: {
   if (
     component.kind !== "text" &&
     component.kind !== "user" &&
+    component.kind !== "notification-bell" &&
     component.kind !== "image" &&
+    component.kind !== "icon" &&
     component.kind !== "metric-kpi" &&
     component.kind !== "metric-derived-kpi"
   ) {
@@ -1754,78 +1757,150 @@ function themeTokenCssDeclarations(
   }
 }
 
-function themeTokenBackgroundCss(token: ThemeToken): string {
+function themeTokenBackgroundInlineStyle(token: ThemeToken): LayoutInlineStyle {
   switch (token) {
     case "muted":
-      return "background-color:var(--color-muted)";
+      return { backgroundColor: "var(--color-muted)" };
     case "primary":
-      return "background-color:color-mix(in oklab, var(--color-primary) 10%, transparent)";
+      return {
+        backgroundColor:
+          "color-mix(in oklab, var(--color-primary) 10%, transparent)",
+      };
     case "success":
-      return "background-color:color-mix(in oklab, var(--color-success) 10%, transparent)";
+      return {
+        backgroundColor:
+          "color-mix(in oklab, var(--color-success) 10%, transparent)",
+      };
     case "warning":
-      return "background-color:color-mix(in oklab, var(--color-warning) 10%, transparent)";
+      return {
+        backgroundColor:
+          "color-mix(in oklab, var(--color-warning) 10%, transparent)",
+      };
     case "danger":
-      return "background-color:color-mix(in oklab, var(--color-destructive) 10%, transparent)";
+      return {
+        backgroundColor:
+          "color-mix(in oklab, var(--color-destructive) 10%, transparent)",
+      };
     case "info":
-      return "background-color:color-mix(in oklab, var(--color-info) 10%, transparent)";
+      return {
+        backgroundColor:
+          "color-mix(in oklab, var(--color-info) 10%, transparent)",
+      };
     case "background":
-      return "background-color:var(--color-background)";
+      return { backgroundColor: "var(--color-background)" };
     case "foreground":
-      return "background-color:color-mix(in oklab, var(--color-foreground) 10%, transparent)";
+      return {
+        backgroundColor:
+          "color-mix(in oklab, var(--color-foreground) 10%, transparent)",
+      };
     case "transparent":
-      return "background-color:transparent";
+      return { backgroundColor: "transparent" };
     default:
-      return "background-color:var(--color-muted)";
+      return { backgroundColor: "var(--color-muted)" };
   }
 }
 
-function themeTokenTextCss(token: ThemeToken): string {
+function themeTokenTextInlineStyle(token: ThemeToken): LayoutInlineStyle {
   switch (token) {
     case "muted":
-      return "color:var(--color-muted-foreground)";
+      return { color: "var(--color-muted-foreground)" };
     case "primary":
-      return "color:var(--color-primary)";
+      return { color: "var(--color-primary)" };
     case "success":
-      return "color:var(--color-success)";
+      return { color: "var(--color-success)" };
     case "warning":
-      return "color:var(--color-warning)";
+      return { color: "var(--color-warning)" };
     case "danger":
-      return "color:var(--color-destructive)";
+      return { color: "var(--color-destructive)" };
     case "info":
-      return "color:var(--color-info)";
+      return { color: "var(--color-info)" };
     case "transparent":
-      return "color:transparent";
+      return { color: "transparent" };
     case "background":
     case "foreground":
     case "default":
     default:
-      return "color:var(--color-foreground)";
+      return { color: "var(--color-foreground)" };
   }
 }
 
-function themeTokenBorderCss(token: ThemeToken): string {
+function themeTokenBorderInlineStyle(token: ThemeToken): LayoutInlineStyle {
   switch (token) {
     case "muted":
-      return "border-color:var(--color-muted)";
+      return { borderColor: "var(--color-muted)" };
     case "primary":
-      return "border-color:var(--color-primary)";
+      return { borderColor: "var(--color-primary)" };
     case "success":
-      return "border-color:var(--color-success)";
+      return { borderColor: "var(--color-success)" };
     case "warning":
-      return "border-color:var(--color-warning)";
+      return { borderColor: "var(--color-warning)" };
     case "danger":
-      return "border-color:var(--color-destructive)";
+      return { borderColor: "var(--color-destructive)" };
     case "info":
-      return "border-color:var(--color-info)";
+      return { borderColor: "var(--color-info)" };
     case "background":
-      return "border-color:var(--color-background)";
+      return { borderColor: "var(--color-background)" };
     case "foreground":
-      return "border-color:var(--color-foreground)";
+      return { borderColor: "var(--color-foreground)" };
     case "transparent":
-      return "border-color:transparent";
+      return { borderColor: "transparent" };
     default:
-      return "border-color:var(--color-border)";
+      return { borderColor: "var(--color-border)" };
   }
+}
+
+/** Inline layout styles for theme color tokens (overrides conflicting utility classes). */
+export function themeTokenToLayoutInlineStyle(
+  property: StylePropertyKey,
+  token: ThemeToken,
+): LayoutInlineStyle | undefined {
+  switch (property) {
+    case "backgroundColor":
+      return themeTokenBackgroundInlineStyle(token);
+    case "color":
+      return themeTokenTextInlineStyle(token);
+    case "borderColor":
+      return themeTokenBorderInlineStyle(token);
+    default:
+      return undefined;
+  }
+}
+
+export function themeTokenInlineStyleFromRules(
+  styles: readonly StyleRule[] | undefined,
+  atBreakpoint?: StyleBreakpoint,
+): LayoutInlineStyle {
+  const style: LayoutInlineStyle = {};
+
+  for (const rule of filterStyleRulesForFlatApplication(styles, atBreakpoint)) {
+    if (rule.value === undefined || !COLOR_STYLE_PROPERTIES.has(rule.property)) {
+      continue;
+    }
+
+    const raw = String(rule.value);
+    if (!isThemeTokenValue(raw)) {
+      continue;
+    }
+
+    const tokenStyle = themeTokenToLayoutInlineStyle(rule.property, raw);
+    if (tokenStyle) {
+      Object.assign(style, tokenStyle);
+    }
+  }
+
+  return style;
+}
+
+function themeTokenBackgroundCss(token: ThemeToken): string {
+  return layoutStyleToCssDeclarations(themeTokenBackgroundInlineStyle(token));
+}
+
+function themeTokenTextCss(token: ThemeToken): string {
+  return layoutStyleToCssDeclarations(themeTokenTextInlineStyle(token));
+}
+
+function themeTokenBorderCss(token: ThemeToken): string {
+  return layoutStyleToCssDeclarations(themeTokenBorderInlineStyle(token));
 }
 
 function unsetCssForProperty(property: StylePropertyKey): string {

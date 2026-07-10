@@ -1,5 +1,5 @@
 import type {
-  ViewFilterComponentConfig,
+  ViewDateFilterComponentConfig,
   ViewFilterDateGranularity,
 } from "../types/component.js";
 
@@ -24,14 +24,14 @@ export function defaultDateFilterParam(
 }
 
 export function resolveDateFilterGranularity(
-  config: Pick<ViewFilterComponentConfig, "dateFilterGranularity">,
+  config: Pick<ViewDateFilterComponentConfig, "dateFilterGranularity">,
 ): ViewFilterDateGranularity {
   return config.dateFilterGranularity ?? "month";
 }
 
 export function resolveDateFilterParam(
   config: Pick<
-    ViewFilterComponentConfig,
+    ViewDateFilterComponentConfig,
     "dateFilterGranularity" | "dateFilterParam"
   >,
 ): string {
@@ -44,12 +44,8 @@ export function resolveDateFilterParam(
 }
 
 export function resolveDashboardDateFilterConfig(
-  config: ViewFilterComponentConfig,
-): DashboardDateFilterConfig | null {
-  if (config.enableDateFilter !== true) {
-    return null;
-  }
-
+  config: ViewDateFilterComponentConfig,
+): DashboardDateFilterConfig {
   const granularity = resolveDateFilterGranularity(config);
   return {
     param: resolveDateFilterParam(config),

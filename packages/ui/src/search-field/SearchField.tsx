@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Search, X } from "lucide-react";
 import {
   startTransition,
@@ -24,6 +25,8 @@ export interface SearchFieldProps {
   readonly clearAriaLabel?: string;
   readonly debounceMs?: number;
   readonly className?: string;
+  readonly inputClassName?: string;
+  readonly inputStyle?: CSSProperties;
 }
 
 export function SearchField({
@@ -34,6 +37,8 @@ export function SearchField({
   clearAriaLabel = DEFAULT_CLEAR_ARIA_LABEL,
   debounceMs = DEFAULT_DEBOUNCE_MS,
   className,
+  inputClassName,
+  inputStyle,
 }: SearchFieldProps) {
   const [localValue, setLocalValue] = useState(value);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -122,7 +127,12 @@ export function SearchField({
         }}
         onBlur={handleBlur}
         placeholder={placeholder}
-        className={cn("!pl-11 shadow-none", showClearButton && "!pr-10")}
+        className={cn(
+          "!pl-11 shadow-none",
+          showClearButton && "!pr-10",
+          inputClassName,
+        )}
+        style={inputStyle}
         aria-label={ariaLabel ?? placeholder}
         data-testid="data-view-search"
       />

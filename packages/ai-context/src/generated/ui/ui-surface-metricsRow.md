@@ -14,7 +14,9 @@ Requires `metricWidgets[]` definitions and `metricRowLayout` with metric-widget 
 - `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
-- `view-filter`
+- `view-search`
+- `view-filters`
+- `view-date-filter`
 - `metric-widget`
 
 ## Slice envelope example

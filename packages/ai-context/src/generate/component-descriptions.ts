@@ -406,19 +406,44 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
   },
   user: {
     summary:
-      "Displays the signed-in user (name, email, photo, or photo with name).",
+      "Displays the signed-in user (name, email, photo, photo with name, or profile button menu).",
     properties: [
-      "display: name | email | photo | photo-and-name",
+      "display: name | email | photo | photo-and-name | profile-button",
       "nameFormat?: full | first",
       "imageSize?",
+      "avatarShape?: circle | rounded | square",
+      "profileButtonContent?: photo | full",
       "label?",
       "styles?",
     ],
     example: JSON.stringify(
       {
         kind: "user",
-        display: "photo-and-name",
-        imageSize: 40,
+        display: "profile-button",
+        profileButtonContent: "photo",
+        imageSize: 48,
+        avatarShape: "circle",
+      },
+      null,
+      2,
+    ),
+  },
+  "notification-bell": {
+    summary:
+      "Interactive notifications bell with unread badge and notifications panel.",
+    properties: [
+      "iconName?: string (default Bell)",
+      "iconSize?",
+      "showBadge?",
+      "label?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "notification-bell",
+        iconName: "Bell",
+        iconSize: 24,
+        showBadge: true,
       },
       null,
       2,
@@ -558,43 +583,46 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
   },
   "view-search": {
     summary:
-      "Legacy component kind; migrated to `view-filter` with `enableSearch: true`. Prefer `view-filter`.",
-    properties: ["placeholder?", "styles?"],
+      "Global search input for a data view. Binds to URL query param `q`. Searchable fields are inferred from all entities in the tenant catalog.",
+    properties: ["placeholder?", "label?", "styles?"],
     example: JSON.stringify(
-      { kind: "view-search", placeholder: "Search…" },
+      { kind: "view-search", placeholder: "Search accounts…" },
       null,
       2,
     ),
   },
-  "view-filter": {
+  "view-filters": {
     summary:
-      "Unified search and filter toolbar for a view. Toggle search, entity filters, and/or a date filter in the designer. Search binds to URL `q`; filters bind to URL `f.{entity}.{field}`; date filter binds to a configurable URL param (default `year`, `month`, or `date`).",
+      "Entity field filter panel for a data view. Filter entries bind to URL `f.{entity}.{field}`. Multiple instances merge filter columns globally.",
+    properties: ["filters", "label?", "styles?"],
+    example: JSON.stringify(
+      {
+        kind: "view-filters",
+        filters: [{ entityName: "account", fieldName: "accountType" }],
+      },
+      null,
+      2,
+    ),
+  },
+  "view-date-filter": {
+    summary:
+      "Date period filter for a dashboard data view. Binds to a configurable URL param (default `year`, `month`, or `date`). First instance in layout walk order wins for URL param configuration.",
     properties: [
-      "enableSearch?",
-      "enableFilters?",
-      "enableDateFilter?",
       "dateFilterGranularity?",
       "dateFilterParam?",
-      "dateFilterLabel?",
-      "searchPlaceholder?",
-      "filters",
+      "label?",
       "styles?",
     ],
     example: JSON.stringify(
       {
-        kind: "view-filter",
-        enableSearch: true,
-        enableFilters: true,
-        enableDateFilter: true,
+        kind: "view-date-filter",
         dateFilterGranularity: "month",
         dateFilterParam: "month",
-        dateFilterLabel: {
+        label: {
           show: true,
           text: "Reporting period",
           position: "above",
         },
-        searchPlaceholder: "Search…",
-        filters: [{ entityName: "account", fieldName: "accountType" }],
       },
       null,
       2,

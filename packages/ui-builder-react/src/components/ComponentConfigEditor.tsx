@@ -4,8 +4,6 @@ import { findFirstImageFieldName } from "@repo/entities";
 import {
   createDefaultComponent,
   createDefaultStaticComponent,
-  type BadgeComponentConfig,
-  type ConditionalStyleRule,
   type DataSource,
   type EntityFieldSelectorComponentConfig,
   type FormFieldComponentConfig,
@@ -16,7 +14,6 @@ import {
   type UiComponentConfig,
   type UiComponentKind,
   type WizardProgressComponentConfig,
-  type WizardStepStatusKind,
 } from "@repo/ui-builder-core";
 import {
   Button,
@@ -101,36 +98,6 @@ function getNextFallbackFieldPath(
   return filtered.find((field) => !usedPaths.has(field.path))?.path;
 }
 
-const BADGE_VARIANTS = [
-  "success",
-  "warning",
-  "danger",
-  "info",
-  "default",
-  "active",
-  "pending",
-  "closed",
-  "neutral",
-] as const;
-
-const WIZARD_STEP_STATUS_OPTIONS: readonly WizardStepStatusKind[] = [
-  "pending",
-  "active",
-  "completed",
-  "invalid",
-] as const;
-
-function updateWizardProgressConditionalRules(
-  config: WizardProgressComponentConfig,
-  rules: readonly ConditionalStyleRule[],
-  onChange: (config: UiComponentConfig) => void,
-): void {
-  onChange({
-    ...config,
-    conditionalStyles: rules,
-  });
-}
-
 function resolveWizardProgressVariant(
   config: WizardProgressComponentConfig,
 ): "steps" | "bar" | "stepper" {
@@ -147,6 +114,12 @@ export interface ComponentConfigEditorLabels {
   readonly slotSettings: string;
   readonly componentStyles: string;
   readonly badgeColorRules: string;
+  readonly conditionalStyleRules?: string;
+  readonly conditionalStyleRulesHint?: string;
+  readonly daysRemainingConditionalHint?: string;
+  readonly conditionalStyleBackgroundColor?: string;
+  readonly conditionalStyleTextColor?: string;
+  readonly conditionalStyleBadgeVariant?: string;
   readonly matchValue: string;
   readonly addRule: string;
   readonly imageSize: string;
@@ -1095,142 +1068,6 @@ export function ComponentConfigEditor({
                 </label>
               </div>
             ) : null}
-            {resolveWizardProgressVariant(config) === "steps" ||
-            resolveWizardProgressVariant(config) === "stepper" ? (
-              <>
-                <Text variant="muted" className="text-xs">
-                  Style each status (pending, active, completed, invalid) using
-                  conditional rules below.
-                </Text>
-                <div className="flex flex-col gap-2">
-                  <Text className="text-muted-foreground text-sm">
-                    {labels.badgeColorRules}
-                  </Text>
-                  {(config.conditionalStyles ?? []).map((rule, index) => (
-                    <div
-                      key={index}
-                      className="border-border flex flex-col gap-3 rounded-lg border p-3"
-                    >
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <label className="flex flex-col gap-1 text-sm">
-                          <span className="text-muted-foreground">
-                            {labels.matchValue}
-                          </span>
-                          <Select
-                            searchable
-                            value={rule.matchValue ?? ""}
-                            onChange={(event) => {
-                              const rules = [
-                                ...(config.conditionalStyles ?? []),
-                              ];
-                              rules[index] = {
-                                ...rule,
-                                matchValue: event.target.value,
-                              };
-                              updateWizardProgressConditionalRules(
-                                config,
-                                rules,
-                                onChange,
-                              );
-                            }}
-                          >
-                            <option value="">{labels.matchValue}</option>
-                            {WIZARD_STEP_STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>
-                                {status}
-                              </option>
-                            ))}
-                          </Select>
-                        </label>
-                        <div className="flex items-end justify-end">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              updateWizardProgressConditionalRules(
-                                config,
-                                (config.conditionalStyles ?? []).filter(
-                                  (_, ruleIndex) => ruleIndex !== index,
-                                ),
-                                onChange,
-                              );
-                            }}
-                          >
-                            {labels.remove}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <label className="flex flex-col gap-1 text-sm">
-                          <span className="text-muted-foreground">
-                            Background
-                          </span>
-                          <ColorValueEditor
-                            value={rule.background ?? "default"}
-                            onChange={(background) => {
-                              const rules = [
-                                ...(config.conditionalStyles ?? []),
-                              ];
-                              rules[index] = {
-                                ...rule,
-                                background,
-                              };
-                              updateWizardProgressConditionalRules(
-                                config,
-                                rules,
-                                onChange,
-                              );
-                            }}
-                            labels={labels.styleRules}
-                            colorRole="background"
-                          />
-                        </label>
-                        <label className="flex flex-col gap-1 text-sm">
-                          <span className="text-muted-foreground">
-                            Text color
-                          </span>
-                          <ColorValueEditor
-                            value={rule.textColor ?? "default"}
-                            onChange={(textColor) => {
-                              const rules = [
-                                ...(config.conditionalStyles ?? []),
-                              ];
-                              rules[index] = {
-                                ...rule,
-                                textColor,
-                              };
-                              updateWizardProgressConditionalRules(
-                                config,
-                                rules,
-                                onChange,
-                              );
-                            }}
-                            labels={labels.styleRules}
-                            colorRole="text"
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      updateWizardProgressConditionalRules(
-                        config,
-                        [
-                          ...(config.conditionalStyles ?? []),
-                          { matchValue: "active" },
-                        ],
-                        onChange,
-                      );
-                    }}
-                  >
-                    {labels.addRule}
-                  </Button>
-                </div>
-              </>
-            ) : null}
           </>
         ) : null}
         {isPageUiComponent(config) ||
@@ -1275,13 +1112,6 @@ export function ComponentConfigEditor({
 
   const canAddFallback =
     getNextFallbackFieldPath(filtered, fieldConfig) !== undefined;
-
-  const updateConditionalRules = (rules: readonly ConditionalStyleRule[]) => {
-    onChange({
-      ...fieldConfig,
-      conditionalStyles: rules,
-    } as BadgeComponentConfig);
-  };
 
   const updateStyles = (styles: readonly StyleRule[]) => {
     onChange({ ...fieldConfig, styles });
@@ -1537,13 +1367,15 @@ export function ComponentConfigEditor({
                   dateDisplayFormat: event.target.value as
                     | "date"
                     | "datetime"
-                    | "time",
+                    | "time"
+                    | "daysRemaining",
                 })
               }
             >
               <option value="date">date</option>
               <option value="datetime">datetime</option>
               <option value="time">time</option>
+              <option value="daysRemaining">daysRemaining</option>
             </Select>
           </label>
         ) : null}
@@ -1611,74 +1443,6 @@ export function ComponentConfigEditor({
             }}
           />
         )}
-
-        {fieldConfig.kind === "badge" ? (
-          <div className="flex flex-col gap-2">
-            <Text className="text-muted-foreground text-sm">
-              {labels.badgeColorRules}
-            </Text>
-            {(fieldConfig.conditionalStyles ?? []).map((rule, index) => (
-              <div key={index} className="flex gap-2">
-                <Input
-                  value={rule.matchValue}
-                  onChange={(event) => {
-                    const rules = [...(fieldConfig.conditionalStyles ?? [])];
-                    rules[index] = {
-                      ...rule,
-                      matchValue: event.target.value,
-                    };
-                    updateConditionalRules(rules);
-                  }}
-                  placeholder={labels.matchValue}
-                />
-                <Select
-                  searchable
-                  value={rule.badgeVariant ?? "default"}
-                  onChange={(event) => {
-                    const rules = [...(fieldConfig.conditionalStyles ?? [])];
-                    rules[index] = {
-                      ...rule,
-                      badgeVariant: event.target
-                        .value as ConditionalStyleRule["badgeVariant"],
-                    };
-                    updateConditionalRules(rules);
-                  }}
-                >
-                  {BADGE_VARIANTS.map((variant) => (
-                    <option key={variant} value={variant}>
-                      {variant}
-                    </option>
-                  ))}
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    updateConditionalRules(
-                      (fieldConfig.conditionalStyles ?? []).filter(
-                        (_, i) => i !== index,
-                      ),
-                    );
-                  }}
-                >
-                  {labels.remove}
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                updateConditionalRules([
-                  ...(fieldConfig.conditionalStyles ?? []),
-                  { matchValue: "", badgeVariant: "default" },
-                ]);
-              }}
-            >
-              {labels.addRule}
-            </Button>
-          </div>
-        ) : null}
       </div>
     </div>
   );

@@ -183,8 +183,6 @@ describe("seed-local-tenant-ui-slices", () => {
 
     for (const [widgetId, expectedGlowId] of [
       ["due-today-snapshot-mini", "row-due-today-snapshot-mini-glow"],
-      ["upcoming-week-snapshot-mini", "row-upcoming-week-snapshot-mini-glow"],
-      ["budget-status-snapshot-mini", "row-budget-status-snapshot-mini-glow"],
     ] as const) {
       const miniWidget = override?.metricWidgets?.find(
         (widget) => widget.id === widgetId,
@@ -214,6 +212,52 @@ describe("seed-local-tenant-ui-slices", () => {
         ]),
       );
       expect(shell?.rows?.some((row) => row.id === expectedGlowId)).toBe(true);
+    }
+
+    for (const [widgetId, glowId, gridId] of [
+      [
+        "upcoming-week-snapshot-mini",
+        "row-upcoming-week-snapshot-mini-glow",
+        "row-upcoming-week-snapshot-mini-grid",
+      ],
+      [
+        "budget-status-snapshot-mini",
+        "row-budget-status-snapshot-mini-glow",
+        "row-budget-status-snapshot-mini-grid",
+      ],
+    ] as const) {
+      const miniWidget = override?.metricWidgets?.find(
+        (widget) => widget.id === widgetId,
+      );
+      const shell = (
+        miniWidget?.layout as {
+          root?: {
+            columns?: Array<{
+              rows?: Array<{
+                component?: {
+                  styles?: Array<{ property: string; value: string }>;
+                  rows?: Array<{ id?: string; component?: { kind?: string } }>;
+                };
+              }>;
+            }>;
+          };
+        }
+      )?.root?.columns?.[0]?.rows?.[0]?.component;
+      expect(shell?.styles).toEqual(
+        expect.arrayContaining([
+          { property: "backgroundColor", value: "var(--color-card)" },
+          { property: "backdropFilter", value: "var(--backdrop-filter-card)" },
+          { property: "boxShadow", value: "var(--shadow-card)" },
+          { property: "borderRadius", value: "16" },
+          { property: "padding", value: "13" },
+        ]),
+      );
+      expect(shell?.rows?.some((row) => row.id === glowId)).toBe(true);
+      expect(
+        shell?.rows?.some(
+          (row) => row.id === gridId && row.component?.kind === "grid",
+        ),
+      ).toBe(true);
     }
 
     const upcomingWeekWidget = override?.metricWidgets?.find(

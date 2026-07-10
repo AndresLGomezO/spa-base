@@ -31,6 +31,7 @@ import { GridRowPanel } from "../form-designer/GridRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
+import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 import { useDetailViewDesigner } from "./detail-view-designer-context";
 import { ChartComponentEditor } from "../../components/charts/ChartComponentEditor";
 
@@ -77,6 +78,8 @@ export function DetailViewDesignerComponentRowPanel({
         rowNode={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
+        designSurface={designSurface}
         labels={labels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
@@ -182,6 +185,15 @@ export function DetailViewDesignerComponentRowPanel({
         binding={binding}
         definition={definition}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
+
+      <ComponentRowConditionalStylesPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        fieldDescriptors={fieldDescriptors}
+        definition={definition}
         designSurface={designSurface}
       />
 

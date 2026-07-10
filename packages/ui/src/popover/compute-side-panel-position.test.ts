@@ -151,4 +151,18 @@ describe("computeAnchoredPanelPosition", () => {
     expect(result.style.top).toBe(248);
     expect(result.style.maxHeight).toBe(344);
   });
+
+  it("right-aligns below the trigger when horizontalAlign is end", () => {
+    const result = computeAnchoredPanelPosition({
+      preferred: "bottom-start",
+      horizontalAlign: "end",
+      triggerRect: triggerRect(720, 24, 48, 48),
+      panelSize: { width: 288, height: 280 },
+      viewport,
+    });
+
+    expect(result.resolvedPlacement).toBe("bottom-start");
+    expect(result.style.top).toBe(80);
+    expect(result.style.left).toBe(480);
+  });
 });

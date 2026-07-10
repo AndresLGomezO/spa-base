@@ -15,6 +15,7 @@ export type UiComponentKind =
   | "image"
   | "icon"
   | "user"
+  | "notification-bell"
   | "date"
   | "numeric"
   | "badge"
@@ -36,7 +37,8 @@ export type UiComponentKind =
   | "page-metrics"
   | "page-list"
   | "view-search"
-  | "view-filter"
+  | "view-filters"
+  | "view-date-filter"
   | "chart";
 
 export type WizardStepStatusKind =
@@ -115,6 +117,7 @@ export interface MetricKpiComponentConfig {
   >;
   readonly label?: string;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
   /** When true, colors the value from its sign (see `tonePolarity`). */
   readonly showToneColors?: boolean;
   /** `normal`: positive = success, negative = danger. `inverted`: positive = danger, negative = success. */
@@ -146,6 +149,7 @@ export interface MetricDerivedKpiComponentConfig {
     Record<string, MetricBindingSource>
   >;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export interface MetricWidgetComponentConfig {
@@ -154,6 +158,7 @@ export interface MetricWidgetComponentConfig {
   readonly widgetId: string;
   readonly label?: string;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export interface DashboardSectionComponentConfig {
@@ -339,6 +344,7 @@ export interface ChartComponentConfig {
   readonly chartDefinitionId: string;
   readonly parameterBindings?: Readonly<Record<string, MetricBindingSource>>;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
   readonly ariaLabel?: string;
 }
 
@@ -366,19 +372,42 @@ export interface IconComponentConfig {
   readonly iconSize?: number;
   readonly label?: LabelConfig;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
-export type UserDisplayMode = "name" | "email" | "photo" | "photo-and-name";
+export type UserDisplayMode =
+  | "name"
+  | "email"
+  | "photo"
+  | "photo-and-name"
+  | "profile-button";
 
 export type UserNameFormat = "full" | "first";
+
+export type UserAvatarShape = "circle" | "rounded" | "square";
+
+export type UserProfileButtonContent = "photo" | "full";
+
+export interface NotificationBellComponentConfig {
+  readonly kind: "notification-bell";
+  readonly iconName?: string;
+  readonly iconSize?: number;
+  readonly showBadge?: boolean;
+  readonly label?: LabelConfig;
+  readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+}
 
 export interface UserComponentConfig {
   readonly kind: "user";
   readonly display: UserDisplayMode;
   readonly nameFormat?: UserNameFormat;
   readonly imageSize?: number;
+  readonly avatarShape?: UserAvatarShape;
+  readonly profileButtonContent?: UserProfileButtonContent;
   readonly label?: LabelConfig;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export type FieldUiComponentConfig =
@@ -404,6 +433,7 @@ export interface FormFieldComponentConfig {
   readonly multiline?: boolean;
   readonly multilineRows?: number;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export type EntityFieldSelectorLayout =
@@ -420,12 +450,14 @@ export interface EntityFieldSelectorComponentConfig {
   readonly cardsPerRow?: number;
   readonly imageFieldPath?: string;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export interface FormSectionComponentConfig {
   readonly kind: "form-section";
   readonly title?: string;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export interface FormActionsComponentConfig {
@@ -490,6 +522,7 @@ export interface RelatedRecordsComponentConfig {
   readonly childEntity: string;
   readonly foreignKeyField: string;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export interface PageHeaderComponentConfig {
@@ -517,26 +550,29 @@ export interface ViewFilterEntry {
   readonly fieldName: string;
 }
 
+export type ViewFilterDateGranularity = "year" | "month" | "day";
+
 export interface ViewSearchComponentConfig {
   readonly kind: "view-search";
   readonly placeholder?: string;
+  readonly label?: LabelConfig;
   readonly styles?: readonly StyleRule[];
 }
 
-export interface ViewFilterComponentConfig {
-  readonly kind: "view-filter";
-  readonly enableSearch?: boolean;
-  readonly enableFilters?: boolean;
-  readonly enableDateFilter?: boolean;
+export interface ViewFiltersComponentConfig {
+  readonly kind: "view-filters";
+  readonly filters: readonly ViewFilterEntry[];
+  readonly label?: LabelConfig;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface ViewDateFilterComponentConfig {
+  readonly kind: "view-date-filter";
   readonly dateFilterGranularity?: ViewFilterDateGranularity;
   readonly dateFilterParam?: string;
-  readonly dateFilterLabel?: LabelConfig;
-  readonly searchPlaceholder?: string;
-  readonly filters: readonly ViewFilterEntry[];
+  readonly label?: LabelConfig;
   readonly styles?: readonly StyleRule[];
 }
-
-export type ViewFilterDateGranularity = "year" | "month" | "day";
 
 export interface ContainerComponentConfig {
   readonly kind: "container";
@@ -545,6 +581,7 @@ export interface ContainerComponentConfig {
   /** @deprecated Use `grid` component for layout structure. */
   readonly stackDirection?: ColumnStackDirection;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 /** Grid is the only layout structural primitive (Section 15.1). */
@@ -555,6 +592,7 @@ export interface GridComponentConfig {
   readonly alignItems?: LayoutAlign;
   readonly rows: readonly RowNode[];
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export interface QueryViewerComponentConfig {
@@ -567,6 +605,7 @@ export interface QueryViewerComponentConfig {
   /** Vertical (default) or horizontal stacking of result items. */
   readonly stackDirection?: ColumnStackDirection;
   readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
 export type RowHolderComponentConfig =
@@ -582,7 +621,8 @@ export type PageUiComponentConfig =
 
 export type ViewFilterUiComponentConfig =
   | ViewSearchComponentConfig
-  | ViewFilterComponentConfig;
+  | ViewFiltersComponentConfig
+  | ViewDateFilterComponentConfig;
 
 export type UiComponentConfig =
   | ContainerComponentConfig
@@ -591,6 +631,7 @@ export type UiComponentConfig =
   | FieldUiComponentConfig
   | ChartComponentConfig
   | IconComponentConfig
+  | NotificationBellComponentConfig
   | UserComponentConfig
   | MetricKpiComponentConfig
   | MetricDerivedKpiComponentConfig
@@ -661,16 +702,28 @@ export function isViewSearchComponent(
   return config.kind === "view-search";
 }
 
-export function isViewFilterComponent(
+export function isViewFiltersComponent(
   config: UiComponentConfig,
-): config is ViewFilterComponentConfig {
-  return config.kind === "view-filter";
+): config is ViewFiltersComponentConfig {
+  return config.kind === "view-filters";
+}
+
+export function isViewDateFilterComponent(
+  config: UiComponentConfig,
+): config is ViewDateFilterComponentConfig {
+  return config.kind === "view-date-filter";
 }
 
 export function isIconComponent(
   config: UiComponentConfig,
 ): config is IconComponentConfig {
   return config.kind === "icon";
+}
+
+export function isNotificationBellComponent(
+  config: UiComponentConfig,
+): config is NotificationBellComponentConfig {
+  return config.kind === "notification-bell";
 }
 
 export function isUserComponent(

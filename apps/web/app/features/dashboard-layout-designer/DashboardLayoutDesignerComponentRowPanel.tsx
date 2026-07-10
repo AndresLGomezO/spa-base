@@ -13,7 +13,10 @@ import {
   isChartComponent,
   isMetricWidgetComponent,
   isUserComponent,
-  isViewFilterComponent,
+  isNotificationBellComponent,
+  isViewSearchComponent,
+  isViewFiltersComponent,
+  isViewDateFilterComponent,
   type MotionPreset,
 } from "@repo/ui-builder-core";
 import { Text } from "@repo/ui";
@@ -33,13 +36,17 @@ import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-b
 import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { DashboardSectionComponentEditor } from "./DashboardSectionComponentEditor";
 import { UserComponentEditor } from "./UserComponentEditor";
+import { NotificationBellComponentEditor } from "./NotificationBellComponentEditor";
 import { MetricWidgetComponentEditor } from "../metrics-row-designer/MetricWidgetComponentEditor";
 import { ChartComponentEditor } from "../../components/charts/ChartComponentEditor";
-import { ViewFilterComponentEditor } from "../ui-builder/ViewFilterComponentEditor";
+import { ViewSearchComponentEditor } from "../ui-builder/ViewSearchComponentEditor";
+import { ViewFiltersComponentEditor } from "../ui-builder/ViewFiltersComponentEditor";
+import { ViewDateFilterComponentEditor } from "../ui-builder/ViewDateFilterComponentEditor";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
 import { TenantDashboardStaticImageValueEditor } from "./TenantDashboardStaticImageValueEditor";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
+import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 import type { SerializableEntityDefinition } from "@repo/entities";
 
 interface DashboardLayoutDesignerComponentRowPanelProps {
@@ -93,6 +100,8 @@ export function DashboardLayoutDesignerComponentRowPanel({
         rowNode={row}
         rowRef={rowRef}
         binding={binding}
+        definition={clickActionDefinition}
+        designSurface={designSurface}
         labels={labels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
@@ -136,6 +145,11 @@ export function DashboardLayoutDesignerComponentRowPanel({
             config={row.component}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />
+        ) : isNotificationBellComponent(row.component) ? (
+          <NotificationBellComponentEditor
+            config={row.component}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
         ) : isMetricWidgetComponent(row.component) ? (
           <MetricWidgetComponentEditor
             config={row.component}
@@ -148,7 +162,9 @@ export function DashboardLayoutDesignerComponentRowPanel({
             filterFieldOptions={[]}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />
-        ) : isViewFilterComponent(row.component) ? null : (
+        ) : isViewSearchComponent(row.component) ||
+          isViewFiltersComponent(row.component) ||
+          isViewDateFilterComponent(row.component) ? null : (
           <ComponentConfigEditor
             config={row.component}
             fieldDescriptors={[]}
@@ -183,10 +199,24 @@ export function DashboardLayoutDesignerComponentRowPanel({
         />
       </FormDesignerPanelPrimaryControls>
 
-      {row.type === "component" && isViewFilterComponent(row.component) ? (
-        <ViewFilterComponentEditor
+      {row.type === "component" && isViewSearchComponent(row.component) ? (
+        <ViewSearchComponentEditor
+          config={row.component}
+          onChange={(component) => binding.updateComponent(rowRef, component)}
+        />
+      ) : null}
+
+      {row.type === "component" && isViewFiltersComponent(row.component) ? (
+        <ViewFiltersComponentEditor
           config={row.component}
           catalog={items}
+          onChange={(component) => binding.updateComponent(rowRef, component)}
+        />
+      ) : null}
+
+      {row.type === "component" && isViewDateFilterComponent(row.component) ? (
+        <ViewDateFilterComponentEditor
+          config={row.component}
           onChange={(component) => binding.updateComponent(rowRef, component)}
         />
       ) : null}
@@ -197,6 +227,15 @@ export function DashboardLayoutDesignerComponentRowPanel({
         binding={binding}
         definition={clickActionDefinition}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
+
+      <ComponentRowConditionalStylesPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        fieldDescriptors={fieldDescriptors}
+        definition={clickActionDefinition}
         designSurface={designSurface}
       />
 

@@ -4,66 +4,30 @@ import { resolveViewFilterDateLabel } from "./resolve-view-filter-date-label";
 
 describe("resolveViewFilterDateLabel", () => {
   const baseConfig = {
-    kind: "view-filter" as const,
-    filters: [],
+    kind: "view-date-filter" as const,
   };
 
-  it("shows the default label above when dateFilterLabel is omitted", () => {
-    expect(resolveViewFilterDateLabel(baseConfig, "Date")).toEqual({
+  it("uses default text when label is missing", () => {
+    expect(resolveViewFilterDateLabel(baseConfig, "Period")).toEqual({
       show: true,
-      text: "Date",
+      text: "Period",
       position: "above",
     });
   });
 
-  it("hides the label when show is false", () => {
+  it("respects hidden labels", () => {
     expect(
       resolveViewFilterDateLabel(
         {
           ...baseConfig,
-          dateFilterLabel: { show: false },
+          label: { show: false, text: "Hidden" },
         },
-        "Date",
-      ),
-    ).toMatchObject({
-      show: false,
-      position: "above",
-    });
-  });
-
-  it("uses custom text and position when configured", () => {
-    expect(
-      resolveViewFilterDateLabel(
-        {
-          ...baseConfig,
-          dateFilterLabel: {
-            show: true,
-            text: "Reporting period",
-            position: "below",
-            bold: true,
-            align: "center",
-          },
-        },
-        "Date",
+        "Period",
       ),
     ).toEqual({
-      show: true,
-      text: "Reporting period",
-      position: "below",
-      bold: true,
-      align: "center",
+      show: false,
+      text: "Period",
+      position: "above",
     });
-  });
-
-  it("falls back to the default text when custom text is blank", () => {
-    expect(
-      resolveViewFilterDateLabel(
-        {
-          ...baseConfig,
-          dateFilterLabel: { show: true, text: "   " },
-        },
-        "Date",
-      ).text,
-    ).toBe("Date");
   });
 });

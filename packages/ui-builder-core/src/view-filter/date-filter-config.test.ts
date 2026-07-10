@@ -22,22 +22,11 @@ describe("date-filter-config", () => {
     ).toBe("period");
   });
 
-  it("returns null when date filter is disabled", () => {
+  it("returns config for view-date-filter components", () => {
     expect(
       resolveDashboardDateFilterConfig({
-        kind: "view-filter",
-        filters: [],
-      }),
-    ).toBeNull();
-  });
-
-  it("returns config when date filter is enabled", () => {
-    expect(
-      resolveDashboardDateFilterConfig({
-        kind: "view-filter",
-        enableDateFilter: true,
+        kind: "view-date-filter",
         dateFilterGranularity: "year",
-        filters: [],
       }),
     ).toEqual({
       param: "year",

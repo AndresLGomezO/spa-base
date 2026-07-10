@@ -42,7 +42,6 @@ export {
   type GridTemplateColumnsErrorCode,
   countDefinedGridTemplateTracks,
 } from "./layout/parse-grid-template-columns.js";
-export { migrateViewSearchFilterLayout } from "./layout/migrate-view-search-filter-layout.js";
 export { resolveComponentBoundFieldPath } from "./layout/resolve-component-bound-field-path.js";
 export {
   defaultDateFilterParam,
@@ -105,7 +104,8 @@ export type {
   MetricWidgetComponentConfig,
   DashboardSectionComponentConfig,
   ViewSearchComponentConfig,
-  ViewFilterComponentConfig,
+  ViewFiltersComponentConfig,
+  ViewDateFilterComponentConfig,
   ViewFilterDateGranularity,
   ViewFilterEntry,
   ViewFilterUiComponentConfig,
@@ -138,9 +138,12 @@ export type {
   NumericComponentConfig,
   BadgeComponentConfig,
   IconComponentConfig,
+  NotificationBellComponentConfig,
   UserComponentConfig,
   UserDisplayMode,
   UserNameFormat,
+  UserAvatarShape,
+  UserProfileButtonContent,
   ContainerComponentConfig,
   GridComponentConfig,
   QueryViewerComponentConfig,
@@ -161,11 +164,13 @@ export {
   isMetricWidgetComponent,
   isDashboardSectionComponent,
   isViewSearchComponent,
-  isViewFilterComponent,
+  isViewFiltersComponent,
+  isViewDateFilterComponent,
   isFieldUiComponent,
   isChartComponent,
   createDefaultChartComponent,
   isIconComponent,
+  isNotificationBellComponent,
   isUserComponent,
   isContainerComponent,
   isGridComponent,
@@ -315,6 +320,8 @@ export {
 } from "./layout/container-overlay.js";
 export {
   isStructuralLayoutRow,
+  resolveParentGridAlignItems,
+  resolveParentIsGrid,
   resolveParentStackAlign,
   resolveParentStackDirection,
   resolveParentStackStyles,
@@ -519,6 +526,12 @@ export {
   resolveMetricKpiPresentation,
   type MetricKpiPresentation,
 } from "./styles/resolve-metric-kpi-presentation.js";
+export {
+  interactiveNotificationBellIconClass,
+  interactiveSearchFieldClass,
+  interactiveTriggerBaseClass,
+  stylesIncludeVisualChrome,
+} from "./styles/interactive-trigger-styles.js";
 
 export {
   diffCalendarDays,
@@ -529,8 +542,31 @@ export {
   matchConditionalDaysRemainingStyles,
   matchConditionalStylesForDate,
   conditionalRulesToBadgeVariants,
+  mergeConditionalCssText,
   type MatchedConditionalStyles,
 } from "./conditions/match-conditional-styles.js";
+export {
+  normalizeConditionalStyleRule,
+  formatConditionalRulePreview,
+  type NormalizedConditionalStyleRule,
+} from "./conditions/normalize-conditional-style-rule.js";
+export {
+  resolveEntityConditionalStyles,
+  type CompareFieldDisplayMeta,
+  type ResolveEntityConditionalStylesOptions,
+} from "./conditions/resolve-entity-conditional-styles.js";
+export {
+  FIELD_COMPONENTS_WITH_CONDITIONAL_STYLES,
+  ENTITY_BOUND_CONDITIONAL_STYLE_KINDS,
+  fieldComponentSupportsConditionalStyles,
+  entityBoundComponentSupportsConditionalStyles,
+  resolveDefaultCompareFieldPath,
+  type FieldComponentWithConditionalStyles,
+  type EntityBoundConditionalStyleKind,
+} from "./conditions/component-supports-conditional-styles.js";
+export type {
+  ConditionalStylesCapable,
+} from "./types/styling.js";
 
 export {
   listDataSourcePaths,

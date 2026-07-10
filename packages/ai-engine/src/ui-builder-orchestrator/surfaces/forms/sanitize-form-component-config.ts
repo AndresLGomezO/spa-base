@@ -125,6 +125,27 @@ function sanitizeConditionalStyles(raw: unknown): unknown[] | undefined {
       rule.textColor = item.textColor.trim();
     }
 
+    if (
+      typeof item.compareFieldPath === "string" &&
+      item.compareFieldPath.trim().length > 0
+    ) {
+      rule.compareFieldPath = item.compareFieldPath.trim();
+    }
+
+    if (
+      item.compareFieldDateFormat === "date" ||
+      item.compareFieldDateFormat === "datetime" ||
+      item.compareFieldDateFormat === "time" ||
+      item.compareFieldDateFormat === "daysRemaining"
+    ) {
+      rule.compareFieldDateFormat = item.compareFieldDateFormat;
+    }
+
+    const nestedStyles = sanitizeStyles(item.styles);
+    if (nestedStyles) {
+      rule.styles = nestedStyles;
+    }
+
     rules.push(rule);
   }
 

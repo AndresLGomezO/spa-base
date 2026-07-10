@@ -9,11 +9,14 @@ Set `listViewType: "card"`. Default preset: `card-list`. Layout uses display com
 - `image`
 - `icon`
 - `user`
+- `notification-bell`
 - `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
 - `metric-widget`
-- `view-filter`
+- `view-search`
+- `view-filters`
+- `view-date-filter`
 
 ## Slice envelope example
 ```json

@@ -19,6 +19,7 @@ export function useDashboardViewFilterUrlState(options: {
   const collected = useMemo(() => {
     if (!options.dashboardLayout) {
       return {
+        hasSearch: false,
         filterColumns: [],
         searchColumns: [],
         catalogEntities: [],

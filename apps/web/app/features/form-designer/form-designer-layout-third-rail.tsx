@@ -1,5 +1,6 @@
-import { useSyncExternalStore, type ReactNode } from "react";
+import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 
+import { LayoutStructurePanelBody } from "../ui-builder/LayoutStructurePanelBody";
 import { createThirdRailSyncStore } from "../ui-builder/third-rail-sync-store";
 import {
   FormDesignerContext,
@@ -10,6 +11,8 @@ import { FormDesignerLayoutColumnPanelFooter } from "./FormDesignerLayoutColumnP
 import { FormDesignerLayoutColumnPanelHeaderMenu } from "./FormDesignerLayoutColumnPanelHeaderMenu";
 import { FormDesignerRootLayoutPanel } from "./FormDesignerRootLayoutPanel";
 import { FormDesignerRootLayoutPanelFooter } from "./FormDesignerRootLayoutPanelFooter";
+import { getFormDesignerOuterLayout } from "./form-designer-layout";
+import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerLayoutColumnPanelSession {
   readonly columnIndex: number;
@@ -114,8 +117,31 @@ function LayoutColumnBody() {
 
   return (
     <LayoutColumnContextBridge>
-      <FormDesignerLayoutColumnPanel columnIndex={session.columnIndex} />
+      <FormDesignerLayoutColumnStructurePanelBody
+        columnIndex={session.columnIndex}
+      />
     </LayoutColumnContextBridge>
+  );
+}
+
+function FormDesignerLayoutColumnStructurePanelBody({
+  columnIndex,
+}: {
+  readonly columnIndex: number;
+}) {
+  const { editor } = useFormDesigner();
+  const { layout } = useMemo(
+    () => getFormDesignerOuterLayout(editor),
+    [editor],
+  );
+
+  return (
+    <LayoutStructurePanelBody
+      layout={layout}
+      target={{ kind: "rootLayoutColumn", columnIndex }}
+    >
+      <FormDesignerLayoutColumnPanel columnIndex={columnIndex} />
+    </LayoutStructurePanelBody>
   );
 }
 
@@ -140,8 +166,22 @@ function RootLayoutBody() {
 
   return (
     <RootLayoutContextBridge>
-      <FormDesignerRootLayoutPanel />
+      <FormDesignerRootLayoutStructurePanelBody />
     </RootLayoutContextBridge>
+  );
+}
+
+function FormDesignerRootLayoutStructurePanelBody() {
+  const { editor } = useFormDesigner();
+  const { layout } = useMemo(
+    () => getFormDesignerOuterLayout(editor),
+    [editor],
+  );
+
+  return (
+    <LayoutStructurePanelBody layout={layout} target={{ kind: "rootLayout" }}>
+      <FormDesignerRootLayoutPanel />
+    </LayoutStructurePanelBody>
   );
 }
 

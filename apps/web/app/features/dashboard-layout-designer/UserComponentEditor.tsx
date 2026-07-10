@@ -12,13 +12,22 @@ interface UserComponentEditorProps {
   readonly onChange: (config: UiComponentConfig) => void;
 }
 
+function showsAvatar(config: UserComponentConfig): boolean {
+  return (
+    config.display === "photo" ||
+    config.display === "photo-and-name" ||
+    config.display === "profile-button"
+  );
+}
+
 export function UserComponentEditor({
   config,
   onChange,
 }: UserComponentEditorProps) {
   const { t } = useTranslation("common");
-  const showImageSize =
-    config.display === "photo" || config.display === "photo-and-name";
+  const showImageSize = showsAvatar(config);
+  const showAvatarShape = showsAvatar(config);
+  const showProfileButtonContent = config.display === "profile-button";
   const showNameFormat =
     config.display === "name" || config.display === "photo-and-name";
 
@@ -42,6 +51,16 @@ export function UserComponentEditor({
                 display === "name" || display === "photo-and-name"
                   ? config.nameFormat
                   : undefined,
+              imageSize:
+                display === "photo" ||
+                display === "photo-and-name" ||
+                display === "profile-button"
+                  ? (config.imageSize ?? 40)
+                  : undefined,
+              profileButtonContent:
+                display === "profile-button"
+                  ? (config.profileButtonContent ?? "full")
+                  : undefined,
             });
           }}
         >
@@ -56,6 +75,9 @@ export function UserComponentEditor({
           </option>
           <option value="photo-and-name">
             {t("dashboardLayoutDesigner.userComponent.displayPhotoAndName")}
+          </option>
+          <option value="profile-button">
+            {t("dashboardLayoutDesigner.userComponent.displayProfileButton")}
           </option>
         </Select>
       </div>
@@ -112,6 +134,63 @@ export function UserComponentEditor({
             }}
           />
         </label>
+      ) : null}
+
+      {showProfileButtonContent ? (
+        <div className="flex flex-col gap-2">
+          <FieldLabel htmlFor="dashboard-user-profile-button-content">
+            {t("dashboardLayoutDesigner.userComponent.profileButtonContent")}
+          </FieldLabel>
+          <Select
+            id="dashboard-user-profile-button-content"
+            className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+            value={config.profileButtonContent ?? "full"}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                profileButtonContent: event.target
+                  .value as UserComponentConfig["profileButtonContent"],
+              })
+            }
+          >
+            <option value="photo">
+              {t("dashboardLayoutDesigner.userComponent.profileButtonContentPhoto")}
+            </option>
+            <option value="full">
+              {t("dashboardLayoutDesigner.userComponent.profileButtonContentFull")}
+            </option>
+          </Select>
+        </div>
+      ) : null}
+
+      {showAvatarShape ? (
+        <div className="flex flex-col gap-2">
+          <FieldLabel htmlFor="dashboard-user-avatar-shape">
+            {t("dashboardLayoutDesigner.userComponent.avatarShape")}
+          </FieldLabel>
+          <Select
+            id="dashboard-user-avatar-shape"
+            className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+            value={config.avatarShape ?? "rounded"}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                avatarShape: event.target
+                  .value as UserComponentConfig["avatarShape"],
+              })
+            }
+          >
+            <option value="circle">
+              {t("dashboardLayoutDesigner.userComponent.avatarShapeCircle")}
+            </option>
+            <option value="rounded">
+              {t("dashboardLayoutDesigner.userComponent.avatarShapeRounded")}
+            </option>
+            <option value="square">
+              {t("dashboardLayoutDesigner.userComponent.avatarShapeSquare")}
+            </option>
+          </Select>
+        </div>
       ) : null}
     </div>
   );

@@ -37,6 +37,9 @@ function resolveFormValueType(
   if (meta.type === "boolean") {
     return "boolean";
   }
+  if (meta.type === "enum") {
+    return "enum";
+  }
   if (meta.type === "relation") {
     return "string";
   }
@@ -53,12 +56,18 @@ export function entityFormFieldAdapter(
     const meta = definition.fields[path];
     const fieldUi = definition.ui.fields?.[path];
 
+    const enumValues =
+      meta?.type === "enum" && meta.enumValues && meta.enumValues.length > 0
+        ? meta.enumValues
+        : undefined;
+
     return {
       path,
       label: resolveFieldLabel(definition, path),
       valueType: meta ? resolveFormValueType(meta) : "unknown",
       displayFormat: fieldUi?.displayFormat,
       dateDisplayFormat: fieldUi?.dateDisplayFormat,
+      ...(enumValues ? { enumValues } : {}),
     };
   });
 
@@ -75,12 +84,18 @@ export function entityFieldSelectorFieldAdapter(
     const meta = definition.fields[path];
     const fieldUi = definition.ui.fields?.[path];
 
+    const enumValues =
+      meta?.type === "enum" && meta.enumValues && meta.enumValues.length > 0
+        ? meta.enumValues
+        : undefined;
+
     return {
       path,
       label: resolveFieldLabel(definition, path),
       valueType: meta ? resolveFormValueType(meta) : "unknown",
       displayFormat: fieldUi?.displayFormat,
       dateDisplayFormat: fieldUi?.dateDisplayFormat,
+      ...(enumValues ? { enumValues } : {}),
     };
   });
 

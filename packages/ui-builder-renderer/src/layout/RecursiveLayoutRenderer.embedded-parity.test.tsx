@@ -191,6 +191,26 @@ describe("RecursiveLayoutRenderer embedded layout parity", () => {
     expect(html).toContain("height:200px");
   });
 
+  it("skips inherited designer wrappers when inheritDesignerWrappers is false", () => {
+    const html = renderToStaticMarkup(
+      <LayoutRenderOptionsProvider
+        value={{
+          stretchRootColumns: true,
+          rowWrapper: () => <div data-testid="designer-row-wrapper" />,
+        }}
+      >
+        <EmbeddedLayoutRenderer
+          layout={userWidgetLayout}
+          context={listItemContext}
+          inheritDesignerWrappers={false}
+        />
+      </LayoutRenderOptionsProvider>,
+    );
+
+    expect(html).toContain("height:200px");
+    expect(html).not.toContain("designer-row-wrapper");
+  });
+
   it("matches partial percent-split geometry when embedded via metric-widget", () => {
     const partialSplitLayout: UiLayoutDocument = {
       showActions: true,

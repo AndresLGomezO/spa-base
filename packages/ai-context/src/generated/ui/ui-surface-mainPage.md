@@ -9,7 +9,9 @@ Stored as `mainPage` on entity UI override. Slot kinds: page-header, page-toolba
 - `page-toolbar`
 - `page-metrics`
 - `page-list`
-- `view-filter`
+- `view-search`
+- `view-filters`
+- `view-date-filter`
 
 ## Slice envelope example
 ```json

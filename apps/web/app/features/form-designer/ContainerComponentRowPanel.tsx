@@ -16,6 +16,7 @@ import {
 } from "@repo/ui-builder-core";
 
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
+import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
@@ -96,6 +97,15 @@ export function ContainerComponentRowPanel({
         binding={binding}
         definition={definition}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
+
+      <ComponentRowConditionalStylesPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        fieldDescriptors={fieldDescriptors}
+        definition={definition}
         designSurface={designSurface}
       />
 

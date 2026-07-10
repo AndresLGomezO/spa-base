@@ -9,7 +9,12 @@
         {
           "type": "table",
           "name": "default",
-          "fields": ["financialItemId", "dueDate", "expectedAmount", "status"]
+          "fields": [
+            "financialItemId",
+            "dueDate",
+            "expectedAmount",
+            "status"
+          ]
         }
       ],
       "listViewType": "expandableTable",
@@ -1138,11 +1143,6 @@
                     {
                       "type": "component",
                       "id": "row-upcoming-week-snapshot-mini-shell",
-                      "motion": {
-                        "hoverTransform": "scale-up",
-                        "hoverDurationMs": 200,
-                        "transition": "all"
-                      },
                       "component": {
                         "kind": "container",
                         "rows": [
@@ -1151,6 +1151,7 @@
                             "id": "row-upcoming-week-snapshot-mini-glow",
                             "component": {
                               "kind": "container",
+                              "rows": [],
                               "stackDirection": "column",
                               "styles": [
                                 {
@@ -1185,328 +1186,324 @@
                                   "property": "zIndex",
                                   "value": "0"
                                 }
-                              ],
-                              "rows": []
-                            }
-                          },
-                          {
-                            "type": "component",
-                            "id": "row-upcoming-week-snapshot-mini-header",
-                            "component": {
-                              "kind": "container",
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-title",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Upcoming"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "12",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-primary)"
-                                      }
-                                    ],
-                                    "kind": "text"
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-count",
-                                  "component": {
-                                    "kind": "metric-kpi",
-                                    "metricDefinitionId": "Upcoming This Week Count",
-                                    "groupBindings": {},
-                                    "dimensionBindings": {},
-                                    "label": "",
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "12",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-primary)"
-                                      },
-                                      {
-                                        "property": "backgroundColor",
-                                        "value": "color-mix(in oklch, var(--color-primary) 20%, transparent)"
-                                      },
-                                      {
-                                        "property": "borderRadius",
-                                        "value": "999"
-                                      },
-                                      {
-                                        "property": "padding",
-                                        "value": "var(--spacing-compact)",
-                                        "valuesByBreakpoint": {
-                                          "base": "4"
-                                        }
-                                      }
-                                    ]
-                                  }
-                                }
-                              ],
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "height",
-                                  "value": "100%"
-                                }
                               ]
                             }
                           },
                           {
                             "type": "component",
-                            "id": "row-upcoming-week-snapshot-mini-body",
+                            "id": "row-upcoming-week-snapshot-mini-grid",
                             "component": {
-                              "kind": "container",
+                              "kind": "grid",
+                              "gridTemplateColumns": "auto repeat(1, 1fr) auto",
                               "rows": [
                                 {
                                   "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-icon",
+                                  "id": "row-upcoming-week-snapshot-mini-icon-track",
                                   "component": {
-                                    "kind": "icon",
-                                    "iconName": "Calendar",
-                                    "styles": [
+                                    "kind": "container",
+                                    "rows": [
                                       {
-                                        "property": "color",
-                                        "value": "var(--color-primary)"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "28",
-                                        "valuesByBreakpoint": {
-                                          "base": "18"
+                                        "type": "component",
+                                        "id": "row-upcoming-week-snapshot-mini-icon",
+                                        "component": {
+                                          "kind": "icon",
+                                          "iconName": "Calendar",
+                                          "styles": [
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-primary)"
+                                            },
+                                            {
+                                              "property": "fontSize",
+                                              "value": "30"
+                                            },
+                                            {
+                                              "property": "backgroundColor",
+                                              "value": "primary"
+                                            },
+                                            {
+                                              "property": "padding",
+                                              "value": "10"
+                                            },
+                                            {
+                                              "property": "borderRadius",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "height",
+                                              "value": "100%"
+                                            }
+                                          ]
                                         }
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-value",
-                                  "component": {
-                                    "kind": "metric-kpi",
-                                    "metricDefinitionId": "Upcoming This Week Total",
-                                    "groupBindings": {},
-                                    "dimensionBindings": {},
-                                    "label": "",
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "22",
-                                        "valuesByBreakpoint": {
-                                          "base": "12"
-                                        }
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "textAlign",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-card-foreground)"
-                                      },
-                                      {
-                                        "property": "marginTop",
-                                        "value": "4"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-subtext",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "This week"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "12",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "thin"
-                                      },
-                                      {
-                                        "property": "textAlign",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-card-foreground)"
                                       }
                                     ],
-                                    "kind": "text"
+                                    "styles": []
                                   }
-                                }
-                              ],
-                              "stackDirection": "column",
-                              "styles": [
-                                {
-                                  "property": "width",
-                                  "value": "100%"
                                 },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "marginBottom",
-                                  "value": "10"
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "type": "component",
-                            "id": "row-upcoming-week-snapshot-mini-action",
-                            "component": {
-                              "kind": "container",
-                              "rows": [
                                 {
                                   "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-action-label",
+                                  "id": "row-upcoming-week-snapshot-mini-body",
                                   "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "See all"
-                                    },
-                                    "styles": [
+                                    "kind": "container",
+                                    "rows": [
                                       {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "13",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
+                                        "type": "component",
+                                        "id": "row-upcoming-week-snapshot-mini-title",
+                                        "component": {
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "Upcoming"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            },
+                                            {
+                                              "property": "fontSize",
+                                              "value": "15"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-primary)"
+                                            }
+                                          ],
+                                          "kind": "text"
                                         }
                                       },
                                       {
-                                        "property": "color",
-                                        "value": "var(--color-primary)"
+                                        "type": "component",
+                                        "id": "row-upcoming-week-snapshot-mini-value",
+                                        "component": {
+                                          "kind": "metric-kpi",
+                                          "metricDefinitionId": "Upcoming This Week Total",
+                                          "groupBindings": {},
+                                          "dimensionBindings": {},
+                                          "label": "",
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "20"
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            },
+                                            {
+                                              "property": "textAlign",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-card-foreground)"
+                                            },
+                                            {
+                                              "property": "marginTop",
+                                              "value": "10"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-upcoming-week-snapshot-mini-subtext",
+                                        "component": {
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "This week"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "thin"
+                                            },
+                                            {
+                                              "property": "textAlign",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-muted-foreground)"
+                                            }
+                                          ],
+                                          "kind": "text"
+                                        }
                                       }
                                     ],
-                                    "kind": "text"
+                                    "styles": [
+                                      {
+                                        "property": "marginLeft",
+                                        "value": "10"
+                                      }
+                                    ]
                                   }
                                 },
                                 {
                                   "type": "component",
-                                  "id": "row-upcoming-week-snapshot-mini-action-chevron",
+                                  "id": "row-upcoming-week-snapshot-mini-action-track",
                                   "component": {
-                                    "kind": "icon",
-                                    "iconName": "ChevronRight",
-                                    "iconSize": 16,
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-upcoming-week-snapshot-mini-count",
+                                        "component": {
+                                          "kind": "metric-kpi",
+                                          "metricDefinitionId": "Upcoming This Week Count",
+                                          "groupBindings": {},
+                                          "dimensionBindings": {},
+                                          "label": "",
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "14"
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-primary)"
+                                            },
+                                            {
+                                              "property": "backgroundColor",
+                                              "value": "color-mix(in oklch, var(--color-primary) 20%, transparent)"
+                                            },
+                                            {
+                                              "property": "borderRadius",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "paddingTop",
+                                              "value": "5"
+                                            },
+                                            {
+                                              "property": "paddingBottom",
+                                              "value": "5"
+                                            },
+                                            {
+                                              "property": "paddingLeft",
+                                              "value": "10"
+                                            },
+                                            {
+                                              "property": "paddingRight",
+                                              "value": "10"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-upcoming-week-snapshot-mini-action",
+                                        "component": {
+                                          "kind": "container",
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-upcoming-week-snapshot-mini-action-label",
+                                              "component": {
+                                                "primary": {
+                                                  "type": "static",
+                                                  "value": "See all"
+                                                },
+                                                "styles": [
+                                                  {
+                                                    "property": "fontWeight",
+                                                    "value": "bold"
+                                                  },
+                                                  {
+                                                    "property": "fontSize",
+                                                    "value": "13"
+                                                  },
+                                                  {
+                                                    "property": "color",
+                                                    "value": "var(--color-primary)"
+                                                  }
+                                                ],
+                                                "kind": "text"
+                                              }
+                                            },
+                                            {
+                                              "type": "component",
+                                              "id": "row-upcoming-week-snapshot-mini-action-chevron",
+                                              "component": {
+                                                "kind": "icon",
+                                                "iconName": "ChevronRight",
+                                                "iconSize": 16,
+                                                "styles": [
+                                                  {
+                                                    "property": "color",
+                                                    "value": "var(--color-primary)"
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ],
+                                          "stackDirection": "row",
+                                          "styles": [
+                                            {
+                                              "property": "backgroundColor",
+                                              "value": "color-mix(in oklch, var(--color-primary) 24%, transparent)"
+                                            },
+                                            {
+                                              "property": "borderRadius",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "padding",
+                                              "value": "10"
+                                            },
+                                            {
+                                              "property": "alignItems",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "justifyContent",
+                                              "value": "between"
+                                            },
+                                            {
+                                              "property": "height",
+                                              "value": "auto"
+                                            }
+                                          ]
+                                        },
+                                        "clickAction": {
+                                          "type": "externalUrl",
+                                          "url": {
+                                            "type": "static",
+                                            "value": "/app/views/upcoming-payments"
+                                          },
+                                          "openInNewTab": false
+                                        },
+                                        "motion": {
+                                          "hoverSurface": "accent",
+                                          "hoverDurationMs": 150,
+                                          "transition": "all"
+                                        }
+                                      }
+                                    ],
                                     "styles": [
                                       {
-                                        "property": "color",
-                                        "value": "var(--color-primary)"
+                                        "property": "height",
+                                        "value": "100%"
+                                      },
+                                      {
+                                        "property": "alignItems",
+                                        "value": "end"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "between"
                                       }
                                     ]
                                   }
                                 }
-                              ],
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "backgroundColor",
-                                  "value": "color-mix(in oklch, var(--color-primary) 24%, transparent)"
-                                },
-                                {
-                                  "property": "borderRadius",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "paddingTop",
-                                  "value": "10"
-                                },
-                                {
-                                  "property": "paddingBottom",
-                                  "value": "10"
-                                },
-                                {
-                                  "property": "paddingLeft",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "paddingRight",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                }
                               ]
-                            },
-                            "clickAction": {
-                              "type": "externalUrl",
-                              "url": {
-                                "type": "static",
-                                "value": "/app/views/upcoming-payments"
-                              }
-                            },
-                            "motion": {
-                              "hoverSurface": "accent",
-                              "hoverTransform": "none",
-                              "hoverDurationMs": 150,
-                              "transition": "all"
                             }
                           }
                         ],
@@ -1526,7 +1523,7 @@
                           },
                           {
                             "property": "padding",
-                            "value": "16"
+                            "value": "13"
                           },
                           {
                             "property": "borderWidth",
@@ -1559,12 +1556,13 @@
                           {
                             "property": "backdropFilter",
                             "value": "var(--backdrop-filter-card)"
-                          },
-                          {
-                            "property": "gap",
-                            "value": "var(--spacing-comfortable)"
                           }
                         ]
+                      },
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
                       }
                     }
                   ]
@@ -1588,11 +1586,6 @@
                     {
                       "type": "component",
                       "id": "row-budget-status-snapshot-mini-shell",
-                      "motion": {
-                        "hoverTransform": "scale-up",
-                        "hoverDurationMs": 200,
-                        "transition": "all"
-                      },
                       "component": {
                         "kind": "container",
                         "rows": [
@@ -1601,6 +1594,7 @@
                             "id": "row-budget-status-snapshot-mini-glow",
                             "component": {
                               "kind": "container",
+                              "rows": [],
                               "stackDirection": "column",
                               "styles": [
                                 {
@@ -1635,265 +1629,257 @@
                                   "property": "zIndex",
                                   "value": "0"
                                 }
-                              ],
-                              "rows": []
-                            }
-                          },
-                          {
-                            "type": "component",
-                            "id": "row-budget-status-snapshot-mini-header",
-                            "component": {
-                              "kind": "container",
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-budget-status-snapshot-mini-title",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Payment Progress"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "12",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-primary-400)"
-                                      }
-                                    ],
-                                    "kind": "text"
-                                  }
-                                }
-                              ],
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "height",
-                                  "value": "100%"
-                                }
                               ]
                             }
                           },
                           {
                             "type": "component",
-                            "id": "row-budget-status-snapshot-mini-body",
+                            "id": "row-budget-status-snapshot-mini-grid",
                             "component": {
-                              "kind": "container",
+                              "kind": "grid",
+                              "gridTemplateColumns": "auto repeat(1, 1fr) auto",
                               "rows": [
                                 {
                                   "type": "component",
-                                  "id": "row-f4e76b4a-e743-4a0a-a916-e268bcfca4f3",
+                                  "id": "row-budget-status-snapshot-mini-chart-track",
                                   "component": {
                                     "kind": "container",
                                     "rows": [
                                       {
                                         "type": "component",
-                                        "id": "row-a1404809-2500-4b74-a52a-9d531dc7d7bd",
+                                        "id": "row-f4e76b4a-e743-4a0a-a916-e268bcfca4f3",
                                         "component": {
-                                          "kind": "chart",
-                                          "chartDefinitionId": "Budget status donut",
-                                          "parameterBindings": {
-                                            "period": {
-                                              "type": "dashboardDateFilter"
+                                          "kind": "container",
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-a1404809-2500-4b74-a52a-9d531dc7d7bd",
+                                              "component": {
+                                                "kind": "chart",
+                                                "chartDefinitionId": "Budget status donut",
+                                                "parameterBindings": {
+                                                  "period": {
+                                                    "type": "dashboardDateFilter"
+                                                  }
+                                                },
+                                                "styles": [
+                                                  {
+                                                    "property": "height",
+                                                    "value": "85",
+                                                    "valuesByBreakpoint": {
+                                                      "base": "60"
+                                                    }
+                                                  }
+                                                ]
+                                              }
                                             }
-                                          },
+                                          ],
                                           "styles": [
                                             {
-                                              "property": "height",
-                                              "value": "85",
-                                              "valuesByBreakpoint": {
-                                                "base": "60"
-                                              }
+                                              "property": "width",
+                                              "value": "100%"
                                             }
                                           ]
                                         }
                                       }
                                     ],
+                                    "styles": []
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-budget-status-snapshot-mini-body",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-budget-status-snapshot-mini-title",
+                                        "component": {
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "Payment Progress"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            },
+                                            {
+                                              "property": "fontSize",
+                                              "value": "15"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-primary-400)"
+                                            }
+                                          ],
+                                          "kind": "text"
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-budget-status-snapshot-mini-subtext",
+                                        "component": {
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "Paid so far"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "thin"
+                                            },
+                                            {
+                                              "property": "textAlign",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-muted-foreground)"
+                                            }
+                                          ],
+                                          "kind": "text"
+                                        }
+                                      }
+                                    ],
                                     "styles": [
                                       {
-                                        "property": "width",
+                                        "property": "marginLeft",
+                                        "value": "10"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-budget-status-snapshot-mini-action-track",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-budget-status-snapshot-mini-action",
+                                        "component": {
+                                          "kind": "container",
+                                          "rows": [
+                                            {
+                                              "type": "component",
+                                              "id": "row-budget-status-snapshot-mini-action-label",
+                                              "component": {
+                                                "primary": {
+                                                  "type": "static",
+                                                  "value": "See all"
+                                                },
+                                                "styles": [
+                                                  {
+                                                    "property": "fontWeight",
+                                                    "value": "bold"
+                                                  },
+                                                  {
+                                                    "property": "fontSize",
+                                                    "value": "13"
+                                                  },
+                                                  {
+                                                    "property": "color",
+                                                    "value": "var(--color-primary-400)"
+                                                  }
+                                                ],
+                                                "kind": "text"
+                                              }
+                                            },
+                                            {
+                                              "type": "component",
+                                              "id": "row-budget-status-snapshot-mini-action-chevron",
+                                              "component": {
+                                                "kind": "icon",
+                                                "iconName": "ChevronRight",
+                                                "iconSize": 16,
+                                                "styles": [
+                                                  {
+                                                    "property": "color",
+                                                    "value": "var(--color-primary-400)"
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ],
+                                          "stackDirection": "row",
+                                          "styles": [
+                                            {
+                                              "property": "backgroundColor",
+                                              "value": "color-mix(in oklch, var(--color-primary-400) 24%, transparent)"
+                                            },
+                                            {
+                                              "property": "borderRadius",
+                                              "value": "12"
+                                            },
+                                            {
+                                              "property": "paddingTop",
+                                              "value": "8"
+                                            },
+                                            {
+                                              "property": "paddingBottom",
+                                              "value": "8"
+                                            },
+                                            {
+                                              "property": "paddingLeft",
+                                              "value": "10"
+                                            },
+                                            {
+                                              "property": "paddingRight",
+                                              "value": "10"
+                                            },
+                                            {
+                                              "property": "alignItems",
+                                              "value": "center"
+                                            },
+                                            {
+                                              "property": "justifyContent",
+                                              "value": "between"
+                                            },
+                                            {
+                                              "property": "height",
+                                              "value": "auto"
+                                            }
+                                          ]
+                                        },
+                                        "clickAction": {
+                                          "type": "externalUrl",
+                                          "url": {
+                                            "type": "static",
+                                            "value": "/app/views/payments-due-this-month"
+                                          },
+                                          "openInNewTab": false
+                                        },
+                                        "motion": {
+                                          "hoverSurface": "accent",
+                                          "hoverDurationMs": 150,
+                                          "transition": "all"
+                                        }
+                                      }
+                                    ],
+                                    "styles": [
+                                      {
+                                        "property": "height",
                                         "value": "100%"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-budget-status-snapshot-mini-subtext",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Paid so far"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "12",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
                                       },
                                       {
-                                        "property": "fontWeight",
-                                        "value": "thin"
+                                        "property": "alignItems",
+                                        "value": "end"
                                       },
                                       {
-                                        "property": "textAlign",
-                                        "value": "center"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-card-foreground)"
-                                      }
-                                    ],
-                                    "kind": "text"
-                                  }
-                                }
-                              ],
-                              "stackDirection": "column",
-                              "styles": [
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "marginBottom",
-                                  "value": "10"
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "type": "component",
-                            "id": "row-budget-status-snapshot-mini-action",
-                            "component": {
-                              "kind": "container",
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-budget-status-snapshot-mini-action-label",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "See all"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "13",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-primary-400)"
-                                      }
-                                    ],
-                                    "kind": "text"
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-budget-status-snapshot-mini-action-chevron",
-                                  "component": {
-                                    "kind": "icon",
-                                    "iconName": "ChevronRight",
-                                    "iconSize": 16,
-                                    "styles": [
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-primary-400)"
+                                        "property": "justifyContent",
+                                        "value": "between"
                                       }
                                     ]
                                   }
                                 }
-                              ],
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "backgroundColor",
-                                  "value": "color-mix(in oklch, var(--color-primary-400) 24%, transparent)"
-                                },
-                                {
-                                  "property": "borderRadius",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "paddingTop",
-                                  "value": "10"
-                                },
-                                {
-                                  "property": "paddingBottom",
-                                  "value": "10"
-                                },
-                                {
-                                  "property": "paddingLeft",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "paddingRight",
-                                  "value": "12"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                }
                               ]
-                            },
-                            "clickAction": {
-                              "type": "externalUrl",
-                              "url": {
-                                "type": "static",
-                                "value": "/app/views/payments-due-this-month"
-                              }
-                            },
-                            "motion": {
-                              "hoverSurface": "accent",
-                              "hoverTransform": "none",
-                              "hoverDurationMs": 150,
-                              "transition": "all"
                             }
                           }
                         ],
@@ -1913,7 +1899,7 @@
                           },
                           {
                             "property": "padding",
-                            "value": "16"
+                            "value": "13"
                           },
                           {
                             "property": "borderWidth",
@@ -1946,12 +1932,13 @@
                           {
                             "property": "backdropFilter",
                             "value": "var(--backdrop-filter-card)"
-                          },
-                          {
-                            "property": "gap",
-                            "value": "var(--spacing-comfortable)"
                           }
                         ]
+                      },
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
                       }
                     }
                   ]

@@ -47,12 +47,12 @@ Pick the preset first, then customize layout inside the envelope. Do not set `pr
 
 | Surface | Primary kinds |
 |---------|---------------|
-| List item / card | `text`, `image`, `icon`, `date`, `numeric`, `badge`, `metric-kpi`, `metric-derived-kpi`, `view-filter`, `container`, `grid` |
+| List item / card | `text`, `image`, `icon`, `date`, `numeric`, `badge`, `metric-kpi`, `metric-derived-kpi`, `view-search`, `view-filters`, `view-date-filter`, `container`, `grid` |
 | Table column cell | Same as list item |
 | Form (plain) | `form-field`, `entity-field-selector`, `form-section`, `form-actions` + display kinds |
 | Form (wizard shell) | `wizard-progress`, `wizard-step-host`, `wizard-actions` |
-| Main page | `page-header`, `page-toolbar`, `page-metrics`, `page-list`, `view-filter` |
-| Record detail | Display kinds, `related-records`, `metric-*`, `view-filter` |
+| Main page | `page-header`, `page-toolbar`, `page-metrics`, `page-list`, `view-search`, `view-filters`, `view-date-filter` |
+| Record detail | Display kinds, `related-records`, `metric-*`, `view-search`, `view-filters`, `view-date-filter` |
 | Metric row | Display kinds, `metric-widget` |
 
 ---

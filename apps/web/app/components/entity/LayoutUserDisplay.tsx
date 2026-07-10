@@ -3,28 +3,26 @@ import {
   filterComponentInnerStyleRules,
   fontSizePxFromStyles,
   layoutInlineStyleFromStyleRules,
+  resolveMetricKpiPresentation,
   splitStyleRuleClasses,
+  stylesIncludeVisualChrome,
   textInlineStyleFromStyleRules,
   textWrapClassFromStyles,
 } from "@repo/ui-builder-core";
 import { Avatar, CardFieldValue } from "@repo/ui";
+import { ResponsiveStyleTag } from "@repo/ui-builder-renderer";
 import { cn } from "@repo/theme/utils";
+
+import { UserProfileMenu } from "../user/UserProfileMenu";
+import {
+  avatarShapeClassName,
+  getUserInitials,
+} from "../user/user-profile.utils";
 
 export interface LayoutUserInfo {
   readonly displayName: string | null;
   readonly email: string | null;
   readonly photoURL: string | null;
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "?";
-  }
-  if (parts.length === 1) {
-    return parts[0]!.slice(0, 2).toUpperCase();
-  }
-  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
 }
 
 function resolveLayoutUserDisplayName(
@@ -95,6 +93,35 @@ export function LayoutUserDisplay({
   const email = user?.email?.trim() ?? "";
   const labelText = config.label?.text?.trim();
   const showLabel = config.label?.show === true && Boolean(labelText);
+  const avatarClassName = avatarShapeClassName(config.avatarShape);
+
+  if (config.display === "profile-button") {
+    const presentation = resolveMetricKpiPresentation(innerStyles);
+    const customChrome = stylesIncludeVisualChrome(config.styles);
+
+    return (
+      <div
+        className={cn(
+          "w-fit max-w-full shrink-0",
+          presentation.className,
+          containerClassName,
+        )}
+        style={{ ...presentation.style, ...containerStyle }}
+      >
+        <ResponsiveStyleTag cssText={presentation.cssText} />
+        <UserProfileMenu
+          placement="bottom-end"
+          fullWidth={false}
+          imageSize={imageSize}
+          avatarShape={config.avatarShape}
+          showDetails={(config.profileButtonContent ?? "full") === "full"}
+          presentation={presentation}
+          customChrome={customChrome}
+          textClassName={valueClassName}
+        />
+      </div>
+    );
+  }
 
   const photo = (
     <span
@@ -104,8 +131,8 @@ export function LayoutUserDisplay({
       <Avatar
         src={user?.photoURL}
         alt={displayName}
-        fallback={getInitials(displayName)}
-        className="size-full text-[0.65em]"
+        fallback={getUserInitials(displayName)}
+        className={cn("size-full text-[0.65em]", avatarClassName)}
       />
     </span>
   );

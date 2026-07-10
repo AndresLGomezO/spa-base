@@ -3,58 +3,68 @@ import { describe, expect, it } from "vitest";
 import { componentRowSchema } from "@repo/ui-builder-core";
 
 describe("componentRowSchema view filter components", () => {
-  it("parses legacy view-search rows for backward compatibility", () => {
+  it("parses view-search rows", () => {
     const parsed = componentRowSchema.parse({
       type: "component",
       id: "row-search",
       component: {
         kind: "view-search",
+        placeholder: "Search…",
       },
     });
 
     expect(parsed).toMatchObject({
       component: {
         kind: "view-search",
+        placeholder: "Search…",
       },
     });
   });
 
-  it("parses unified view-filter rows with search and filter flags", () => {
+  it("parses view-filters rows", () => {
     const parsed = componentRowSchema.parse({
       type: "component",
-      id: "row-filter",
+      id: "row-filters",
       component: {
-        kind: "view-filter",
-        enableSearch: true,
-        enableFilters: true,
-        enableDateFilter: true,
-        dateFilterGranularity: "month",
-        dateFilterParam: "month",
-        dateFilterLabel: {
-          show: true,
-          text: "Period",
-          position: "below",
-        },
-        searchPlaceholder: "Search…",
+        kind: "view-filters",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },
     });
 
     expect(parsed).toMatchObject({
       component: {
-        kind: "view-filter",
-        enableSearch: true,
-        enableFilters: true,
-        enableDateFilter: true,
+        kind: "view-filters",
+        filters: [{ entityName: "account", fieldName: "accountType" }],
+      },
+    });
+  });
+
+  it("parses view-date-filter rows", () => {
+    const parsed = componentRowSchema.parse({
+      type: "component",
+      id: "row-date-filter",
+      component: {
+        kind: "view-date-filter",
         dateFilterGranularity: "month",
         dateFilterParam: "month",
-        dateFilterLabel: {
+        label: {
           show: true,
           text: "Period",
           position: "below",
         },
-        searchPlaceholder: "Search…",
-        filters: [{ entityName: "account", fieldName: "accountType" }],
+      },
+    });
+
+    expect(parsed).toMatchObject({
+      component: {
+        kind: "view-date-filter",
+        dateFilterGranularity: "month",
+        dateFilterParam: "month",
+        label: {
+          show: true,
+          text: "Period",
+          position: "below",
+        },
       },
     });
   });

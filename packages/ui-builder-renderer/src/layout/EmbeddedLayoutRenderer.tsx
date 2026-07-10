@@ -10,6 +10,8 @@ export interface EmbeddedLayoutRendererProps {
   readonly context: LayoutRenderContext;
   readonly shellClassName?: string;
   readonly shellStyle?: CSSProperties;
+  /** When false, embedded content renders without designer row/column chrome wrappers. */
+  readonly inheritDesignerWrappers?: boolean;
 }
 
 export function EmbeddedLayoutRenderer({
@@ -17,6 +19,7 @@ export function EmbeddedLayoutRenderer({
   context,
   shellClassName,
   shellStyle,
+  inheritDesignerWrappers = true,
 }: EmbeddedLayoutRendererProps): ReactNode {
   const inherited = useLayoutRenderOptions();
 
@@ -25,11 +28,19 @@ export function EmbeddedLayoutRenderer({
       <RecursiveLayoutRenderer
         layout={layout}
         context={context}
-        stretchRootColumns={inherited.stretchRootColumns}
-        rowWrapper={inherited.rowWrapper}
-        rootColumnWrapper={inherited.rootColumnWrapper}
-        nestedColumnWrapper={inherited.nestedColumnWrapper}
-        renderEmptyRootColumns={inherited.renderEmptyRootColumns}
+        stretchRootColumns={
+          inheritDesignerWrappers ? inherited.stretchRootColumns : false
+        }
+        rowWrapper={inheritDesignerWrappers ? inherited.rowWrapper : undefined}
+        rootColumnWrapper={
+          inheritDesignerWrappers ? inherited.rootColumnWrapper : undefined
+        }
+        nestedColumnWrapper={
+          inheritDesignerWrappers ? inherited.nestedColumnWrapper : undefined
+        }
+        renderEmptyRootColumns={
+          inheritDesignerWrappers ? inherited.renderEmptyRootColumns : false
+        }
       />
     </div>
   );

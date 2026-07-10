@@ -1,5 +1,5 @@
 import { Calendar } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { cn } from "@repo/theme/utils";
 
@@ -39,6 +39,8 @@ export interface DatePickerProps {
   readonly timeZone?: string;
   readonly labels: DatePickerLabels;
   readonly className?: string;
+  readonly inputClassName?: string;
+  readonly inputStyle?: CSSProperties;
   readonly compact?: boolean;
   readonly showClearButton?: boolean;
   readonly onClear?: () => void;
@@ -55,6 +57,8 @@ function DatePickerNative({
   placeholder,
   labels,
   className,
+  inputClassName,
+  inputStyle,
 }: DatePickerProps) {
   const nativeType = mode === "datetime" ? "datetime-local" : mode;
 
@@ -67,6 +71,8 @@ function DatePickerNative({
         hasError={hasError}
         value={isoToNativeInputValue(mode, value)}
         placeholder={placeholder ?? labels.placeholder ?? "Select date"}
+        className={inputClassName}
+        style={inputStyle}
         onChange={(event) => {
           onChange(nativeInputValueToIso(mode, event.target.value));
         }}
@@ -99,6 +105,8 @@ function DatePickerPopover({
   timeZone = "UTC",
   labels,
   className,
+  inputClassName,
+  inputStyle,
   compact = false,
   showClearButton = false,
   onClear,
@@ -256,7 +264,9 @@ function DatePickerPopover({
               datePickerCompactInputPadding(compact, canClear) ?? "pr-10",
               compact && "w-auto [field-sizing:content] min-w-[5rem]",
               disabled && "cursor-not-allowed",
+              inputClassName,
             )}
+            style={inputStyle}
           />
           <DatePickerFieldClearButton
             visible={canClear}

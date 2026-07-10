@@ -2,43 +2,36 @@
 
 ## Purpose
 
-**When to use:** Legacy search-only toolbar. **Prefer `view-filter` with `enableSearch: true`.**
+**When to use:** Global search input for a data view. Place independently in the layout toolbar or any allowed surface.
 
-**When not to use:** New designs — use `view-filter`. Filters without search — use `view-filter` with `enableFilters`.
+**When not to use:** Entity field filters — use `view-filters`. Date period selection — use `view-date-filter`.
 
 ## Allowed surfaces
 
 | Design surface | Allowed |
 |----------------|--------|
-| `listItem` | No |
-| `tableColumnCell` | No |
-| `tableRowExpand` | No |
-| `mainPage` | No |
-| `recordDetail` | No |
-| `formCreate` | No |
-| `formEdit` | No |
-| `formPlain` | No |
-| `formWizardShell` | No |
-| `formWizardStep` | No |
-| `formModalFooter` | No |
-| `metricStrip` | No |
-| `metricRow` | No |
-| `metricWidget` | No |
-| `dashboardSection` | No |
-| `dashboardLayout` | No |
-
-> **Legacy:** Parsed for backward compatibility. Migrated to `view-filter` on import. Not in `componentKindsForSurface` — treat as deprecated.
+| `listItem` | Yes |
+| `tableColumnCell` | Yes |
+| `tableRowExpand` | Yes |
+| `mainPage` | Yes |
+| `recordDetail` | Yes |
+| `metricStrip` | Yes |
+| `metricRow` | Yes |
+| `metricWidget` | Yes |
+| `dashboardSection` | Yes |
+| `dashboardLayout` | Yes |
 
 ## Properties
 
 | Name | Type | Required | Constraints | Why |
 |------|------|----------|-------------|-----|
 | `placeholder` | `string` | No |  | Search input placeholder. |
-| `styles` | `StyleRule[]` | No |  | Toolbar styling. |
+| `label` | `LabelConfig` | No |  | Optional label above/below the search field. |
+| `styles` | `StyleRule[]` | No |  | Full styling (background, border, shadow, etc.). |
 
 ## Interactions
 
-Search binds to URL query param `q`.
+Search binds to URL query param `q`. Search columns are built from all entities in the tenant catalog when at least one `view-search` component exists in the layout.
 
 ## Binding
 
@@ -57,16 +50,27 @@ None — search is global to the active data view.
 
 ```json
 {
-  "kind": "view-filter",
-  "enableSearch": true,
-  "enableFilters": false,
-  "searchPlaceholder": "Search accounts…",
-  "filters": []
+  "kind": "view-search",
+  "placeholder": "Search accounts…",
+  "label": {
+    "show": true,
+    "text": "Search",
+    "position": "above"
+  },
+  "styles": [
+    {
+      "property": "borderColor",
+      "value": "primary"
+    },
+    {
+      "property": "borderWidth",
+      "value": "1px"
+    }
+  ]
 }
 ```
 
 ## Common mistakes
 
-- Creating new `view-search` rows instead of `view-filter`.
-- Adjacent `view-search` + `view-filter` — import merges them.
-- Expecting `filters` on `view-search` — use `view-filter`.
+- Expecting per-entity search field configuration — searchable fields are inferred globally.
+- Placing search without any `view-search` component and expecting URL `q` to affect list queries.

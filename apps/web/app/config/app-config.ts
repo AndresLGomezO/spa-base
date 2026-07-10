@@ -8,6 +8,7 @@ interface FirebaseConfig {
   readonly messagingSenderId: string;
   readonly appId: string;
   readonly authEmulatorHost: string;
+  readonly authEmulatorDisableWarnings: boolean;
   readonly storageEmulatorPublicHost: string;
 }
 
@@ -57,6 +58,9 @@ export const appConfig: Readonly<AppConfig> = Object.freeze({
     ),
     appId: readEnv("VITE_FIREBASE_APP_ID", "1:123456789:web:abcdef"),
     authEmulatorHost: readEnv("VITE_FIREBASE_AUTH_EMULATOR_HOST", ""),
+    authEmulatorDisableWarnings: readEnvBoolean(
+      "VITE_FIREBASE_AUTH_EMULATOR_DISABLE_WARNINGS",
+    ),
     storageEmulatorPublicHost: readEnv(
       "VITE_FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST",
       "127.0.0.1:9199",

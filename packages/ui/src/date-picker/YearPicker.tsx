@@ -1,5 +1,5 @@
 import { Calendar } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { cn } from "@repo/theme/utils";
 
@@ -32,6 +32,8 @@ export interface YearPickerProps {
   readonly locale?: string;
   readonly labels: DatePickerLabels;
   readonly className?: string;
+  readonly inputClassName?: string;
+  readonly inputStyle?: CSSProperties;
   readonly compact?: boolean;
   readonly showClearButton?: boolean;
   readonly onClear?: () => void;
@@ -47,6 +49,8 @@ function YearPickerNative({
   placeholder,
   labels,
   className,
+  inputClassName,
+  inputStyle,
   compact = false,
   showClearButton = false,
   onClear,
@@ -63,7 +67,12 @@ function YearPickerNative({
       hasError={hasError}
       value={value}
       placeholder={placeholder ?? labels.placeholder ?? "Select year"}
-      className={cn(compact && "w-auto [field-sizing:content]", className)}
+      className={cn(
+        compact && "w-auto [field-sizing:content]",
+        className,
+        inputClassName,
+      )}
+      style={inputStyle}
       onChange={(event) => {
         const next = event.target.value.trim();
         if (!next || !parseYearBucket(next)) {
@@ -85,6 +94,8 @@ function YearPickerPopover({
   locale = "en",
   labels,
   className,
+  inputClassName,
+  inputStyle,
   compact = false,
   showClearButton = false,
   onClear,
@@ -160,7 +171,9 @@ function YearPickerPopover({
               datePickerCompactInputPadding(compact, canClear) ?? "pr-10",
               compact && "w-auto [field-sizing:content] min-w-[3rem]",
               disabled && "cursor-not-allowed",
+              inputClassName,
             )}
+            style={inputStyle}
           />
           <DatePickerFieldClearButton
             visible={canClear}

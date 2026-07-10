@@ -51,6 +51,7 @@ import {
   stackShellLayoutClasses,
   stretchColumnStackShellClassName,
   stackShellWidthClassName,
+  type FlexAlign,
   type ColumnNode,
   type ColumnStackDirection,
   type ContainerOverlayContext,
@@ -67,6 +68,14 @@ import type { LayoutRenderContext } from "../context.js";
 import { wrapRowWithClickAction } from "../click-action/wrap-row-click-action.js";
 import { LayoutRenderOptionsProvider } from "../layout-render-options-context.js";
 import { renderUiComponent } from "../engine/render-component.js";
+import {
+  mergeMatchedConditionalClassName,
+  resolveComponentConditionalStyles,
+} from "../engine/apply-entity-conditional-styles.js";
+import {
+  mergeConditionalCssText,
+  type ConditionalStylesCapable,
+} from "@repo/ui-builder-core";
 import {
   resolveMotionPreset,
   mergeMotionPresetStyle,
@@ -90,6 +99,24 @@ export type {
 const LIST_DETAIL_COLUMN_SHELL_CLASS = "flex min-w-0 flex-col";
 const LIST_DETAIL_ROOT_SHELL_CLASS = "flex min-w-0 flex-col";
 
+function withEntityConditionalShellStyles(
+  component: ConditionalStylesCapable,
+  context: LayoutRenderContext,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
+  base: ReturnType<typeof resolveRowWrapperStyleRules>,
+): ReturnType<typeof resolveRowWrapperStyleRules> {
+  const matched = resolveComponentConditionalStyles(
+    component,
+    context,
+    atBreakpoint,
+  );
+  return {
+    className: mergeMatchedConditionalClassName(base.className, matched),
+    style: { ...base.style, ...matched.style },
+    cssText: mergeConditionalCssText(base.cssText, matched.cssText),
+  };
+}
+
 function isListOrDetailSurface(context: LayoutRenderContext): boolean {
   return context.mode === "listItem" || context.mode === "detail";
 }
@@ -106,6 +133,7 @@ function resolveRowShellLayoutOptions(options: {
   readonly parentColumn?: ColumnNode;
   readonly stackDirection: ColumnStackDirection;
   readonly atBreakpoint?: ResponsiveGridBreakpoint;
+  readonly rowScope: RowRenderScope;
 }) {
   const parentStackDirection = options.parentColumn
     ? resolveColumnStackDirection(options.parentColumn)
@@ -127,6 +155,10 @@ function resolveRowShellLayoutOptions(options: {
         )
       : false,
     parentStackStyles: options.parentColumn?.styles,
+    parentIsGrid: options.rowScope.insideGridTrack ?? false,
+    parentGridAlignItems: options.rowScope.insideGridTrack
+      ? (options.rowScope.gridParentAlignItems ?? "stretch")
+      : undefined,
     row: options.row,
   };
 }
@@ -285,6 +317,8 @@ interface RowRenderScope {
   readonly rootColumnIndex: number;
   readonly containerParentRowId?: string;
   readonly containerOverlayContext?: ContainerOverlayContext;
+  readonly insideGridTrack?: boolean;
+  readonly gridParentAlignItems?: FlexAlign;
 }
 
 function buildRowLocator(scope: RowRenderScope): RowLocator {
@@ -527,7 +561,11 @@ function rowStackShellClassName(
     return "min-w-0";
   }
 
-  if (component?.kind === "view-filter") {
+  if (
+    component?.kind === "view-search" ||
+    component?.kind === "view-filters" ||
+    component?.kind === "view-date-filter"
+  ) {
     return "min-w-0 w-full max-w-full";
   }
 
@@ -868,6 +906,17 @@ function resolveColumnDisplayRange(
   );
 }
 
+function resolveLayoutVisibilityClassName(displayRange: {
+  readonly hidden: boolean;
+  readonly className?: string;
+}): string | undefined {
+  if (displayRange.hidden) {
+    return "hidden";
+  }
+
+  return displayRange.className;
+}
+
 function renderRow(
   row: RowNode,
   context: LayoutRenderContext,
@@ -879,9 +928,7 @@ function renderRow(
   columnGridOptions?: ColumnGridRenderOptions,
 ): ReactNode {
   const displayRange = resolveRowDisplayRange(row, atBreakpoint);
-  if (displayRange.hidden) {
-    return null;
-  }
+  const visibilityClassName = resolveLayoutVisibilityClassName(displayRange);
 
   const rowLocator = buildRowLocator(rowScope);
   const parentStackDirection = parentColumn
@@ -906,6 +953,7 @@ function renderRow(
           parentColumn,
           stackDirection,
           atBreakpoint,
+          rowScope,
         }),
       )
     : undefined;
@@ -924,9 +972,14 @@ function renderRow(
       : { className: "" };
   if (row.type === "component") {
     if (isGridComponent(row.component)) {
-      const gridStyles = resolveRowWrapperStyleRules(row.component.styles, {
+      const gridStyles = withEntityConditionalShellStyles(
+        row.component,
+        context,
         atBreakpoint,
-      });
+        resolveRowWrapperStyleRules(row.component.styles, {
+          atBreakpoint,
+        }),
+      );
       const gridInlineStyle = gridStyles.style ?? {};
       const gridStyleWithoutGap = { ...gridInlineStyle };
       delete gridStyleWithoutGap.gap;
@@ -937,6 +990,8 @@ function renderRow(
       const gridScope: RowRenderScope = {
         rootColumnIndex: rowScope.rootColumnIndex,
         containerParentRowId: row.id,
+        insideGridTrack: true,
+        gridParentAlignItems: row.component.alignItems ?? "stretch",
       };
       const resolvedGap = resolveGridGapCSSValue(
         row.component.gap,
@@ -946,7 +1001,11 @@ function renderRow(
       const gridInner = (
         <div
           key={row.id}
-          className={[gridStyles.className, motionPreset.className]
+          className={[
+            gridStyles.className,
+            motionPreset.className,
+            visibilityClassName,
+          ]
             .filter(Boolean)
             .join(" ")}
           style={{
@@ -974,7 +1033,14 @@ function renderRow(
       return wrapRowContent(
         row,
         rowLocator,
-        wrapRowWithClickAction(row, gridInner, context),
+        useProductionShellLayout && rowShellLayout ? (
+          wrapProductionRowShell(
+            rowShellLayout,
+            wrapRowWithClickAction(row, gridInner, context),
+          )
+        ) : (
+          wrapRowWithClickAction(row, gridInner, context)
+        ),
         columnGridOptions,
       );
     }
@@ -991,7 +1057,11 @@ function renderRow(
       const neutralInner = (
         <div
           key={row.id}
-          className={[neutralStyles.className, motionPreset.className]
+          className={[
+            neutralStyles.className,
+            motionPreset.className,
+            visibilityClassName,
+          ]
             .filter(Boolean)
             .join(" ")}
           style={mergeMotionPresetStyle(neutralStyles.style, motionPreset)}
@@ -1017,7 +1087,9 @@ function renderRow(
         <div
           aria-hidden
           key={row.id}
-          className={overlayStyles.className}
+          className={[overlayStyles.className, visibilityClassName]
+            .filter(Boolean)
+            .join(" ")}
           style={overlayStyles.style}
         />
       );
@@ -1028,11 +1100,13 @@ function renderRow(
       const containerOverlayContext = createContainerOverlayContext(
         row.component.rows,
       );
-      const containerStyles = resolveRowWrapperStyleRules(
-        row.component.styles,
-        {
+      const containerStyles = withEntityConditionalShellStyles(
+        row.component,
+        context,
+        atBreakpoint,
+        resolveRowWrapperStyleRules(row.component.styles, {
           atBreakpoint,
-        },
+        }),
       );
       const containerShellStyle = resolveContainerShellLayoutStyle(
         row.component.styles,
@@ -1076,8 +1150,17 @@ function renderRow(
               parentColumn.rows,
             )
           : undefined;
+      const percentFillStretchClass = stretchPercentFillContainer
+        ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
+        : undefined;
+      const rowSiblingStretchClass =
+        containerParentIsRow && !stretchRootContainer && !percentSplitHeight
+          ? rowSiblingContainerShellClassName()
+          : undefined;
+      const productionContainerStretchClass =
+        percentFillStretchClass ?? rowSiblingStretchClass;
       const stretchedContainerClass = useProductionShellLayout
-        ? undefined
+        ? productionContainerStretchClass
         : stretchRootContainer
           ? rootContainerDefiniteHeight
             ? "flex min-h-0 w-full min-w-0 shrink-0 flex-col"
@@ -1086,12 +1169,9 @@ function renderRow(
             ? stackDirection === "column"
               ? "flex min-h-0 h-full w-full min-w-0 shrink-0 flex-col"
               : "flex min-h-0 w-full min-w-0 shrink-0 flex-col"
-            : stretchPercentFillContainer
-              ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
-              : (splitSiblingContainerClass ??
-                (containerParentIsRow
-                  ? rowSiblingContainerShellClassName()
-                  : undefined));
+            : (percentFillStretchClass ??
+              (splitSiblingContainerClass ??
+                rowSiblingStretchClass));
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-container`,
         rows: row.component.rows,
@@ -1103,14 +1183,15 @@ function renderRow(
         containerParentRowId: row.id,
         containerOverlayContext,
       };
-      const containerWidthClass =
-        useProductionShellLayout || flexWrapRowItemClass
-          ? ""
-          : stackShellWidthClassName(
+      const containerWidthClass = flexWrapRowItemClass
+        ? ""
+        : !useProductionShellLayout || containerParentIsRow
+          ? stackShellWidthClassName(
               row.component.styles,
               containerStackDirection,
               atBreakpoint,
-            );
+            )
+          : "";
       const containerShellExtraClassName =
         useProductionShellLayout &&
         containerParentIsRow &&
@@ -1132,6 +1213,7 @@ function renderRow(
             ),
             containerStyles.className,
             motionPreset.className,
+            visibilityClassName,
           ]
             .filter(Boolean)
             .join(" ")}
@@ -1293,7 +1375,7 @@ function renderRow(
           formSlotClassName,
           rowWrapperStyleClassName(rowStyles),
           motionPreset.className,
-          displayRange.className,
+          visibilityClassName,
         ]
           .filter(Boolean)
           .join(" ")}
@@ -1338,9 +1420,7 @@ function renderColumn(
   },
 ): ReactNode {
   const displayRange = resolveColumnDisplayRange(column, atBreakpoint);
-  if (displayRange.hidden) {
-    return null;
-  }
+  const visibilityClassName = resolveLayoutVisibilityClassName(displayRange);
 
   if (column.rows.length === 0 && !options?.allowEmpty) {
     return null;
@@ -1362,7 +1442,7 @@ function renderColumn(
       className={[
         columnShellClassName(context, column, options?.stretchColumn),
         columnStyles.className,
-        displayRange.className,
+        visibilityClassName,
         useEmptyMinHeight ? "min-h-24" : undefined,
       ]
         .filter(Boolean)

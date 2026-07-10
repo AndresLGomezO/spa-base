@@ -189,6 +189,7 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
                       component: {
                         kind: "grid",
                         gridTemplateColumns: "1fr",
+                        alignItems: "end",
                         rows: [
                           {
                             type: "component",
@@ -252,6 +253,7 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
 
     expect(markup).toContain("flex-[1]");
     expect(markup).toContain("items-end");
+    expect(markup).toContain("self-end");
   });
 
   it("stretches flex-grow text rows to full width in column stacks for textAlign", () => {

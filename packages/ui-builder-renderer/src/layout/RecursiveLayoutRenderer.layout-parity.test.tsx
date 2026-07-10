@@ -4,6 +4,8 @@ import {
   ensureContainerRoot,
   normalizeRuntimeRowInnerClassName,
   normalizeRuntimeRowShellClassName,
+  resolveParentGridAlignItems,
+  resolveParentIsGrid,
   resolveParentStackAlign,
   resolveParentStackDirection,
   resolveParentStackStyles,
@@ -68,11 +70,16 @@ function createFlexWrapDashboardLayout(): UiLayoutDocument {
 
 function createPreviewShellRowWrapper(layout: UiLayoutDocument): RowWrapper {
   return (row, locator, children) => {
+    const parentIsGrid = resolveParentIsGrid(layout, locator);
     const rowShell = resolveRowShellLayoutForRender({
       parentStackDirection: resolveParentStackDirection(layout, locator),
       parentStackAlign: resolveParentStackAlign(layout, locator),
       parentUsesFlexWrap: resolveParentStackUsesFlexWrap(layout, locator),
       parentStackStyles: resolveParentStackStyles(layout, locator),
+      parentIsGrid,
+      parentGridAlignItems: parentIsGrid
+        ? resolveParentGridAlignItems(layout, locator)
+        : undefined,
       row,
     });
 

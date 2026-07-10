@@ -34,7 +34,13 @@ if (appConfig.firebase.authEmulatorHost) {
     ? appConfig.firebase.authEmulatorHost
     : `http://${appConfig.firebase.authEmulatorHost}`;
 
-  connectAuthEmulator(auth, emulatorUrl);
+  connectAuthEmulator(
+    auth,
+    emulatorUrl,
+    appConfig.firebase.authEmulatorDisableWarnings
+      ? { disableWarnings: true }
+      : undefined,
+  );
 }
 
 registerFirebaseAppForAppCheck(app);

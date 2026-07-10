@@ -6,6 +6,7 @@ import {
   isResponsiveGridStyleProperty,
 } from "@repo/ui-builder-react";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
+import type { SerializableEntityDefinition } from "@repo/entities";
 import {
   analyzeGridTemplateColumns,
   countDefinedGridTemplateTracks,
@@ -15,6 +16,7 @@ import {
   updateComponentRowAt,
   updateGridRowMetaAt,
   type ComponentRowNode,
+  type DesignSurface,
   type GridComponentConfig,
   type StyleRule,
 } from "@repo/ui-builder-core";
@@ -22,6 +24,7 @@ import { PreservedTextInput } from "@repo/ui-builder-react";
 import { FieldError, FieldLabel, Text } from "@repo/ui";
 import { useMemo } from "react";
 
+import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
 import type { ComponentsLayoutBinding } from "./form-designer-components-layout";
 import type { formDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
@@ -35,6 +38,8 @@ interface GridRowPanelProps {
   readonly rowNode: ComponentRowNode;
   readonly rowRef: ComponentRowRef;
   readonly binding: ComponentsLayoutBinding;
+  readonly definition: SerializableEntityDefinition;
+  readonly designSurface: DesignSurface;
   readonly labels: ReturnType<typeof formDesignerLayoutEditorLabels>;
   readonly treeLabels: StructureTreeLabels;
   readonly fieldDescriptors: readonly FieldDescriptor[];
@@ -89,6 +94,8 @@ export function GridRowPanel({
   rowNode,
   rowRef,
   binding,
+  definition,
+  designSurface,
   labels,
   treeLabels,
   fieldDescriptors,
@@ -202,6 +209,15 @@ export function GridRowPanel({
           onChange={(patch) => binding.updateGridRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowConditionalStylesPanelSection
+        row={rowNode}
+        rowRef={rowRef}
+        binding={binding}
+        fieldDescriptors={fieldDescriptors}
+        definition={definition}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={labels.rowLayoutStyles}

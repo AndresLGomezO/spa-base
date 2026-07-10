@@ -71,7 +71,7 @@ const SURFACE_PREVIEW_OVERRIDES: Partial<
   listItem: MOBILE_DESKTOP_STRATEGY,
   metricWidget: WIDGET_WIDTH_STRATEGY,
   mainPage: FULL_DEVICE_STRATEGY,
-  dashboardLayout: FULL_DEVICE_STRATEGY,
+  dashboardLayout: SECTION_WIDTH_STRATEGY,
   tableColumnCell: WIDGET_WIDTH_STRATEGY,
 };
 

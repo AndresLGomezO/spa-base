@@ -37,7 +37,8 @@ function assertNoUnsupportedComponents(component: UiComponentConfig): void {
     component.kind === "query-viewer" ||
     component.kind === "dashboard-section" ||
     component.kind === "view-search" ||
-    component.kind === "view-filter" ||
+    component.kind === "view-filters" ||
+    component.kind === "view-date-filter" ||
     component.kind === "related-records"
   ) {
     throw new GenericizeLayoutNodeError(

@@ -4,6 +4,7 @@ import {
   conditionalRulesToBadgeVariants,
   isFieldUiComponent,
   isIconComponent,
+  isNotificationBellComponent,
   isUserComponent,
   isDashboardSectionComponent,
   isMetricKpiComponent,
@@ -12,10 +13,12 @@ import {
   isChartComponent,
   isQueryViewerComponent,
   isViewSearchComponent,
-  isViewFilterComponent,
+  isViewFiltersComponent,
+  isViewDateFilterComponent,
   isPageUiComponent,
-  matchConditionalStyles,
-  matchConditionalStylesForDate,
+  mergeConditionalCssText,
+  resolveDefaultCompareFieldPath,
+  type MatchedConditionalStyles,
   resolveFieldChain,
   filterComponentInnerStyleRules,
   resolvePageSlotWrapper,
@@ -42,6 +45,11 @@ import {
 
 import type { LayoutRenderContext } from "../context.js";
 import type { FieldDisplayMeta } from "../context.js";
+import {
+  mergeMatchedConditionalClassName,
+  resolveComponentConditionalStyles,
+  wrapNodeWithConditionalStyles,
+} from "./apply-entity-conditional-styles.js";
 
 function resolveFieldDisplayValue(
   fieldPath: string,
@@ -215,33 +223,61 @@ export function renderUiComponent(
   atBreakpoint?: ResponsiveGridBreakpoint,
 ): ReactNode {
   if (isMetricKpiComponent(config)) {
-    return (
+    const node =
       context.metricKpiRenderer?.(
         config,
         resolveMetricKpiPresentation(config.styles, atBreakpoint),
-      ) ?? null
+      ) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
     );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (isMetricDerivedKpiComponent(config)) {
-    return (
+    const node =
       context.metricDerivedKpiRenderer?.(
         config,
         resolveMetricKpiPresentation(config.styles, atBreakpoint),
-      ) ?? null
+      ) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
     );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (isMetricWidgetComponent(config)) {
-    return context.metricWidgetRenderer?.(config) ?? null;
+    const node = context.metricWidgetRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (isQueryViewerComponent(config)) {
-    return context.queryViewerRenderer?.(config) ?? null;
+    const node = context.queryViewerRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (isChartComponent(config)) {
-    return context.chartRenderer?.(config) ?? null;
+    const node = context.chartRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (isDashboardSectionComponent(config)) {
@@ -249,20 +285,15 @@ export function renderUiComponent(
   }
 
   if (isViewSearchComponent(config)) {
-    return (
-      context.viewFilterRenderer?.({
-        kind: "view-filter",
-        enableSearch: true,
-        enableFilters: false,
-        filters: [],
-        searchPlaceholder: config.placeholder,
-        styles: config.styles,
-      }) ?? null
-    );
+    return context.viewSearchRenderer?.(config) ?? null;
   }
 
-  if (isViewFilterComponent(config)) {
-    return context.viewFilterRenderer?.(config) ?? null;
+  if (isViewFiltersComponent(config)) {
+    return context.viewFiltersRenderer?.(config) ?? null;
+  }
+
+  if (isViewDateFilterComponent(config)) {
+    return context.viewDateFilterRenderer?.(config) ?? null;
   }
 
   if (config.kind === "form-field") {
@@ -272,11 +303,31 @@ export function renderUiComponent(
     ) {
       return null;
     }
-    const { containerClassName } = resolveComponentRenderStyles(
-      config.styles,
+    const { containerClassName, containerStyle, cssText } =
+      resolveComponentRenderStyles(config.styles, atBreakpoint);
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
       atBreakpoint,
+      { defaultCompareFieldPath: config.fieldPath },
     );
-    return context.formFieldRenderer?.(config, containerClassName) ?? null;
+    const mergedClassName = mergeMatchedConditionalClassName(
+      containerClassName,
+      matched,
+    );
+    const mergedCssText = mergeConditionalCssText(cssText, matched.cssText);
+    const mergedStyle = { ...containerStyle, ...matched.style };
+    const fieldNode =
+      context.formFieldRenderer?.(config, mergedClassName) ?? null;
+    if (!mergedCssText && Object.keys(mergedStyle).length === 0) {
+      return fieldNode;
+    }
+    return (
+      <>
+        {mergedCssText ? <ResponsiveStyleTag cssText={mergedCssText} /> : null}
+        <div style={mergedStyle}>{fieldNode}</div>
+      </>
+    );
   }
 
   if (config.kind === "entity-field-selector") {
@@ -286,12 +337,30 @@ export function renderUiComponent(
     ) {
       return null;
     }
-    const { containerClassName } = resolveComponentRenderStyles(
-      config.styles,
+    const { containerClassName, containerStyle, cssText } =
+      resolveComponentRenderStyles(config.styles, atBreakpoint);
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
       atBreakpoint,
+      { defaultCompareFieldPath: config.fieldPath },
     );
+    const mergedClassName = mergeMatchedConditionalClassName(
+      containerClassName,
+      matched,
+    );
+    const mergedCssText = mergeConditionalCssText(cssText, matched.cssText);
+    const mergedStyle = { ...containerStyle, ...matched.style };
+    const selectorNode =
+      context.entityFieldSelectorRenderer?.(config, mergedClassName) ?? null;
+    if (!mergedCssText && Object.keys(mergedStyle).length === 0) {
+      return selectorNode;
+    }
     return (
-      context.entityFieldSelectorRenderer?.(config, containerClassName) ?? null
+      <>
+        {mergedCssText ? <ResponsiveStyleTag cssText={mergedCssText} /> : null}
+        <div style={mergedStyle}>{selectorNode}</div>
+      </>
     );
   }
 
@@ -386,11 +455,33 @@ export function renderUiComponent(
   }
 
   if (isIconComponent(config)) {
-    return context.lucideIconRenderer?.(config, atBreakpoint) ?? null;
+    const node = context.lucideIconRenderer?.(config, atBreakpoint) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (isUserComponent(config)) {
-    return context.userRenderer?.(config) ?? null;
+    const node = context.userRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
+  }
+
+  if (isNotificationBellComponent(config)) {
+    const node = context.notificationBellRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
   }
 
   if (!isFieldUiComponent(config)) {
@@ -407,17 +498,37 @@ export function renderUiComponent(
     cssText,
   } = resolveComponentRenderStyles(innerStyles, atBreakpoint);
 
-  const withResponsiveCss = (node: ReactNode): ReactNode => {
-    if (!cssText) {
+  const withResponsiveCss = (
+    node: ReactNode,
+    extraCssText?: string,
+  ): ReactNode => {
+    const mergedCssText = mergeConditionalCssText(cssText, extraCssText);
+    if (!mergedCssText) {
       return node;
     }
     return (
       <>
-        <ResponsiveStyleTag cssText={cssText} />
+        <ResponsiveStyleTag cssText={mergedCssText} />
         {node}
       </>
     );
   };
+
+  const mergeMatchedClassName = (
+    baseClassName: string | undefined,
+    matched: MatchedConditionalStyles,
+  ): string => mergeMatchedConditionalClassName(baseClassName, matched);
+
+  const resolveFieldConditionalStyles = (
+    boundFieldPath?: string,
+  ): MatchedConditionalStyles =>
+    resolveComponentConditionalStyles(config, context, atBreakpoint, {
+      defaultCompareFieldPath:
+        boundFieldPath ?? resolveDefaultCompareFieldPath(config),
+      boundFieldPath,
+      dateDisplayFormat:
+        config.kind === "date" ? config.dateDisplayFormat : undefined,
+    });
 
   const chain = resolveFieldChain({
     primary: config.primary,
@@ -432,18 +543,20 @@ export function renderUiComponent(
     chain.staticValue !== undefined &&
     config.kind !== "image"
   ) {
+    const matched = resolveFieldConditionalStyles();
     return withResponsiveCss(
       <CardFieldValue
         value={chain.staticValue}
         allowEmpty
-        className={containerClassName}
-        style={containerStyle}
+        className={mergeMatchedClassName(containerClassName, matched)}
+        style={{ ...containerStyle, ...matched.style }}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
         valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
         label={labelFromConfig(config, "", context)}
       />,
+      matched.cssText,
     );
   }
 
@@ -463,6 +576,9 @@ export function renderUiComponent(
 
   if (config.kind === "image") {
     const imageRenderOptions = resolveImageRenderOptions(config);
+    const matched = resolveFieldConditionalStyles(fieldPath);
+    const imageClassName = mergeMatchedClassName(containerClassName, matched);
+    const imageStyle = { ...containerStyle, ...matched.style };
     if (context.resolveImage) {
       const primaryFieldPath =
         config.primary.type === "field" ? config.primary.path.trim() : "";
@@ -471,8 +587,8 @@ export function renderUiComponent(
         imageSize: imageRenderOptions.sizePx,
         fillContainer: imageRenderOptions.fillContainer,
         objectFit: imageRenderOptions.objectFit,
-        className: containerClassName,
-        style: containerStyle,
+        className: imageClassName,
+        style: imageStyle,
       });
     }
 
@@ -485,9 +601,10 @@ export function renderUiComponent(
         sizePx={imageRenderOptions.sizePx}
         fillContainer={imageRenderOptions.fillContainer}
         objectFit={imageRenderOptions.objectFit}
-        className={containerClassName}
-        style={containerStyle}
+        className={imageClassName}
+        style={imageStyle}
       />,
+      matched.cssText,
     );
   }
 
@@ -498,9 +615,9 @@ export function renderUiComponent(
       formatted,
       context,
     );
-    const matched = matchConditionalStyles(rawValue, config.conditionalStyles);
+    const matched = resolveFieldConditionalStyles(fieldPath);
     const badgeContainer = resolveStyleRules(innerStyles, {
-      baseClassName: matched.className,
+      baseClassName: mergeMatchedClassName(undefined, matched),
       atBreakpoint,
     });
 
@@ -518,6 +635,7 @@ export function renderUiComponent(
         className={badgeContainer.className}
         style={{ ...badgeContainer.style, ...matched.style }}
       />,
+      matched.cssText,
     );
   }
 
@@ -560,6 +678,8 @@ export function renderUiComponent(
       );
     }
 
+    const matched = resolveFieldConditionalStyles(fieldPath);
+
     return withResponsiveCss(
       <CardFieldCurrency
         amount={displayValue}
@@ -568,12 +688,16 @@ export function renderUiComponent(
         label={label}
         className={containerClassName}
         style={containerStyle}
-        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
+        valueClassName={valueClassNameFromStyles(
+          innerStyles,
+          mergeMatchedClassName(textClassName, matched),
+        )}
         textSize={textSize}
-        valueStyle={valueStyle}
+        valueStyle={{ ...valueStyle, ...matched.style }}
         showToneColors={showToneColors}
         {...textPropsFromLabel(config)}
       />,
+      matched.cssText,
     );
   }
 
@@ -616,14 +740,7 @@ export function renderUiComponent(
 
     const dateDisplayFormat =
       config.dateDisplayFormat ?? meta.dateDisplayFormat ?? "datetime";
-    const matched = matchConditionalStylesForDate(
-      rawValue,
-      config.conditionalStyles,
-      {
-        dateDisplayFormat,
-        timeZone: "UTC",
-      },
-    );
+    const matched = resolveFieldConditionalStyles(fieldPath);
 
     return withResponsiveCss(
       <CardFieldDate
@@ -635,12 +752,13 @@ export function renderUiComponent(
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(
           innerStyles,
-          [textClassName, matched.className].filter(Boolean).join(" "),
+          mergeMatchedClassName(textClassName, matched),
         )}
         textSize={textSize}
         valueStyle={{ ...valueStyle, ...matched.style }}
         {...textPropsFromLabel(config)}
       />,
+      matched.cssText,
     );
   }
 
@@ -655,6 +773,7 @@ export function renderUiComponent(
     formattedValue,
     context,
   );
+  const matched = resolveFieldConditionalStyles(fieldPath);
 
   return wrapListItemRelationLink(
     fieldPath,
@@ -667,12 +786,16 @@ export function renderUiComponent(
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(
           innerStyles,
-          sampleValueClassName(textClassName, isSample),
+          mergeMatchedClassName(
+            sampleValueClassName(textClassName, isSample),
+            matched,
+          ),
         )}
         textSize={textSize}
-        valueStyle={valueStyle}
+        valueStyle={{ ...valueStyle, ...matched.style }}
         {...textPropsFromLabel(config)}
       />,
+      matched.cssText,
     ),
     context,
   );

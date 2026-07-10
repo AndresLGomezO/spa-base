@@ -9,12 +9,12 @@ Human-readable manual: \`docs/ui-design-manual/\`. This fragment is a compact ro
 
 | Surface | Key kinds |
 |---------|-----------|
-| listItem / card | text, image, icon, date, numeric, badge, metric-*, view-filter + container, grid |
+| listItem / card | text, image, icon, date, numeric, badge, metric-*, view-search, view-filters, view-date-filter + container, grid |
 | table column cell | same as listItem |
 | form plain | form-field, entity-field-selector, form-section, form-actions + display kinds |
 | form wizard shell | wizard-progress, wizard-step-host, wizard-actions |
-| mainPage | page-header, page-toolbar, page-metrics, page-list, view-filter |
-| recordDetail | display kinds, related-records, metric-*, view-filter |
+| mainPage | page-header, page-toolbar, page-metrics, page-list, view-search, view-filters, view-date-filter |
+| recordDetail | display kinds, related-records, metric-*, view-search, view-filters, view-date-filter |
 | metricRow | display kinds, metric-widget |
 
 ## Default presets

@@ -2,7 +2,8 @@
  * @ai-context-sync
  * LabelConfig — keep in sync with packages/ai-context/src/atoms/ui/label-config.ts
  */
-import type { CardBadgeVariant } from "./component.js";
+import type { CardBadgeVariant, FieldDateDisplayFormat } from "./component.js";
+import type { StyleRule } from "../styles/style-types.js";
 
 export type LabelPosition = "above" | "below";
 
@@ -29,7 +30,18 @@ export interface LabelConfig {
 
 export interface ConditionalStyleRule {
   readonly matchValue: string;
-  readonly background?: string;
-  readonly textColor?: string;
+  /** Entity field path to compare; defaults to the component bound field when omitted. */
+  readonly compareFieldPath?: string;
+  /** Date matching format for the compare field when it is a date. */
+  readonly compareFieldDateFormat?: FieldDateDisplayFormat;
   readonly badgeVariant?: CardBadgeVariant;
+  readonly styles?: readonly StyleRule[];
+  /** Legacy — normalized to styles at runtime when styles is absent. */
+  readonly background?: string;
+  /** Legacy — normalized to styles at runtime when styles is absent. */
+  readonly textColor?: string;
+}
+
+export interface ConditionalStylesCapable {
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }

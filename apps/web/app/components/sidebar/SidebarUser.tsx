@@ -1,148 +1,15 @@
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { ChevronsUpDown } from "lucide-react";
+import { sidebarMenuButtonClassName } from "@repo/ui";
 
-import {
-  Avatar,
-  Button,
-  Popover,
-  Text,
-  sidebarMenuButtonClassName,
-} from "@repo/ui";
-import { cn } from "@repo/theme/utils";
-
-import { useAuth } from "../../auth/AuthContext";
-import { LanguageSwitcher } from "../LanguageSwitcher";
-import { ThemeToggle } from "../ThemeToggle";
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
-}
+import { UserProfileMenu } from "../user/UserProfileMenu";
 
 export function SidebarUser() {
-  const { t } = useTranslation("common");
-  const {
-    user,
-    logout,
-    tenantRoleNames,
-    isSuperAdmin,
-    activeTenantName,
-    tenantId,
-    tenantOptions,
-  } = useAuth();
-  const [open, setOpen] = useState(false);
-
-  const displayName = useMemo(
-    () =>
-      user?.displayName ?? user?.email?.split("@")[0] ?? t("nav.fallbackName"),
-    [t, user?.displayName, user?.email],
-  );
-  const displayEmail = user?.email ?? "";
-  const tenantLabel = useMemo(() => {
-    if (activeTenantName) {
-      return activeTenantName;
-    }
-    if (!tenantId) {
-      return null;
-    }
-    const option = tenantOptions.find((item) => item.id === tenantId);
-    return option?.name ?? tenantId;
-  }, [activeTenantName, tenantId, tenantOptions]);
-  const roleLabel = useMemo(() => {
-    const parts: string[] = [];
-    if (isSuperAdmin) {
-      parts.push(t("profile.platformSuperadmin"));
-    }
-    if (tenantRoleNames.length > 0) {
-      parts.push(tenantRoleNames.join(", "));
-    }
-    return parts.length > 0 ? parts.join(" · ") : t("profile.noRole");
-  }, [isSuperAdmin, t, tenantRoleNames]);
-  const initials = getInitials(displayName);
-
-  const profileBlock = (
-    <div className="flex items-start gap-3">
-      <Avatar src={user?.photoURL} alt={displayName} fallback={initials} />
-      <div className="min-w-0 flex-1 space-y-1">
-        <Text className="truncate font-medium">{displayName}</Text>
-        <Text variant="caption" className="truncate">
-          {displayEmail}
-        </Text>
-        {tenantLabel ? (
-          <Text variant="caption" className="truncate font-medium">
-            {tenantLabel}
-          </Text>
-        ) : null}
-        <Text variant="caption" className="truncate capitalize">
-          {roleLabel}
-        </Text>
-      </div>
-    </div>
-  );
-
   return (
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
+    <UserProfileMenu
       placement="right-start"
-      title={t("nav.userMenu")}
-      panelClassName="w-72"
-      className="block w-full"
-      trigger={
-        <Button
-          type="button"
-          variant="ghost"
-          fullWidth
-          aria-label={t("nav.userMenu")}
-          className={cn(
-            sidebarMenuButtonClassName({ size: "lg" }),
-            "h-auto justify-start border-0 font-normal shadow-none focus-visible:ring-offset-0",
-            open && "bg-sidebar-accent text-sidebar-accent-foreground",
-          )}
-        >
-          <Avatar
-            src={user?.photoURL}
-            alt={displayName}
-            fallback={initials}
-            size="md"
-          />
-          <div className="text-sidebar-foreground grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]/sidebar:hidden">
-            <span className="truncate font-medium">{displayName}</span>
-            <span className="text-muted-foreground truncate text-xs">
-              {displayEmail}
-            </span>
-            <span className="text-muted-foreground truncate text-xs capitalize">
-              {roleLabel}
-            </span>
-          </div>
-          <ChevronsUpDown className="ml-auto size-4 shrink-0 group-data-[collapsible=icon]/sidebar:hidden" />
-        </Button>
-      }
-    >
-      {profileBlock}
-      <div className="border-border border-t pt-3">
-        <Text variant="muted" className="mb-2 block text-xs">
-          {t("theme.label")}
-        </Text>
-        <ThemeToggle fullWidth />
-      </div>
-      <div>
-        <Text variant="muted" className="mb-2 block text-xs">
-          {t("language.label")}
-        </Text>
-        <LanguageSwitcher fullWidth />
-      </div>
-      <Button
-        variant="ghost"
-        fullWidth
-        className="text-destructive hover:text-destructive justify-start"
-        onClick={() => void logout()}
-      >
-        {t("nav.signOut")}
-      </Button>
-    </Popover>
+      fullWidth
+      triggerClassName={sidebarMenuButtonClassName({ size: "lg" })}
+      textClassName="text-sidebar-foreground"
+      hideTextClassName="group-data-[collapsible=icon]/sidebar:hidden"
+    />
   );
 }

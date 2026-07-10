@@ -1,4 +1,6 @@
 export {
+  resolveParentGridAlignItems,
+  resolveParentIsGrid,
   resolveParentStackAlign,
   resolveParentStackDirection,
   resolveParentStackStyles,

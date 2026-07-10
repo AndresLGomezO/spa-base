@@ -19,7 +19,7 @@ describe("matchConditionalDaysRemainingStyles", () => {
       { referenceDate, timeZone: "UTC" },
     );
 
-    expect(matched.className).toBe("text-destructive");
+    expect(matched.className).toContain("text-destructive");
   });
 
   it("applies warning when 2 to 4 days remain", () => {
@@ -33,7 +33,7 @@ describe("matchConditionalDaysRemainingStyles", () => {
       { referenceDate, timeZone: "UTC" },
     );
 
-    expect(matched.className).toBe("text-warning");
+    expect(matched.className).toContain("text-warning");
   });
 
   it("applies success when 5 or more days remain", () => {
@@ -47,7 +47,7 @@ describe("matchConditionalDaysRemainingStyles", () => {
       { referenceDate, timeZone: "UTC" },
     );
 
-    expect(matched.className).toBe("text-success");
+    expect(matched.className).toContain("text-success");
   });
 
   it("treats overdue dates as danger when less than 2 days", () => {
@@ -61,7 +61,7 @@ describe("matchConditionalDaysRemainingStyles", () => {
       { referenceDate, timeZone: "UTC" },
     );
 
-    expect(matched.className).toBe("text-destructive");
+    expect(matched.className).toContain("text-destructive");
   });
 });
 
@@ -81,7 +81,7 @@ describe("matchConditionalStylesForDate", () => {
       },
     );
 
-    expect(matched.className).toBe("text-warning");
+    expect(matched.className).toContain("text-warning");
   });
 
   it("falls back to exact match for other date display formats", () => {
@@ -91,6 +91,6 @@ describe("matchConditionalStylesForDate", () => {
       { dateDisplayFormat: "date", referenceDate, timeZone: "UTC" },
     );
 
-    expect(matched.className).toBe("text-primary");
+    expect(matched.className).toContain("text-primary");
   });
 });

@@ -2407,6 +2407,7 @@
                             "id": "row-recent-activity-card-glow",
                             "component": {
                               "kind": "container",
+                              "rows": [],
                               "stackDirection": "column",
                               "styles": [
                                 {
@@ -2441,8 +2442,7 @@
                                   "property": "zIndex",
                                   "value": "0"
                                 }
-                              ],
-                              "rows": []
+                              ]
                             }
                           },
                           {
@@ -2846,6 +2846,18 @@
                                                                       "value": "auto"
                                                                     }
                                                                   ],
+                                                                  "conditionalStyles": [
+                                                                    {
+                                                                      "matchValue": "INCOME",
+                                                                      "compareFieldPath": "financialItem.flowKind",
+                                                                      "styles": [
+                                                                        {
+                                                                          "property": "color",
+                                                                          "value": "success"
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ],
                                                                   "kind": "numeric",
                                                                   "displayFormat": "currency",
                                                                   "showToneColors": false
@@ -2903,20 +2915,7 @@
                                                                 "value": "auto"
                                                               }
                                                             ],
-                                                            "conditionalStyles": [
-                                                              {
-                                                                "matchValue": "<2",
-                                                                "textColor": "danger"
-                                                              },
-                                                              {
-                                                                "matchValue": "<5",
-                                                                "textColor": "warning"
-                                                              },
-                                                              {
-                                                                "matchValue": ">=5",
-                                                                "textColor": "success"
-                                                              }
-                                                            ],
+                                                            "conditionalStyles": [],
                                                             "kind": "date",
                                                             "dateDisplayFormat": "date"
                                                           }

@@ -23,4 +23,26 @@ describe("componentRowSchema user", () => {
       imageSize: 48,
     });
   });
+
+  it("parses profile-button display with avatarShape", () => {
+    const parsed = componentRowSchema.parse({
+      type: "component",
+      id: "row-2",
+      component: {
+        kind: "user",
+        display: "profile-button",
+        profileButtonContent: "photo",
+        imageSize: 48,
+        avatarShape: "circle",
+      },
+    }) as ComponentRowNode;
+
+    expect(parsed.component).toMatchObject({
+      kind: "user",
+      display: "profile-button",
+      profileButtonContent: "photo",
+      imageSize: 48,
+      avatarShape: "circle",
+    });
+  });
 });

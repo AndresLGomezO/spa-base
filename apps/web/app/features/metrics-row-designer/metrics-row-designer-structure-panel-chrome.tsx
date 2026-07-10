@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 
-import { MetricsRowDesignerComponentColumnPanel } from "./MetricsRowDesignerComponentColumnPanel";
 import { MetricsRowDesignerComponentColumnPanelHeaderMenu } from "./MetricsRowDesignerComponentColumnPanelHeaderMenu";
-import { MetricsRowDesignerComponentRowPanel } from "./MetricsRowDesignerComponentRowPanel";
 import { MetricsRowDesignerComponentRowPanelHeaderMenu } from "./MetricsRowDesignerComponentRowPanelHeaderMenu";
 import { MetricsRowDesignerStructurePanelFooter } from "./MetricsRowDesignerStructurePanelFooter";
 import type { MetricsRowPanelSession } from "./metrics-row-designer-panel-session";
+import { MetricsRowStructurePanelBody } from "./MetricsRowStructurePanelBody";
 
 export function renderMetricsRowStructurePanelContent(
   session: MetricsRowPanelSession,
@@ -23,9 +22,7 @@ export function renderMetricsRowStructurePanelContent(
           columnRef={target.columnRef}
         />
       ),
-      body: (
-        <MetricsRowDesignerComponentColumnPanel columnRef={target.columnRef} />
-      ),
+      body: <MetricsRowStructurePanelBody session={session} />,
       footer: <MetricsRowDesignerStructurePanelFooter />,
     };
   }
@@ -34,7 +31,7 @@ export function renderMetricsRowStructurePanelContent(
     headerActions: (
       <MetricsRowDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: <MetricsRowDesignerComponentRowPanel rowRef={target.rowRef} />,
+    body: <MetricsRowStructurePanelBody session={session} />,
     footer: <MetricsRowDesignerStructurePanelFooter />,
   };
 }

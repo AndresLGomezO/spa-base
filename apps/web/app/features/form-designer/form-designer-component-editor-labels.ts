@@ -24,6 +24,18 @@ export function formDesignerComponentEditorLabels(
     slotSettings: t("entity.viewSettings.slotSettings"),
     componentStyles: t("entity.viewSettings.componentStyles"),
     badgeColorRules: t("entity.viewSettings.badgeColorRules"),
+    conditionalStyleRules: t("entity.viewSettings.conditionalStyleRules"),
+    conditionalStyleRulesHint: t("entity.viewSettings.conditionalStyleRulesHint"),
+    daysRemainingConditionalHint: t(
+      "entity.viewSettings.daysRemainingConditionalHint",
+    ),
+    conditionalStyleBackgroundColor: t(
+      "entity.viewSettings.conditionalStyleBackgroundColor",
+    ),
+    conditionalStyleTextColor: t("entity.viewSettings.conditionalStyleTextColor"),
+    conditionalStyleBadgeVariant: t(
+      "entity.viewSettings.conditionalStyleBadgeVariant",
+    ),
     matchValue: t("entity.viewSettings.matchValue"),
     addRule: t("entity.viewSettings.addRule"),
     imageSize: t("entity.viewSettings.imageSize"),

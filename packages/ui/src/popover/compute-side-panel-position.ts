@@ -154,14 +154,20 @@ function stackedTriggerStyle(
     padding: number;
     gap: number;
     viewport: ViewportSize;
+    horizontalAlign: "start" | "end";
   },
 ): ComputeSidePanelPositionResult {
-  const { triggerRect, panelSize, padding, gap, viewport } = input;
+  const { triggerRect, panelSize, padding, gap, viewport, horizontalAlign } =
+    input;
   const resolvedPlacement: SidePopoverResolvedPlacement =
     stack === "above" ? "top-start" : "bottom-start";
 
+  const rawLeft =
+    horizontalAlign === "end"
+      ? triggerRect.right - panelSize.width
+      : triggerRect.left;
   const left = clampHorizontalLeft(
-    triggerRect.left,
+    rawLeft,
     panelSize.width,
     viewport.width,
     padding,
@@ -206,6 +212,7 @@ function stackedTriggerStyle(
 
 export function computeAnchoredPanelPosition(input: {
   readonly preferred: "bottom-start" | "top-start";
+  readonly horizontalAlign?: "start" | "end";
   readonly triggerRect: RectLike;
   readonly panelSize: PanelSize;
   readonly viewport?: ViewportSize;
@@ -214,6 +221,7 @@ export function computeAnchoredPanelPosition(input: {
 }): ComputeSidePanelPositionResult {
   const padding = input.padding ?? DEFAULT_PADDING;
   const gap = input.gap ?? DEFAULT_GAP;
+  const horizontalAlign = input.horizontalAlign ?? "start";
   const viewport = input.viewport ?? {
     width: typeof window !== "undefined" ? window.innerWidth : 0,
     height: typeof window !== "undefined" ? window.innerHeight : 0,
@@ -224,6 +232,7 @@ export function computeAnchoredPanelPosition(input: {
     padding,
     gap,
     viewport,
+    horizontalAlign,
   };
 
   const roomAbove = input.triggerRect.top - gap - padding;

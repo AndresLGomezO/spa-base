@@ -1,7 +1,7 @@
 import type {
   LabelConfig,
   TextColorToken,
-  ViewFilterComponentConfig,
+  ViewDateFilterComponentConfig,
 } from "@repo/ui-builder-core";
 
 interface ResolvedViewFilterDateLabel {
@@ -17,10 +17,10 @@ interface ResolvedViewFilterDateLabel {
 }
 
 export function resolveViewFilterDateLabel(
-  config: ViewFilterComponentConfig,
+  config: ViewDateFilterComponentConfig,
   defaultText: string,
 ): ResolvedViewFilterDateLabel {
-  const label = config.dateFilterLabel;
+  const label = config.label;
 
   if (label?.show === false) {
     return {

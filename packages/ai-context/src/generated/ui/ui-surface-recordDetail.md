@@ -14,7 +14,9 @@ Display components + related-records. Stored as `recordDetail`.
 - `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
-- `view-filter`
+- `view-search`
+- `view-filters`
+- `view-date-filter`
 - `related-records`
 
 ## Slice envelope example

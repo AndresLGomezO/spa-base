@@ -25,6 +25,7 @@ import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { LucideIconField } from "../../components/shared/LucideIconField";
 import { LayoutStaticImageValueEditor } from "../ui-builder/LayoutStaticImageValueEditor";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
+import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 import { useFormDesignerComponentEditorLabels } from "./form-designer-component-editor-labels";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
@@ -95,6 +96,8 @@ export function FormDesignerComponentRowPanel({
         rowNode={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
+        designSurface={designSurface}
         labels={labels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
@@ -219,6 +222,15 @@ export function FormDesignerComponentRowPanel({
         binding={binding}
         definition={definition}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
+
+      <ComponentRowConditionalStylesPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        fieldDescriptors={fieldDescriptors}
+        definition={definition}
         designSurface={designSurface}
       />
 

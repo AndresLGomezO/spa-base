@@ -1,6 +1,7 @@
 import { Text } from "@repo/ui";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
+  ensureContainerRoot,
   resolvePreviewStrategy,
   toEditableLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -32,8 +33,9 @@ export function DashboardLayoutDesignerUnifiedPreviewPanel({
   const { editor, designFocus, previewColorScheme } =
     useDashboardLayoutDesigner();
 
-  const structureWrappers =
-    useDashboardLayoutDesignerLayoutPreviewWrappers(withStructureChrome);
+  const structureWrappers = useDashboardLayoutDesignerLayoutPreviewWrappers(
+    withStructureChrome && !isShellLayoutFocus(designFocus),
+  );
 
   const previewLayout = isShellLayoutFocus(designFocus)
     ? editor.dashboardLayout
@@ -101,16 +103,23 @@ export function DashboardLayoutDesignerUnifiedPreviewPanel({
     ],
   );
 
-  const editableLayout = useMemo(
-    () => (previewLayout ? toEditableLayoutDocument(previewLayout) : null),
-    [previewLayout],
-  );
+  const renderLayout = useMemo(() => {
+    if (!previewLayout) {
+      return null;
+    }
+
+    if (isShellLayoutFocus(designFocus)) {
+      return ensureContainerRoot(previewLayout);
+    }
+
+    return toEditableLayoutDocument(previewLayout);
+  }, [designFocus, previewLayout]);
 
   const previewBody =
-    editableLayout != null ? (
+    renderLayout != null ? (
       <ViewFilterPageProvider value={pageState}>
         <RecursiveLayoutRenderer
-          layout={editableLayout}
+          layout={renderLayout}
           context={previewContext}
           rowWrapper={structureWrappers?.rowWrapper}
           rootColumnWrapper={structureWrappers?.rootColumnWrapper}

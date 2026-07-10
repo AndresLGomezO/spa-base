@@ -1,9 +1,10 @@
 import type { DashboardSectionDefinition } from "@repo/entities";
 import { CardFieldImage } from "@repo/ui";
-import type { UserComponentConfig } from "@repo/ui-builder-core";
+import type { UserComponentConfig, NotificationBellComponentConfig } from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { TFunction } from "i18next";
 
+import { LayoutNotificationBell } from "../../components/entity/LayoutNotificationBell";
 import {
   LayoutUserDisplay,
   type LayoutUserInfo,
@@ -20,7 +21,9 @@ import { createEntityLayoutRenderContext } from "./create-entity-layout-render-c
 import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
 import { ChartComponentSlot } from "./ChartComponentSlot";
 import { listFiltersForEntity } from "./list-filters-for-entity";
-import { ViewFilterComponent } from "./ViewFilterComponent";
+import { ViewSearchComponent } from "./ViewSearchComponent";
+import { ViewFiltersComponent } from "./ViewFiltersComponent";
+import { ViewDateFilterComponent } from "./ViewDateFilterComponent";
 import { resolveStaticImageSrc } from "@repo/entities";
 import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 
@@ -97,6 +100,9 @@ export function createTenantDashboardLayoutRenderContext(
         fallbackName={fallbackName}
       />
     ),
+    notificationBellRenderer: (config: NotificationBellComponentConfig) => (
+      <LayoutNotificationBell config={config} />
+    ),
     metricKpiRenderer: (config, presentation) => (
       <DashboardMetricKpiSlot
         config={config}
@@ -149,7 +155,11 @@ export function createTenantDashboardLayoutRenderContext(
             }),
         })
       : undefined,
-    viewFilterRenderer: (config) => <ViewFilterComponent config={config} />,
+    viewSearchRenderer: (config) => <ViewSearchComponent config={config} />,
+    viewFiltersRenderer: (config) => <ViewFiltersComponent config={config} />,
+    viewDateFilterRenderer: (config) => (
+      <ViewDateFilterComponent config={config} />
+    ),
     dashboardSectionRenderer: createDashboardSectionRenderer({
       sections,
       t,

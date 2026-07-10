@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
 
-import { ItemListDesignerComponentColumnPanel } from "./ItemListDesignerComponentColumnPanel";
 import { ItemListDesignerComponentColumnPanelHeaderMenu } from "./ItemListDesignerComponentColumnPanelHeaderMenu";
-import { ItemListDesignerComponentRowPanel } from "./ItemListDesignerComponentRowPanel";
 import { ItemListDesignerComponentRowPanelHeaderMenu } from "./ItemListDesignerComponentRowPanelHeaderMenu";
-import { ItemListDesignerGroupedColumnPanel } from "./ItemListDesignerGroupedColumnPanel";
 import { ItemListDesignerStructurePanelFooter } from "./ItemListDesignerStructurePanelFooter";
 import type { ItemListPanelSession } from "./item-list-designer-panel-session";
+import { ItemListStructurePanelBody } from "./ItemListStructurePanelBody";
 
 export function renderItemListStructurePanelContent(
   session: ItemListPanelSession,
@@ -19,9 +17,7 @@ export function renderItemListStructurePanelContent(
 
   if (target.kind === "groupedColumn") {
     return {
-      body: (
-        <ItemListDesignerGroupedColumnPanel columnIndex={target.columnIndex} />
-      ),
+      body: <ItemListStructurePanelBody session={session} />,
       footer: <ItemListDesignerStructurePanelFooter />,
     };
   }
@@ -33,9 +29,7 @@ export function renderItemListStructurePanelContent(
           columnRef={target.columnRef}
         />
       ),
-      body: (
-        <ItemListDesignerComponentColumnPanel columnRef={target.columnRef} />
-      ),
+      body: <ItemListStructurePanelBody session={session} />,
       footer: <ItemListDesignerStructurePanelFooter />,
     };
   }
@@ -44,7 +38,7 @@ export function renderItemListStructurePanelContent(
     headerActions: (
       <ItemListDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: <ItemListDesignerComponentRowPanel rowRef={target.rowRef} />,
+    body: <ItemListStructurePanelBody session={session} />,
     footer: <ItemListDesignerStructurePanelFooter />,
   };
 }

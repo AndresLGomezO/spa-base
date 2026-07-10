@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 
-import { DetailViewDesignerComponentColumnPanel } from "./DetailViewDesignerComponentColumnPanel";
 import { DetailViewDesignerComponentColumnPanelHeaderMenu } from "./DetailViewDesignerComponentColumnPanelHeaderMenu";
-import { DetailViewDesignerComponentRowPanel } from "./DetailViewDesignerComponentRowPanel";
 import { DetailViewDesignerComponentRowPanelHeaderMenu } from "./DetailViewDesignerComponentRowPanelHeaderMenu";
 import { DetailViewDesignerStructurePanelFooter } from "./DetailViewDesignerStructurePanelFooter";
 import type { DetailViewPanelSession } from "./detail-view-designer-panel-session";
+import { DetailViewStructurePanelBody } from "./DetailViewStructurePanelBody";
 
 export function renderDetailViewStructurePanelContent(
   session: DetailViewPanelSession,
@@ -23,9 +22,7 @@ export function renderDetailViewStructurePanelContent(
           columnRef={target.columnRef}
         />
       ),
-      body: (
-        <DetailViewDesignerComponentColumnPanel columnRef={target.columnRef} />
-      ),
+      body: <DetailViewStructurePanelBody session={session} />,
       footer: <DetailViewDesignerStructurePanelFooter />,
     };
   }
@@ -34,7 +31,7 @@ export function renderDetailViewStructurePanelContent(
     headerActions: (
       <DetailViewDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: <DetailViewDesignerComponentRowPanel rowRef={target.rowRef} />,
+    body: <DetailViewStructurePanelBody session={session} />,
     footer: <DetailViewDesignerStructurePanelFooter />,
   };
 }

@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 
-import { FormDesignerComponentColumnPanel } from "./FormDesignerComponentColumnPanel";
 import { FormDesignerComponentColumnPanelHeaderMenu } from "./FormDesignerComponentColumnPanelHeaderMenu";
-import { FormDesignerComponentRowPanel } from "./FormDesignerComponentRowPanel";
 import { FormDesignerComponentRowPanelFooter } from "./FormDesignerComponentRowPanelFooter";
 import { FormDesignerComponentRowPanelHeaderMenu } from "./FormDesignerComponentRowPanelHeaderMenu";
 import type { ComponentRowPanelSession } from "./form-designer-component-row-panel-session";
+import { FormDesignerComponentStructurePanelBody } from "./FormDesignerComponentStructurePanelBody";
 
 export function renderFormDesignerComponentPanelContent(
   session: ComponentRowPanelSession,
@@ -27,7 +26,7 @@ export function renderFormDesignerComponentPanelContent(
       headerActions: (
         <FormDesignerComponentColumnPanelHeaderMenu {...columnProps} />
       ),
-      body: <FormDesignerComponentColumnPanel {...columnProps} />,
+      body: <FormDesignerComponentStructurePanelBody session={session} />,
       footer: <FormDesignerComponentRowPanelFooter />,
     };
   }
@@ -40,7 +39,7 @@ export function renderFormDesignerComponentPanelContent(
 
   return {
     headerActions: <FormDesignerComponentRowPanelHeaderMenu {...rowProps} />,
-    body: <FormDesignerComponentRowPanel {...rowProps} />,
+    body: <FormDesignerComponentStructurePanelBody session={session} />,
     footer: <FormDesignerComponentRowPanelFooter />,
   };
 }

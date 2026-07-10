@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { ChevronDown, Filter } from "lucide-react";
 
 import { cn } from "@repo/theme/utils";
@@ -33,6 +33,9 @@ export interface FilterPanelProps {
   readonly toolbarFillWidth?: boolean;
   /** When false, click-outside dismiss is handled by a parent container. */
   readonly manageDismiss?: boolean;
+  readonly triggerClassName?: string;
+  readonly triggerStyle?: CSSProperties;
+  readonly rootClassName?: string;
 }
 
 interface FilterPanelToolbarProps {
@@ -232,6 +235,9 @@ export function FilterPanel({
   compact = false,
   toolbarFillWidth = false,
   manageDismiss = true,
+  triggerClassName,
+  triggerStyle,
+  rootClassName,
 }: FilterPanelProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -242,7 +248,11 @@ export function FilterPanel({
       type="button"
       variant="outline"
       size="sm"
-      className="flex shrink-0 items-center gap-1 rounded-xl max-md:px-2.5 md:gap-2"
+      className={cn(
+        "flex shrink-0 items-center gap-1 rounded-xl max-md:px-2.5 md:gap-2",
+        triggerClassName,
+      )}
+      style={triggerStyle}
       disabled={disabled}
       onClick={() => onOpenChange(!open)}
       aria-expanded={open}
@@ -304,6 +314,7 @@ export function FilterPanel({
         className={cn(
           compact && toolbarFillWidth && "w-full min-w-0",
           open && "relative z-30 isolate",
+          rootClassName,
         )}
       >
         {toolbar}
@@ -314,7 +325,11 @@ export function FilterPanel({
   return (
     <div
       ref={rootRef}
-      className={cn("flex flex-col gap-2", open && "relative z-30 isolate")}
+      className={cn(
+        "flex flex-col gap-2",
+        open && "relative z-30 isolate",
+        rootClassName,
+      )}
     >
       {toolbar}
       {body}

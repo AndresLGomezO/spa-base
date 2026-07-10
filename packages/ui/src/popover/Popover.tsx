@@ -63,6 +63,15 @@ const sideResolvedHiddenOffsetClasses: Record<
   "bottom-start": "-translate-y-1",
 };
 
+function isAnchoredPlacement(placement: PopoverPlacement): boolean {
+  return (
+    placement === "top-start" ||
+    placement === "top-end" ||
+    placement === "bottom-start" ||
+    placement === "bottom-end"
+  );
+}
+
 function isSidePlacement(
   placement: PopoverPlacement,
 ): placement is SidePopoverPreferredPlacement {
@@ -116,7 +125,8 @@ export function Popover({
     );
 
   const useSidePortal = isSidePlacement(placement);
-  const usePortal = useSidePortal || layer === "elevated";
+  const useAnchoredPortal = isAnchoredPlacement(placement);
+  const usePortal = useSidePortal || useAnchoredPortal || layer === "elevated";
 
   const close = useCallback(() => {
     onOpenChange(false);
@@ -222,8 +232,11 @@ export function Popover({
         placement === "top-start" || placement === "top-end"
           ? "top-start"
           : "bottom-start";
+      const horizontalAlign =
+        placement === "top-end" || placement === "bottom-end" ? "end" : "start";
       const { style, resolvedPlacement } = computeAnchoredPanelPosition({
         preferred,
+        horizontalAlign,
         triggerRect,
         panelSize,
       });

@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 
-import { DashboardLayoutDesignerComponentColumnPanel } from "./DashboardLayoutDesignerComponentColumnPanel";
 import { DashboardLayoutDesignerComponentColumnPanelHeaderMenu } from "./DashboardLayoutDesignerComponentColumnPanelHeaderMenu";
-import { DashboardLayoutDesignerComponentRowPanel } from "./DashboardLayoutDesignerComponentRowPanel";
 import { DashboardLayoutDesignerComponentRowPanelHeaderMenu } from "./DashboardLayoutDesignerComponentRowPanelHeaderMenu";
+import { DashboardLayoutStructurePanelBody } from "./DashboardLayoutStructurePanelBody";
 import { DashboardLayoutDesignerStructurePanelFooter } from "./DashboardLayoutDesignerStructurePanelFooter";
 import type { DashboardLayoutPanelSession } from "./dashboard-layout-designer-panel-session";
 
@@ -24,9 +23,7 @@ export function renderDashboardLayoutStructurePanelContent(
         />
       ),
       body: (
-        <DashboardLayoutDesignerComponentColumnPanel
-          columnRef={target.columnRef}
-        />
+        <DashboardLayoutStructurePanelBody session={session} />
       ),
       footer: <DashboardLayoutDesignerStructurePanelFooter />,
     };
@@ -38,7 +35,7 @@ export function renderDashboardLayoutStructurePanelContent(
         rowRef={target.rowRef}
       />
     ),
-    body: <DashboardLayoutDesignerComponentRowPanel rowRef={target.rowRef} />,
+    body: <DashboardLayoutStructurePanelBody session={session} />,
     footer: <DashboardLayoutDesignerStructurePanelFooter />,
   };
 }

@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 
-import { MainViewDesignerComponentColumnPanel } from "./MainViewDesignerComponentColumnPanel";
 import { MainViewDesignerComponentColumnPanelHeaderMenu } from "./MainViewDesignerComponentColumnPanelHeaderMenu";
-import { MainViewDesignerComponentRowPanel } from "./MainViewDesignerComponentRowPanel";
 import { MainViewDesignerComponentRowPanelHeaderMenu } from "./MainViewDesignerComponentRowPanelHeaderMenu";
 import { MainViewDesignerStructurePanelFooter } from "./MainViewDesignerStructurePanelFooter";
 import type { MainViewPanelSession } from "./main-view-designer-panel-session";
+import { MainViewStructurePanelBody } from "./MainViewStructurePanelBody";
 
 export function renderMainViewStructurePanelContent(
   session: MainViewPanelSession,
@@ -23,9 +22,7 @@ export function renderMainViewStructurePanelContent(
           columnRef={target.columnRef}
         />
       ),
-      body: (
-        <MainViewDesignerComponentColumnPanel columnRef={target.columnRef} />
-      ),
+      body: <MainViewStructurePanelBody session={session} />,
       footer: <MainViewDesignerStructurePanelFooter />,
     };
   }
@@ -34,7 +31,7 @@ export function renderMainViewStructurePanelContent(
     headerActions: (
       <MainViewDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: <MainViewDesignerComponentRowPanel rowRef={target.rowRef} />,
+    body: <MainViewStructurePanelBody session={session} />,
     footer: <MainViewDesignerStructurePanelFooter />,
   };
 }

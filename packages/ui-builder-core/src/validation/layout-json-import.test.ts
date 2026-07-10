@@ -415,8 +415,10 @@ describe("validateLayoutJsonImport", () => {
                   conditionalStyles: [
                     {
                       matchValue: "active",
-                      background: "primary",
-                      textColor: "default",
+                      styles: [
+                        { property: "backgroundColor", value: "primary" },
+                        { property: "color", value: "default" },
+                      ],
                     },
                     {
                       matchValue: "completed",
@@ -484,8 +486,10 @@ describe("validateLayoutJsonImport", () => {
                   conditionalStyles: [
                     {
                       matchValue: "active",
-                      background: "primary",
-                      textColor: "default",
+                      styles: [
+                        { property: "backgroundColor", value: "primary" },
+                        { property: "color", value: "default" },
+                      ],
                     },
                     {
                       matchValue: "completed",
@@ -523,6 +527,33 @@ describe("validateLayoutJsonImport", () => {
         designSurface: "formWizardShell",
         definition,
       },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("accepts container conditionalStyles with compareFieldPath", () => {
+    const row = {
+      type: "component" as const,
+      id: "row-container",
+      component: {
+        kind: "container" as const,
+        rows: [],
+        conditionalStyles: [
+          {
+            compareFieldPath: "dueDate",
+            matchValue: "<=7",
+            styles: [{ property: "backgroundColor", value: "warning" }],
+          },
+        ],
+      },
+    };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(row),
+      { type: "component-row" },
+      { designSurface: "listItem", definition },
     );
 
     expect(result.ok).toBe(true);

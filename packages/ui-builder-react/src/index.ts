@@ -38,6 +38,19 @@ export {
   type LayoutColumnControlsLabels,
 } from "./components/LayoutColumnControls.js";
 export {
+  CollapsibleConditionalStylesEditor,
+  type CollapsibleConditionalStylesEditorLabels,
+  type CollapsibleConditionalStylesEditorMode,
+  type CollapsibleConditionalStylesEditorProps,
+} from "./components/CollapsibleConditionalStylesEditor.js";
+export {
+  StyleRulesPopoverTable,
+  useStyleRulesPopoverEditor,
+  STYLE_RULES_POPOVER_PANEL_CLASS,
+  type StyleRulesPopoverTableProps,
+  type UseStyleRulesPopoverEditorOptions,
+} from "./components/StyleRulesPopoverTable.js";
+export {
   ComponentConfigEditor,
   type ComponentConfigEditorLabels,
   type ComponentConfigEditorProps,

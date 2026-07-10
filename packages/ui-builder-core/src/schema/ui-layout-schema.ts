@@ -244,6 +244,11 @@ const labelConfigSchema = z
 const conditionalStyleRuleSchema = z
   .object({
     matchValue: z.string(),
+    compareFieldPath: z.string().trim().min(1).optional(),
+    compareFieldDateFormat: z
+      .enum(["date", "datetime", "time", "daysRemaining"])
+      .optional(),
+    styles: z.array(styleRuleSchema).optional(),
     background: z.string().trim().min(1).optional(),
     textColor: z.string().trim().min(1).optional(),
     badgeVariant: z
@@ -261,6 +266,10 @@ const conditionalStyleRuleSchema = z
       .optional(),
   })
   .strict();
+
+const optionalConditionalStylesSchema = {
+  conditionalStyles: z.array(conditionalStyleRuleSchema).optional(),
+} as const;
 
 const metricBindingSourceSchema = z.discriminatedUnion("type", [
   z
@@ -369,6 +378,7 @@ const metricDerivedKpiSchema = z
       .record(z.string(), metricBindingSourceSchema)
       .optional(),
     styles: z.array(styleRuleSchema).optional(),
+    ...optionalConditionalStylesSchema,
   })
   .strict()
   .superRefine((value, context) => {
@@ -396,6 +406,9 @@ const metricDerivedKpiSchema = z
         ? { queryParameterBindings: value.queryParameterBindings }
         : {}),
       styles: value.styles,
+      ...(value.conditionalStyles
+        ? { conditionalStyles: value.conditionalStyles }
+        : {}),
     };
   })
   .superRefine((value, context) => {
@@ -640,6 +653,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
           .optional(),
         ariaLabel: z.string().optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -658,6 +672,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         showToneColors: z.boolean().optional(),
         tonePolarity: z.enum(["normal", "inverted"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     metricDerivedKpiSchema,
@@ -668,6 +683,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         widgetId: z.string(),
         label: z.string().optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -691,6 +707,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         multiline: z.boolean().optional(),
         multilineRows: z.number().int().min(2).max(20).optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -703,6 +720,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         cardsPerRow: z.number().int().min(1).max(4).optional(),
         imageFieldPath: z.string().trim().min(1).optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -710,6 +728,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         kind: z.literal("form-section"),
         title: z.string().trim().min(1).optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -719,16 +738,37 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         iconSize: z.number().int().min(12).max(96).optional(),
         label: labelConfigSchema.optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
       .object({
         kind: z.literal("user"),
-        display: z.enum(["name", "email", "photo", "photo-and-name"]),
+        display: z.enum([
+          "name",
+          "email",
+          "photo",
+          "photo-and-name",
+          "profile-button",
+        ]),
         nameFormat: z.enum(["full", "first"]).optional(),
         imageSize: z.number().int().min(8).max(1024).optional(),
+        avatarShape: z.enum(["circle", "rounded", "square"]).optional(),
+        profileButtonContent: z.enum(["photo", "full"]).optional(),
         label: labelConfigSchema.optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("notification-bell"),
+        iconName: z.string().trim().min(1).optional(),
+        iconSize: z.number().int().min(12).max(96).optional(),
+        showBadge: z.boolean().optional(),
+        label: labelConfigSchema.optional(),
+        styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -789,6 +829,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         childEntity: z.string().trim().min(1),
         foreignKeyField: z.string().trim().min(1),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -819,19 +860,13 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
       .object({
         kind: z.literal("view-search"),
         placeholder: z.string().optional(),
+        label: labelConfigSchema.optional(),
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),
     z
       .object({
-        kind: z.literal("view-filter"),
-        enableSearch: z.boolean().optional(),
-        enableFilters: z.boolean().optional(),
-        enableDateFilter: z.boolean().optional(),
-        dateFilterGranularity: z.enum(["year", "month", "day"]).optional(),
-        dateFilterParam: z.string().trim().min(1).optional(),
-        dateFilterLabel: labelConfigSchema.optional(),
-        searchPlaceholder: z.string().optional(),
+        kind: z.literal("view-filters"),
         filters: z
           .array(
             z
@@ -842,6 +877,16 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
               .strict(),
           )
           .default([]),
+        label: labelConfigSchema.optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("view-date-filter"),
+        dateFilterGranularity: z.enum(["year", "month", "day"]).optional(),
+        dateFilterParam: z.string().trim().min(1).optional(),
+        label: labelConfigSchema.optional(),
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),
@@ -851,6 +896,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         rows: z.array(rowNodeSchema),
         stackDirection: z.enum(["column", "row"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -861,6 +907,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         alignItems: z.enum(["start", "center", "end", "stretch"]).optional(),
         rows: z.array(rowNodeSchema),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
     z
@@ -874,6 +921,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         emptyStateRows: z.array(rowNodeSchema).optional(),
         stackDirection: z.enum(["column", "row"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
       })
       .strict(),
   ]),

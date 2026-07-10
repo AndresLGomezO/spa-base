@@ -6,6 +6,7 @@ import type {
   EntityFieldSelectorComponentConfig,
   FormFieldComponentConfig,
   IconComponentConfig,
+  NotificationBellComponentConfig,
   MetricDerivedKpiComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
@@ -15,7 +16,9 @@ import type {
   ResolvedComponentClickTarget,
   ResponsiveGridBreakpoint,
   UserComponentConfig,
-  ViewFilterComponentConfig,
+  ViewSearchComponentConfig,
+  ViewFiltersComponentConfig,
+  ViewDateFilterComponentConfig,
   WizardActionsComponentConfig,
   WizardProgressComponentConfig,
   WizardStepHostComponentConfig,
@@ -88,6 +91,9 @@ export interface LayoutRenderContext {
     atBreakpoint?: ResponsiveGridBreakpoint,
   ) => ReactNode;
   readonly userRenderer?: (config: UserComponentConfig) => ReactNode;
+  readonly notificationBellRenderer?: (
+    config: NotificationBellComponentConfig,
+  ) => ReactNode;
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
   readonly metricKpiRenderer?: (
@@ -142,8 +148,14 @@ export interface LayoutRenderContext {
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;
   readonly pageListRenderer?: () => ReactNode;
-  readonly viewFilterRenderer?: (
-    config: ViewFilterComponentConfig,
+  readonly viewSearchRenderer?: (
+    config: ViewSearchComponentConfig,
+  ) => ReactNode;
+  readonly viewFiltersRenderer?: (
+    config: ViewFiltersComponentConfig,
+  ) => ReactNode;
+  readonly viewDateFilterRenderer?: (
+    config: ViewDateFilterComponentConfig,
   ) => ReactNode;
   readonly registerPageListScrollElement?: (
     element: HTMLElement | null,

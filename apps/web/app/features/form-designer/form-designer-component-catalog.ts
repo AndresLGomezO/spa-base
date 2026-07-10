@@ -16,10 +16,12 @@ import {
   MousePointerClick,
   PanelTop,
   Route,
+  Search,
   Sparkles,
   TextCursorInput,
   Type,
   UserRound,
+  Bell,
 } from "lucide-react";
 import {
   isComponentKindAllowedOnSurface,
@@ -102,7 +104,11 @@ const FORM_SECTION: ComponentCatalogSection = {
 
 const DATA_CONTROLS_SECTION: ComponentCatalogSection = {
   id: "dataControls",
-  entries: [{ kind: "view-filter", icon: Filter }],
+  entries: [
+    { kind: "view-search", icon: Search },
+    { kind: "view-filters", icon: Filter },
+    { kind: "view-date-filter", icon: Calendar },
+  ],
 };
 
 const ALL_SECTIONS: readonly ComponentCatalogSection[] = [
@@ -157,11 +163,13 @@ export function getFilteredComponentCatalog(
       designSurface === "dashboardLayout"
         ? [
             { kind: "user" as const, icon: UserRound },
+            { kind: "notification-bell" as const, icon: Bell },
             { kind: "dashboard-section" as const, icon: LayoutGrid },
           ]
         : designSurface === "dashboardSection"
           ? [
               { kind: "user" as const, icon: UserRound },
+              { kind: "notification-bell" as const, icon: Bell },
               { kind: "metric-widget" as const, icon: LayoutGrid },
             ]
           : designSurface === "metricWidget"

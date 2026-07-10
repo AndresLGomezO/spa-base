@@ -37,13 +37,19 @@ describe("resolvePreviewStrategy", () => {
     }
   });
 
-  it("maps mainPage and dashboardLayout to full device set", () => {
-    for (const surface of ["mainPage", "dashboardLayout"] as const) {
-      const strategy = resolvePreviewStrategy(surface);
-      expect(strategy).toEqual(FULL_DEVICE_STRATEGY);
-      if (strategy.type === "device") {
-        expect(strategy.devices).toEqual(["mobile", "tablet", "desktop"]);
-      }
+  it("maps mainPage to full device set", () => {
+    const strategy = resolvePreviewStrategy("mainPage");
+    expect(strategy).toEqual(FULL_DEVICE_STRATEGY);
+    if (strategy.type === "device") {
+      expect(strategy.devices).toEqual(["mobile", "tablet", "desktop"]);
+    }
+  });
+
+  it("maps dashboardLayout to section width slider strategy", () => {
+    const strategy = resolvePreviewStrategy("dashboardLayout");
+    expect(strategy).toEqual(SECTION_WIDTH_STRATEGY);
+    if (strategy.type === "width") {
+      expect(strategy.presets).toEqual([320, 640, 768, 1024, 1280, 1600]);
     }
   });
 

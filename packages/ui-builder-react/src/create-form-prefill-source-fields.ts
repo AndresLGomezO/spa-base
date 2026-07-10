@@ -48,7 +48,15 @@ export function listCreateFormPrefillSourceFieldDescriptors(
     }
 
     if (meta.type === "enum") {
-      ensureField(fieldName);
+      if (!byPath.has(fieldName)) {
+        const enumValues = meta.enumValues ?? [];
+        byPath.set(fieldName, {
+          path: fieldName,
+          label: resolveFieldLabel(definition, fieldName),
+          valueType: "enum",
+          ...(enumValues.length > 0 ? { enumValues } : {}),
+        });
+      }
     }
   }
 

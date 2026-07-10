@@ -74,6 +74,7 @@ export function createMetricWidgetRenderer(
           .filter(Boolean)
           .join(" ")}
         shellStyle={containerStyle}
+        inheritDesignerWrappers={false}
       />
     );
   };

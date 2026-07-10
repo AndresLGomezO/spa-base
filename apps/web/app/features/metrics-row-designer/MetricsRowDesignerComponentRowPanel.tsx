@@ -51,6 +51,7 @@ import {
   isInsideQueryViewerTemplate,
 } from "../ui-builder/resolve-query-viewer-field-context";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
+import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 
 interface MetricsRowDesignerComponentRowPanelProps {
   readonly rowRef: ComponentRowRef;
@@ -166,6 +167,8 @@ export function MetricsRowDesignerComponentRowPanel({
         rowNode={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
+        designSurface={designSurface}
         labels={labels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
@@ -292,6 +295,15 @@ export function MetricsRowDesignerComponentRowPanel({
         binding={binding}
         definition={fieldDefinition}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
+
+      <ComponentRowConditionalStylesPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        fieldDescriptors={fieldDescriptors}
+        definition={definition}
         designSurface={designSurface}
       />
 

@@ -43,6 +43,7 @@ export function createDashboardSectionRenderer(
         layout={section.layout}
         context={buildLayoutContext()}
         shellClassName={resolveDashboardSectionShellClassName(config.styles)}
+        inheritDesignerWrappers={false}
       />
     );
   };

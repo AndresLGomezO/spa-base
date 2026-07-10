@@ -776,6 +776,11 @@
     }
   },
   "viewFilterComponents": {
+    "search": "Búsqueda",
+    "filters": "Filtros",
+    "dateFilter": "Filtro de fecha",
+    "searchLabel": "Etiqueta",
+    "filtersLabel": "Etiqueta",
     "searchAndFilters": "Búsqueda y filtros",
     "enableSearch": "Activar búsqueda",
     "enableFilters": "Activar filtros",
@@ -818,6 +823,7 @@
     "layout": {
       "structureTitle": "Estructura del dashboard"
     },
+    "structurePanelComponentId": "ID del componente",
     "sectionComponent": {
       "section": "Sección",
       "selectSection": "Seleccionar una sección…",
@@ -827,7 +833,14 @@
     },
     "components": {
       "dashboardSection": "Sección del dashboard",
-      "user": "Usuario conectado"
+      "user": "Usuario conectado",
+      "notificationBell": "Campana de notificaciones"
+    },
+    "notificationBellComponent": {
+      "iconName": "Icono (nombre Lucide)",
+      "iconNameHint": "Nombre Lucide en PascalCase, p. ej. Bell",
+      "iconSize": "Tamaño del icono (px)",
+      "showBadge": "Mostrar insignia de no leídas"
     },
     "userComponent": {
       "display": "Mostrar",
@@ -835,10 +848,18 @@
       "displayEmail": "Correo",
       "displayPhoto": "Foto",
       "displayPhotoAndName": "Foto y nombre",
+      "displayProfileButton": "Botón de perfil",
       "nameFormat": "Formato del nombre",
       "nameFormatFull": "Nombre completo",
       "nameFormatFirst": "Solo nombre",
-      "imageSize": "Tamaño de foto (px)"
+      "imageSize": "Tamaño de foto (px)",
+      "avatarShape": "Forma del avatar",
+      "avatarShapeCircle": "Circular",
+      "avatarShapeRounded": "Redondeado",
+      "avatarShapeSquare": "Cuadrado",
+      "profileButtonContent": "Contenido del botón de perfil",
+      "profileButtonContentPhoto": "Solo foto",
+      "profileButtonContentFull": "Foto con nombre y detalles"
     },
     "sections": {
       "selectLabel": "Sección",
@@ -1527,6 +1548,18 @@
       "addFallback": "Añadir alternativa",
       "remove": "Eliminar",
       "badgeColorRules": "Reglas de color de insignia",
+      "conditionalStyleRules": "Reglas de estilo condicional",
+      "conditionalStyleRulesHint": "Aplica estilos cuando el valor del campo coincida con una regla.",
+      "daysRemainingConditionalHint": "Usa umbrales como <2, <=5 o >=5 para días restantes.",
+      "conditionalStyleBackgroundColor": "Fondo",
+      "conditionalStyleTextColor": "Color de texto",
+      "conditionalStyleBadgeVariant": "Variante de insignia",
+      "conditionalStyleCompareField": "Campo de comparación",
+      "conditionalStyleCompareFieldHint": "Campo de la entidad cuyo valor se compara con cada regla.",
+      "conditionalStylePreview": "Vista previa",
+      "conditionalStylesWhenMatched": "Estilos cuando coincide",
+      "saveConditionalStyleRule": "Guardar regla",
+      "cancel": "Cancelar",
       "matchValue": "Valor coincidente",
       "addRule": "Añadir regla",
       "dateDisplayFormat": "Formato de fecha",

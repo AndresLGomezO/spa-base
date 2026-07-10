@@ -12,7 +12,7 @@ import type {
   UiLayoutDocument,
 } from "../types/layout.js";
 import type { StyleRule } from "../styles/style-types.js";
-import { isContainerComponent } from "../types/component.js";
+import { isContainerComponent, isGridComponent } from "../types/component.js";
 import {
   flexWrapRowItemClassName,
   isFlexWrapRowStack,
@@ -82,6 +82,62 @@ function findRowNodeInLayout(
   }
 
   return null;
+}
+
+function findParentRowNodeInLayout(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+): RowNode | null {
+  switch (locator.scope) {
+    case "root":
+      return null;
+    case "container":
+      return findRowNodeInLayout(layout, locator.containerRowId);
+  }
+}
+
+function gridCrossAxisSelfClassName(
+  alignItems: FlexAlign | undefined,
+): string | undefined {
+  if (alignItems === "center") {
+    return "self-center";
+  }
+  if (alignItems === "start") {
+    return "self-start";
+  }
+  if (alignItems === "end") {
+    return "self-end";
+  }
+  if (alignItems === "stretch") {
+    return "self-stretch";
+  }
+
+  return undefined;
+}
+
+export function resolveParentIsGrid(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+): boolean {
+  const parentRow = findParentRowNodeInLayout(layout, locator);
+  return (
+    parentRow?.type === "component" && isGridComponent(parentRow.component)
+  );
+}
+
+export function resolveParentGridAlignItems(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+): FlexAlign | undefined {
+  const parentRow = findParentRowNodeInLayout(layout, locator);
+  if (
+    parentRow?.type === "component" &&
+    isGridComponent(parentRow.component)
+  ) {
+    return parentRow.component.alignItems ?? "stretch";
+  }
+
+  return undefined;
 }
 
 function readStackAlignFromStyles(
@@ -240,11 +296,44 @@ function resolveRowShellLayoutStyle(
   return splitFlex;
 }
 
+function resolveGridParentRowShellLayoutClasses(options: {
+  readonly parentGridAlignItems?: FlexAlign;
+  readonly isStructuralRow: boolean;
+  readonly preferFlexGrow: boolean;
+  readonly preferContentWidth: boolean;
+}): RowShellLayoutClasses | undefined {
+  const selfClass = gridCrossAxisSelfClassName(options.parentGridAlignItems);
+  if (!selfClass) {
+    return undefined;
+  }
+
+  if (options.isStructuralRow || options.preferFlexGrow) {
+    return {
+      shell: `relative flex min-h-0 h-full w-full min-w-0 shrink-0 flex-col ${selfClass}`,
+      inner: "relative z-0 flex h-full min-h-0 w-full min-w-0 flex-col",
+    };
+  }
+
+  if (options.preferContentWidth) {
+    return {
+      shell: `relative flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col ${selfClass}`,
+      inner: "relative z-0 flex min-h-0 min-w-0 flex-col",
+    };
+  }
+
+  return {
+    shell: `relative flex min-h-0 h-full min-w-0 max-w-full shrink-0 flex-col ${selfClass}`,
+    inner: "relative z-0 flex h-full min-h-0 min-w-0 flex-col",
+  };
+}
+
 export function resolveRowShellLayoutClasses(options: {
   readonly parentStackDirection: ColumnStackDirection;
   readonly parentStackAlign?: FlexAlign;
   readonly parentUsesFlexWrap?: boolean;
   readonly parentStackStyles?: readonly StyleRule[];
+  readonly parentIsGrid?: boolean;
+  readonly parentGridAlignItems?: FlexAlign;
   readonly row?: RowNode;
   readonly isStructuralRow: boolean;
   readonly preferFlexGrow: boolean;
@@ -279,6 +368,19 @@ export function resolveRowShellLayoutClasses(options: {
       shell: "relative flex min-h-0 w-full min-w-0 shrink-0 flex-col",
       inner: "relative z-0 flex min-h-0 w-full min-w-0 flex-col",
     };
+  }
+
+  if (options.parentIsGrid) {
+    const gridShell = resolveGridParentRowShellLayoutClasses({
+      parentGridAlignItems: options.parentGridAlignItems,
+      isStructuralRow: options.isStructuralRow,
+      preferFlexGrow: options.preferFlexGrow,
+      preferContentWidth: options.preferContentWidth,
+    });
+
+    if (gridShell) {
+      return gridShell;
+    }
   }
 
   const parentUsesContentWidth =
@@ -429,6 +531,8 @@ export function resolveRowShellLayoutForRender(options: {
   readonly parentStackAlign?: FlexAlign;
   readonly parentUsesFlexWrap?: boolean;
   readonly parentStackStyles?: readonly StyleRule[];
+  readonly parentIsGrid?: boolean;
+  readonly parentGridAlignItems?: FlexAlign;
   readonly row: RowNode;
 }): RowShellLayoutClasses {
   return resolveRowShellLayoutClasses({
@@ -436,6 +540,8 @@ export function resolveRowShellLayoutForRender(options: {
     parentStackAlign: options.parentStackAlign,
     parentUsesFlexWrap: options.parentUsesFlexWrap,
     parentStackStyles: options.parentStackStyles,
+    parentIsGrid: options.parentIsGrid,
+    parentGridAlignItems: options.parentGridAlignItems,
     row: options.row,
     isStructuralRow: isStructuralLayoutRow(options.row),
     preferFlexGrow: rowPrefersFlexGrow(options.row),

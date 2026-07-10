@@ -1,15 +1,17 @@
 import type {
   UiLayoutDocument,
   UiComponentConfig,
-  ViewFilterComponentConfig,
+  ViewFiltersComponentConfig,
   ViewFilterEntry,
+  ViewDateFilterComponentConfig,
 } from "@repo/ui-builder-core";
 import {
   isDashboardSectionComponent,
   isGridComponent,
   isRowHolderComponent,
-  isViewFilterComponent,
+  isViewFiltersComponent,
   isViewSearchComponent,
+  isViewDateFilterComponent,
   resolveDashboardDateFilterConfig,
   type DashboardDateFilterConfig,
   resolveLayoutRootColumns,
@@ -26,6 +28,7 @@ import { resolveViewSearchFieldNames } from "./resolve-view-filter-field-names";
 import { toQualifiedViewFilterColumnId } from "./view-filter-qualified-id";
 
 interface CollectedViewFilterDescriptors {
+  readonly hasSearch: boolean;
   readonly filterColumns: readonly DataViewColumnDescriptor<
     Record<string, unknown>
   >[];
@@ -33,7 +36,7 @@ interface CollectedViewFilterDescriptors {
     Record<string, unknown>
   >[];
   readonly catalogEntities: readonly string[];
-  readonly filterConfigs: readonly ViewFilterComponentConfig[];
+  readonly filterConfigs: readonly ViewFiltersComponentConfig[];
   readonly dateFilterConfig: DashboardDateFilterConfig | null;
 }
 
@@ -160,7 +163,7 @@ function buildGlobalSearchColumns(
 }
 
 function collectFilterEntries(
-  configs: readonly ViewFilterComponentConfig[],
+  configs: readonly ViewFiltersComponentConfig[],
 ): ViewFilterEntry[] {
   const entriesByKey = new Map<string, ViewFilterEntry>();
 
@@ -187,15 +190,23 @@ export function collectViewFilterDescriptors(options: {
   readonly sections: readonly DashboardSectionDefinition[];
   readonly catalog: readonly EntityCatalogEntry[];
 }): CollectedViewFilterDescriptors {
-  const filterConfigs: ViewFilterComponentConfig[] = [];
+  let hasSearch = false;
+  const filterConfigs: ViewFiltersComponentConfig[] = [];
+  const dateFilterConfigs: ViewDateFilterComponentConfig[] = [];
 
   const visit = (component: UiComponentConfig) => {
     if (isViewSearchComponent(component)) {
+      hasSearch = true;
       return;
     }
 
-    if (isViewFilterComponent(component)) {
+    if (isViewFiltersComponent(component)) {
       filterConfigs.push(component);
+      return;
+    }
+
+    if (isViewDateFilterComponent(component)) {
+      dateFilterConfigs.push(component);
     }
   };
 
@@ -222,13 +233,16 @@ export function collectViewFilterDescriptors(options: {
   const catalogEntities = listCatalogEntityNames(options.catalog);
   const filterEntries = collectFilterEntries(filterConfigs);
   const dateFilterConfig =
-    filterConfigs
-      .map((config) => resolveDashboardDateFilterConfig(config))
-      .find((config) => config !== null) ?? null;
+    dateFilterConfigs.length > 0
+      ? resolveDashboardDateFilterConfig(dateFilterConfigs[0]!)
+      : null;
 
   return {
+    hasSearch,
     filterColumns: buildQualifiedFilterColumns(options.catalog, filterEntries),
-    searchColumns: buildGlobalSearchColumns(options.catalog, catalogEntities),
+    searchColumns: hasSearch
+      ? buildGlobalSearchColumns(options.catalog, catalogEntities)
+      : [],
     catalogEntities,
     filterConfigs,
     dateFilterConfig,

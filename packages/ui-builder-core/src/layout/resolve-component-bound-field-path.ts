@@ -15,5 +15,9 @@ export function resolveComponentBoundFieldPath(
     return config.fieldPath;
   }
 
+  if (config.kind === "entity-field-selector") {
+    return config.fieldPath;
+  }
+
   return undefined;
 }

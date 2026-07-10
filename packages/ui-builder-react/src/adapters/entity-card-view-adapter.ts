@@ -18,9 +18,11 @@ export interface FieldDescriptor {
     | "date"
     | "boolean"
     | "image"
+    | "enum"
     | "unknown";
   readonly displayFormat?: "currency" | "plain" | "percentage";
   readonly dateDisplayFormat?: "date" | "datetime" | "time" | "daysRemaining";
+  readonly enumValues?: readonly string[];
 }
 
 export interface EntityCardViewAdapterResult {
@@ -126,8 +128,46 @@ function resolveValueTypeFromLeaf(
   if (meta?.type === "string") {
     return "string";
   }
+  if (meta?.type === "enum") {
+    return "enum";
+  }
 
   return "unknown";
+}
+
+function resolveEnumValuesFromLeaf(
+  leafDefinition: SerializableEntityDefinition,
+  leafFieldName: string,
+): readonly string[] | undefined {
+  const meta = leafDefinition.fields[leafFieldName];
+  if (meta?.type !== "enum") {
+    return undefined;
+  }
+
+  const values = meta.enumValues ?? [];
+  return values.length > 0 ? values : undefined;
+}
+
+function resolveEnumValuesForPath(
+  definition: SerializableEntityDefinition,
+  path: string,
+  getDefinition?: EntityDefinitionLookup,
+): readonly string[] | undefined {
+  const leaf = resolveLayoutFieldLeaf(definition, path, getDefinition);
+  if (leaf) {
+    return resolveEnumValuesFromLeaf(
+      leaf.leafDefinition as SerializableEntityDefinition,
+      leaf.leafFieldName,
+    );
+  }
+
+  const meta = definition.fields[path];
+  if (meta?.type !== "enum") {
+    return undefined;
+  }
+
+  const values = meta.enumValues ?? [];
+  return values.length > 0 ? values : undefined;
 }
 
 function resolveValueType(
@@ -227,6 +267,12 @@ export function entityCardViewAdapter(
     const root = path.includes(".") ? path.split(".")[0]! : path;
     const fieldUi = definition.ui.fields?.[root];
 
+    const enumValues = resolveEnumValuesForPath(
+      definition,
+      path,
+      getDefinition,
+    );
+
     return {
       path,
       label: resolveDescriptorLabel(definition, path, getDefinition),
@@ -234,6 +280,7 @@ export function entityCardViewAdapter(
       displayFormat: targetFieldUi?.displayFormat ?? fieldUi?.displayFormat,
       dateDisplayFormat:
         targetFieldUi?.dateDisplayFormat ?? fieldUi?.dateDisplayFormat,
+      ...(enumValues ? { enumValues } : {}),
     };
   });
 
@@ -258,6 +305,7 @@ export function filterFieldsForComponentKind(
           field.valueType === "string" ||
           field.valueType === "number" ||
           field.valueType === "boolean" ||
+          field.valueType === "enum" ||
           field.valueType === "unknown",
       );
     case "metric-kpi":

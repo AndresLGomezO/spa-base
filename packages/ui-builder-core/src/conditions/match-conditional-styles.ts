@@ -8,28 +8,62 @@ import {
   resolveBackgroundComponentColor,
   resolveTextComponentColor,
 } from "../styles/resolve-component-color.js";
+import {
+  resolveStyleRules,
+  themeTokenInlineStyleFromRules,
+  type ResolveStyleRulesOptions,
+  type ResolvedStyleRules,
+} from "../styles/apply-style-rules.js";
+import { normalizeConditionalStyleRule } from "./normalize-conditional-style-rule.js";
 
 export interface MatchedConditionalStyles {
   readonly badgeVariant?: CardBadgeVariant;
   readonly className?: string;
-  readonly style?: {
-    readonly backgroundColor?: string;
-    readonly background?: string;
-    readonly color?: string;
-  };
+  readonly style?: ResolvedStyleRules["style"];
+  readonly styleScopeClassName?: string;
+  readonly cssText?: string;
 }
 
 const DAYS_REMAINING_THRESHOLD_PATTERN = /^([<>]=?)(-?\d+)$/;
 
+function hasMatchedConditionalOutput(
+  matched: MatchedConditionalStyles,
+): boolean {
+  return Boolean(
+    matched.badgeVariant ||
+      matched.className ||
+      matched.style ||
+      matched.styleScopeClassName ||
+      matched.cssText,
+  );
+}
+
 function applyConditionalStyleRule(
   rule: ConditionalStyleRule,
+  options: ResolveStyleRulesOptions = {},
 ): MatchedConditionalStyles {
+  const normalized = normalizeConditionalStyleRule(rule);
+
+  if (normalized.styles.length > 0) {
+    const resolved = resolveStyleRules(normalized.styles, options);
+    const style = {
+      ...resolved.style,
+      ...themeTokenInlineStyleFromRules(
+        normalized.styles,
+        options.atBreakpoint,
+      ),
+    };
+    return {
+      badgeVariant: normalized.badgeVariant,
+      className: resolved.className || undefined,
+      style: Object.keys(style).length > 0 ? style : undefined,
+      styleScopeClassName: resolved.styleScopeClassName,
+      cssText: resolved.cssText,
+    };
+  }
+
   const classes: string[] = [];
-  const style: {
-    backgroundColor?: string;
-    background?: string;
-    color?: string;
-  } = {};
+  const style: NonNullable<MatchedConditionalStyles["style"]> = {};
   const background = resolveBackgroundComponentColor(rule.background);
   const textColor = resolveTextComponentColor(rule.textColor);
 
@@ -49,7 +83,7 @@ function applyConditionalStyleRule(
   }
 
   return {
-    badgeVariant: rule.badgeVariant,
+    badgeVariant: normalized.badgeVariant,
     className: classes.length > 0 ? classes.join(" ") : undefined,
     style: Object.keys(style).length > 0 ? style : undefined,
   };
@@ -78,6 +112,7 @@ export function matchConditionalDaysRemainingStyles(
   options: {
     readonly timeZone?: string;
     readonly referenceDate?: Date;
+    readonly atBreakpoint?: ResolveStyleRulesOptions["atBreakpoint"];
   } = {},
 ): MatchedConditionalStyles {
   if (!rules || rules.length === 0) {
@@ -112,7 +147,9 @@ export function matchConditionalDaysRemainingStyles(
     }
 
     if (matchesDaysRemainingThreshold(days, operator, threshold)) {
-      return applyConditionalStyleRule(rule);
+      return applyConditionalStyleRule(rule, {
+        atBreakpoint: options.atBreakpoint,
+      });
     }
   }
 
@@ -126,6 +163,7 @@ export function matchConditionalStylesForDate(
     readonly dateDisplayFormat?: string;
     readonly timeZone?: string;
     readonly referenceDate?: Date;
+    readonly atBreakpoint?: ResolveStyleRulesOptions["atBreakpoint"];
   } = {},
 ): MatchedConditionalStyles {
   if (options.dateDisplayFormat === "daysRemaining") {
@@ -134,21 +172,20 @@ export function matchConditionalStylesForDate(
       rules,
       options,
     );
-    if (
-      daysRemainingMatch.className ||
-      daysRemainingMatch.style ||
-      daysRemainingMatch.badgeVariant
-    ) {
+    if (hasMatchedConditionalOutput(daysRemainingMatch)) {
       return daysRemainingMatch;
     }
   }
 
-  return matchConditionalStyles(rawValue, rules);
+  return matchConditionalStyles(rawValue, rules, {
+    atBreakpoint: options.atBreakpoint,
+  });
 }
 
 export function matchConditionalStyles(
   rawValue: unknown,
   rules: readonly ConditionalStyleRule[] | undefined,
+  options: ResolveStyleRulesOptions = {},
 ): MatchedConditionalStyles {
   if (!rules || rules.length === 0) {
     return {};
@@ -164,7 +201,7 @@ export function matchConditionalStyles(
       continue;
     }
     if (matchValue === normalized) {
-      return applyConditionalStyleRule(rule);
+      return applyConditionalStyleRule(rule, options);
     }
   }
 
@@ -186,4 +223,14 @@ export function conditionalRulesToBadgeVariants(
   }
 
   return Object.keys(map).length > 0 ? map : undefined;
+}
+
+export function mergeConditionalCssText(
+  baseCssText: string | undefined,
+  conditionalCssText: string | undefined,
+): string | undefined {
+  const parts = [baseCssText, conditionalCssText].filter(
+    (part): part is string => typeof part === "string" && part.length > 0,
+  );
+  return parts.length > 0 ? parts.join("\n") : undefined;
 }

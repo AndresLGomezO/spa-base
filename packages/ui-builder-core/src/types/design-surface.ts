@@ -23,7 +23,11 @@ export type DesignSurface =
   | "dashboardSection"
   | "dashboardLayout";
 
-const VIEW_FILTER_KINDS: readonly UiComponentKind[] = ["view-filter"];
+const VIEW_FILTER_KINDS: readonly UiComponentKind[] = [
+  "view-search",
+  "view-filters",
+  "view-date-filter",
+];
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -119,6 +123,7 @@ const DASHBOARD_CONTENT_KINDS: readonly UiComponentKind[] = [
   "image",
   "icon",
   "user",
+  "notification-bell",
   "chart",
   "metric-kpi",
   "metric-derived-kpi",

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  resolveParentGridAlignItems,
+  resolveParentIsGrid,
   resolveParentStackAlign,
   resolveParentStackDirection,
   resolvePreviewRowChromeLayoutClasses,
@@ -148,6 +150,35 @@ describe("preview-row-chrome-layout", () => {
       flex: "0 0 60%",
       minHeight: "0",
     });
+  });
+
+  it("centers grid track rows when parent grid uses alignItems center", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      parentIsGrid: true,
+      parentGridAlignItems: "center",
+      isStructuralRow: true,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "row-greetings-actions",
+        component: {
+          kind: "container",
+          stackDirection: "row",
+          rows: [],
+          styles: [
+            { property: "alignItems", value: "center" },
+            { property: "height", value: "100%" },
+          ],
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("self-center");
+    expect(classes.shell).toContain("shrink-0");
+    expect(classes.shell).not.toContain("flex-1");
+    expect(classes.shell).not.toContain("h-full");
   });
 
   it("uses column slot sizing by default in vertical stacks", () => {
@@ -389,6 +420,58 @@ describe("preview-row-chrome-layout", () => {
         scope: "container",
         columnIndex: 0,
         containerRowId: "container-1",
+      }),
+    ).toBe("center");
+
+    const gridLayout = {
+      showActions: true,
+      root: {
+        type: "root" as const,
+        id: "root-1",
+        columnCount: 1,
+        columns: [
+          {
+            id: "col-1",
+            rows: [
+              {
+                type: "component" as const,
+                id: "row-greetings-header",
+                component: {
+                  kind: "grid" as const,
+                  gridTemplateColumns: "1fr auto",
+                  alignItems: "center" as const,
+                  rows: [
+                    {
+                      type: "component" as const,
+                      id: "row-greetings-actions",
+                      component: {
+                        kind: "container" as const,
+                        stackDirection: "row" as const,
+                        rows: [],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(
+      resolveParentIsGrid(gridLayout, {
+        scope: "container",
+        columnIndex: 0,
+        containerRowId: "row-greetings-header",
+      }),
+    ).toBe(true);
+
+    expect(
+      resolveParentGridAlignItems(gridLayout, {
+        scope: "container",
+        columnIndex: 0,
+        containerRowId: "row-greetings-header",
       }),
     ).toBe("center");
 

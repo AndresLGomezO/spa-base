@@ -776,6 +776,11 @@
     }
   },
   "viewFilterComponents": {
+    "search": "Search",
+    "filters": "Filters",
+    "dateFilter": "Date filter",
+    "searchLabel": "Label",
+    "filtersLabel": "Label",
     "searchAndFilters": "Search & filters",
     "enableSearch": "Enable search",
     "enableFilters": "Enable filters",
@@ -818,6 +823,7 @@
     "layout": {
       "structureTitle": "Dashboard structure"
     },
+    "structurePanelComponentId": "Component ID",
     "sectionComponent": {
       "section": "Section",
       "selectSection": "Select a section…",
@@ -827,7 +833,14 @@
     },
     "components": {
       "dashboardSection": "Dashboard section",
-      "user": "Signed-in user"
+      "user": "Signed-in user",
+      "notificationBell": "Notifications bell"
+    },
+    "notificationBellComponent": {
+      "iconName": "Icon (Lucide name)",
+      "iconNameHint": "PascalCase Lucide icon name, e.g. Bell",
+      "iconSize": "Icon size (px)",
+      "showBadge": "Show unread badge"
     },
     "userComponent": {
       "display": "Show",
@@ -835,10 +848,18 @@
       "displayEmail": "Email",
       "displayPhoto": "Photo",
       "displayPhotoAndName": "Photo and name",
+      "displayProfileButton": "Profile button",
       "nameFormat": "Name format",
       "nameFormatFull": "Full name",
       "nameFormatFirst": "First name only",
-      "imageSize": "Photo size (px)"
+      "imageSize": "Photo size (px)",
+      "avatarShape": "Avatar shape",
+      "avatarShapeCircle": "Circle",
+      "avatarShapeRounded": "Rounded",
+      "avatarShapeSquare": "Square",
+      "profileButtonContent": "Profile button content",
+      "profileButtonContentPhoto": "Photo only",
+      "profileButtonContentFull": "Photo with name and details"
     },
     "sections": {
       "selectLabel": "Section",
@@ -1527,6 +1548,18 @@
       "addFallback": "Add fallback",
       "remove": "Remove",
       "badgeColorRules": "Badge color rules",
+      "conditionalStyleRules": "Conditional style rules",
+      "conditionalStyleRulesHint": "Apply styles when the field value matches a rule.",
+      "daysRemainingConditionalHint": "Use threshold match values like <2, <=5, or >=5 for days remaining.",
+      "conditionalStyleBackgroundColor": "Background",
+      "conditionalStyleTextColor": "Text color",
+      "conditionalStyleBadgeVariant": "Badge variant",
+      "conditionalStyleCompareField": "Compare field",
+      "conditionalStyleCompareFieldHint": "Entity field whose value is matched against each rule.",
+      "conditionalStylePreview": "Preview",
+      "conditionalStylesWhenMatched": "Styles when matched",
+      "saveConditionalStyleRule": "Save rule",
+      "cancel": "Cancel",
       "matchValue": "Match value",
       "addRule": "Add rule",
       "dateDisplayFormat": "Date format",

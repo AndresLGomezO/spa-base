@@ -70,6 +70,62 @@ describe("sanitizeListComponentConfig", () => {
     });
   });
 
+  it("preserves nested styles inside conditionalStyles rules", () => {
+    expect(
+      sanitizeListComponentConfig("text", "priority", {
+        kind: "text",
+        primary: { type: "field", path: "priority" },
+        conditionalStyles: [
+          {
+            matchValue: "high",
+            styles: [
+              { property: "color", value: "danger" },
+              { property: "fontWeight", value: "bold" },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({
+      kind: "text",
+      primary: { type: "field", path: "priority" },
+      conditionalStyles: [
+        {
+          matchValue: "high",
+          styles: [
+            { property: "color", value: "danger" },
+            { property: "fontWeight", value: "bold" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("preserves compareFieldPath on conditional style rules", () => {
+    expect(
+      sanitizeListComponentConfig("text", "dueDate", {
+        kind: "text",
+        primary: { type: "field", path: "dueDate" },
+        conditionalStyles: [
+          {
+            compareFieldPath: "status",
+            matchValue: "OVERDUE",
+            styles: [{ property: "color", value: "danger" }],
+          },
+        ],
+      }),
+    ).toEqual({
+      kind: "text",
+      primary: { type: "field", path: "dueDate" },
+      conditionalStyles: [
+        {
+          compareFieldPath: "status",
+          matchValue: "OVERDUE",
+          styles: [{ property: "color", value: "danger" }],
+        },
+      ],
+    });
+  });
+
   it("maps invalid badgeVariant aliases to schema-safe values", () => {
     expect(
       sanitizeListComponentConfig("badge", "contractType", {

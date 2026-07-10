@@ -452,6 +452,27 @@ describe("applyStyleRules", () => {
     ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
   });
 
+  it("uses content width for icon rows by default", () => {
+    expect(
+      prefersInlineContentWidth({
+        kind: "icon",
+        styles: [{ property: "padding", value: "10" }],
+      }),
+    ).toBe(true);
+    expect(
+      inlineContentRowClassName({
+        kind: "icon",
+        styles: [{ property: "padding", value: "10" }],
+      }),
+    ).toBe("w-fit max-w-full shrink-0");
+    expect(
+      prefersInlineContentWidth({
+        kind: "icon",
+        styles: [{ property: "flex", value: "1" }],
+      }),
+    ).toBe(false);
+  });
+
   it("emits base fontSize as CSS var and media overrides (no inline fontSize)", () => {
     const resolved = resolveStyleRules([
       {

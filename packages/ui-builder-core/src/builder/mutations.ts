@@ -20,7 +20,6 @@ import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
 import { createLayoutId } from "./id.js";
 import { regenerateLayoutDocumentIds } from "../validation/regenerate-layout-ids.js";
 import { regenerateComponentRowSubtree } from "../validation/regenerate-layout-ids.js";
-import { migrateViewSearchFilterLayout } from "../layout/migrate-view-search-filter-layout.js";
 import { toEditableLayoutRoot } from "../layout/layout-root-adapters.js";
 import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import { resolveContainerChildRows } from "../layout/resolve-container-child-rows.js";
@@ -97,12 +96,23 @@ export function createDefaultComponent(
     return createDefaultChartComponent();
   }
 
-  if (kind === "view-search" || kind === "view-filter") {
+  if (kind === "view-search") {
     return {
-      kind: "view-filter",
-      enableSearch: true,
-      enableFilters: true,
+      kind: "view-search",
+    };
+  }
+
+  if (kind === "view-filters") {
+    return {
+      kind: "view-filters",
       filters: [],
+    };
+  }
+
+  if (kind === "view-date-filter") {
+    return {
+      kind: "view-date-filter",
+      dateFilterGranularity: "month",
     };
   }
 
@@ -129,6 +139,10 @@ export function createDefaultComponent(
 
   if (kind === "user") {
     return { kind: "user", display: "name" };
+  }
+
+  if (kind === "notification-bell") {
+    return { kind: "notification-bell", iconName: "Bell" };
   }
 
   if (kind === "form-actions") {
@@ -227,12 +241,23 @@ export function createDefaultStaticComponent(
     return createDefaultChartComponent();
   }
 
-  if (kind === "view-search" || kind === "view-filter") {
+  if (kind === "view-search") {
     return {
-      kind: "view-filter",
-      enableSearch: true,
-      enableFilters: true,
+      kind: "view-search",
+    };
+  }
+
+  if (kind === "view-filters") {
+    return {
+      kind: "view-filters",
       filters: [],
+    };
+  }
+
+  if (kind === "view-date-filter") {
+    return {
+      kind: "view-date-filter",
+      dateFilterGranularity: "month",
     };
   }
 
@@ -259,6 +284,10 @@ export function createDefaultStaticComponent(
 
   if (kind === "user") {
     return { kind: "user", display: "name" };
+  }
+
+  if (kind === "notification-bell") {
+    return { kind: "notification-bell", iconName: "Bell" };
   }
 
   if (kind === "form-actions") {
@@ -624,8 +653,7 @@ function normalizeRowNode(row: RowNode): RowNode {
 }
 
 export function normalizeLayout(layout: UiLayoutDocument): UiLayoutDocument {
-  const migrated = migrateViewSearchFilterLayout(layout);
-  return withEditableRoot(migrated, (root) => {
+  return withEditableRoot(layout, (root) => {
     const columns = root.columns.map(normalizeColumnNode);
     return {
       ...root,

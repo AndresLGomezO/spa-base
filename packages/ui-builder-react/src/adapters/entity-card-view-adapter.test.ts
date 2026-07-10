@@ -249,6 +249,75 @@ describe("entityCardViewAdapter", () => {
     expect(imageFields.map((field) => field.path)).toContain("logo");
   });
 
+  it("includes enum values on direct and relation enum field descriptors", () => {
+    const accountDefinition: SerializableEntityDefinition = {
+      name: "account",
+      collection: "accounts",
+      permissions: [],
+      fields: {
+        status: {
+          type: "enum",
+          required: true,
+          optional: false,
+          enumValues: ["active", "inactive", "pending"],
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {
+          status: { label: "Status" },
+        },
+      },
+    };
+
+    const subscriptionWithStatus: SerializableEntityDefinition = {
+      ...subscriptionDefinition,
+      fields: {
+        ...subscriptionDefinition.fields,
+        status: {
+          type: "enum",
+          required: true,
+          optional: false,
+          enumValues: ["draft", "published"],
+        },
+        accountId: {
+          type: "string",
+          required: true,
+          optional: false,
+          relation: { type: "many-to-one", target: "account" },
+        },
+      },
+    };
+
+    const { fieldDescriptors } = entityCardViewAdapter(
+      subscriptionWithStatus,
+      (entityName) =>
+        entityName === "account"
+          ? accountDefinition
+          : lookupDefinitions[entityName],
+    );
+
+    const directStatus = fieldDescriptors.find(
+      (field) => field.path === "status",
+    );
+    expect(directStatus?.valueType).toBe("enum");
+    expect(directStatus?.enumValues).toEqual(["draft", "published"]);
+
+    const relationStatus = fieldDescriptors.find(
+      (field) => field.path === "account.status",
+    );
+    expect(relationStatus?.valueType).toBe("enum");
+    expect(relationStatus?.enumValues).toEqual([
+      "active",
+      "inactive",
+      "pending",
+    ]);
+
+    const badgeFields = filterFieldsForComponentKind(fieldDescriptors, "badge");
+    expect(badgeFields.map((field) => field.path)).toContain("account.status");
+  });
+
   it("includes nested relation image paths for multi-hop display bindings", () => {
     const providerDefinition: SerializableEntityDefinition = {
       name: "provider",

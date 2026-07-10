@@ -23,7 +23,7 @@ function createCatalogEntry(name: string): EntityCatalogEntry {
 }
 
 describe("collectViewFilterDescriptors", () => {
-  it("collects filter entries from view-filter components with qualified ids", () => {
+  it("collects filter entries from view-filters components with qualified ids", () => {
     const collected = collectViewFilterDescriptors({
       catalog: [createCatalogEntry("account")],
       sections: [
@@ -42,12 +42,17 @@ describe("collectViewFilterDescriptors", () => {
                   rows: [
                     {
                       type: "component",
-                      id: "row-filter",
+                      id: "row-search",
                       component: {
-                        kind: "view-filter",
-                        enableSearch: true,
-                        enableFilters: true,
-                        searchPlaceholder: "Search…",
+                        kind: "view-search",
+                        placeholder: "Search…",
+                      },
+                    },
+                    {
+                      type: "component",
+                      id: "row-filters",
+                      component: {
+                        kind: "view-filters",
                         filters: [
                           { entityName: "account", fieldName: "accountType" },
                         ],
@@ -94,6 +99,7 @@ describe("collectViewFilterDescriptors", () => {
       },
     });
 
+    expect(collected.hasSearch).toBe(true);
     expect(collected.filterConfigs).toHaveLength(1);
     expect(collected.filterColumns.map((column) => column.id)).toEqual([
       "account.accountType",
@@ -104,7 +110,7 @@ describe("collectViewFilterDescriptors", () => {
     ]);
   });
 
-  it("collects the first enabled date filter config", () => {
+  it("does not build search columns when no view-search component exists", () => {
     const collected = collectViewFilterDescriptors({
       catalog: [createCatalogEntry("account")],
       sections: [],
@@ -120,12 +126,45 @@ describe("collectViewFilterDescriptors", () => {
               rows: [
                 {
                   type: "component",
-                  id: "row-filter",
+                  id: "row-filters",
                   component: {
-                    kind: "view-filter",
-                    enableDateFilter: true,
+                    kind: "view-filters",
+                    filters: [
+                      { entityName: "account", fieldName: "accountType" },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(collected.hasSearch).toBe(false);
+    expect(collected.searchColumns).toEqual([]);
+  });
+
+  it("collects the first view-date-filter config", () => {
+    const collected = collectViewFilterDescriptors({
+      catalog: [createCatalogEntry("account")],
+      sections: [],
+      dashboardLayout: {
+        showActions: true,
+        root: {
+          type: "root",
+          id: "root-dashboard",
+          columnCount: 1,
+          columns: [
+            {
+              id: "col-dashboard",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-date-filter",
+                  component: {
+                    kind: "view-date-filter",
                     dateFilterGranularity: "month",
-                    filters: [],
                   },
                 },
               ],
