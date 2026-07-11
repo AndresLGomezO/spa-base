@@ -1,7 +1,10 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeColorSync } from "./ThemeColorSync";
+import {
+  resolvePageBackgroundColor,
+  ThemeColorSync,
+} from "./ThemeColorSync";
 
 const useColorSchemeMock = vi.fn(() => ({
   colorScheme: "light" as "light" | "dark",
@@ -25,9 +28,16 @@ vi.mock("../auth/AuthContext", () => ({
 
 describe("ThemeColorSync", () => {
   beforeEach(() => {
+    document.documentElement.style.backgroundColor = "";
     document.body.style.backgroundColor = "rgb(248, 250, 252)";
+    document.documentElement.style.setProperty(
+      "--color-background",
+      "rgb(248, 250, 252)",
+    );
     document
-      .querySelectorAll('meta[name="theme-color"]')
+      .querySelectorAll(
+        'meta[name="theme-color"], meta[name="apple-mobile-web-app-status-bar-style"]',
+      )
       .forEach((node) => node.remove());
     useColorSchemeMock.mockReturnValue({
       colorScheme: "light",
@@ -41,22 +51,34 @@ describe("ThemeColorSync", () => {
     });
   });
 
-  it("writes the body background into the theme-color meta", async () => {
+  it("writes the page background into theme-color and uses default status bar in light mode", async () => {
     render(<ThemeColorSync />);
 
     await vi.waitFor(() => {
-      const meta = document.querySelector('meta[name="theme-color"]');
-      expect(meta?.getAttribute("content")).toBe("rgb(248, 250, 252)");
+      expect(
+        document.querySelector('meta[name="theme-color"]')?.getAttribute(
+          "content",
+        ),
+      ).toBe("rgb(248, 250, 252)");
+      expect(
+        document
+          .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+          ?.getAttribute("content"),
+      ).toBe("default");
     });
     expect(document.documentElement.style.colorScheme).toBe("light");
   });
 
-  it("sets dark color-scheme when the theme is dark", async () => {
+  it("uses black-translucent status bar and dark theme-color in dark mode", async () => {
     useColorSchemeMock.mockReturnValue({
       colorScheme: "dark",
       setColorScheme: vi.fn(),
       toggleColorScheme: vi.fn(),
     });
+    document.documentElement.style.setProperty(
+      "--color-background",
+      "rgb(11, 13, 20)",
+    );
     document.body.style.backgroundColor = "rgb(11, 13, 20)";
 
     render(<ThemeColorSync />);
@@ -64,10 +86,24 @@ describe("ThemeColorSync", () => {
     await vi.waitFor(() => {
       expect(document.documentElement.style.colorScheme).toBe("dark");
       expect(
-        document
-          .querySelector('meta[name="theme-color"]')
-          ?.getAttribute("content"),
+        document.querySelector('meta[name="theme-color"]')?.getAttribute(
+          "content",
+        ),
       ).toBe("rgb(11, 13, 20)");
+      expect(
+        document
+          .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+          ?.getAttribute("content"),
+      ).toBe("black-translucent");
     });
+  });
+
+  it("resolvePageBackgroundColor falls back by scheme when colors are transparent", () => {
+    document.documentElement.style.backgroundColor = "rgba(0, 0, 0, 0)";
+    document.body.style.backgroundColor = "rgba(0, 0, 0, 0)";
+    document.documentElement.style.removeProperty("--color-background");
+
+    expect(resolvePageBackgroundColor("light")).toBe("#ffffff");
+    expect(resolvePageBackgroundColor("dark")).toBe("#0a0a0a");
   });
 });

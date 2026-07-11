@@ -16,7 +16,6 @@ import { PageTitleProvider } from "../routing/page-title-context";
 import { RequireAuth } from "../routing/RouteGuards";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 import { AppFooter } from "../components/sidebar/AppFooter";
-import { appShellLayoutHasContent } from "../components/sidebar/app-shell-layout-has-content";
 import { TenantAwareSidebarProvider } from "../components/sidebar/TenantAwareSidebarProvider";
 import { useTenantSidebarLayoutRuntime } from "../features/ui-builder/use-tenant-sidebar-layout-runtime";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
@@ -25,11 +24,7 @@ import { IndexProvisioningGlobalBanner } from "../components/index-provisioning/
 import { NotificationsProvider } from "../features/notifications/notifications-context";
 import { EntitySaveManagerProvider } from "../features/entity-save/entity-save-context";
 
-function MainOutlet({
-  padBottomSafeArea,
-}: {
-  readonly padBottomSafeArea: boolean;
-}) {
+function MainOutlet() {
   const location = useLocation();
   const isHomeDashboard = location.pathname === "/";
 
@@ -38,7 +33,6 @@ function MainOutlet({
       className={cn(
         "mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden",
         !isHomeDashboard && "p-macro",
-        padBottomSafeArea && "pb-[env(safe-area-inset-bottom)]",
       )}
     >
       <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden">
@@ -51,14 +45,11 @@ function MainOutlet({
 function AppShellColumn() {
   const runtime = useTenantSidebarLayoutRuntime();
   const footerLayout = runtime.exists ? runtime.config.footerLayout : null;
-  const hasFooter = Boolean(
-    footerLayout && appShellLayoutHasContent(footerLayout),
-  );
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <AppHeader />
-      <MainOutlet padBottomSafeArea={!hasFooter} />
+      <MainOutlet />
       {footerLayout ? <AppFooter layout={footerLayout} /> : null}
     </div>
   );
@@ -80,7 +71,7 @@ export default function PrivateLayoutRoute() {
                       <CreateTenantModalProvider>
                         <ThirdRailProvider>
                           <TenantAwareSidebarProvider>
-                            <div className="bg-background relative flex h-dvh overflow-hidden">
+                            <div className="bg-background relative flex h-dvh max-h-dvh min-h-dvh overflow-hidden">
                               <AppSidebar />
                               <AppShellColumn />
                               <ThirdRailHost />

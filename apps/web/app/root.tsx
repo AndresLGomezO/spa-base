@@ -45,12 +45,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        {/* Translucent status bar; page background paints edge-to-edge underneath. */}
+        {/* Light: opaque bar + dark icons. Dark: translucent over edge-to-edge content. Synced at runtime by ThemeColorSync. */}
         <meta
           name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
+          content="default"
         />
-        <meta name="theme-color" content="transparent" />
+        <meta name="theme-color" content="#ffffff" />
         {import.meta.env.DEV ? (
           <meta
             httpEquiv="Content-Security-Policy"
@@ -59,7 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ) : null}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var d=document.documentElement;if(localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark"){d.classList.add("dark");d.style.colorScheme="dark"}else{d.style.colorScheme="light"}}catch(e){}})();`,
+            __html: `(function(){try{var d=document.documentElement;var dark=localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark";if(dark){d.classList.add("dark");d.style.colorScheme="dark";var s=document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');if(s)s.setAttribute("content","black-translucent");var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute("content","#0a0a0a")}else{d.style.colorScheme="light"}}catch(e){}})();`,
           }}
         />
         <title>{DEFAULT_SITE_NAME}</title>

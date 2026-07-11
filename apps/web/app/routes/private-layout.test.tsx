@@ -108,8 +108,8 @@ describe("PrivateLayoutRoute", () => {
       "max-w-none",
       "flex-1",
       "overflow-hidden",
-      "pb-[env(safe-area-inset-bottom)]",
     );
+    expect(main).not.toHaveClass("pb-[env(safe-area-inset-bottom)]");
 
     const pageScroll = main.firstElementChild;
     expect(pageScroll).toHaveClass(

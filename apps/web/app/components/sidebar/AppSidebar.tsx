@@ -155,7 +155,7 @@ export function AppHeader() {
   return (
     <header
       className={cn(
-        "border-border relative z-20 flex min-h-14 shrink-0 items-center border-b px-4 pt-[env(safe-area-inset-top)]",
+        "bg-background relative z-20 flex min-h-14 shrink-0 items-center px-4 pt-[env(safe-area-inset-top)]",
         hamburgerHiddenClassName,
       )}
     >

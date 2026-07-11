@@ -228,8 +228,10 @@ export function DesignedAppHeader({ layout }: DesignedAppHeaderProps) {
   );
 
   if (!appShellLayoutHasContent(layout)) {
+    // Keep a borderless safe-area spacer so dashboard content doesn't seam
+    // against the status bar when the designed header is empty.
     return (
-      <div className="relative">
+      <div className="bg-background relative shrink-0 pt-[env(safe-area-inset-top)]">
         <NavigationProgressBar />
       </div>
     );
@@ -242,7 +244,7 @@ export function DesignedAppHeader({ layout }: DesignedAppHeaderProps) {
       </div>
       <header
         className={cn(
-          "border-border relative z-20 min-h-14 shrink-0 items-center border-b px-4 pt-[env(safe-area-inset-top)]",
+          "bg-background relative z-20 flex min-h-14 shrink-0 items-center px-4 pt-[env(safe-area-inset-top)]",
           resolveAppShellChromeDisplayClassName(layout, atBreakpoint),
         )}
       >
