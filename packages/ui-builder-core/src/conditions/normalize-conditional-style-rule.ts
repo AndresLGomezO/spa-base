@@ -48,7 +48,9 @@ export function formatConditionalRulePreview(
   const normalized = normalizeConditionalStyleRule(rule);
   const parts: string[] = [];
 
-  if (compareFieldLabel && compareFieldLabel.trim().length > 0) {
+  if (rule.conditionKind === "activePath") {
+    parts.push(`path = ${normalized.matchValue}`);
+  } else if (compareFieldLabel && compareFieldLabel.trim().length > 0) {
     parts.push(`${compareFieldLabel} = ${normalized.matchValue}`);
   } else if (rule.compareFieldPath && rule.compareFieldPath.trim().length > 0) {
     parts.push(`${rule.compareFieldPath} = ${normalized.matchValue}`);

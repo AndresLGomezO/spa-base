@@ -31,6 +31,8 @@ import {
   resolveLayoutSpacingProps,
   resolveGridGapCSSValue,
   resolveRowWrapperStyleRules,
+  resolveDefaultCompareFieldPath,
+  resolveStylesWithMatchedConditionalOverrides,
   stylesHaveWidthBounds,
   stylesIncludeFlexGrow,
   usesFlexWrapLayout,
@@ -68,18 +70,12 @@ import type { LayoutRenderContext } from "../context.js";
 import { wrapRowWithClickAction } from "../click-action/wrap-row-click-action.js";
 import { LayoutRenderOptionsProvider } from "../layout-render-options-context.js";
 import { renderUiComponent } from "../engine/render-component.js";
-import {
-  mergeMatchedConditionalClassName,
-  resolveComponentConditionalStyles,
-} from "../engine/apply-entity-conditional-styles.js";
-import {
-  mergeConditionalCssText,
-  type ConditionalStylesCapable,
-} from "@repo/ui-builder-core";
+import type { ConditionalStylesCapable } from "@repo/ui-builder-core";
 import {
   resolveMotionPreset,
   mergeMotionPresetStyle,
 } from "../motion/resolve-motion.js";
+import { MotionPressHost } from "../motion/MotionPressHost.js";
 import { usePreviewBreakpoint } from "../preview-breakpoint-context.js";
 import type {
   LayoutWrapperRenderOptions,
@@ -100,21 +96,31 @@ const LIST_DETAIL_COLUMN_SHELL_CLASS = "flex min-w-0 flex-col";
 const LIST_DETAIL_ROOT_SHELL_CLASS = "flex min-w-0 flex-col";
 
 function withEntityConditionalShellStyles(
-  component: ConditionalStylesCapable,
+  component: ConditionalStylesCapable & {
+    readonly styles?: Parameters<typeof resolveRowWrapperStyleRules>[0];
+  },
   context: LayoutRenderContext,
   atBreakpoint: ResponsiveGridBreakpoint | undefined,
-  base: ReturnType<typeof resolveRowWrapperStyleRules>,
 ): ReturnType<typeof resolveRowWrapperStyleRules> {
-  const matched = resolveComponentConditionalStyles(
-    component,
-    context,
-    atBreakpoint,
+  const effectiveStyles = resolveStylesWithMatchedConditionalOverrides(
+    component.styles,
+    component.conditionalStyles,
+    {
+      resolveField: context.resolveField,
+      resolveFieldMeta: context.resolveFieldMeta
+        ? (path) => context.resolveFieldMeta?.(path) ?? {}
+        : undefined,
+      resolveActivePathname: context.resolveActivePathname,
+      atBreakpoint,
+      defaultCompareFieldPath: resolveDefaultCompareFieldPath(
+        component as Parameters<typeof resolveDefaultCompareFieldPath>[0],
+      ),
+    },
   );
-  return {
-    className: mergeMatchedConditionalClassName(base.className, matched),
-    style: { ...base.style, ...matched.style },
-    cssText: mergeConditionalCssText(base.cssText, matched.cssText),
-  };
+
+  return resolveRowWrapperStyleRules(effectiveStyles, {
+    atBreakpoint,
+  });
 }
 
 function isListOrDetailSurface(context: LayoutRenderContext): boolean {
@@ -991,9 +997,6 @@ function renderRow(
         row.component,
         context,
         atBreakpoint,
-        resolveRowWrapperStyleRules(row.component.styles, {
-          atBreakpoint,
-        }),
       );
       const gridInlineStyle = gridStyles.style ?? {};
       const gridStyleWithoutGap = { ...gridInlineStyle };
@@ -1014,8 +1017,10 @@ function renderRow(
         atBreakpoint,
       );
       const gridInner = (
-        <div
+        <MotionPressHost
           key={row.id}
+          press={row.motion?.press}
+          pressDurationMs={row.motion?.pressDurationMs}
           data-layout-row-id={row.id}
           className={[
             gridStyles.className,
@@ -1044,7 +1049,7 @@ function renderRow(
             syntheticColumn,
             columnGridOptions,
           )}
-        </div>
+        </MotionPressHost>
       );
       return wrapRowContent(
         row,
@@ -1069,8 +1074,10 @@ function renderRow(
         atBreakpoint,
       });
       const neutralInner = (
-        <div
+        <MotionPressHost
           key={row.id}
+          press={row.motion?.press}
+          pressDurationMs={row.motion?.pressDurationMs}
           data-layout-row-id={row.id}
           className={[
             neutralStyles.className,
@@ -1120,9 +1127,6 @@ function renderRow(
         row.component,
         context,
         atBreakpoint,
-        resolveRowWrapperStyleRules(row.component.styles, {
-          atBreakpoint,
-        }),
       );
       const containerShellStyle = resolveContainerShellLayoutStyle(
         row.component.styles,
@@ -1243,8 +1247,10 @@ function renderRow(
           ? "self-stretch"
           : undefined;
       const containerInner = (
-        <div
+        <MotionPressHost
           key={row.id}
+          press={row.motion?.press}
+          pressDurationMs={row.motion?.pressDurationMs}
           data-layout-row-id={row.id}
           className={[
             stretchedContainerClass,
@@ -1285,7 +1291,7 @@ function renderRow(
             ),
             columnGridOptions,
           )}
-        </div>
+        </MotionPressHost>
       );
       const containerBody = wrapRowWithClickAction(
         row,
@@ -1398,8 +1404,10 @@ function renderRow(
             .join(" ")
         : componentSlotWrapperClassName(row.component.styles, stackDirection);
     const rowDiv = (
-      <div
+      <MotionPressHost
         key={row.id}
+        press={row.motion?.press}
+        pressDurationMs={row.motion?.pressDurationMs}
         data-layout-row-id={row.id}
         className={[
           flexWrapRowItemClass,
@@ -1431,7 +1439,7 @@ function renderRow(
           renderUiComponent(row.component, context, atBreakpoint),
           context,
         )}
-      </div>
+      </MotionPressHost>
     );
 
     return wrapRowContent(

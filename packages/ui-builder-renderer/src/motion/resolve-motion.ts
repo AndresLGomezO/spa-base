@@ -3,6 +3,8 @@ import type { CSSProperties } from "react";
 import type {
   MotionHoverTransform,
   MotionHoverSurface,
+  MotionPress,
+  MotionPressColor,
   MotionPreset,
 } from "@repo/ui-builder-core";
 
@@ -16,6 +18,19 @@ const ENTRANCE_CLASS: Record<NonNullable<MotionPreset["entrance"]>, string> = {
 export const MOTION_HOVER_INTERACTIVE_CLASS = "ui-motion-hover-interactive";
 export const MOTION_HOVER_GLOW_BORDER_CLASS = "ui-motion-hover-glow-border";
 
+export const MOTION_PRESS_CLASS = "ui-motion-press";
+export const MOTION_PRESS_KIND_CLASS: Record<
+  Exclude<MotionPress, "none">,
+  string
+> = {
+  ripple: "ui-motion-press-ripple",
+  glow: "ui-motion-press-glow",
+  wave: "ui-motion-press-wave",
+  neon: "ui-motion-press-neon",
+  pop: "ui-motion-press-pop",
+  slide: "ui-motion-press-slide",
+};
+
 const HOVER_SURFACE_BG: Record<
   Exclude<MotionHoverSurface, "none" | "glow-border">,
   string
@@ -27,6 +42,34 @@ const HOVER_SURFACE_BG: Record<
   destructive: "color-mix(in oklch, var(--color-destructive) 40%, transparent)",
   warning: "color-mix(in oklch, var(--color-warning) 40%, transparent)",
   success: "color-mix(in oklch, var(--color-success) 40%, transparent)",
+};
+
+const PRESS_COLOR: Record<MotionPressColor, string> = {
+  default: "var(--color-primary)",
+  accent: "var(--color-accent)",
+  muted: "var(--color-muted-foreground)",
+  info: "var(--color-info)",
+  destructive: "var(--color-destructive)",
+  warning: "var(--color-warning)",
+  success: "var(--color-success)",
+  foreground: "var(--color-foreground)",
+};
+
+const DEFAULT_PRESS_DURATION_MS: Record<
+  Exclude<MotionPress, "none">,
+  number
+> = {
+  ripple: 600,
+  glow: 200,
+  wave: 500,
+  neon: 200,
+  pop: 200,
+  slide: 500,
+};
+
+const DEFAULT_PRESS_GLOW_BLUR_PX: Record<"glow" | "neon", number> = {
+  glow: 20,
+  neon: 40,
 };
 
 export interface ResolvedMotionPreset {
@@ -144,6 +187,54 @@ function resolveInteractiveHoverStyle(
   return style as CSSProperties;
 }
 
+function resolveEffectivePress(preset: MotionPreset): MotionPress {
+  return preset.press ?? "none";
+}
+
+function defaultPressDurationMs(press: Exclude<MotionPress, "none">): number {
+  return DEFAULT_PRESS_DURATION_MS[press];
+}
+
+function resolvePressStyle(preset: MotionPreset): CSSProperties | undefined {
+  const press = resolveEffectivePress(preset);
+  if (press === "none") {
+    return undefined;
+  }
+
+  const color = PRESS_COLOR[preset.pressColor ?? "default"];
+  const durationMs = preset.pressDurationMs ?? defaultPressDurationMs(press);
+  const opacity = preset.pressOpacity ?? 0.4;
+  const scale = preset.pressScale ?? 1.2;
+  const glowBlur =
+    preset.pressGlowBlurPx ??
+    (press === "glow" || press === "neon"
+      ? DEFAULT_PRESS_GLOW_BLUR_PX[press]
+      : 20);
+
+  return {
+    "--motion-press-color": color,
+    "--motion-press-duration": `${durationMs}ms`,
+    "--motion-press-opacity": String(opacity),
+    "--motion-press-scale": String(scale),
+    "--motion-press-glow-blur": `${glowBlur}px`,
+  } as CSSProperties;
+}
+
+function mergeResolvedStyles(
+  ...parts: readonly (CSSProperties | undefined)[]
+): CSSProperties | undefined {
+  const merged: CSSProperties = {};
+  let hasAny = false;
+  for (const part of parts) {
+    if (!part) {
+      continue;
+    }
+    hasAny = true;
+    Object.assign(merged, part);
+  }
+  return hasAny ? merged : undefined;
+}
+
 export function resolveMotionPreset(
   preset: MotionPreset | undefined,
   index?: number,
@@ -165,6 +256,12 @@ export function resolveMotionPreset(
     }
   }
 
+  const press = resolveEffectivePress(preset);
+  if (press !== "none") {
+    classes.push(MOTION_PRESS_CLASS);
+    classes.push(MOTION_PRESS_KIND_CLASS[press]);
+  }
+
   if (preset.transition === "layout") {
     classes.push("ui-motion-transition-layout");
   } else if (preset.transition === "all") {
@@ -183,7 +280,10 @@ export function resolveMotionPreset(
     classes.push(`ui-motion-stagger-${index}`);
   }
 
-  const style = resolveInteractiveHoverStyle(preset);
+  const style = mergeResolvedStyles(
+    resolveInteractiveHoverStyle(preset),
+    resolvePressStyle(preset),
+  );
 
   return {
     className: classes.filter(Boolean).join(" "),

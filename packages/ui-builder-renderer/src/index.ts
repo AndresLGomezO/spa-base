@@ -16,6 +16,10 @@ export {
   type ResolvedMotionPreset,
 } from "./motion/resolve-motion.js";
 export {
+  MotionPressHost,
+  type MotionPressHostProps,
+} from "./motion/MotionPressHost.js";
+export {
   RecursiveLayoutRenderer,
   type RecursiveLayoutRendererProps,
   type NestedColumnWrapper,

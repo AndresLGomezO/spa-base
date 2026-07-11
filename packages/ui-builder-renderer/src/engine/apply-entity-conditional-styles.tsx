@@ -4,9 +4,11 @@ import {
   resolveComponentRenderStyles,
   resolveDefaultCompareFieldPath,
   resolveEntityConditionalStyles,
+  resolveStylesWithMatchedConditionalOverrides,
   type ConditionalStylesCapable,
   type MatchedConditionalStyles,
   type ResponsiveGridBreakpoint,
+  type StyleRule,
 } from "@repo/ui-builder-core";
 
 import type { LayoutRenderContext } from "../context.js";
@@ -40,6 +42,25 @@ function buildCompareFieldMetaResolver(
   };
 }
 
+function buildResolveEntityConditionalOptions(
+  config: ConditionalStylesCapable,
+  context: LayoutRenderContext,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
+  options: ResolveComponentConditionalStylesOptions = {},
+) {
+  return {
+    resolveField: context.resolveField,
+    resolveFieldMeta: buildCompareFieldMetaResolver(context, options),
+    defaultCompareFieldPath:
+      options.defaultCompareFieldPath ??
+      resolveDefaultCompareFieldPath(
+        config as Parameters<typeof resolveDefaultCompareFieldPath>[0],
+      ),
+    atBreakpoint,
+    resolveActivePathname: context.resolveActivePathname,
+  };
+}
+
 export function resolveComponentConditionalStyles(
   config: ConditionalStylesCapable,
   context: LayoutRenderContext,
@@ -50,16 +71,51 @@ export function resolveComponentConditionalStyles(
     return {};
   }
 
-  return resolveEntityConditionalStyles(config.conditionalStyles, {
-    resolveField: context.resolveField,
-    resolveFieldMeta: buildCompareFieldMetaResolver(context, options),
-    defaultCompareFieldPath:
-      options.defaultCompareFieldPath ??
-      resolveDefaultCompareFieldPath(
-        config as Parameters<typeof resolveDefaultCompareFieldPath>[0],
-      ),
-    atBreakpoint,
-  });
+  return resolveEntityConditionalStyles(
+    config.conditionalStyles,
+    buildResolveEntityConditionalOptions(
+      config,
+      context,
+      atBreakpoint,
+      options,
+    ),
+  );
+}
+
+/**
+ * Merge component `styles` with the first matching conditional rule so
+ * presentation-driven components (icons, etc.) honor active-path / field overrides.
+ */
+export function mergeComponentStylesWithConditionalOverrides<
+  T extends ConditionalStylesCapable & {
+    readonly styles?: readonly StyleRule[];
+  },
+>(
+  config: T,
+  context: LayoutRenderContext,
+  atBreakpoint?: ResponsiveGridBreakpoint,
+  options: ResolveComponentConditionalStylesOptions = {},
+): T {
+  if (!config.conditionalStyles?.length) {
+    return config;
+  }
+
+  const styles = resolveStylesWithMatchedConditionalOverrides(
+    config.styles,
+    config.conditionalStyles,
+    buildResolveEntityConditionalOptions(
+      config,
+      context,
+      atBreakpoint,
+      options,
+    ),
+  );
+
+  if (styles === config.styles) {
+    return config;
+  }
+
+  return { ...config, styles };
 }
 
 export function mergeMatchedConditionalClassName(

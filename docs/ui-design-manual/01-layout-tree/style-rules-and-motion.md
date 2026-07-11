@@ -63,6 +63,52 @@ Designer preview snaps via `atBreakpoint`; production emits mobile-first `@media
 
 ---
 
+## Conditional styles
+
+Components that support `conditionalStyles` (containers, icons, fields, etc.) can apply extra `StyleRule`s when a condition matches. Rules are evaluated **in order**; the first match wins.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `conditionKind` | `"field"` \| `"activePath"` | Optional; defaults to `"field"` |
+| `matchValue` | string | Field value to match, or path prefix when `conditionKind` is `"activePath"` |
+| `compareFieldPath` | string | Entity field to compare (field rules only) |
+| `compareFieldDateFormat` | string | Date compare format (field rules only) |
+| `styles` | StyleRule[] | Styles applied when the rule matches |
+| `badgeVariant` | string | Badge-only semantic variant when matched |
+
+### Active path (`conditionKind: "activePath"`)
+
+Matches the current route **pathname** (query and hash ignored), same semantics as sidebar active links:
+
+- `/` matches only `/`
+- Any other `matchValue` matches that path **or** any subpath (`/app/transactions` matches `/app/transactions/abc`)
+
+Useful for footer nav chrome that mirrors sidebar active styling on mobile:
+
+```json
+{
+  "kind": "container",
+  "conditionalStyles": [
+    {
+      "conditionKind": "activePath",
+      "matchValue": "/app/transactions",
+      "styles": [
+        { "property": "color", "value": "primary" },
+        { "property": "backgroundColor", "value": "accent" }
+      ]
+    }
+  ],
+  "clickAction": {
+    "type": "externalUrl",
+    "url": { "type": "static", "value": "/app/transactions" }
+  }
+}
+```
+
+Field-value matching (`conditionKind` omitted or `"field"`) compares `matchValue` to an entity field (or days-remaining thresholds for dates). Nested `styles` may still use `valuesByBreakpoint` for responsive values after a rule matches.
+
+---
+
 ## Where to attach styles
 
 Styles apply at three layers. Choose the layer that matches the visual intent.
@@ -230,11 +276,44 @@ Attach `motion` on the `UiLayoutDocument` root for layout-wide entrance effects:
 | `hoverRotateDeg` | number | -45–45; degrees appended to hover transform |
 | `hoverDurationMs` | number | 0–2000; hover transition duration (default 150ms) |
 | `hover` | string | **Deprecated** — `none` \| `lift` \| `glow`; maps to `hoverTransform` when unset |
+| `press` | string | `none` \| `ripple` \| `glow` \| `wave` \| `neon` \| `pop` \| `slide` |
+| `pressColor` | string | `default` (primary) \| `accent` \| `muted` \| `info` \| `destructive` \| `warning` \| `success` \| `foreground` |
+| `pressDurationMs` | number | 0–2000; defaults: ripple 600, wave/slide 500, glow/neon/pop 200 |
+| `pressScale` | number | 0.5–2; pop scale (default 1.2) |
+| `pressOpacity` | number | 0–1; overlay opacity for ripple/wave/slide (default 0.4) |
+| `pressGlowBlurPx` | number | 0–80; glow/neon blur (default glow 20, neon 40) |
 | `transition` | string | `none` \| `layout` \| `all` |
 
-Interactive hover resolves to the `ui-motion-hover-interactive` class plus CSS variables (`--motion-hover-bg`, `--motion-hover-transform`, `--motion-hover-shadow`, `--motion-hover-duration`) on the row wrapper. Style rules cannot express `:hover` pseudo-states — use motion presets for hover background and transforms.
+Interactive hover resolves to the `ui-motion-hover-interactive` class plus CSS variables (`--motion-hover-bg`, `--motion-hover-transform`, `--motion-hover-shadow`, `--motion-hover-duration`) on the row wrapper. Style rules cannot express `:hover` / `:active` pseudo-states — use motion presets for hover and press feedback.
 
-**Note:** Motion applies to component rows and the document root only — not to `container` or `grid` configs directly.
+Press effects resolve to `ui-motion-press` + `ui-motion-press-{kind}` with CSS variables (`--motion-press-color`, `--motion-press-duration`, `--motion-press-opacity`, `--motion-press-scale`, `--motion-press-glow-blur`). Ripple, wave, and slide use pointer-driven overlays; glow, neon, and pop use `:active` styles. Press works with or without `clickAction`.
+
+Example press on a tappable container row:
+
+```json
+{
+  "type": "component",
+  "id": "row-home",
+  "motion": {
+    "press": "ripple",
+    "pressColor": "default",
+    "pressDurationMs": 600,
+    "pressOpacity": 0.4
+  },
+  "clickAction": {
+    "type": "externalUrl",
+    "url": { "type": "static", "value": "/app/home" }
+  },
+  "component": {
+    "kind": "container",
+    "stackDirection": "column",
+    "rows": []
+  }
+}
+```
+
+**Note:** Motion applies to component rows and the document root only — not to `container` or `grid` configs directly. Document-root motion supports entrance only (not press).
+
 
 ---
 

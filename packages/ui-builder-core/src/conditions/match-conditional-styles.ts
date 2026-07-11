@@ -38,7 +38,7 @@ function hasMatchedConditionalOutput(
   );
 }
 
-function applyConditionalStyleRule(
+export function applyConditionalStyleRule(
   rule: ConditionalStyleRule,
   options: ResolveStyleRulesOptions = {},
 ): MatchedConditionalStyles {

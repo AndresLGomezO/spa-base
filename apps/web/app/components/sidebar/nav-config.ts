@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { isActivePathMatch } from "@repo/ui-builder-core";
 import {
   AppWindow,
   BarChart3,
@@ -314,11 +315,7 @@ export function isAdminEntityNavPath(pathname: string): boolean {
 }
 
 export function isPathActive(pathname: string, matchPath: string): boolean {
-  if (matchPath === "/") {
-    return pathname === "/";
-  }
-
-  return pathname === matchPath || pathname.startsWith(`${matchPath}/`);
+  return isActivePathMatch(pathname, matchPath);
 }
 
 export function resolveNavSubGroupLabel(

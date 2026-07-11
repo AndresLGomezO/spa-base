@@ -177,6 +177,11 @@ export interface LayoutRenderContext {
   readonly wrapPageListScroll?: (listContent: ReactNode) => ReactNode;
   /** When true, relation field links use primary/underline styling (entity lists only). */
   readonly relationLinkAppearance?: boolean;
+  /**
+   * Current route pathname (no query/hash). Used by conditional styles with
+   * `conditionKind: "activePath"`.
+   */
+  readonly resolveActivePathname?: () => string;
   readonly wizard?: WizardRenderState;
   readonly wizardProgressRenderer?: (
     config: WizardProgressComponentConfig,

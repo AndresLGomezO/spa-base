@@ -51,6 +51,7 @@ import type { LayoutRenderContext } from "../context.js";
 import type { FieldDisplayMeta } from "../context.js";
 import {
   mergeMatchedConditionalClassName,
+  mergeComponentStylesWithConditionalOverrides,
   resolveComponentConditionalStyles,
   wrapNodeWithConditionalStyles,
 } from "./apply-entity-conditional-styles.js";
@@ -459,33 +460,30 @@ export function renderUiComponent(
   }
 
   if (isIconComponent(config)) {
-    const node = context.lucideIconRenderer?.(config, atBreakpoint) ?? null;
-    const matched = resolveComponentConditionalStyles(
+    const styledConfig = mergeComponentStylesWithConditionalOverrides(
       config,
       context,
       atBreakpoint,
     );
-    return wrapNodeWithConditionalStyles(node, matched);
+    return context.lucideIconRenderer?.(styledConfig, atBreakpoint) ?? null;
   }
 
   if (isUserComponent(config)) {
-    const node = context.userRenderer?.(config) ?? null;
-    const matched = resolveComponentConditionalStyles(
+    const styledConfig = mergeComponentStylesWithConditionalOverrides(
       config,
       context,
       atBreakpoint,
     );
-    return wrapNodeWithConditionalStyles(node, matched);
+    return context.userRenderer?.(styledConfig) ?? null;
   }
 
   if (isNotificationBellComponent(config)) {
-    const node = context.notificationBellRenderer?.(config) ?? null;
-    const matched = resolveComponentConditionalStyles(
+    const styledConfig = mergeComponentStylesWithConditionalOverrides(
       config,
       context,
       atBreakpoint,
     );
-    return wrapNodeWithConditionalStyles(node, matched);
+    return context.notificationBellRenderer?.(styledConfig) ?? null;
   }
 
   if (isSidebarNavComponent(config)) {

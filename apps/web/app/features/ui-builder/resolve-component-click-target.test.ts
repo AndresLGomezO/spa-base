@@ -125,6 +125,61 @@ describe("resolveComponentClickTarget", () => {
     ).toBeNull();
   });
 
+  it("resolves absolute in-app paths including home /", () => {
+    expect(
+      resolveComponentClickTarget({
+        action: {
+          type: "externalUrl",
+          url: { type: "static", value: "/" },
+          openInNewTab: false,
+        },
+        item: {},
+        entityName: "order",
+        definition: definition as never,
+        resolveField: () => null,
+      }),
+    ).toEqual({
+      kind: "link",
+      href: "/",
+      external: false,
+      openInNewTab: false,
+    });
+
+    expect(
+      resolveComponentClickTarget({
+        action: {
+          type: "externalUrl",
+          url: { type: "static", value: "/settings/users" },
+          openInNewTab: false,
+        },
+        item: {},
+        entityName: "order",
+        definition: definition as never,
+        resolveField: () => null,
+      }),
+    ).toEqual({
+      kind: "link",
+      href: "/settings/users",
+      external: false,
+      openInNewTab: false,
+    });
+  });
+
+  it("rejects protocol-relative URLs", () => {
+    expect(
+      resolveComponentClickTarget({
+        action: {
+          type: "externalUrl",
+          url: { type: "static", value: "//evil.example" },
+        },
+        item: {},
+        entityName: "order",
+        definition: definition as never,
+        resolveField: () => null,
+      }),
+    ).toBeNull();
+  });
+
   it("resolves entity list view for explicit entity target", () => {
     const target = resolveComponentClickTarget({
       action: {

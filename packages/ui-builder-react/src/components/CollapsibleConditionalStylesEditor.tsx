@@ -45,6 +45,12 @@ export interface CollapsibleConditionalStylesEditorLabels {
   readonly compareFieldHint?: string;
   readonly dateDisplayFormat?: string;
   readonly matchValue: string;
+  readonly matchPath?: string;
+  readonly matchPathPlaceholder?: string;
+  readonly conditionKind?: string;
+  readonly conditionKindField?: string;
+  readonly conditionKindActivePath?: string;
+  readonly activePathHint?: string;
   readonly preview: string;
   readonly addRule: string;
   readonly saveRule: string;
@@ -135,20 +141,46 @@ function formatFieldOptionLabel(field: FieldDescriptor): string {
 
 function createDefaultRule(
   mode: CollapsibleConditionalStylesEditorMode,
+  fieldOptions: readonly FieldDescriptor[],
 ): ConditionalStyleRule {
   if (mode === "wizard-status") {
     return { matchValue: "active", styles: [] };
   }
+  const preferActivePath = fieldOptions.length === 0;
   if (mode === "badge") {
-    return { matchValue: "", badgeVariant: "default", styles: [] };
+    return preferActivePath
+      ? {
+          conditionKind: "activePath",
+          matchValue: "",
+          badgeVariant: "default",
+          styles: [],
+        }
+      : { matchValue: "", badgeVariant: "default", styles: [] };
   }
-  return { matchValue: "", styles: [] };
+  return preferActivePath
+    ? { conditionKind: "activePath", matchValue: "", styles: [] }
+    : { matchValue: "", styles: [] };
+}
+
+function isActivePathRule(rule: ConditionalStyleRule): boolean {
+  return rule.conditionKind === "activePath";
 }
 
 function normalizeRuleCompareField(
   rule: ConditionalStyleRule,
   defaultCompareFieldPath?: string,
 ): ConditionalStyleRule {
+  if (isActivePathRule(rule)) {
+    const {
+      compareFieldPath: _path,
+      compareFieldDateFormat: _format,
+      ...rest
+    } = rule;
+    void _path;
+    void _format;
+    return rest;
+  }
+
   const explicitPath = rule.compareFieldPath?.trim();
   const defaultPath = defaultCompareFieldPath?.trim();
 
@@ -210,7 +242,27 @@ function normalizeConditionalStyleRule(
   defaultCompareFieldPath?: string,
   defaultCompareFieldDateFormat?: FieldDateDisplayFormat,
 ): ConditionalStyleRule {
-  let next = normalizeRuleCompareField(rule, defaultCompareFieldPath);
+  let next =
+    fieldOptions.length === 0 && rule.conditionKind !== "activePath"
+      ? { ...rule, conditionKind: "activePath" as const }
+      : rule;
+
+  next = normalizeRuleCompareField(next, defaultCompareFieldPath);
+
+  if (isActivePathRule(next)) {
+    return {
+      ...next,
+      conditionKind: "activePath",
+      matchValue: next.matchValue.trim(),
+    };
+  }
+
+  if (next.conditionKind === "field") {
+    const { conditionKind: _kind, ...rest } = next;
+    void _kind;
+    next = rest;
+  }
+
   const comparePath = resolveEffectiveCompareFieldPath(
     next,
     defaultCompareFieldPath,
@@ -344,10 +396,9 @@ function ConditionalRuleForm({
     draft,
     defaultCompareFieldPath,
   );
-  const showDateFormat = isDateCompareFieldPath(
-    effectiveCompareFieldPath,
-    fieldOptions,
-  );
+  const showDateFormat =
+    !isActivePathRule(draft) &&
+    isDateCompareFieldPath(effectiveCompareFieldPath, fieldOptions);
   const defaultDateFormat = resolveDefaultDateFormatForPath(
     effectiveCompareFieldPath,
     fieldOptions,
@@ -361,24 +412,77 @@ function ConditionalRuleForm({
       defaultCompareFieldPath,
       defaultCompareFieldDateFormat,
     ) ?? "datetime";
-  const ruleHint = resolveRuleHint(
-    draft,
-    fieldOptions,
-    defaultCompareFieldPath,
-    defaultCompareFieldDateFormat,
-    hint,
-    daysRemainingHint,
-  );
-  const showCompareField = mode !== "wizard-status" && fieldOptions.length > 0;
+  const ruleHint = isActivePathRule(draft)
+    ? (labels.activePathHint ?? hint)
+    : resolveRuleHint(
+        draft,
+        fieldOptions,
+        defaultCompareFieldPath,
+        defaultCompareFieldDateFormat,
+        hint,
+        daysRemainingHint,
+      );
+  const allowConditionKindSelect = mode !== "wizard-status";
+  const allowFieldCondition = fieldOptions.length > 0;
+  const showCompareField =
+    !isActivePathRule(draft) &&
+    mode !== "wizard-status" &&
+    fieldOptions.length > 0;
   const compareFieldEnumValues = resolveCompareFieldEnumValues(
     effectiveCompareFieldPath,
     fieldOptions,
   );
   const showEnumMatchValue =
-    mode !== "wizard-status" && compareFieldEnumValues.length > 0;
+    !isActivePathRule(draft) &&
+    mode !== "wizard-status" &&
+    compareFieldEnumValues.length > 0;
 
   return (
     <div className="flex flex-col gap-5">
+      {allowConditionKindSelect ? (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">
+            {labels.conditionKind ?? "Condition"}
+          </span>
+          <Select
+            value={
+              isActivePathRule(draft) || !allowFieldCondition
+                ? "activePath"
+                : "field"
+            }
+            onChange={(event) => {
+              const nextKind = event.target.value;
+              if (nextKind === "activePath") {
+                const {
+                  compareFieldPath: _path,
+                  compareFieldDateFormat: _format,
+                  ...rest
+                } = draft;
+                void _path;
+                void _format;
+                onChange({
+                  ...rest,
+                  conditionKind: "activePath",
+                });
+                return;
+              }
+              const { conditionKind: _kind, ...rest } = draft;
+              void _kind;
+              onChange(rest);
+            }}
+          >
+            {allowFieldCondition ? (
+              <option value="field">
+                {labels.conditionKindField ?? "Field value"}
+              </option>
+            ) : null}
+            <option value="activePath">
+              {labels.conditionKindActivePath ?? "Active path"}
+            </option>
+          </Select>
+        </label>
+      ) : null}
+
       {showCompareField ? (
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">
@@ -455,7 +559,11 @@ function ConditionalRuleForm({
       ) : null}
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">{labels.matchValue}</span>
+        <span className="text-muted-foreground">
+          {isActivePathRule(draft)
+            ? (labels.matchPath ?? labels.matchValue)
+            : labels.matchValue}
+        </span>
         {mode === "wizard-status" ? (
           <Select
             searchable
@@ -492,7 +600,11 @@ function ConditionalRuleForm({
             onChange={(event) =>
               onChange({ ...draft, matchValue: event.target.value })
             }
-            placeholder={labels.matchValue}
+            placeholder={
+              isActivePathRule(draft)
+                ? (labels.matchPathPlaceholder ?? "/app/transactions")
+                : labels.matchValue
+            }
           />
         )}
       </label>
@@ -590,7 +702,7 @@ export function CollapsibleConditionalStylesEditor({
       setCardOpen(true);
       setEditingIndex(null);
       setEditDraft(null);
-      setAddDraft(createDefaultRule(mode));
+      setAddDraft(createDefaultRule(mode, fieldOptions));
       return;
     }
     setAddDraft(null);
@@ -647,6 +759,9 @@ export function CollapsibleConditionalStylesEditor({
   };
 
   const formatRuleMatchSummary = (rule: ConditionalStyleRule): string => {
+    if (isActivePathRule(rule)) {
+      return `path = ${rule.matchValue || "—"}`;
+    }
     const comparePath = resolveEffectiveCompareFieldPath(
       rule,
       defaultCompareFieldPath,

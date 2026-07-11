@@ -8,6 +8,7 @@ import {
   type EntityViewKind,
 } from "@repo/ui-builder-core";
 import { Checkbox, FieldLabel, Input, Select, Text } from "@repo/ui";
+import { useEffect } from "react";
 
 import type { FieldDescriptor } from "../adapters/entity-card-view-adapter.js";
 import {
@@ -226,6 +227,113 @@ function listRelationNavigationFields(
   }));
 }
 
+export function resolveDefaultEntityNavigation(options: {
+  readonly showCurrentRecordTarget: boolean;
+  readonly showListTargets: boolean;
+  readonly suggestedListEntityName?: string;
+  readonly catalogEntityNames: readonly string[];
+  readonly relationFieldPaths: readonly string[];
+}): {
+  readonly destination: NavigationDestination;
+  readonly scope: TargetScopeMode;
+  readonly relationFieldPath: string;
+  readonly entityName: string;
+} {
+  const firstEntityName =
+    options.suggestedListEntityName?.trim() ||
+    options.catalogEntityNames[0] ||
+    "";
+  const firstRelationPath = options.relationFieldPaths[0] ?? "";
+
+  if (options.showListTargets && firstEntityName) {
+    return {
+      destination: "entityList",
+      scope: "entity",
+      relationFieldPath: firstRelationPath,
+      entityName: firstEntityName,
+    };
+  }
+
+  if (options.showCurrentRecordTarget) {
+    return {
+      destination: "recordDetail",
+      scope: "current",
+      relationFieldPath: firstRelationPath,
+      entityName: firstEntityName,
+    };
+  }
+
+  if (firstRelationPath) {
+    return {
+      destination: "recordDetail",
+      scope: "relation",
+      relationFieldPath: firstRelationPath,
+      entityName: firstEntityName,
+    };
+  }
+
+  return {
+    destination: firstEntityName ? "entityList" : "recordDetail",
+    scope: "entity",
+    relationFieldPath: "",
+    entityName: firstEntityName,
+  };
+}
+
+function coerceNavigationScope(
+  scopeMode: TargetScopeMode,
+  relationFieldPath: string,
+  entityName: string,
+  options: {
+    readonly showCurrentRecordTarget: boolean;
+    readonly relationFieldPaths: readonly string[];
+  },
+): {
+  readonly scope: TargetScopeMode;
+  readonly relationFieldPath: string;
+  readonly entityName: string;
+} {
+  if (scopeMode === "current") {
+    return { scope: "current", relationFieldPath, entityName };
+  }
+
+  if (scopeMode === "entity") {
+    return { scope: "entity", relationFieldPath, entityName };
+  }
+
+  const trimmedRelation = relationFieldPath.trim();
+  if (
+    trimmedRelation &&
+    (options.relationFieldPaths.length === 0 ||
+      options.relationFieldPaths.includes(trimmedRelation))
+  ) {
+    return {
+      scope: "relation",
+      relationFieldPath: trimmedRelation,
+      entityName,
+    };
+  }
+
+  const fallbackRelation = options.relationFieldPaths[0] ?? "";
+  if (fallbackRelation) {
+    return {
+      scope: "relation",
+      relationFieldPath: fallbackRelation,
+      entityName,
+    };
+  }
+
+  if (entityName.trim()) {
+    return { scope: "entity", relationFieldPath: "", entityName };
+  }
+
+  if (options.showCurrentRecordTarget) {
+    return { scope: "current", relationFieldPath: "", entityName };
+  }
+
+  return { scope: "entity", relationFieldPath: "", entityName };
+}
+
 function buildNavigationTarget(
   scopeMode: TargetScopeMode,
   relationFieldPath: string,
@@ -313,6 +421,87 @@ function buildEntityNavigationAction(
   };
 }
 
+/** Rewrites empty relation targets to a valid scope when possible. */
+export function sanitizeComponentClickAction(
+  clickAction: ComponentClickAction | undefined,
+  options: {
+    readonly showCurrentRecordTarget?: boolean;
+    readonly relationFieldPaths?: readonly string[];
+    readonly fallbackEntityName?: string;
+  } = {},
+): ComponentClickAction | undefined {
+  if (!clickAction) {
+    return undefined;
+  }
+
+  if (clickAction.type === "externalUrl") {
+    return clickAction;
+  }
+
+  if (clickAction.type === "entityRecord") {
+    if (clickAction.target === "current") {
+      return clickAction;
+    }
+    if (clickAction.target.relationFieldPath.trim()) {
+      return clickAction;
+    }
+    const fallbackEntity = options.fallbackEntityName?.trim() ?? "";
+    if (fallbackEntity) {
+      return {
+        type: "entityView",
+        view: "recordDetail",
+        target: { scope: "entity", entityName: fallbackEntity },
+      };
+    }
+    if (options.showCurrentRecordTarget) {
+      return { type: "entityRecord", target: "current" };
+    }
+    return undefined;
+  }
+
+  if (clickAction.target.scope !== "relation") {
+    return clickAction;
+  }
+
+  if (clickAction.target.relationFieldPath.trim()) {
+    return clickAction;
+  }
+
+  const coerced = coerceNavigationScope(
+    "relation",
+    "",
+    options.fallbackEntityName ?? "",
+    {
+      showCurrentRecordTarget: options.showCurrentRecordTarget ?? false,
+      relationFieldPaths: options.relationFieldPaths ?? [],
+    },
+  );
+  const target = buildNavigationTarget(
+    coerced.scope,
+    coerced.relationFieldPath,
+    coerced.entityName,
+  );
+
+  if (
+    target.scope === "entity" &&
+    !("entityName" in target && target.entityName.trim())
+  ) {
+    return undefined;
+  }
+
+  if (clickAction.type === "entityCreateForm") {
+    return {
+      ...clickAction,
+      target,
+    };
+  }
+
+  return {
+    ...clickAction,
+    target,
+  };
+}
+
 export function ComponentClickActionEditor({
   clickAction,
   boundFieldPath,
@@ -365,6 +554,48 @@ export function ComponentClickActionEditor({
   const showFormDesignPicker =
     destination === "createForm" || destination === "recordEditForm";
 
+  const displayScopeMode = coerceNavigationScope(
+    targetScopeMode,
+    relationFieldPath,
+    specificEntityName,
+    {
+      showCurrentRecordTarget,
+      relationFieldPaths: relationFields.map((field) => field.path),
+    },
+  ).scope;
+
+  useEffect(() => {
+    const hasEmptyRelation =
+      !!clickAction &&
+      ((clickAction.type === "entityRecord" &&
+        clickAction.target !== "current" &&
+        clickAction.target.relationFieldPath.trim().length === 0) ||
+        ((clickAction.type === "entityView" ||
+          clickAction.type === "entityCreateForm") &&
+          clickAction.target.scope === "relation" &&
+          clickAction.target.relationFieldPath.trim().length === 0));
+
+    if (!hasEmptyRelation) {
+      return;
+    }
+
+    onChange(
+      sanitizeComponentClickAction(clickAction, {
+        showCurrentRecordTarget,
+        relationFieldPaths: relationFields.map((field) => field.path),
+        fallbackEntityName:
+          suggestedListEntityName ?? catalogEntities[0]?.entityName,
+      }),
+    );
+  }, [
+    catalogEntities,
+    clickAction,
+    onChange,
+    relationFields,
+    showCurrentRecordTarget,
+    suggestedListEntityName,
+  ]);
+
   const emitNavigation = (
     nextDestination: NavigationDestination,
     nextScopeMode: TargetScopeMode,
@@ -376,10 +607,19 @@ export function ComponentClickActionEditor({
       readonly formDesignId?: string;
     },
   ) => {
-    const target = buildNavigationTarget(
+    const coerced = coerceNavigationScope(
       nextScopeMode,
       nextRelationFieldPath,
       nextEntityName,
+      {
+        showCurrentRecordTarget,
+        relationFieldPaths: relationFields.map((field) => field.path),
+      },
+    );
+    const target = buildNavigationTarget(
+      coerced.scope,
+      coerced.relationFieldPath,
+      coerced.entityName,
     );
     const nextFormDesignId =
       options?.formDesignId ??
@@ -437,26 +677,26 @@ export function ComponentClickActionEditor({
             }
 
             if (nextType === "entityNavigation") {
-              const defaultDestination: NavigationDestination =
-                showListTargets && suggestedListEntityName
-                  ? "entityList"
-                  : "recordDetail";
-              const defaultScope: TargetScopeMode =
-                defaultDestination === "entityList"
-                  ? "entity"
-                  : showCurrentRecordTarget
-                    ? "current"
-                    : "relation";
+              const defaults = resolveDefaultEntityNavigation({
+                showCurrentRecordTarget,
+                showListTargets,
+                suggestedListEntityName,
+                catalogEntityNames: catalogEntities.map(
+                  (entry) => entry.entityName,
+                ),
+                relationFieldPaths: relationFields.map((field) => field.path),
+              });
 
               emitNavigation(
-                defaultDestination,
-                defaultScope,
-                readRelationFieldPath(
-                  undefined,
-                  boundFieldPath,
-                  relationFields,
-                ),
-                suggestedListEntityName ?? catalogEntities[0]?.entityName ?? "",
+                defaults.destination,
+                defaults.scope,
+                defaults.relationFieldPath ||
+                  readRelationFieldPath(
+                    undefined,
+                    boundFieldPath,
+                    relationFields,
+                  ),
+                defaults.entityName,
               );
               return;
             }
@@ -538,7 +778,7 @@ export function ComponentClickActionEditor({
             </FieldLabel>
             <Select
               searchable
-              value={targetScopeMode}
+              value={displayScopeMode}
               onChange={(event) => {
                 const nextScope = event.target.value as TargetScopeMode;
                 emitNavigation(destination, nextScope, undefined, undefined, {
@@ -549,12 +789,14 @@ export function ComponentClickActionEditor({
               {showCurrentTarget ? (
                 <option value="current">{labels.entityTargetCurrent}</option>
               ) : null}
-              <option value="relation">{labels.entityTargetRelation}</option>
+              {relationFields.length > 0 ? (
+                <option value="relation">{labels.entityTargetRelation}</option>
+              ) : null}
               <option value="entity">{labels.entityTargetSpecific}</option>
             </Select>
           </label>
 
-          {targetScopeMode === "relation" ? (
+          {displayScopeMode === "relation" ? (
             relationFields.length > 0 ? (
               <label className="flex flex-col gap-1 text-sm">
                 <FieldLabel className="text-muted-foreground">
@@ -589,7 +831,7 @@ export function ComponentClickActionEditor({
             )
           ) : null}
 
-          {targetScopeMode === "entity" && catalogEntities.length > 0 ? (
+          {displayScopeMode === "entity" && catalogEntities.length > 0 ? (
             <label className="flex flex-col gap-1 text-sm">
               <FieldLabel className="text-muted-foreground">
                 {labels.specificEntity}

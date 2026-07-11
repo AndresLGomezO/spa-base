@@ -1,4 +1,5 @@
 import { resolveStaticImageSrc } from "@repo/entities";
+import type { SerializableEntityDefinition } from "@repo/entities";
 import {
   CardFieldImage,
   Logo,
@@ -21,6 +22,7 @@ import type { TFunction } from "i18next";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
+import { cn } from "@repo/theme/utils";
 
 import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
 import { LayoutNotificationBell } from "../../components/entity/LayoutNotificationBell";
@@ -39,7 +41,16 @@ import {
   shouldShowSystemConfigurationNavSection,
   type NavItemConfig,
 } from "../../components/sidebar/nav-config";
-import { cn } from "@repo/theme/utils";
+import { createComponentClickContextHelpers } from "./create-component-click-context-helpers.js";
+
+/** Stub entity context so app-shell chrome can resolve `externalUrl` click actions. */
+const APP_SHELL_CLICK_DEFINITION = {
+  name: "__app-shell__",
+  collection: "__app-shell__",
+  permissions: [],
+  fields: {},
+  ui: { fields: {}, views: [], forms: {} },
+} as unknown as SerializableEntityDefinition;
 
 function RuntimeSidebarCollapse({
   config,
@@ -235,6 +246,8 @@ interface CreateRuntimeSidebarLayoutRenderContextOptions {
    * notification/user triggers and brand logo+title.
    */
   readonly sidebarChrome?: boolean;
+  /** Current route pathname for `conditionKind: "activePath"` conditional styles. */
+  readonly activePathname?: string;
 }
 
 export function createRuntimeSidebarLayoutRenderContext(
@@ -253,14 +266,25 @@ export function createRuntimeSidebarLayoutRenderContext(
     hamburgerHiddenClassName,
     iconsOnly = false,
     sidebarChrome = true,
+    activePathname,
   } = options;
   const fallbackName = t("nav.fallbackName");
+  const clickHelpers = createComponentClickContextHelpers({
+    item: {},
+    entityName: APP_SHELL_CLICK_DEFINITION.name,
+    definition: APP_SHELL_CLICK_DEFINITION,
+    resolveField: () => undefined,
+  });
 
   const context: LayoutRenderContext = {
     mode: "mainPage",
     data: {},
     locale,
     resolveField: () => undefined,
+    ...clickHelpers,
+    ...(activePathname !== undefined
+      ? { resolveActivePathname: () => activePathname }
+      : {}),
     isImagePresent: (_fieldPath, rawValue) => {
       if (typeof rawValue === "string" && rawValue.trim().length > 0) {
         return Boolean(resolveStaticImageSrc(rawValue));

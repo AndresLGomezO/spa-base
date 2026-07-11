@@ -397,11 +397,20 @@ export type {
   MotionHoverSurface,
   MotionHoverTransform,
   MotionTransition,
+  MotionPress,
+  MotionPressColor,
 } from "./types/motion.js";
 export {
   MOTION_DURATION_MAX_MS,
   MOTION_HOVER_ROTATE_DEG_MIN,
   MOTION_HOVER_ROTATE_DEG_MAX,
+  MOTION_PRESS_SCALE_MIN,
+  MOTION_PRESS_SCALE_MAX,
+  MOTION_PRESS_OPACITY_MIN,
+  MOTION_PRESS_OPACITY_MAX,
+  MOTION_PRESS_GLOW_BLUR_MAX_PX,
+  MOTION_PRESS_HOST_KINDS,
+  motionPressNeedsHost,
 } from "./types/motion.js";
 export { motionPresetSchema } from "./schema/motion-schema.js";
 
@@ -409,6 +418,7 @@ export type {
   LabelConfig,
   LabelPosition,
   TextColorToken,
+  ConditionalStyleConditionKind,
   ConditionalStyleRule,
 } from "./types/styling.js";
 
@@ -565,10 +575,12 @@ export {
   matchConditionalStyles,
   matchConditionalDaysRemainingStyles,
   matchConditionalStylesForDate,
+  applyConditionalStyleRule,
   conditionalRulesToBadgeVariants,
   mergeConditionalCssText,
   type MatchedConditionalStyles,
 } from "./conditions/match-conditional-styles.js";
+export { isActivePathMatch } from "./conditions/is-active-path-match.js";
 export {
   normalizeConditionalStyleRule,
   formatConditionalRulePreview,
@@ -576,6 +588,7 @@ export {
 } from "./conditions/normalize-conditional-style-rule.js";
 export {
   resolveEntityConditionalStyles,
+  resolveStylesWithMatchedConditionalOverrides,
   type CompareFieldDisplayMeta,
   type ResolveEntityConditionalStylesOptions,
 } from "./conditions/resolve-entity-conditional-styles.js";

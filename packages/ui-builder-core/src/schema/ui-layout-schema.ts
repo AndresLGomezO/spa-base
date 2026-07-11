@@ -243,6 +243,7 @@ const labelConfigSchema = z
 
 const conditionalStyleRuleSchema = z
   .object({
+    conditionKind: z.enum(["field", "activePath"]).optional(),
     matchValue: z.string(),
     compareFieldPath: z.string().trim().min(1).optional(),
     compareFieldDateFormat: z

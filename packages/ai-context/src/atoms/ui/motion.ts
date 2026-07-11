@@ -21,6 +21,10 @@ On **component rows** (\`type: "component"\`):
     "hoverSurface": "default",
     "hoverTransform": "lift",
     "hoverDurationMs": 150,
+    "press": "ripple",
+    "pressColor": "default",
+    "pressDurationMs": 600,
+    "pressOpacity": 0.4,
     "transition": "layout"
   },
   "component": { "kind": "text", "primary": { "type": "field", "path": "name" } }
@@ -38,6 +42,8 @@ On \`UiLayoutDocument\` root (layout effects for nested layouts):
 }
 \`\`\`
 
+Document-root motion supports entrance only — not press.
+
 ## MotionPreset fields
 
 | Field | Type | Allowed values |
@@ -51,7 +57,15 @@ On \`UiLayoutDocument\` root (layout effects for nested layouts):
 | \`hoverRotateDeg\` | number | -45–45; appended to hover transform |
 | \`hoverDurationMs\` | number | 0–2000; hover transition duration (default 150) |
 | \`hover\` | string | **deprecated** — \`none\` \\| \`lift\` \\| \`glow\`; maps to \`hoverTransform\` when unset |
+| \`press\` | string | \`none\` \\| \`ripple\` \\| \`glow\` \\| \`wave\` \\| \`neon\` \\| \`pop\` \\| \`slide\` |
+| \`pressColor\` | string | \`default\` (primary) \\| \`accent\` \\| \`muted\` \\| \`info\` \\| \`destructive\` \\| \`warning\` \\| \`success\` \\| \`foreground\` |
+| \`pressDurationMs\` | number | 0–2000; defaults ripple 600, wave/slide 500, glow/neon/pop 200 |
+| \`pressScale\` | number | 0.5–2; pop scale (default 1.2) |
+| \`pressOpacity\` | number | 0–1; overlay opacity (default 0.4) |
+| \`pressGlowBlurPx\` | number | 0–80; glow/neon blur (default glow 20, neon 40) |
 | \`transition\` | string | \`none\` \\| \`layout\` \\| \`all\` |
+
+Press works with or without \`clickAction\`. Prefer \`press\` on tappable container/icon rows (e.g. bottom nav).
 
 **Nested-layout rows** do not support \`motion\` — only component rows and document root.
 `;

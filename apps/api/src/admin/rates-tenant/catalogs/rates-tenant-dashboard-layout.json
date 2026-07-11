@@ -215,6 +215,10 @@
                                         {
                                           "property": "gap",
                                           "value": "var(--spacing-tight)"
+                                        },
+                                        {
+                                          "property": "flexWrap",
+                                          "value": "wrap"
                                         }
                                       ]
                                     }

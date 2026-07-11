@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router";
 
 import {
   containerRowWrapperClassName,
@@ -25,9 +26,18 @@ interface AppFooterProps {
   readonly layout: UiLayoutDocument;
 }
 
+/** Structural host only — layout styles own background, border, and padding. */
+const FOOTER_HOST_STRUCTURAL_CLASS_NAME =
+  "sticky bottom-0 z-20 flex w-full min-w-0 shrink-0";
+
+/** Fallback chrome when there is no promoted root container to style the host. */
+const FOOTER_HOST_DEFAULT_CHROME_CLASS_NAME =
+  "border-border bg-background sticky bottom-0 z-20 flex shrink-0 items-center border-t px-2 py-1";
+
 export function AppFooter({ layout }: AppFooterProps) {
   const { t, i18n } = useTranslation("common");
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const atBreakpoint = usePreviewBreakpoint();
 
   const layoutUser = useMemo<LayoutUserInfo | null>(() => {
@@ -47,8 +57,9 @@ export function AppFooter({ layout }: AppFooterProps) {
         locale: i18n.language,
         t,
         user: layoutUser,
+        activePathname: pathname,
       }),
-    [i18n.language, layoutUser, t],
+    [i18n.language, layoutUser, pathname, t],
   );
 
   if (!appShellLayoutHasContent(layout)) {
@@ -63,19 +74,15 @@ export function AppFooter({ layout }: AppFooterProps) {
   const rootContainer = resolveAppShellRootContainerRow(layout);
   if (rootContainer && isContainerComponent(rootContainer.component)) {
     const stackDirection = rootContainer.component.stackDirection ?? "row";
-    const containerStyles = resolveRowWrapperStyleRules(
-      rootContainer.component.styles,
-    );
+    const rootStyles = rootContainer.component.styles;
+    const containerStyles = resolveRowWrapperStyleRules(rootStyles);
 
     return (
       <footer
         className={cn(
-          "border-border bg-background sticky bottom-0 z-20 flex w-full min-w-0 shrink-0 border-t px-2 py-1",
+          FOOTER_HOST_STRUCTURAL_CLASS_NAME,
           stackDirection === "row" ? "flex-row items-center" : "flex-col",
-          containerRowWrapperClassName(
-            rootContainer.component.styles,
-            stackDirection,
-          ),
+          containerRowWrapperClassName(rootStyles, stackDirection),
           chromeDisplayClassName,
           containerStyles.className,
         )}
@@ -96,7 +103,7 @@ export function AppFooter({ layout }: AppFooterProps) {
   return (
     <footer
       className={cn(
-        "border-border bg-background sticky bottom-0 z-20 flex shrink-0 items-center border-t px-2 py-1",
+        FOOTER_HOST_DEFAULT_CHROME_CLASS_NAME,
         chromeDisplayClassName,
       )}
     >

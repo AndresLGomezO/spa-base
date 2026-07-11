@@ -4,6 +4,11 @@ import {
   MOTION_DURATION_MAX_MS,
   MOTION_HOVER_ROTATE_DEG_MAX,
   MOTION_HOVER_ROTATE_DEG_MIN,
+  MOTION_PRESS_GLOW_BLUR_MAX_PX,
+  MOTION_PRESS_OPACITY_MAX,
+  MOTION_PRESS_OPACITY_MIN,
+  MOTION_PRESS_SCALE_MAX,
+  MOTION_PRESS_SCALE_MIN,
 } from "../types/motion.js";
 
 export const motionPresetSchema = z
@@ -41,5 +46,41 @@ export const motionPresetSchema = z
       .max(MOTION_DURATION_MAX_MS)
       .optional(),
     transition: z.enum(["none", "layout", "all"]).optional(),
+    press: z
+      .enum(["none", "ripple", "glow", "wave", "neon", "pop", "slide"])
+      .optional(),
+    pressColor: z
+      .enum([
+        "default",
+        "accent",
+        "muted",
+        "info",
+        "destructive",
+        "warning",
+        "success",
+        "foreground",
+      ])
+      .optional(),
+    pressDurationMs: z
+      .number()
+      .int()
+      .min(0)
+      .max(MOTION_DURATION_MAX_MS)
+      .optional(),
+    pressScale: z
+      .number()
+      .min(MOTION_PRESS_SCALE_MIN)
+      .max(MOTION_PRESS_SCALE_MAX)
+      .optional(),
+    pressOpacity: z
+      .number()
+      .min(MOTION_PRESS_OPACITY_MIN)
+      .max(MOTION_PRESS_OPACITY_MAX)
+      .optional(),
+    pressGlowBlurPx: z
+      .number()
+      .min(0)
+      .max(MOTION_PRESS_GLOW_BLUR_MAX_PX)
+      .optional(),
   })
   .strict();

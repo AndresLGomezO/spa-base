@@ -19,6 +19,8 @@ export {
 } from "./components/ComponentRowClickActionEditor.js";
 export {
   ComponentClickActionEditor,
+  resolveDefaultEntityNavigation,
+  sanitizeComponentClickAction,
   type CatalogEntityOption,
   type ComponentClickActionEditorLabels,
   type ComponentClickActionEditorProps,

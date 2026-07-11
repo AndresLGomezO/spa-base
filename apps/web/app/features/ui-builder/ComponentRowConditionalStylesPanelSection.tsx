@@ -19,19 +19,16 @@ import type { ComponentsLayoutBinding } from "../form-designer/form-designer-com
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref.js";
 import { useConditionalStylesEditorLabels } from "./conditional-styles-editor-labels.js";
 
-function componentShowsConditionalStylesSection(
+/** Whether the structure panel shows the conditional styles section for a component. */
+export function componentShowsConditionalStylesSection(
   config: UiComponentConfig,
-  fieldDescriptors: readonly FieldDescriptor[],
 ): boolean {
   if (config.kind === "wizard-progress") {
     const variant = config.variant ?? "steps";
     return variant === "steps" || variant === "stepper";
   }
 
-  return (
-    fieldDescriptors.length > 0 &&
-    entityBoundComponentSupportsConditionalStyles(config.kind)
-  );
+  return entityBoundComponentSupportsConditionalStyles(config.kind);
 }
 
 function resolveConditionalStylesEditorMode(
@@ -85,7 +82,7 @@ export function ComponentRowConditionalStylesPanelSection({
   }
 
   const config = row.component;
-  if (!componentShowsConditionalStylesSection(config, fieldDescriptors)) {
+  if (!componentShowsConditionalStylesSection(config)) {
     return null;
   }
 

@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router";
 
 import {
   layoutHasComponentKind,
@@ -56,6 +57,7 @@ export function DesignedSidebarBody({
     activeTenantName,
   } = useAuth();
   const { navItems } = useNavItems();
+  const { pathname } = useLocation();
 
   const layoutUser = useMemo<LayoutUserInfo | null>(() => {
     if (!user) {
@@ -95,6 +97,7 @@ export function DesignedSidebarBody({
       logoTitle: activeTenantName ?? "",
       iconsOnly,
       sidebarChrome: true,
+      activePathname: pathname,
     });
   }, [
     activeTenantName,
@@ -106,6 +109,7 @@ export function DesignedSidebarBody({
     layoutUser,
     navItems,
     onNavigate,
+    pathname,
     t,
     tenantAppearance?.logoUrl,
   ]);
@@ -187,6 +191,7 @@ export function DesignedAppHeader({ layout }: DesignedAppHeaderProps) {
   const { t, i18n } = useTranslation("common");
   const { user, tenantAppearance, activeTenantName } = useAuth();
   const { hamburgerHiddenClassName } = useSidebar();
+  const { pathname } = useLocation();
   const atBreakpoint = usePreviewBreakpoint();
 
   const layoutUser = useMemo<LayoutUserInfo | null>(() => {
@@ -209,12 +214,14 @@ export function DesignedAppHeader({ layout }: DesignedAppHeaderProps) {
         logoUrl: tenantAppearance?.logoUrl ?? null,
         logoTitle: activeTenantName ?? "",
         hamburgerHiddenClassName,
+        activePathname: pathname,
       }),
     [
       activeTenantName,
       hamburgerHiddenClassName,
       i18n.language,
       layoutUser,
+      pathname,
       t,
       tenantAppearance?.logoUrl,
     ],

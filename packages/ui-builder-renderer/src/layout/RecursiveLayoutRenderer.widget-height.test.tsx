@@ -283,7 +283,7 @@ describe("RecursiveLayoutRenderer widget percentage heights", () => {
     );
 
     expect(html).toMatch(
-      /data-row-id="row-9a50c012-b04b-4d16-9d9a-75c203aa3f3c"[^>]*><div class="[^"]*\bz-10\b[^"]*"><div class="[^"]*\bflex-1\b[^"]*\bh-full\b[^"]*" style="[^"]*height:100%/,
+      /data-row-id="row-9a50c012-b04b-4d16-9d9a-75c203aa3f3c"[^>]*><div class="[^"]*\bz-10\b[^"]*"><div(?=[^>]*\bclass="[^"]*\bflex-1\b)(?=[^>]*\bh-full\b)[^>]*style="[^"]*height:100%/,
     );
     expect(html).not.toMatch(
       /data-row-id="row-9a50c012-b04b-4d16-9d9a-75c203aa3f3c"[^>]*><div class="[^"]*\bz-10\b[^"]*"><div><div class="[^"]*\bflex-1\b/,

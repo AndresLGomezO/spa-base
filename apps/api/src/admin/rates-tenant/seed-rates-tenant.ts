@@ -25,6 +25,7 @@ import { seedLocalTenantUiSlicesIfPresent } from "./seed-local-tenant-ui-slices.
 import { seedRatesEntityUiOverrides } from "./seed-rates-entity-ui-overrides.js";
 import { seedRatesUiBuilderPresets } from "./seed-rates-ui-builder-presets.js";
 import { seedRatesTenantDashboardLayout } from "./seed-rates-tenant-dashboard-layout.js";
+import { seedRatesTenantSidebarLayout } from "./seed-rates-tenant-sidebar-layout.js";
 import { seedRatesTenantAppearance } from "./seed-rates-tenant-appearance.js";
 import { ensureRatesRole } from "./seed-helpers.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
@@ -142,6 +143,8 @@ async function seedRatesTenant(
   await seedRatesUiBuilderPresets(tenantId, firebaseAdminConfig);
 
   await seedRatesTenantDashboardLayout(tenantId, firebaseAdminConfig);
+
+  await seedRatesTenantSidebarLayout(tenantId, firebaseAdminConfig);
 
   await seedRatesTenantAppearance(tenantId, firebaseAdminConfig);
 

@@ -52,6 +52,10 @@ vi.mock("./seed-rates-tenant-dashboard-layout.js", () => ({
   seedRatesTenantDashboardLayout: vi.fn(),
 }));
 
+vi.mock("./seed-rates-tenant-sidebar-layout.js", () => ({
+  seedRatesTenantSidebarLayout: vi.fn(),
+}));
+
 vi.mock("./seed-rates-tenant-appearance.js", () => ({
   seedRatesTenantAppearance: vi.fn(),
 }));

@@ -28,7 +28,14 @@ export interface LabelConfig {
   readonly align?: "left" | "center" | "right";
 }
 
+export type ConditionalStyleConditionKind = "field" | "activePath";
+
 export interface ConditionalStyleRule {
+  /**
+   * How `matchValue` is interpreted. Defaults to `"field"` when omitted.
+   * `"activePath"` compares against the current route pathname (see `isActivePathMatch`).
+   */
+  readonly conditionKind?: ConditionalStyleConditionKind;
   readonly matchValue: string;
   /** Entity field path to compare; defaults to the component bound field when omitted. */
   readonly compareFieldPath?: string;

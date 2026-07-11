@@ -1,10 +1,14 @@
+import type { StyleRule } from "../styles/style-types.js";
 import type { ConditionalStyleRule } from "../types/styling.js";
+import { isActivePathMatch } from "./is-active-path-match.js";
 import {
+  applyConditionalStyleRule,
   matchConditionalDaysRemainingStyles,
   matchConditionalStyles,
   matchConditionalStylesForDate,
   type MatchedConditionalStyles,
 } from "./match-conditional-styles.js";
+import { normalizeConditionalStyleRule } from "./normalize-conditional-style-rule.js";
 import type { ResolveStyleRulesOptions } from "../styles/apply-style-rules.js";
 
 const DAYS_REMAINING_THRESHOLD_PATTERN = /^([<>]=?)(-?\d+)$/;
@@ -23,6 +27,8 @@ export interface ResolveEntityConditionalStylesOptions {
   readonly atBreakpoint?: ResolveStyleRulesOptions["atBreakpoint"];
   readonly timeZone?: string;
   readonly referenceDate?: Date;
+  /** Current route pathname (no query/hash). Used by `conditionKind: "activePath"`. */
+  readonly resolveActivePathname?: () => string;
 }
 
 function hasMatchedConditionalOutput(
@@ -116,6 +122,93 @@ function matchSingleRule(
   return hasMatchedConditionalOutput(exactMatch) ? exactMatch : null;
 }
 
+function matchActivePathRule(
+  rule: ConditionalStyleRule,
+  options: ResolveEntityConditionalStylesOptions,
+): MatchedConditionalStyles | null {
+  const matchPath =
+    typeof rule.matchValue === "string" ? rule.matchValue.trim() : "";
+  if (matchPath.length === 0) {
+    return null;
+  }
+
+  const pathname = options.resolveActivePathname?.()?.trim() ?? "";
+  if (!isActivePathMatch(pathname, matchPath)) {
+    return null;
+  }
+
+  const matched = applyConditionalStyleRule(rule, {
+    atBreakpoint: options.atBreakpoint,
+  });
+  return hasMatchedConditionalOutput(matched) ? matched : null;
+}
+
+function findMatchingConditionalStyleRule(
+  rules: readonly ConditionalStyleRule[] | undefined,
+  options: ResolveEntityConditionalStylesOptions,
+): ConditionalStyleRule | undefined {
+  if (!rules || rules.length === 0) {
+    return undefined;
+  }
+
+  for (const rule of rules) {
+    if (rule.conditionKind === "activePath") {
+      if (matchActivePathRule(rule, options)) {
+        return rule;
+      }
+      continue;
+    }
+
+    const fieldPath = (
+      rule.compareFieldPath ?? options.defaultCompareFieldPath
+    )?.trim();
+    if (!fieldPath) {
+      continue;
+    }
+
+    const rawValue = options.resolveField(fieldPath);
+    const meta = options.resolveFieldMeta?.(fieldPath);
+    if (
+      matchSingleRule(
+        rule,
+        rawValue,
+        mergeRuleCompareFieldMeta(rule, meta),
+        options,
+      )
+    ) {
+      return rule;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Returns base style rules with properties overridden by the first matching
+ * conditional rule's styles (conditional wins per property).
+ */
+export function resolveStylesWithMatchedConditionalOverrides(
+  baseStyles: readonly StyleRule[] | undefined,
+  rules: readonly ConditionalStyleRule[] | undefined,
+  options: ResolveEntityConditionalStylesOptions,
+): readonly StyleRule[] | undefined {
+  const matched = findMatchingConditionalStyleRule(rules, options);
+  if (!matched) {
+    return baseStyles;
+  }
+
+  const normalized = normalizeConditionalStyleRule(matched);
+  if (normalized.styles.length === 0) {
+    return baseStyles;
+  }
+
+  const overridden = new Set(normalized.styles.map((style) => style.property));
+  return [
+    ...(baseStyles ?? []).filter((style) => !overridden.has(style.property)),
+    ...normalized.styles,
+  ];
+}
+
 export function resolveEntityConditionalStyles(
   rules: readonly ConditionalStyleRule[] | undefined,
   options: ResolveEntityConditionalStylesOptions,
@@ -125,6 +218,14 @@ export function resolveEntityConditionalStyles(
   }
 
   for (const rule of rules) {
+    if (rule.conditionKind === "activePath") {
+      const matched = matchActivePathRule(rule, options);
+      if (matched) {
+        return matched;
+      }
+      continue;
+    }
+
     const fieldPath = (
       rule.compareFieldPath ?? options.defaultCompareFieldPath
     )?.trim();

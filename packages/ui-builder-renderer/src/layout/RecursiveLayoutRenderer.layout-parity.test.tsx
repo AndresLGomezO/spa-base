@@ -112,10 +112,10 @@ describe("RecursiveLayoutRenderer dashboard layout parity", () => {
 
     expect(markup).toContain("w-fit max-w-full");
     expect(markup).toMatch(
-      /flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col"><div class="flex min-h-0 min-w-0 flex-col"><div class="[^"]*"><div class="min-w-0 w-fit max-w-full shrink-0">Widget<\/div>/,
+      /flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col"><div class="flex min-h-0 min-w-0 flex-col"><div(?=[^>]*\bclass=")[^>]*><div class="min-w-0 w-fit max-w-full shrink-0">Widget<\/div>/,
     );
     expect(markup).toMatch(
-      /flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col"><div class="flex min-h-0 min-w-0 flex-col"><div class="[^"]*"><div class="min-w-0 w-fit max-w-full shrink-0">Section<\/div>/,
+      /flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col"><div class="flex min-h-0 min-w-0 flex-col"><div(?=[^>]*\bclass=")[^>]*><div class="min-w-0 w-fit max-w-full shrink-0">Section<\/div>/,
     );
     expect(markup).not.toMatch(
       /flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col[^"]*flex w-full items-start/,

@@ -28,6 +28,18 @@ export function useConditionalStylesEditorLabels(): {
         ),
         dateDisplayFormat: t("entity.viewSettings.dateDisplayFormat"),
         matchValue: t("entity.viewSettings.matchValue"),
+        matchPath: t("entity.viewSettings.conditionalStyleMatchPath"),
+        matchPathPlaceholder: t(
+          "entity.viewSettings.conditionalStyleMatchPathPlaceholder",
+        ),
+        conditionKind: t("entity.viewSettings.conditionalStyleConditionKind"),
+        conditionKindField: t(
+          "entity.viewSettings.conditionalStyleConditionKindField",
+        ),
+        conditionKindActivePath: t(
+          "entity.viewSettings.conditionalStyleConditionKindActivePath",
+        ),
+        activePathHint: t("entity.viewSettings.conditionalStyleActivePathHint"),
         preview: t("entity.viewSettings.conditionalStylePreview"),
         addRule: t("entity.viewSettings.addRule"),
         saveRule: t("entity.viewSettings.saveConditionalStyleRule"),

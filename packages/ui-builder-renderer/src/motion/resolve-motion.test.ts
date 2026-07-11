@@ -155,6 +155,79 @@ describe("resolveMotionPreset", () => {
     expect(resolved.className).toContain("ui-motion-hover-interactive");
     expect(resolved.className).toContain("ui-motion-stagger-2");
   });
+
+  it("maps each press kind to classes and CSS variables", () => {
+    for (const press of [
+      "ripple",
+      "glow",
+      "wave",
+      "neon",
+      "pop",
+      "slide",
+    ] as const) {
+      const resolved = resolveMotionPreset({ press });
+      expect(resolved.className).toContain("ui-motion-press");
+      expect(resolved.className).toContain(`ui-motion-press-${press}`);
+      expect(motionStyleVar(resolved.style, "--motion-press-color")).toBe(
+        "var(--color-primary)",
+      );
+      expect(
+        motionStyleVar(resolved.style, "--motion-press-duration"),
+      ).toBeDefined();
+      expect(motionStyleVar(resolved.style, "--motion-press-opacity")).toBe(
+        "0.4",
+      );
+    }
+  });
+
+  it("maps pressColor tokens to theme CSS variables", () => {
+    expect(
+      motionStyleVar(
+        resolveMotionPreset({ press: "glow", pressColor: "accent" }).style,
+        "--motion-press-color",
+      ),
+    ).toBe("var(--color-accent)");
+
+    expect(
+      motionStyleVar(
+        resolveMotionPreset({ press: "ripple", pressColor: "foreground" })
+          .style,
+        "--motion-press-color",
+      ),
+    ).toBe("var(--color-foreground)");
+
+    expect(
+      motionStyleVar(
+        resolveMotionPreset({
+          press: "neon",
+          pressColor: "destructive",
+          pressDurationMs: 300,
+          pressGlowBlurPx: 48,
+        }).style,
+        "--motion-press-glow-blur",
+      ),
+    ).toBe("48px");
+
+    expect(
+      motionStyleVar(
+        resolveMotionPreset({
+          press: "neon",
+          pressColor: "destructive",
+          pressDurationMs: 300,
+        }).style,
+        "--motion-press-duration",
+      ),
+    ).toBe("300ms");
+  });
+
+  it("uses pop scale from pressScale", () => {
+    expect(
+      motionStyleVar(
+        resolveMotionPreset({ press: "pop", pressScale: 1.35 }).style,
+        "--motion-press-scale",
+      ),
+    ).toBe("1.35");
+  });
 });
 
 describe("mergeMotionPresetStyle", () => {

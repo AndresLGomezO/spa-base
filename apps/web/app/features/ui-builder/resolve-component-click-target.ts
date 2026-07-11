@@ -53,7 +53,9 @@ function isValidClickHref(href: string): boolean {
     return true;
   }
 
-  return href.startsWith("/app/");
+  // Absolute in-app paths: home `/`, `/app/…`, `/settings/…`, etc.
+  // Reject protocol-relative URLs (`//evil.example`).
+  return href.startsWith("/") && !href.startsWith("//");
 }
 
 function readRecordId(item: Record<string, unknown>): string | undefined {

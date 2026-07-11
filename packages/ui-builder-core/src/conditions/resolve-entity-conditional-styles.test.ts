@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveEntityConditionalStyles } from "./resolve-entity-conditional-styles.js";
+import {
+  resolveEntityConditionalStyles,
+  resolveStylesWithMatchedConditionalOverrides,
+} from "./resolve-entity-conditional-styles.js";
 
 describe("resolveEntityConditionalStyles", () => {
   it("matches rules against per-rule compareFieldPath values", () => {
@@ -118,5 +121,109 @@ describe("resolveEntityConditionalStyles", () => {
 
     expect(matched.className).toContain("text-destructive");
     expect(matched.style?.color).toBe("var(--color-destructive)");
+  });
+
+  it("matches activePath rules against resolveActivePathname", () => {
+    const matched = resolveEntityConditionalStyles(
+      [
+        {
+          conditionKind: "activePath",
+          matchValue: "/app/transactions",
+          styles: [{ property: "color", value: "primary" }],
+        },
+      ],
+      {
+        resolveField: () => undefined,
+        resolveActivePathname: () => "/app/transactions/abc",
+      },
+    );
+
+    expect(matched.className).toContain("text-primary");
+  });
+
+  it("does not match activePath when pathname is unrelated", () => {
+    const matched = resolveEntityConditionalStyles(
+      [
+        {
+          conditionKind: "activePath",
+          matchValue: "/app/transactions",
+          styles: [{ property: "color", value: "primary" }],
+        },
+      ],
+      {
+        resolveField: () => undefined,
+        resolveActivePathname: () => "/app/home",
+      },
+    );
+
+    expect(matched.className).toBeUndefined();
+  });
+
+  it("does not match activePath when resolveActivePathname is missing", () => {
+    const matched = resolveEntityConditionalStyles(
+      [
+        {
+          conditionKind: "activePath",
+          matchValue: "/app/transactions",
+          styles: [{ property: "color", value: "primary" }],
+        },
+      ],
+      {
+        resolveField: () => undefined,
+      },
+    );
+
+    expect(matched.className).toBeUndefined();
+  });
+
+  it("first-wins across mixed field and activePath rules", () => {
+    const matched = resolveEntityConditionalStyles(
+      [
+        {
+          conditionKind: "activePath",
+          matchValue: "/app/other",
+          styles: [{ property: "color", value: "danger" }],
+        },
+        {
+          compareFieldPath: "status",
+          matchValue: "ACTIVE",
+          styles: [{ property: "color", value: "success" }],
+        },
+      ],
+      {
+        resolveField: (path) => (path === "status" ? "ACTIVE" : null),
+        resolveActivePathname: () => "/app/transactions",
+      },
+    );
+
+    expect(matched.className).toContain("text-success");
+  });
+
+  it("overrides base style properties with matched activePath styles", () => {
+    const styles = resolveStylesWithMatchedConditionalOverrides(
+      [
+        { property: "backgroundColor", value: "transparent" },
+        { property: "color", value: "muted" },
+      ],
+      [
+        {
+          conditionKind: "activePath",
+          matchValue: "/app/views/transactions-this-month",
+          styles: [
+            { property: "backgroundColor", value: "primary" },
+            { property: "color", value: "primary" },
+          ],
+        },
+      ],
+      {
+        resolveField: () => undefined,
+        resolveActivePathname: () => "/app/views/transactions-this-month",
+      },
+    );
+
+    expect(styles).toEqual([
+      { property: "backgroundColor", value: "primary" },
+      { property: "color", value: "primary" },
+    ]);
   });
 });

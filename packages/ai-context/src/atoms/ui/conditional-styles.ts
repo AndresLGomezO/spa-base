@@ -27,7 +27,7 @@ export const COMPONENTS_WITH_CONDITIONAL_STYLES = [
 export function buildUiConditionalStylesAtom(): string {
   return `# Conditional style rules
 
-Apply value-based styling when an entity field value matches a rule.
+Apply styling when a condition matches: entity field value, or the current route pathname (\`activePath\`).
 
 ## Supported components
 
@@ -39,9 +39,10 @@ Add \`conditionalStyles\` array on the component config (alongside \`styles\`).
 
 | Property | Type | Description |
 |----------|------|-------------|
-| matchValue | string | **Required.** Exact string match, or daysRemaining threshold (\`<=7\`) for date fields. |
-| compareFieldPath | string | **Optional.** Entity field path to compare. Defaults to the component's bound field when omitted. |
-| compareFieldDateFormat | string | **Optional.** Date format for date compare fields: \`date\`, \`datetime\`, \`time\`, or \`daysRemaining\`. |
+| conditionKind | \`"field"\` \\| \`"activePath"\` | **Optional.** Defaults to \`"field"\`. Use \`"activePath"\` to match the current route pathname. |
+| matchValue | string | **Required.** For field: exact string match, or daysRemaining threshold (\`<=7\`). For activePath: path prefix (e.g. \`/app/transactions\`). |
+| compareFieldPath | string | **Optional.** Entity field path to compare (field rules only). Defaults to the component's bound field when omitted. |
+| compareFieldDateFormat | string | **Optional.** Date format for date compare fields: \`date\`, \`datetime\`, \`time\`, or \`daysRemaining\`. Ignored for activePath. |
 | styles | StyleRule[] | **Preferred.** Full style rules (same shape as component \`styles\`). |
 | background | string | **Legacy.** Background color: ThemeToken or CSS color. Normalized to \`backgroundColor\` when \`styles\` is absent. |
 | textColor | string | **Legacy.** Text color: ThemeToken or CSS color. Normalized to \`color\` when \`styles\` is absent. |
@@ -51,13 +52,36 @@ Add \`conditionalStyles\` array on the component config (alongside \`styles\`).
 
 ## Matching behavior
 
-- Rules are evaluated **in order**; first \`matchValue\` equal to the field value wins.
+- Rules are evaluated **in order**; first matching rule wins (field and activePath rules may be mixed).
+- **activePath:** pathname only (ignore query/hash). \`/\` is exact-only; other paths match exact or any subpath (\`/app/deal\` matches \`/app/deal/new\`).
 - Empty/null field values match \`matchValue: ""\` only if you add that rule explicitly.
 - Prefer \`styles\` for new rules; legacy \`background\` / \`textColor\` still work via runtime normalization.
 - For **badge**, \`badgeVariant\` drives the badge chip color; nested \`styles\` or legacy colors add optional overrides.
 - For **text/date/numeric/image**, use nested \`styles\` (or legacy \`background\` / \`textColor\`).
 - **wizard-progress** uses rules for step status strings (e.g. \`active\`, \`completed\`, \`pending\`).
 - **date + daysRemaining format:** match numeric thresholds as strings (e.g. \`"0"\`, \`"7"\`, \`"30"\`).
+
+## Active path example — footer nav highlight
+
+\`\`\`json
+{
+  "kind": "container",
+  "conditionalStyles": [
+    {
+      "conditionKind": "activePath",
+      "matchValue": "/app/transactions",
+      "styles": [
+        { "property": "color", "value": "primary" },
+        { "property": "backgroundColor", "value": "accent" }
+      ]
+    }
+  ],
+  "clickAction": {
+    "type": "externalUrl",
+    "url": { "type": "static", "value": "/app/transactions" }
+  }
+}
+\`\`\`
 
 ## Badge example — status-based colors
 

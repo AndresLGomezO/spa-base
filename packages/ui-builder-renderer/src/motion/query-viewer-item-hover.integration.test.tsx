@@ -62,7 +62,7 @@ describe("query viewer item row hover", () => {
     const json = readFileSync(
       join(
         process.cwd(),
-        "../../.local/tenant-import/ui/paymentSchedule-entity-ui-overrides.json",
+        "../../apps/api/src/admin/rates-tenant/__fixtures__/local-ui-slices/paymentSchedule-entity-ui-overrides.json",
       ),
       "utf8",
     );
@@ -117,7 +117,7 @@ describe("query viewer item row hover", () => {
     const json = readFileSync(
       join(
         process.cwd(),
-        "../../.local/tenant-import/ui/paymentSchedule-entity-ui-overrides.json",
+        "../../apps/api/src/admin/rates-tenant/__fixtures__/local-ui-slices/paymentSchedule-entity-ui-overrides.json",
       ),
       "utf8",
     );
