@@ -14,6 +14,7 @@ import {
 import type { NavLinkConfig } from "../components/sidebar/nav-config";
 import {
   DESIGN_LAYOUT_DASHBOARD_NAV_ICON,
+  DESIGN_LAYOUT_SIDEBAR_NAV_ICON,
   DESIGN_LAYOUT_DETAIL_NAV_ICON,
   DESIGN_LAYOUT_FORMS_NAV_ICON,
   DESIGN_LAYOUT_LIST_NAV_ICON,
@@ -94,6 +95,14 @@ export const DESIGN_LAYOUT_DASHBOARD_NAV_ITEM: NavLinkConfig = {
   to: "/settings/design-layout/dashboard",
   matchPath: "/settings/design-layout/dashboard",
   icon: DESIGN_LAYOUT_DASHBOARD_NAV_ICON,
+};
+
+export const DESIGN_LAYOUT_APP_SHELL_NAV_ITEM: NavLinkConfig = {
+  id: "design-layout-app-shell",
+  labelKey: "designLayoutAppShell",
+  to: "/settings/design-layout/app-shell",
+  matchPath: "/settings/design-layout/app-shell",
+  icon: DESIGN_LAYOUT_SIDEBAR_NAV_ICON,
 };
 
 interface BuildDesignLayoutNavInput {

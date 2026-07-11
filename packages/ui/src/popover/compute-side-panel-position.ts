@@ -278,6 +278,7 @@ export function computeSidePanelPosition(
     padding,
     gap,
     viewport,
+    horizontalAlign: "start" as const,
   };
 
   const rightLeft = triggerRect.right + gap;

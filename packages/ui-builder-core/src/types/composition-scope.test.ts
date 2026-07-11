@@ -8,6 +8,9 @@ const SURFACE_EXPECTATIONS: ReadonlyArray<{
 }> = [
   { surface: "mainPage", scope: "screen" },
   { surface: "dashboardLayout", scope: "screen" },
+  { surface: "sidebarLayout", scope: "screen" },
+  { surface: "headerLayout", scope: "screen" },
+  { surface: "footerLayout", scope: "screen" },
   { surface: "listItem", scope: "block" },
   { surface: "metricWidget", scope: "component" },
   { surface: "formWizardStep", scope: "section" },

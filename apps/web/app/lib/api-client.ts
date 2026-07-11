@@ -4,9 +4,11 @@ import type {
   EntityUIConfig,
   EntityUiOverrideRecord,
   PutTenantDashboardLayoutInput,
+  PutTenantSidebarLayoutInput,
   PutEntityUiOverrideInput,
   SerializableEntityDefinition,
   TenantDashboardLayoutRecord,
+  TenantSidebarLayoutRecord,
   UiBuilderPresetRecord,
   UpdateUiBuilderPresetInput,
 } from "@repo/entities";
@@ -1363,6 +1365,42 @@ export async function uploadTenantDashboardLayoutImage(input: {
     {
       method: "POST",
       body: input,
+    },
+  );
+}
+
+export type TenantSidebarLayoutGetResponse =
+  | { readonly exists: false }
+  | {
+      readonly exists: true;
+      readonly config: TenantSidebarLayoutRecord;
+    };
+
+export async function getTenantSidebarLayout(): Promise<TenantSidebarLayoutGetResponse> {
+  return apiRequest<TenantSidebarLayoutGetResponse>(
+    "/api/tenant-sidebar-layout",
+  );
+}
+
+export async function putTenantSidebarLayout(
+  input: PutTenantSidebarLayoutInput,
+): Promise<{ readonly config: TenantSidebarLayoutRecord }> {
+  return apiRequest<{ readonly config: TenantSidebarLayoutRecord }>(
+    "/api/tenant-sidebar-layout",
+    {
+      method: "PUT",
+      body: input,
+    },
+  );
+}
+
+export async function deleteTenantSidebarLayout(): Promise<{
+  readonly deleted: boolean;
+}> {
+  return apiRequest<{ readonly deleted: boolean }>(
+    "/api/tenant-sidebar-layout",
+    {
+      method: "DELETE",
     },
   );
 }

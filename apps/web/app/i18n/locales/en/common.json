@@ -80,6 +80,7 @@
     "designLayoutMetrics": "Metrics",
     "designLayoutPresets": "Component presets",
     "designLayoutDashboard": "Dashboard layout",
+    "designLayoutAppShell": "App shell",
     "aiChat": "AI Chat",
     "debugger": "Debugger",
     "debuggerAiJobs": "AI Jobs",
@@ -543,8 +544,7 @@
           "view": "View",
           "import": "Import"
         }
-      },
-      "selectColumn": "Edit column {{column}}"
+      }
     },
     "components": {
       "panelTitle": "Structure",
@@ -781,10 +781,6 @@
     "dateFilter": "Date filter",
     "searchLabel": "Label",
     "filtersLabel": "Label",
-    "searchAndFilters": "Search & filters",
-    "enableSearch": "Enable search",
-    "enableFilters": "Enable filters",
-    "enableDateFilter": "Enable date filter",
     "dateFilterGranularity": "Date filter format",
     "dateFilterGranularityYear": "Year only",
     "dateFilterGranularityMonth": "Month and year",
@@ -859,7 +855,8 @@
       "avatarShapeSquare": "Square",
       "profileButtonContent": "Profile button content",
       "profileButtonContentPhoto": "Photo only",
-      "profileButtonContentFull": "Photo with name and details"
+      "profileButtonContentFull": "Photo with name and details",
+      "profileButtonShowArrow": "Show profile button arrow"
     },
     "sections": {
       "selectLabel": "Section",
@@ -886,6 +883,74 @@
       "discard": "Discard changes",
       "keepEditing": "Keep editing"
     }
+  },
+  "sidebarLayoutDesigner": {
+    "title": "App Shell Designer",
+    "settings": "Settings",
+    "resetToPlatform": "Reset to platform",
+    "resetToPlatformTitle": "Reset app shell to platform default?",
+    "resetToPlatformMessage": "This removes the tenant app shell override (sidebar, header, and footer). The platform hardcoded chrome will be used until you save a new layout.",
+    "resetToPlatformConfirm": "Reset to platform",
+    "autoCollapseBreakpoint": "Auto-collapse breakpoint",
+    "hamburgerBreakpoint": "Hamburger breakpoint",
+    "none": "None",
+    "tabs": {
+      "ariaLabel": "App shell regions",
+      "sidebar": "Sidebar",
+      "header": "Header",
+      "footer": "Footer"
+    },
+    "layout": {
+      "structureTitle": "Sidebar structure",
+      "headerStructureTitle": "Header structure",
+      "footerStructureTitle": "Footer structure"
+    },
+    "components": {
+      "sidebarNav": "Sidebar navigation",
+      "sidebarCollapse": "Sidebar collapse",
+      "sidebarTrigger": "Menu button",
+      "navTab": "Nav tab"
+    },
+    "collapseComponent": {
+      "iconName": "Icon when expanded",
+      "iconNameHint": "Shown while the sidebar is open (collapse action). Lucide PascalCase, e.g. PanelLeftClose",
+      "expandIconName": "Icon when collapsed",
+      "expandIconNameHint": "Shown while the sidebar is icons-only (expand action). Lucide PascalCase, e.g. PanelLeft",
+      "iconSize": "Icon size (px)",
+      "statePreview": "State preview",
+      "stateExpanded": "Expanded",
+      "stateCollapsed": "Collapsed"
+    },
+    "triggerComponent": {
+      "iconName": "Menu icon (Lucide name)",
+      "iconNameHint": "PascalCase Lucide icon name, e.g. Menu",
+      "iconSize": "Icon size (px)"
+    },
+    "navTabComponent": {
+      "iconName": "Tab icon (Lucide name)",
+      "label": "Label",
+      "to": "Path",
+      "matchPath": "Match path (optional)"
+    },
+    "navComponent": {
+      "templatesHint": "Group, subgroup, and raw item templates are shared across the whole sidebar. Customize each template’s styles below; container styles are on the row styles section.",
+      "groupItemStyles": "Group item styles",
+      "subgroupItemStyles": "Subgroup item styles",
+      "rawItemStyles": "Raw item styles"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
+      "structurePanelSave": "Save structure changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing",
+      "tabMessage": "You have unsaved changes on this tab. Save them before switching, or discard your changes.",
+      "save": "Save changes"
+    }
+  },
+  "appShellDesigner": {
+    "title": "App Shell Designer",
+    "subtitle": "Configure the app sidebar, header, and footer navigation"
   },
   "uiBuilderAi": {
     "progressTitle": "Building layout…",
@@ -1406,8 +1471,10 @@
       "component": "Component",
       "showLabel": "Show label",
       "labelPosition": "Label position",
-      "labelAbove": "Above text",
-      "labelBelow": "Below text",
+      "labelAbove": "Above",
+      "labelBelow": "Below",
+      "labelLeft": "Left",
+      "labelRight": "Right",
       "label": "Label",
       "preview": "Preview",
       "structure": "Structure",

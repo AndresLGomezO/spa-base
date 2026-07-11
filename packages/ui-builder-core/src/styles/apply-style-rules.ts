@@ -1873,7 +1873,10 @@ export function themeTokenInlineStyleFromRules(
   const style: LayoutInlineStyle = {};
 
   for (const rule of filterStyleRulesForFlatApplication(styles, atBreakpoint)) {
-    if (rule.value === undefined || !COLOR_STYLE_PROPERTIES.has(rule.property)) {
+    if (
+      rule.value === undefined ||
+      !COLOR_STYLE_PROPERTIES.has(rule.property)
+    ) {
       continue;
     }
 

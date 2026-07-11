@@ -353,6 +353,7 @@ function nestedColumnGridOptions(
     nestedColumnWrapper: options.nestedColumnWrapper,
     renderEmptyRootColumns: options.renderEmptyRootColumns,
     stretchRootColumns: preserveStretch ? options.stretchRootColumns : false,
+    promotedContainerRowId: options.promotedContainerRowId,
   };
 }
 
@@ -599,6 +600,7 @@ function rowStackShellClassName(
 
 function rowWrapperStyleClassName(
   rowStyles: ReturnType<typeof mergeRowWrapperStyles>,
+  component?: UiComponentConfig,
 ): string {
   const parts = rowStyles.className
     .split(/\s+/)
@@ -609,7 +611,14 @@ function rowWrapperStyleClassName(
     parts.push("overflow-visible");
   }
 
-  parts.push("py-0.5");
+  // Compact chrome (avatars, icons, bell) must hug content — no default gutter.
+  const skipVerticalGutter =
+    component?.kind === "user" ||
+    component?.kind === "notification-bell" ||
+    component?.kind === "icon";
+  if (!skipVerticalGutter) {
+    parts.push("py-0.5");
+  }
 
   return parts.join(" ");
 }
@@ -730,6 +739,9 @@ function renderLayoutColumnGrid(
         {
           ...columnFlags,
           columnGridOptions: options,
+          layoutColumnId: nestedContext
+            ? `${nestedContext.rootColumnIndex}:${nestedContext.nestedParentRowId}:${index}`
+            : `${index}`,
         },
       ),
       options,
@@ -866,6 +878,9 @@ function renderWrappedColumns(
             ...columnFlags,
             flexBasisPercent: percents[index],
             columnGridOptions: options,
+            layoutColumnId: nestedContext
+              ? `${nestedContext.rootColumnIndex}:${nestedContext.nestedParentRowId}:${index}`
+              : `${index}`,
           },
         );
         if (!columnContent) {
@@ -1001,6 +1016,7 @@ function renderRow(
       const gridInner = (
         <div
           key={row.id}
+          data-layout-row-id={row.id}
           className={[
             gridStyles.className,
             motionPreset.className,
@@ -1033,14 +1049,12 @@ function renderRow(
       return wrapRowContent(
         row,
         rowLocator,
-        useProductionShellLayout && rowShellLayout ? (
-          wrapProductionRowShell(
-            rowShellLayout,
-            wrapRowWithClickAction(row, gridInner, context),
-          )
-        ) : (
-          wrapRowWithClickAction(row, gridInner, context)
-        ),
+        useProductionShellLayout && rowShellLayout
+          ? wrapProductionRowShell(
+              rowShellLayout,
+              wrapRowWithClickAction(row, gridInner, context),
+            )
+          : wrapRowWithClickAction(row, gridInner, context),
         columnGridOptions,
       );
     }
@@ -1057,6 +1071,7 @@ function renderRow(
       const neutralInner = (
         <div
           key={row.id}
+          data-layout-row-id={row.id}
           className={[
             neutralStyles.className,
             motionPreset.className,
@@ -1087,6 +1102,7 @@ function renderRow(
         <div
           aria-hidden
           key={row.id}
+          data-layout-row-id={row.id}
           className={[overlayStyles.className, visibilityClassName]
             .filter(Boolean)
             .join(" ")}
@@ -1170,8 +1186,8 @@ function renderRow(
               ? "flex min-h-0 h-full w-full min-w-0 shrink-0 flex-col"
               : "flex min-h-0 w-full min-w-0 shrink-0 flex-col"
             : (percentFillStretchClass ??
-              (splitSiblingContainerClass ??
-                rowSiblingStretchClass));
+              splitSiblingContainerClass ??
+              rowSiblingStretchClass);
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-container`,
         rows: row.component.rows,
@@ -1183,6 +1199,32 @@ function renderRow(
         containerParentRowId: row.id,
         containerOverlayContext,
       };
+
+      if (columnGridOptions?.promotedContainerRowId === row.id) {
+        const promotedChildren = row.component.rows.map(
+          (childRow, childIndex) => (
+            <Fragment key={childRow.id}>
+              {renderRow(
+                childRow,
+                context,
+                containerStackDirection,
+                atBreakpoint,
+                containerScope,
+                childIndex,
+                syntheticColumn,
+                columnGridOptions,
+              )}
+            </Fragment>
+          ),
+        );
+        return wrapRowContent(
+          row,
+          rowLocator,
+          <Fragment key={row.id}>{promotedChildren}</Fragment>,
+          columnGridOptions,
+        );
+      }
+
       const containerWidthClass = flexWrapRowItemClass
         ? ""
         : !useProductionShellLayout || containerParentIsRow
@@ -1203,6 +1245,7 @@ function renderRow(
       const containerInner = (
         <div
           key={row.id}
+          data-layout-row-id={row.id}
           className={[
             stretchedContainerClass,
             flexWrapRowItemClass,
@@ -1357,6 +1400,7 @@ function renderRow(
     const rowDiv = (
       <div
         key={row.id}
+        data-layout-row-id={row.id}
         className={[
           flexWrapRowItemClass,
           rowStackShellClassName(
@@ -1373,7 +1417,7 @@ function renderRow(
           inlineContentRowClass,
           inlineFlexGrowStretchClassName(row.component, stackDirection),
           formSlotClassName,
-          rowWrapperStyleClassName(rowStyles),
+          rowWrapperStyleClassName(rowStyles, row.component),
           motionPreset.className,
           visibilityClassName,
         ]
@@ -1417,6 +1461,7 @@ function renderColumn(
     readonly flexBasisPercent?: number;
     readonly stretchColumn?: boolean;
     readonly columnGridOptions?: ColumnGridRenderOptions;
+    readonly layoutColumnId?: string;
   },
 ): ReactNode {
   const displayRange = resolveColumnDisplayRange(column, atBreakpoint);
@@ -1439,6 +1484,7 @@ function renderColumn(
   return (
     <div
       key={column.id}
+      data-layout-column-id={options?.layoutColumnId ?? column.id}
       className={[
         columnShellClassName(context, column, options?.stretchColumn),
         columnStyles.className,
@@ -1478,6 +1524,17 @@ export interface RecursiveLayoutRendererProps {
   readonly rowWrapper?: RowWrapper;
   readonly renderEmptyRootColumns?: boolean;
   readonly stretchRootColumns?: boolean;
+  /**
+   * When true, screen-root skips its outer/grid shells and renders tracks as
+   * direct children (e.g. app-shell footer promoting the root container to
+   * `<footer>`).
+   */
+  readonly flattenScreenRoot?: boolean;
+  /**
+   * Container row whose shell is hosted by a parent element (e.g. `<footer>`).
+   * Children render as direct siblings under that host.
+   */
+  readonly promotedContainerRowId?: string;
 }
 
 export function RecursiveLayoutRenderer({
@@ -1489,6 +1546,8 @@ export function RecursiveLayoutRenderer({
   rowWrapper,
   renderEmptyRootColumns = false,
   stretchRootColumns = false,
+  flattenScreenRoot = false,
+  promotedContainerRowId,
 }: RecursiveLayoutRendererProps): ReactNode {
   const atBreakpoint = usePreviewBreakpoint();
   const rootMotionClass = resolveMotionPreset(layout.motion);
@@ -1505,11 +1564,28 @@ export function RecursiveLayoutRenderer({
       rowWrapper,
       renderEmptyRootColumns,
       stretchRootColumns,
+      promotedContainerRowId,
     };
     const syntheticColumn: ColumnNode = {
       id: `${screenRoot.id}-screen`,
       rows: screenRoot.rows,
     };
+
+    if (flattenScreenRoot) {
+      return (
+        <LayoutRenderOptionsProvider value={columnGridOptions}>
+          {renderGridTrackRows(
+            screenRoot.rows,
+            context,
+            atBreakpoint,
+            { rootColumnIndex: 0 },
+            0,
+            syntheticColumn,
+            columnGridOptions,
+          )}
+        </LayoutRenderOptionsProvider>
+      );
+    }
 
     return (
       <LayoutRenderOptionsProvider value={columnGridOptions}>
@@ -1607,6 +1683,7 @@ export function RecursiveLayoutRenderer({
     rowWrapper,
     renderEmptyRootColumns,
     stretchRootColumns,
+    promotedContainerRowId,
   };
 
   if (

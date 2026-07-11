@@ -26,6 +26,9 @@
 | `metricWidget` | No |
 | `dashboardSection` | Yes |
 | `dashboardLayout` | Yes |
+| `sidebarLayout` | Yes |
+| `headerLayout` | Yes |
+| `footerLayout` | Yes |
 
 ## Properties
 
@@ -36,6 +39,7 @@
 | `imageSize` | `number` | No | Pixels. | Avatar size. |
 | `avatarShape` | `circle` \| `rounded` \| `square` | No | When avatar is shown. | Avatar geometry. |
 | `profileButtonContent` | `photo` \| `full` | No | When `display` is `profile-button`. | Trigger shows avatar only or full details. |
+| `profileButtonShowArrow` | `boolean` | No | When `display` is `profile-button`. Default: `true`. | Show/hide the chevron next to the trigger. |
 | `label` | `LabelConfig` | No |  | Optional caption. |
 | `styles` | `StyleRule[]` | No |  | Avatar framing. |
 

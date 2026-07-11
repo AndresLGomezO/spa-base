@@ -1,6 +1,6 @@
 /** Card field presentation types used by layout primitives. */
 
-export type CardLabelPosition = "above" | "below";
+export type CardLabelPosition = "above" | "below" | "left" | "right";
 
 export type CardBadgeVariant =
   | "success"

@@ -10,9 +10,7 @@ import { CardFieldValue } from "@repo/ui";
 import { ResponsiveStyleTag } from "@repo/ui-builder-renderer";
 import { cn } from "@repo/theme/utils";
 
-function labelAlignClassName(
-  align?: LabelConfig["align"],
-): string | undefined {
+function labelAlignClassName(align?: LabelConfig["align"]): string | undefined {
   if (align === "center") {
     return "text-center";
   }
@@ -73,6 +71,7 @@ export function LayoutInteractiveShell({
       label={labelText}
       showLabel={showLabel}
       labelPosition={label?.position ?? "above"}
+      labelUppercase={false}
       value={content}
       allowEmpty
       className={cn(

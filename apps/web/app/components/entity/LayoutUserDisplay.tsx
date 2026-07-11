@@ -9,7 +9,7 @@ import {
   textInlineStyleFromStyleRules,
   textWrapClassFromStyles,
 } from "@repo/ui-builder-core";
-import { Avatar, CardFieldValue } from "@repo/ui";
+import { Avatar, CardFieldValue, sidebarMenuButtonClassName } from "@repo/ui";
 import { ResponsiveStyleTag } from "@repo/ui-builder-renderer";
 import { cn } from "@repo/theme/utils";
 
@@ -68,12 +68,17 @@ interface LayoutUserDisplayProps {
   readonly config: UserComponentConfig;
   readonly user: LayoutUserInfo | null | undefined;
   readonly fallbackName: string;
+  readonly iconsOnly?: boolean;
+  /** Match hardcoded AppSidebar profile trigger (sidebar menu button). */
+  readonly sidebarChrome?: boolean;
 }
 
 export function LayoutUserDisplay({
   config,
   user,
   fallbackName,
+  iconsOnly = false,
+  sidebarChrome = false,
 }: LayoutUserDisplayProps) {
   const innerStyles = filterComponentInnerStyleRules(config.styles);
   const { containerClassName, textClassName } =
@@ -84,25 +89,41 @@ export function LayoutUserDisplay({
   const valueClassName = [textWrapClassFromStyles(innerStyles), textClassName]
     .filter(Boolean)
     .join(" ");
+  const styleFontSize = fontSizePxFromStyles(config.styles);
+  const configuredImageSize =
+    config.imageSize ?? (sidebarChrome ? undefined : (styleFontSize ?? 40));
   const imageSize =
-    config.imageSize ?? fontSizePxFromStyles(config.styles) ?? 40;
+    configuredImageSize == null
+      ? undefined
+      : iconsOnly && !sidebarChrome
+        ? Math.min(configuredImageSize, 32)
+        : configuredImageSize;
+  const photoSizePx = imageSize ?? (iconsOnly ? 32 : 40);
   const displayName = formatUserName(
     resolveLayoutUserDisplayName(user, fallbackName),
     config.nameFormat,
   );
   const email = user?.email?.trim() ?? "";
   const labelText = config.label?.text?.trim();
-  const showLabel = config.label?.show === true && Boolean(labelText);
+  const showLabel =
+    !iconsOnly && config.label?.show === true && Boolean(labelText);
   const avatarClassName = avatarShapeClassName(config.avatarShape);
+  const hideTextClassName = "group-data-[collapsible=icon]/sidebar:hidden";
+  const useSidebarStyle = sidebarChrome || iconsOnly;
 
   if (config.display === "profile-button") {
     const presentation = resolveMetricKpiPresentation(innerStyles);
     const customChrome = stylesIncludeVisualChrome(config.styles);
+    const showDetails =
+      sidebarChrome || !iconsOnly
+        ? (config.profileButtonContent ?? "full") === "full"
+        : false;
 
     return (
       <div
         className={cn(
-          "w-fit max-w-full shrink-0",
+          useSidebarStyle ? "w-full" : "w-fit max-w-full shrink-0",
+          iconsOnly && !sidebarChrome && "flex justify-center",
           presentation.className,
           containerClassName,
         )}
@@ -110,14 +131,26 @@ export function LayoutUserDisplay({
       >
         <ResponsiveStyleTag cssText={presentation.cssText} />
         <UserProfileMenu
-          placement="bottom-end"
-          fullWidth={false}
+          placement={useSidebarStyle ? "right-start" : "bottom-end"}
+          fullWidth={useSidebarStyle}
           imageSize={imageSize}
           avatarShape={config.avatarShape}
-          showDetails={(config.profileButtonContent ?? "full") === "full"}
+          showDetails={showDetails}
+          showArrow={config.profileButtonShowArrow !== false}
           presentation={presentation}
           customChrome={customChrome}
-          textClassName={valueClassName}
+          textClassName={cn(
+            sidebarChrome && "text-sidebar-foreground",
+            valueClassName,
+          )}
+          hideTextClassName={hideTextClassName}
+          triggerClassName={
+            sidebarChrome
+              ? sidebarMenuButtonClassName({ size: "lg" })
+              : iconsOnly
+                ? "justify-center px-1.5 py-1.5"
+                : undefined
+          }
         />
       </div>
     );
@@ -126,7 +159,7 @@ export function LayoutUserDisplay({
   const photo = (
     <span
       className="inline-flex shrink-0"
-      style={{ width: imageSize, height: imageSize }}
+      style={{ width: photoSizePx, height: photoSizePx }}
     >
       <Avatar
         src={user?.photoURL}
@@ -138,6 +171,17 @@ export function LayoutUserDisplay({
   );
 
   const value = (() => {
+    if (iconsOnly) {
+      if (
+        config.display === "photo" ||
+        config.display === "photo-and-name" ||
+        config.display === "name"
+      ) {
+        return photo;
+      }
+      return photo;
+    }
+
     switch (config.display) {
       case "email":
         return email || fallbackName;
@@ -147,7 +191,9 @@ export function LayoutUserDisplay({
         return (
           <div className="flex min-w-0 items-center gap-3">
             {photo}
-            <span className="truncate">{displayName}</span>
+            <span className={cn("truncate", hideTextClassName)}>
+              {displayName}
+            </span>
           </div>
         );
       case "name":
@@ -161,11 +207,19 @@ export function LayoutUserDisplay({
       label={labelText}
       showLabel={showLabel}
       labelPosition={config.label?.position ?? "above"}
+      labelUppercase={false}
       value={value}
       allowEmpty
-      className={cn("w-fit max-w-full shrink-0", containerClassName)}
+      className={cn(
+        "w-fit max-w-full shrink-0",
+        iconsOnly && "flex w-full justify-center",
+        containerClassName,
+      )}
       style={containerStyle}
-      labelClassName={labelAlignClassName(config.label?.align)}
+      labelClassName={cn(
+        labelAlignClassName(config.label?.align),
+        hideTextClassName,
+      )}
       valueClassName={valueClassName}
       valueStyle={valueStyle}
       textSize={textSize}

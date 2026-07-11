@@ -99,21 +99,28 @@ export function buildDisplayRangeClassName(
     to,
   );
   const display = options.display ?? "flex";
-  const classes: string[] = [];
+  const classes: string[] = ["hidden"];
 
-  if (normalizedFrom !== "base") {
-    classes.push("hidden");
+  if (normalizedFrom === "base") {
+    // Show only below the breakpoint after `to` (avoids bare `flex` fighting `sm:hidden`).
+    const after = nextBreakpoint(normalizedTo);
+    if (after) {
+      classes.push(`max-${after}:${display}`);
+    } else {
+      classes.push(display);
+    }
+  } else {
     classes.push(`${BREAKPOINT_PREFIX[normalizedFrom]}${display}`);
   }
 
-  if (normalizedTo !== "xl") {
+  if (normalizedFrom !== "base" && normalizedTo !== "xl") {
     const after = nextBreakpoint(normalizedTo);
     if (after) {
       classes.push(`${BREAKPOINT_PREFIX[after]}hidden`);
     }
   }
 
-  return classes.length > 0 ? classes.join(" ") : undefined;
+  return classes.join(" ");
 }
 
 export interface ResolvedDisplayRangeVisibility {
@@ -153,6 +160,18 @@ export const DISPLAY_RANGE_TAILWIND_SAFELIST = [
   "md:hidden",
   "lg:hidden",
   "xl:hidden",
+  "max-sm:flex",
+  "max-md:flex",
+  "max-lg:flex",
+  "max-xl:flex",
+  "max-sm:block",
+  "max-md:block",
+  "max-lg:block",
+  "max-xl:block",
+  "max-sm:table-cell",
+  "max-md:table-cell",
+  "max-lg:table-cell",
+  "max-xl:table-cell",
   "sm:flex",
   "md:flex",
   "lg:flex",

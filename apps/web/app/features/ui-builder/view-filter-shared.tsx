@@ -29,7 +29,7 @@ function remapFilterOptionsToQualifiedIds(
   return remapped;
 }
 
-export interface EntityFilterGroup {
+interface EntityFilterGroup {
   readonly entityName: string;
   readonly definition: SerializableEntityDefinition;
   readonly entries: readonly ViewFilterEntry[];

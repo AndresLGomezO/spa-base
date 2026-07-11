@@ -16,6 +16,10 @@ import type {
   ResolvedComponentClickTarget,
   ResponsiveGridBreakpoint,
   UserComponentConfig,
+  SidebarCollapseComponentConfig,
+  SidebarNavComponentConfig,
+  SidebarTriggerComponentConfig,
+  NavTabComponentConfig,
   ViewSearchComponentConfig,
   ViewFiltersComponentConfig,
   ViewDateFilterComponentConfig,
@@ -94,6 +98,16 @@ export interface LayoutRenderContext {
   readonly notificationBellRenderer?: (
     config: NotificationBellComponentConfig,
   ) => ReactNode;
+  readonly sidebarNavRenderer?: (
+    config: SidebarNavComponentConfig,
+  ) => ReactNode;
+  readonly sidebarCollapseRenderer?: (
+    config: SidebarCollapseComponentConfig,
+  ) => ReactNode;
+  readonly sidebarTriggerRenderer?: (
+    config: SidebarTriggerComponentConfig,
+  ) => ReactNode;
+  readonly navTabRenderer?: (config: NavTabComponentConfig) => ReactNode;
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
   readonly metricKpiRenderer?: (

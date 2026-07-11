@@ -3,7 +3,10 @@ import type {
   ViewFilterEntry,
   ViewFiltersComponentConfig,
 } from "@repo/ui-builder-core";
-import { CollapsibleEditorCard, LabelConfigEditor } from "@repo/ui-builder-react";
+import {
+  CollapsibleEditorCard,
+  LabelConfigEditor,
+} from "@repo/ui-builder-react";
 import { Button, IconButton, Popover } from "@repo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -235,7 +238,9 @@ export function ViewFiltersComponentEditor({
                             layer="elevated"
                             placement="right-start"
                             title={t("viewFilterComponents.saveFilter")}
-                            panelClassName={VIEW_FILTER_EDITOR_POPOVER_PANEL_CLASS}
+                            panelClassName={
+                              VIEW_FILTER_EDITOR_POPOVER_PANEL_CLASS
+                            }
                             trigger={
                               <IconButton
                                 type="button"

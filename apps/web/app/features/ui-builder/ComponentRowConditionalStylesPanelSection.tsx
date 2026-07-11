@@ -1,5 +1,9 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
-import type { ComponentRowNode, DesignSurface, UiComponentConfig } from "@repo/ui-builder-core";
+import type {
+  ComponentRowNode,
+  DesignSurface,
+  UiComponentConfig,
+} from "@repo/ui-builder-core";
 import {
   entityBoundComponentSupportsConditionalStyles,
   resolveDefaultCompareFieldPath,
@@ -15,7 +19,7 @@ import type { ComponentsLayoutBinding } from "../form-designer/form-designer-com
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref.js";
 import { useConditionalStylesEditorLabels } from "./conditional-styles-editor-labels.js";
 
-export function componentShowsConditionalStylesSection(
+function componentShowsConditionalStylesSection(
   config: UiComponentConfig,
   fieldDescriptors: readonly FieldDescriptor[],
 ): boolean {
@@ -30,7 +34,7 @@ export function componentShowsConditionalStylesSection(
   );
 }
 
-export function resolveConditionalStylesEditorMode(
+function resolveConditionalStylesEditorMode(
   config: UiComponentConfig,
 ): CollapsibleConditionalStylesEditorMode | null {
   if (config.kind === "badge") {
@@ -40,7 +44,7 @@ export function resolveConditionalStylesEditorMode(
     return "wizard-status";
   }
   if (entityBoundComponentSupportsConditionalStyles(config.kind)) {
-    return config.kind === "badge" ? "badge" : "field";
+    return "field";
   }
   return null;
 }
@@ -74,6 +78,8 @@ export function ComponentRowConditionalStylesPanelSection({
   binding,
   fieldDescriptors,
 }: ComponentRowConditionalStylesPanelSectionProps) {
+  const labels = useConditionalStylesEditorLabels();
+
   if (row.type !== "component") {
     return null;
   }
@@ -88,7 +94,6 @@ export function ComponentRowConditionalStylesPanelSection({
     return null;
   }
 
-  const labels = useConditionalStylesEditorLabels();
   const conditionalStyles =
     "conditionalStyles" in config ? (config.conditionalStyles ?? []) : [];
   const defaultCompareFieldPath = resolveDefaultCompareFieldPath(config);

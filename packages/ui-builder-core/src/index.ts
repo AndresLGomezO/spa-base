@@ -140,6 +140,12 @@ export type {
   IconComponentConfig,
   NotificationBellComponentConfig,
   UserComponentConfig,
+  SidebarNavComponentConfig,
+  SidebarNavItemTemplate,
+  SidebarNavTemplateKey,
+  SidebarCollapseComponentConfig,
+  SidebarTriggerComponentConfig,
+  NavTabComponentConfig,
   UserDisplayMode,
   UserNameFormat,
   UserAvatarShape,
@@ -169,9 +175,21 @@ export {
   isFieldUiComponent,
   isChartComponent,
   createDefaultChartComponent,
+  createDefaultSidebarNavComponent,
+  createDefaultSidebarCollapseComponent,
+  createDefaultSidebarTriggerComponent,
+  createDefaultNavTabComponent,
+  createDefaultSidebarNavItemTemplate,
+  mapSidebarNavTemplateRows,
+  getSidebarNavTemplate,
+  updateSidebarNavTemplate,
   isIconComponent,
   isNotificationBellComponent,
   isUserComponent,
+  isSidebarNavComponent,
+  isSidebarCollapseComponent,
+  isSidebarTriggerComponent,
+  isNavTabComponent,
   isContainerComponent,
   isGridComponent,
   isQueryViewerComponent,
@@ -200,7 +218,9 @@ export {
   migrateNestedLayoutsInDocument,
   createScreenRootNode,
   ensureScreenRootDocument,
+  ensureAppShellScreenRoot,
   layoutRootToScreenRoot,
+  layoutRootToAppShellScreenRoot,
 } from "./layout/migrate-to-grid.js";
 export {
   asEditableLayoutRoot,
@@ -510,9 +530,13 @@ export {
   type FlexWrap,
 } from "./styles/apply-style-rules.js";
 export {
+  allowsNegativeLengthStyleProperty,
+  isInsetStyleProperty,
   isMarginStyleProperty,
   parseMarginPx,
   parseNonNegativeSpacingPx,
+  parseSignedLengthPx,
+  NEGATIVE_LENGTH_MIN_PX,
   NEGATIVE_MARGIN_MIN_PX,
 } from "./styles/spacing-style-values.js";
 export {
@@ -564,9 +588,7 @@ export {
   type FieldComponentWithConditionalStyles,
   type EntityBoundConditionalStyleKind,
 } from "./conditions/component-supports-conditional-styles.js";
-export type {
-  ConditionalStylesCapable,
-} from "./types/styling.js";
+export type { ConditionalStylesCapable } from "./types/styling.js";
 
 export {
   listDataSourcePaths,

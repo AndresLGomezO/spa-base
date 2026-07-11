@@ -41,6 +41,7 @@ import {
 } from "../components/sidebar/nav-config";
 import {
   DESIGN_LAYOUT_DASHBOARD_NAV_ITEM,
+  DESIGN_LAYOUT_APP_SHELL_NAV_ITEM,
   DESIGN_LAYOUT_MATCH_PATH,
   DESIGN_LAYOUT_PRESETS_NAV_ITEM,
   useDesignLayoutNavLinks,
@@ -258,6 +259,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
         ? [
             DESIGN_LAYOUT_PRESETS_NAV_ITEM,
             DESIGN_LAYOUT_DASHBOARD_NAV_ITEM,
+            DESIGN_LAYOUT_APP_SHELL_NAV_ITEM,
             ...designLayoutNavLinks,
           ]
         : designLayoutNavLinks;

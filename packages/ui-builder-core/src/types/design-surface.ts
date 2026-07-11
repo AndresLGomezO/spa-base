@@ -21,7 +21,10 @@ export type DesignSurface =
   | "metricRow"
   | "metricWidget"
   | "dashboardSection"
-  | "dashboardLayout";
+  | "dashboardLayout"
+  | "sidebarLayout"
+  | "headerLayout"
+  | "footerLayout";
 
 const VIEW_FILTER_KINDS: readonly UiComponentKind[] = [
   "view-search",
@@ -136,6 +139,32 @@ const DASHBOARD_LAYOUT_KINDS: readonly UiComponentKind[] = [
   "dashboard-section",
 ];
 
+const SIDEBAR_LAYOUT_KINDS: readonly UiComponentKind[] = [
+  "image",
+  "icon",
+  "text",
+  "user",
+  "notification-bell",
+  "sidebar-nav",
+  "sidebar-collapse",
+];
+
+const HEADER_LAYOUT_KINDS: readonly UiComponentKind[] = [
+  "image",
+  "icon",
+  "text",
+  "user",
+  "sidebar-trigger",
+];
+
+const FOOTER_LAYOUT_KINDS: readonly UiComponentKind[] = [
+  "image",
+  "icon",
+  "text",
+  "user",
+  "nav-tab",
+];
+
 const FORM_MODAL_FOOTER_KINDS = mergeComponentKinds(
   FORM_PLAIN_KINDS,
   FORM_WIZARD_SHELL_KINDS,
@@ -158,6 +187,12 @@ export function componentKindsForSurface(
       return METRIC_WIDGET_KINDS;
     case "dashboardLayout":
       return DASHBOARD_LAYOUT_KINDS;
+    case "sidebarLayout":
+      return SIDEBAR_LAYOUT_KINDS;
+    case "headerLayout":
+      return HEADER_LAYOUT_KINDS;
+    case "footerLayout":
+      return FOOTER_LAYOUT_KINDS;
     case "mainPage":
       return MAIN_PAGE_KINDS;
     case "recordDetail":

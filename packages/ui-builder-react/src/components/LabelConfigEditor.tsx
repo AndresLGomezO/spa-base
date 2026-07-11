@@ -9,6 +9,8 @@ export interface LabelConfigEditorLabels {
   readonly labelPosition: string;
   readonly labelAbove: string;
   readonly labelBelow: string;
+  readonly labelLeft?: string;
+  readonly labelRight?: string;
   readonly labelAlignLeft?: string;
   readonly labelAlignCenter?: string;
   readonly labelAlignRight?: string;
@@ -70,12 +72,16 @@ export function LabelConfigEditor({
               onChange={(event) =>
                 updateLabel({
                   show: true,
-                  position: event.target.value as "above" | "below",
+                  position: event.target.value as NonNullable<
+                    LabelConfig["position"]
+                  >,
                 })
               }
             >
               <option value="above">{labels.labelAbove}</option>
               <option value="below">{labels.labelBelow}</option>
+              <option value="left">{labels.labelLeft ?? "Left"}</option>
+              <option value="right">{labels.labelRight ?? "Right"}</option>
             </Select>
           </label>
 

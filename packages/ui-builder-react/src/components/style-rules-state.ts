@@ -15,15 +15,15 @@ import {
 } from "@repo/theme/tenant-overrides";
 import {
   STYLE_PROPERTY_OPTIONS,
+  allowsNegativeLengthStyleProperty,
   isCssBackdropFilterValue,
   isCssBoxShadowValue,
   isCssFontFamilyValue,
   isCssLengthTokenValue,
-  isMarginStyleProperty,
   isShadowTokenValue,
   isThemeTokenValue,
-  NEGATIVE_MARGIN_MIN_PX,
-  parseMarginPx,
+  NEGATIVE_LENGTH_MIN_PX,
+  parseSignedLengthPx,
   type StylePropertyKey,
   type StyleRule,
   type ThemeToken,
@@ -396,8 +396,8 @@ export function isNumericStyleProperty(property: StylePropertyKey): boolean {
 
 /** Minimum allowed value for numeric style inputs (pixels). */
 export function numericStyleInputMin(property: StylePropertyKey): number {
-  if (isMarginStyleProperty(property)) {
-    return NEGATIVE_MARGIN_MIN_PX;
+  if (allowsNegativeLengthStyleProperty(property)) {
+    return NEGATIVE_LENGTH_MIN_PX;
   }
   if (property === "borderWidth" || property === "fontSize") {
     return 1;
@@ -415,8 +415,8 @@ export function coerceNumericStyleValue(
   property: StylePropertyKey,
   raw: string,
 ): string {
-  if (isMarginStyleProperty(property)) {
-    return String(parseMarginPx(raw) ?? 0);
+  if (allowsNegativeLengthStyleProperty(property)) {
+    return String(parseSignedLengthPx(raw) ?? 0);
   }
 
   const min = numericStyleInputMin(property);
@@ -713,8 +713,8 @@ export function isValidDimensionCustomValue(
     return false;
   }
 
-  if (isMarginStyleProperty(property)) {
-    return parsed >= NEGATIVE_MARGIN_MIN_PX;
+  if (allowsNegativeLengthStyleProperty(property)) {
+    return parsed >= NEGATIVE_LENGTH_MIN_PX;
   }
 
   return parsed >= numericStyleInputMin(property);

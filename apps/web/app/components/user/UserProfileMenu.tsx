@@ -1,20 +1,18 @@
-import {
-  useMemo,
-  useState,
-  type ComponentPropsWithoutRef,
-} from "react";
+import { useMemo, useState, type ComponentPropsWithoutRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronsUpDown, ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
-
-import type { UserAvatarShape, MetricKpiPresentation } from "@repo/ui-builder-core";
-import { interactiveTriggerBaseClass } from "@repo/ui-builder-core";
 import {
-  Avatar,
-  Button,
-  Popover,
-  Text,
-  type PopoverPlacement,
-} from "@repo/ui";
+  ChevronsUpDown,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react";
+
+import type {
+  UserAvatarShape,
+  MetricKpiPresentation,
+} from "@repo/ui-builder-core";
+import { interactiveTriggerBaseClass } from "@repo/ui-builder-core";
+import { Avatar, Button, Popover, Text, type PopoverPlacement } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { useAuth } from "../../auth/AuthContext";
@@ -38,11 +36,10 @@ function ProfileMenuDirectionIcon({
   return <ChevronRight className={className} aria-hidden />;
 }
 
-export interface UserProfileMenuTriggerProps
-  extends Omit<
-    ComponentPropsWithoutRef<typeof Button>,
-    "children" | "fullWidth" | "variant" | "type"
-  > {
+interface UserProfileMenuTriggerProps extends Omit<
+  ComponentPropsWithoutRef<typeof Button>,
+  "children" | "fullWidth" | "variant" | "type"
+> {
   readonly displayName: string;
   readonly displayEmail: string;
   readonly roleLabel: string;
@@ -61,9 +58,11 @@ export interface UserProfileMenuTriggerProps
     "valueClassName" | "valueStyle"
   >;
   readonly customChrome?: boolean;
+  /** When false, hides the chevron / direction icon. Default: true. */
+  readonly showArrow?: boolean;
 }
 
-export function UserProfileMenuTrigger({
+function UserProfileMenuTrigger({
   displayName,
   displayEmail,
   roleLabel,
@@ -79,6 +78,7 @@ export function UserProfileMenuTrigger({
   hideTextClassName,
   presentation,
   customChrome = false,
+  showArrow = true,
   className,
   onClick,
   ...buttonProps
@@ -120,13 +120,21 @@ export function UserProfileMenuTrigger({
       }}
       className={cn(
         interactiveTriggerBaseClass(customChrome),
-        showDetails ? "justify-start" : "gap-1 px-1 py-1",
+        showDetails
+          ? "justify-start"
+          : cn(
+              // Compact photo-only: strip Button size padding / text strut so
+              // the hit target hugs the avatar (custom styles own spacing).
+              "h-auto min-h-0 p-0 leading-none",
+              showArrow ? "gap-1" : "gap-0",
+            ),
         fullWidth ? "w-full" : "w-fit max-w-full",
         open && "bg-sidebar-accent text-sidebar-accent-foreground",
         className,
-        presentation?.valueClassName,
+        // Text metrics (truncate / font) only apply when the trigger shows details.
+        showDetails ? presentation?.valueClassName : undefined,
       )}
-      style={presentation?.valueStyle}
+      style={showDetails ? presentation?.valueStyle : undefined}
     >
       {avatar}
       {showDetails ? (
@@ -146,24 +154,23 @@ export function UserProfileMenuTrigger({
               {roleLabel}
             </span>
           </div>
-          <ChevronsUpDown
-            className={cn(
-              "ml-auto size-4 shrink-0",
-              hideTextClassName,
-            )}
-          />
+          {showArrow ? (
+            <ChevronsUpDown
+              className={cn("ml-auto size-4 shrink-0", hideTextClassName)}
+            />
+          ) : null}
         </>
-      ) : (
+      ) : showArrow ? (
         <ProfileMenuDirectionIcon
           placement={placement}
           className="text-muted-foreground size-3.5 shrink-0"
         />
-      )}
+      ) : null}
     </Button>
   );
 }
 
-export function UserProfileMenuContent() {
+function UserProfileMenuContent() {
   const { t } = useTranslation("common");
   const {
     user,
@@ -246,12 +253,13 @@ export function UserProfileMenuContent() {
   );
 }
 
-export interface UserProfileMenuProps {
+interface UserProfileMenuProps {
   readonly placement?: PopoverPlacement;
   readonly fullWidth?: boolean;
   readonly imageSize?: number;
   readonly avatarShape?: UserAvatarShape;
   readonly showDetails?: boolean;
+  readonly showArrow?: boolean;
   readonly className?: string;
   readonly triggerClassName?: string;
   readonly textClassName?: string;
@@ -269,6 +277,7 @@ export function UserProfileMenu({
   imageSize,
   avatarShape,
   showDetails = true,
+  showArrow = true,
   className,
   triggerClassName,
   textClassName,
@@ -277,11 +286,7 @@ export function UserProfileMenu({
   customChrome = false,
 }: UserProfileMenuProps) {
   const { t } = useTranslation("common");
-  const {
-    user,
-    tenantRoleNames,
-    isSuperAdmin,
-  } = useAuth();
+  const { user, tenantRoleNames, isSuperAdmin } = useAuth();
   const [open, setOpen] = useState(false);
 
   const displayName = useMemo(
@@ -309,7 +314,10 @@ export function UserProfileMenu({
       placement={placement}
       title={t("nav.userMenu")}
       panelClassName="w-72"
-      className={cn(fullWidth ? "block w-full" : "block w-fit max-w-full", className)}
+      className={cn(
+        fullWidth ? "block w-full" : "block w-fit max-w-full",
+        className,
+      )}
       trigger={
         <UserProfileMenuTrigger
           displayName={displayName}
@@ -321,6 +329,7 @@ export function UserProfileMenu({
           avatarShape={avatarShape}
           fullWidth={fullWidth}
           showDetails={showDetails}
+          showArrow={showArrow}
           placement={placement}
           open={open}
           textClassName={textClassName}

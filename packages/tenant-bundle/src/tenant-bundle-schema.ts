@@ -6,6 +6,7 @@ import { customViewRecordSchema } from "@repo/custom-views/types";
 import {
   entityUiOverrideRecordSchema,
   tenantDashboardLayoutRecordSchema,
+  tenantSidebarLayoutRecordSchema,
   uiBuilderPresetRecordSchema,
 } from "@repo/entities";
 import { dataHookDefinitionSchema } from "@repo/hooks";
@@ -28,6 +29,9 @@ export const tenantBundleExportDocumentSchema = z
     entityUiOverrides: z.array(entityUiOverrideRecordSchema),
     uiBuilderPresets: z.array(uiBuilderPresetRecordSchema),
     tenantDashboardLayout: tenantDashboardLayoutRecordSchema.nullable(),
+    tenantSidebarLayout: tenantSidebarLayoutRecordSchema
+      .nullable()
+      .default(null),
     roles: z.array(tenantRoleRecordSchema),
     formulaDefinitions: z.array(formulaDefinitionSchema).default([]),
     hooks: z.array(dataHookDefinitionSchema),
@@ -48,6 +52,7 @@ export interface TenantBundleImportCounts {
   readonly entityUiOverrides: number;
   readonly uiBuilderPresets: number;
   readonly tenantDashboardLayout: number;
+  readonly tenantSidebarLayout: number;
   readonly roles: number;
   readonly formulaDefinitions: number;
   readonly hooks: number;
@@ -66,6 +71,7 @@ export function countTenantBundleSections(
     entityUiOverrides: bundle.entityUiOverrides.length,
     uiBuilderPresets: bundle.uiBuilderPresets.length,
     tenantDashboardLayout: bundle.tenantDashboardLayout ? 1 : 0,
+    tenantSidebarLayout: bundle.tenantSidebarLayout ? 1 : 0,
     roles: bundle.roles.length,
     formulaDefinitions: bundle.formulaDefinitions.length,
     hooks: bundle.hooks.length,

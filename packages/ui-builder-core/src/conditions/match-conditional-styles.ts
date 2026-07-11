@@ -31,10 +31,10 @@ function hasMatchedConditionalOutput(
 ): boolean {
   return Boolean(
     matched.badgeVariant ||
-      matched.className ||
-      matched.style ||
-      matched.styleScopeClassName ||
-      matched.cssText,
+    matched.className ||
+    matched.style ||
+    matched.styleScopeClassName ||
+    matched.cssText,
   );
 }
 

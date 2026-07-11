@@ -1,5 +1,8 @@
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
-import { isRowHolderComponent } from "../types/component.js";
+import {
+  isRowHolderComponent,
+  isSidebarNavComponent,
+} from "../types/component.js";
 import type { ColumnNode, RowNode, UiLayoutDocument } from "../types/layout.js";
 import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
 
@@ -10,6 +13,20 @@ function walkRows(
   for (const row of rows) {
     if (row.component.kind === kind) {
       return row.component;
+    }
+
+    if (isSidebarNavComponent(row.component)) {
+      for (const template of [
+        row.component.groupItem,
+        row.component.subgroupItem,
+        row.component.rawItem,
+      ] as const) {
+        const found = walkRows(template.rows, kind);
+        if (found) {
+          return found;
+        }
+      }
+      continue;
     }
 
     if (isRowHolderComponent(row.component)) {

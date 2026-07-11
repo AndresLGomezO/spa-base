@@ -19,6 +19,7 @@ interface UnifiedBuilderShellProps {
   readonly onSave: () => void | Promise<void>;
   readonly sessionWrapper?: (workbench: ReactNode) => ReactNode;
   readonly showSaveButton?: boolean;
+  readonly toolbarStart?: ReactNode;
 }
 
 /**
@@ -32,6 +33,7 @@ export function UnifiedBuilderShell({
   onSave,
   sessionWrapper,
   showSaveButton = true,
+  toolbarStart,
 }: UnifiedBuilderShellProps) {
   const { t } = useTranslation("common");
 
@@ -52,20 +54,25 @@ export function UnifiedBuilderShell({
     </div>
   );
 
+  const showToolbar = showSaveButton || toolbarStart != null;
+
   return (
     <PreviewContextProvider strategy={adapter.previewContext.strategy}>
       <div className={designerTreeTabRootClassName}>
-        {showSaveButton ? (
-          <div className="flex shrink-0 justify-end">
-            <Button
-              type="button"
-              className="shrink-0"
-              loading={isSaving}
-              disabled={!canSave || !isDirty}
-              onClick={() => void onSave()}
-            >
-              {t("entity.viewSettings.save")}
-            </Button>
+        {showToolbar ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {toolbarStart}
+            {showSaveButton ? (
+              <Button
+                type="button"
+                className="ml-auto shrink-0"
+                loading={isSaving}
+                disabled={!canSave || !isDirty}
+                onClick={() => void onSave()}
+              >
+                {t("entity.viewSettings.save")}
+              </Button>
+            ) : null}
           </div>
         ) : null}
         {sessionWrapper ? sessionWrapper(workbench) : workbench}

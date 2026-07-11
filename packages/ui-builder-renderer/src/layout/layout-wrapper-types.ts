@@ -31,4 +31,9 @@ export interface LayoutWrapperRenderOptions {
   readonly rowWrapper?: RowWrapper;
   readonly renderEmptyRootColumns?: boolean;
   readonly stretchRootColumns?: boolean;
+  /**
+   * When set, that container row skips its own shell and renders children as
+   * direct siblings (styles live on a promoted host such as `<footer>`).
+   */
+  readonly promotedContainerRowId?: string;
 }

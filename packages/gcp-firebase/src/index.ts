@@ -68,6 +68,7 @@ export { createFirestoreAdminEntityDefinitionRepository } from "./firestore-admi
 export { createFirestoreAdminEntityUiOverrideRepository } from "./firestore-admin-entity-ui-override-repository.js";
 export { createFirestoreAdminUiBuilderPresetRepository } from "./firestore-admin-ui-builder-preset-repository.js";
 export { createFirestoreAdminTenantDashboardLayoutRepository } from "./firestore-admin-tenant-dashboard-layout-repository.js";
+export { createFirestoreAdminTenantSidebarLayoutRepository } from "./firestore-admin-tenant-sidebar-layout-repository.js";
 export { createFirestoreAdminDataHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminDataHookExecutionRepository } from "./firestore-admin-hook-execution-repository.js";
 export { createFirestoreAdminHookLogMessageRepository } from "./firestore-admin-hook-log-message-repository.js";
@@ -135,6 +136,7 @@ export {
 export {
   uploadTenantLogo,
   uploadTenantDashboardImage,
+  uploadTenantSidebarImage,
   validateStorageObjectId,
   deleteTenantStoragePrefix,
 } from "./tenant-storage.js";

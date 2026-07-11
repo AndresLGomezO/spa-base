@@ -292,9 +292,7 @@ export function useStyleRulesPopoverEditor({
                   <div className="flex justify-end gap-1">
                     <Popover
                       open={editingIndex === index}
-                      onOpenChange={(open) =>
-                        handleEditOpenChange(index, open)
-                      }
+                      onOpenChange={(open) => handleEditOpenChange(index, open)}
                       layer="elevated"
                       placement="right-start"
                       title={
@@ -366,8 +364,7 @@ export function useStyleRulesPopoverEditor({
   return { addTrigger, table };
 }
 
-export interface StyleRulesPopoverTableProps
-  extends UseStyleRulesPopoverEditorOptions {
+export interface StyleRulesPopoverTableProps extends UseStyleRulesPopoverEditorOptions {
   readonly headerEnd?: ReactNode;
 }
 

@@ -32,9 +32,7 @@ export function normalizeConditionalStyleRule(
 ): NormalizedConditionalStyleRule {
   const explicitStyles = rule.styles ?? [];
   const styles =
-    explicitStyles.length > 0
-      ? explicitStyles
-      : legacyStylesFromRule(rule);
+    explicitStyles.length > 0 ? explicitStyles : legacyStylesFromRule(rule);
 
   return {
     matchValue: rule.matchValue,

@@ -9,12 +9,7 @@
         {
           "type": "table",
           "name": "default",
-          "fields": [
-            "financialItemId",
-            "dueDate",
-            "expectedAmount",
-            "status"
-          ]
+          "fields": ["financialItemId", "dueDate", "expectedAmount", "status"]
         }
       ],
       "listViewType": "expandableTable",

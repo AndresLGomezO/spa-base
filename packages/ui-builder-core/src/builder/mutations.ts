@@ -7,7 +7,13 @@ import type {
   UiLayoutDocument,
 } from "../types/layout.js";
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
-import { createDefaultChartComponent } from "../types/component.js";
+import {
+  createDefaultChartComponent,
+  createDefaultNavTabComponent,
+  createDefaultSidebarCollapseComponent,
+  createDefaultSidebarNavComponent,
+  createDefaultSidebarTriggerComponent,
+} from "../types/component.js";
 import type { ContainerComponentConfig } from "../types/component.js";
 import {
   isContainerComponent,
@@ -143,6 +149,22 @@ export function createDefaultComponent(
 
   if (kind === "notification-bell") {
     return { kind: "notification-bell", iconName: "Bell" };
+  }
+
+  if (kind === "sidebar-nav") {
+    return createDefaultSidebarNavComponent();
+  }
+
+  if (kind === "sidebar-collapse") {
+    return createDefaultSidebarCollapseComponent();
+  }
+
+  if (kind === "sidebar-trigger") {
+    return createDefaultSidebarTriggerComponent();
+  }
+
+  if (kind === "nav-tab") {
+    return createDefaultNavTabComponent();
   }
 
   if (kind === "form-actions") {
@@ -288,6 +310,22 @@ export function createDefaultStaticComponent(
 
   if (kind === "notification-bell") {
     return { kind: "notification-bell", iconName: "Bell" };
+  }
+
+  if (kind === "sidebar-nav") {
+    return createDefaultSidebarNavComponent();
+  }
+
+  if (kind === "sidebar-collapse") {
+    return createDefaultSidebarCollapseComponent();
+  }
+
+  if (kind === "sidebar-trigger") {
+    return createDefaultSidebarTriggerComponent();
+  }
+
+  if (kind === "nav-tab") {
+    return createDefaultNavTabComponent();
   }
 
   if (kind === "form-actions") {

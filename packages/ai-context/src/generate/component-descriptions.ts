@@ -413,6 +413,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       "imageSize?",
       "avatarShape?: circle | rounded | square",
       "profileButtonContent?: photo | full",
+      "profileButtonShowArrow?: boolean (default true)",
       "label?",
       "styles?",
     ],
@@ -444,6 +445,84 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
         iconName: "Bell",
         iconSize: 24,
         showBadge: true,
+      },
+      null,
+      2,
+    ),
+  },
+  "sidebar-nav": {
+    summary:
+      "Sidebar navigation items container with shared templates for group, subgroup, and raw items.",
+    properties: [
+      "groupItem: { rows, styles?, motion? }",
+      "subgroupItem: { rows, styles?, motion? }",
+      "rawItem: { rows, styles?, motion? }",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "sidebar-nav",
+        groupItem: { rows: [] },
+        subgroupItem: { rows: [] },
+        rawItem: { rows: [] },
+      },
+      null,
+      2,
+    ),
+  },
+  "sidebar-collapse": {
+    summary:
+      "Sidebar collapse/expand control with configurable icons and styles.",
+    properties: [
+      "iconName?: string (default PanelLeftClose)",
+      "expandIconName?: string (default PanelLeft)",
+      "iconSize?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "sidebar-collapse",
+        iconName: "PanelLeftClose",
+        expandIconName: "PanelLeft",
+      },
+      null,
+      2,
+    ),
+  },
+  "sidebar-trigger": {
+    summary:
+      "Header control that opens/toggles the app sidebar (e.g. hamburger / panel trigger).",
+    properties: [
+      "iconName?: string (default PanelLeft)",
+      "iconSize?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "sidebar-trigger",
+        iconName: "PanelLeft",
+        iconSize: 20,
+      },
+      null,
+      2,
+    ),
+  },
+  "nav-tab": {
+    summary:
+      "Footer navigation tab with icon, optional label, and route target.",
+    properties: [
+      "iconName: string",
+      "label?: string",
+      "to: string",
+      "matchPath?: string",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "nav-tab",
+        iconName: "Home",
+        label: "Home",
+        to: "/",
       },
       null,
       2,

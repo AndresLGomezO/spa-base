@@ -2,7 +2,7 @@ import { useLocation } from "react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { cn } from "@repo/theme/utils";
 
-import { SidebarProvider, ThirdRailHost, ThirdRailProvider } from "@repo/ui";
+import { ThirdRailHost, ThirdRailProvider } from "@repo/ui";
 
 import { EntityCatalogProvider } from "../entities/entity-catalog-context";
 import { CustomViewCatalogProvider } from "../custom-views/custom-view-catalog-context";
@@ -15,6 +15,9 @@ import { NavigationPendingOutlet } from "../routing/NavigationPendingOutlet";
 import { PageTitleProvider } from "../routing/page-title-context";
 import { RequireAuth } from "../routing/RouteGuards";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
+import { AppFooter } from "../components/sidebar/AppFooter";
+import { TenantAwareSidebarProvider } from "../components/sidebar/TenantAwareSidebarProvider";
+import { useTenantSidebarLayoutRuntime } from "../features/ui-builder/use-tenant-sidebar-layout-runtime";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import { CreateTenantModal } from "../components/platform/CreateTenantModal";
 import { IndexProvisioningGlobalBanner } from "../components/index-provisioning/IndexProvisioningGlobalBanner";
@@ -39,6 +42,20 @@ function MainOutlet() {
   );
 }
 
+function AppShellColumn() {
+  const runtime = useTenantSidebarLayoutRuntime();
+
+  return (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <AppHeader />
+      <MainOutlet />
+      {runtime.exists ? (
+        <AppFooter layout={runtime.config.footerLayout} />
+      ) : null}
+    </div>
+  );
+}
+
 export default function PrivateLayoutRoute() {
   useLockDocumentScroll();
 
@@ -54,16 +71,13 @@ export default function PrivateLayoutRoute() {
                     <EntitySaveManagerProvider>
                       <CreateTenantModalProvider>
                         <ThirdRailProvider>
-                          <SidebarProvider>
+                          <TenantAwareSidebarProvider>
                             <div className="relative flex h-dvh overflow-hidden">
                               <AppSidebar />
-                              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                                <AppHeader />
-                                <MainOutlet />
-                              </div>
+                              <AppShellColumn />
                               <ThirdRailHost />
                             </div>
-                          </SidebarProvider>
+                          </TenantAwareSidebarProvider>
                           <CreateTenantModal />
                           <IndexProvisioningGlobalBanner />
                         </ThirdRailProvider>

@@ -45,11 +45,17 @@ describe("style-rules-state", () => {
     expect(coerceNumericStyleValue("fontSize", "abc")).toBe("1");
   });
 
-  it("allows negative margin values", () => {
+  it("allows negative margin and inset values", () => {
     expect(numericStyleInputMin("marginTop")).toBe(NEGATIVE_MARGIN_MIN_PX);
+    expect(numericStyleInputMin("top")).toBe(NEGATIVE_MARGIN_MIN_PX);
+    expect(numericStyleInputMin("left")).toBe(NEGATIVE_MARGIN_MIN_PX);
     expect(coerceNumericStyleValue("marginTop", "-40")).toBe("-40");
     expect(coerceNumericStyleValue("marginTop", "-1000")).toBe("-999");
+    expect(coerceNumericStyleValue("bottom", "-24")).toBe("-24");
+    expect(coerceNumericStyleValue("right", "-1000")).toBe("-999");
     expect(coerceNumericStyleValue("paddingTop", "-5")).toBe("0");
+    expect(isValidDimensionCustomValue("top", "-12")).toBe(true);
+    expect(isValidDimensionCustomValue("left", "-12%")).toBe(true);
   });
 
   it("removes a rule by index", () => {

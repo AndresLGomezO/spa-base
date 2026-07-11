@@ -80,6 +80,7 @@
     "designLayoutMetrics": "Metrics",
     "designLayoutPresets": "Component presets",
     "designLayoutDashboard": "Dashboard layout",
+    "designLayoutAppShell": "Shell de la app",
     "aiChat": "AI Chat",
     "debugger": "Debugger",
     "debuggerAiJobs": "AI Jobs",
@@ -543,8 +544,7 @@
           "view": "Ver",
           "import": "Importar"
         }
-      },
-      "selectColumn": "Editar columna {{column}}"
+      }
     },
     "components": {
       "panelTitle": "Estructura",
@@ -781,10 +781,6 @@
     "dateFilter": "Filtro de fecha",
     "searchLabel": "Etiqueta",
     "filtersLabel": "Etiqueta",
-    "searchAndFilters": "Búsqueda y filtros",
-    "enableSearch": "Activar búsqueda",
-    "enableFilters": "Activar filtros",
-    "enableDateFilter": "Activar filtro de fecha",
     "dateFilterGranularity": "Formato del filtro de fecha",
     "dateFilterGranularityYear": "Solo año",
     "dateFilterGranularityMonth": "Mes y año",
@@ -859,7 +855,8 @@
       "avatarShapeSquare": "Cuadrado",
       "profileButtonContent": "Contenido del botón de perfil",
       "profileButtonContentPhoto": "Solo foto",
-      "profileButtonContentFull": "Foto con nombre y detalles"
+      "profileButtonContentFull": "Foto con nombre y detalles",
+      "profileButtonShowArrow": "Mostrar flecha del botón de perfil"
     },
     "sections": {
       "selectLabel": "Sección",
@@ -886,6 +883,74 @@
       "discard": "Descartar cambios",
       "keepEditing": "Seguir editando"
     }
+  },
+  "sidebarLayoutDesigner": {
+    "title": "Diseñador del shell de la app",
+    "settings": "Configuración",
+    "resetToPlatform": "Restablecer a plataforma",
+    "resetToPlatformTitle": "¿Restablecer el shell de la app al valor de plataforma?",
+    "resetToPlatformMessage": "Esto elimina la personalización del shell del tenant (barra lateral, encabezado y pie). Se usará el chrome predeterminado de la plataforma hasta que guardes un layout nuevo.",
+    "resetToPlatformConfirm": "Restablecer a plataforma",
+    "autoCollapseBreakpoint": "Breakpoint de auto-colapso",
+    "hamburgerBreakpoint": "Breakpoint del menú hamburguesa",
+    "none": "Ninguno",
+    "tabs": {
+      "ariaLabel": "Regiones del shell de la app",
+      "sidebar": "Barra lateral",
+      "header": "Encabezado",
+      "footer": "Pie"
+    },
+    "layout": {
+      "structureTitle": "Estructura de la barra lateral",
+      "headerStructureTitle": "Estructura del encabezado",
+      "footerStructureTitle": "Estructura del pie"
+    },
+    "components": {
+      "sidebarNav": "Navegación de la barra lateral",
+      "sidebarCollapse": "Colapso de la barra lateral",
+      "sidebarTrigger": "Botón de menú",
+      "navTab": "Pestaña de navegación"
+    },
+    "collapseComponent": {
+      "iconName": "Icono cuando está expandida",
+      "iconNameHint": "Se muestra con la barra abierta (acción de colapsar). Lucide PascalCase, p. ej. PanelLeftClose",
+      "expandIconName": "Icono cuando está colapsada",
+      "expandIconNameHint": "Se muestra en modo solo iconos (acción de expandir). Lucide PascalCase, p. ej. PanelLeft",
+      "iconSize": "Tamaño del icono (px)",
+      "statePreview": "Vista previa de estados",
+      "stateExpanded": "Expandida",
+      "stateCollapsed": "Colapsada"
+    },
+    "triggerComponent": {
+      "iconName": "Icono de menú (nombre Lucide)",
+      "iconNameHint": "Nombre Lucide en PascalCase, p. ej. Menu",
+      "iconSize": "Tamaño del icono (px)"
+    },
+    "navTabComponent": {
+      "iconName": "Icono de pestaña (nombre Lucide)",
+      "label": "Etiqueta",
+      "to": "Ruta",
+      "matchPath": "Ruta de coincidencia (opcional)"
+    },
+    "navComponent": {
+      "templatesHint": "Las plantillas de grupo, subgrupo e ítem simple se comparten en toda la barra lateral. Personaliza los estilos de cada plantilla abajo; los estilos del contenedor están en la sección de estilos de la fila.",
+      "groupItemStyles": "Estilos de ítem de grupo",
+      "subgroupItemStyles": "Estilos de ítem de subgrupo",
+      "rawItemStyles": "Estilos de ítem simple"
+    },
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
+      "structurePanelSave": "Guardar cambios de estructura",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando",
+      "tabMessage": "Tienes cambios sin guardar en esta pestaña. Guárdalos antes de cambiar, o descarta los cambios.",
+      "save": "Guardar cambios"
+    }
+  },
+  "appShellDesigner": {
+    "title": "Diseñador del shell de la app",
+    "subtitle": "Configura la barra lateral, el encabezado y la navegación del pie"
   },
   "uiBuilderAi": {
     "progressTitle": "Construyendo layout…",
@@ -1406,8 +1471,10 @@
       "component": "Componente",
       "showLabel": "Mostrar etiqueta",
       "labelPosition": "Posición de la etiqueta",
-      "labelAbove": "Arriba del texto",
-      "labelBelow": "Debajo del texto",
+      "labelAbove": "Arriba",
+      "labelBelow": "Abajo",
+      "labelLeft": "Izquierda",
+      "labelRight": "Derecha",
       "label": "Etiqueta",
       "preview": "Vista previa",
       "structure": "Estructura",

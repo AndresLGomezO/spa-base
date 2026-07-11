@@ -72,6 +72,9 @@ const SURFACE_PREVIEW_OVERRIDES: Partial<
   metricWidget: WIDGET_WIDTH_STRATEGY,
   mainPage: FULL_DEVICE_STRATEGY,
   dashboardLayout: SECTION_WIDTH_STRATEGY,
+  sidebarLayout: SECTION_WIDTH_STRATEGY,
+  headerLayout: SECTION_WIDTH_STRATEGY,
+  footerLayout: SECTION_WIDTH_STRATEGY,
   tableColumnCell: WIDGET_WIDTH_STRATEGY,
 };
 

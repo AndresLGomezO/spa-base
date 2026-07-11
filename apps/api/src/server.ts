@@ -13,6 +13,7 @@ import type {
   EntityQueryExecutor,
   EntityUiOverrideRepository,
   TenantDashboardLayoutRepository,
+  TenantSidebarLayoutRepository,
   UiBuilderPresetRepository,
   AggregationEventRepository,
   BackfillJobRepository,
@@ -46,6 +47,7 @@ import {
   createInMemoryEntityDefinitionRepository,
   createInMemoryEntityUiOverrideRepository,
   createInMemoryTenantDashboardLayoutRepository,
+  createInMemoryTenantSidebarLayoutRepository,
   createInMemoryUiBuilderPresetRepository,
   createInMemoryDataHookRepository,
   createInMemoryDataHookExecutionRepository,
@@ -77,6 +79,7 @@ import {
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminTenantDashboardLayoutRepository,
+  createFirestoreAdminTenantSidebarLayoutRepository,
   createFirestoreAdminUiBuilderPresetRepository,
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminDataHookExecutionRepository,
@@ -138,6 +141,7 @@ import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityUiOverrideRoutes } from "./entities/register-entity-ui-override-routes.js";
 import { registerUiBuilderPresetRoutes } from "./ui-builder-presets/register-ui-builder-preset-routes.js";
 import { registerTenantDashboardLayoutRoutes } from "./tenant-dashboard-layout/register-tenant-dashboard-layout-routes.js";
+import { registerTenantSidebarLayoutRoutes } from "./tenant-sidebar-layout/register-tenant-sidebar-layout-routes.js";
 import { registerEntityCategoryRoutes } from "./entity-categories/register-entity-category-routes.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
@@ -195,6 +199,7 @@ interface BuildServerOptions {
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
   readonly entityUiOverrideRepository?: EntityUiOverrideRepository;
   readonly tenantDashboardLayoutRepository?: TenantDashboardLayoutRepository;
+  readonly tenantSidebarLayoutRepository?: TenantSidebarLayoutRepository;
   readonly uiBuilderPresetRepository?: UiBuilderPresetRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: DataHookRepository;
@@ -358,6 +363,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
       : createFirestoreAdminTenantDashboardLayoutRepository(
           firebaseAdminConfig,
         ));
+
+  const tenantSidebarLayoutRepository =
+    options.tenantSidebarLayoutRepository ??
+    (options.repositories
+      ? createInMemoryTenantSidebarLayoutRepository()
+      : createFirestoreAdminTenantSidebarLayoutRepository(firebaseAdminConfig));
 
   const entityCategoryRepository =
     options.entityCategoryRepository ??
@@ -842,6 +853,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     tenantDashboardLayoutRepository,
+    firebaseAdminConfig,
+  });
+
+  await registerTenantSidebarLayoutRoutes(server, {
+    authenticate,
+    permissionDeps,
+    tenantSidebarLayoutRepository,
     firebaseAdminConfig,
   });
 

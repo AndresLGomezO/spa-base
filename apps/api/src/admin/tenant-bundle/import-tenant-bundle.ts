@@ -9,11 +9,14 @@ import { dataHookDefinitionSchema, type DataHookDefinition } from "@repo/hooks";
 import {
   entityUiOverrideRecordSchema,
   tenantDashboardLayoutRecordSchema,
+  tenantSidebarLayoutRecordSchema,
   toPersistedTenantDashboardLayout,
+  toPersistedTenantSidebarLayout,
   toPersistedUiBuilderPreset,
   toPersistedUiOverride,
   type EntityUiOverrideRecord,
   type TenantDashboardLayoutRecord,
+  type TenantSidebarLayoutRecord,
 } from "@repo/entities";
 import {
   countTenantBundleSections,
@@ -88,6 +91,20 @@ function buildCollectionDocuments(
                 tenantDashboardLayoutRecordSchema.parse(
                   bundle.tenantDashboardLayout,
                 ) as TenantDashboardLayoutRecord,
+              ) as unknown as Record<string, unknown>,
+            ),
+          },
+        ]
+      : [],
+    tenant_sidebar_layouts: bundle.tenantSidebarLayout
+      ? [
+          {
+            id: bundle.tenantSidebarLayout.tenantId,
+            data: toPlainRecord(
+              toPersistedTenantSidebarLayout(
+                tenantSidebarLayoutRecordSchema.parse(
+                  bundle.tenantSidebarLayout,
+                ) as TenantSidebarLayoutRecord,
               ) as unknown as Record<string, unknown>,
             ),
           },

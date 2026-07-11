@@ -59,11 +59,15 @@ describe("rates tenant dashboard layout catalog", () => {
     expect(greetingsLayoutJson).toMatch(/view-search/);
     expect(greetingsLayoutJson).toMatch(/notification-bell/);
     expect(greetingsLayoutJson).toMatch(/profile-button/);
-    expect(greetingsLayoutJson).toMatch(/row-63bd041e-8a8b-4241-ba9b-b56f71c3121c/);
+    expect(greetingsLayoutJson).toMatch(
+      /row-63bd041e-8a8b-4241-ba9b-b56f71c3121c/,
+    );
     expect(greetingsLayoutJson).toMatch(/"iconSize":25/);
     expect(greetingsLayoutJson).toMatch(/"imageSize":35/);
     expect(greetingsLayoutJson).toMatch(/view-date-filter/);
-    expect(greetingsLayoutJson).toMatch(/row-db15fb24-86b9-4587-a514-186e965a31ab/);
+    expect(greetingsLayoutJson).toMatch(
+      /row-db15fb24-86b9-4587-a514-186e965a31ab/,
+    );
     expect(greetingsLayoutJson).toMatch(/"property":"height"/);
     expect(greetingsLayoutJson).toMatch(/"value":"100%"/);
     expect(greetingsLayoutJson).toMatch(/"displayFrom":"sm"/);

@@ -9,6 +9,10 @@ import {
   isMetricWidgetComponent,
   isUserComponent,
   isNotificationBellComponent,
+  isSidebarNavComponent,
+  isSidebarCollapseComponent,
+  isSidebarTriggerComponent,
+  isNavTabComponent,
   isChartComponent,
 } from "../types/component.js";
 import type { UiComponentConfig } from "../types/component.js";
@@ -175,6 +179,10 @@ function collectComponentPaths(
     isDashboardSectionComponent(component) ||
     isUserComponent(component) ||
     isNotificationBellComponent(component) ||
+    isSidebarNavComponent(component) ||
+    isSidebarCollapseComponent(component) ||
+    isSidebarTriggerComponent(component) ||
+    isNavTabComponent(component) ||
     isChartComponent(component)
   ) {
     return [];
@@ -192,7 +200,6 @@ function collectComponentPaths(
     isRowHolderComponent(component) ||
     component.kind === "form-section" ||
     component.kind === "icon" ||
-    component.kind === "notification-bell" ||
     component.kind === "form-actions" ||
     component.kind === "wizard-progress" ||
     component.kind === "wizard-step-host" ||

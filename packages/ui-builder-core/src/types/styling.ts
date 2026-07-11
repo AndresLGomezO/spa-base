@@ -5,7 +5,7 @@
 import type { CardBadgeVariant, FieldDateDisplayFormat } from "./component.js";
 import type { StyleRule } from "../styles/style-types.js";
 
-export type LabelPosition = "above" | "below";
+export type LabelPosition = "above" | "below" | "left" | "right";
 
 export type TextColorToken =
   | "default"

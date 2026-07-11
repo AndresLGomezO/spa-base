@@ -154,6 +154,7 @@ function normalizeRuleCompareField(
 
   if (!explicitPath || explicitPath === defaultPath) {
     const { compareFieldPath: _removed, ...rest } = rule;
+    void _removed;
     return rest;
   }
 
@@ -221,8 +222,12 @@ function normalizeConditionalStyleRule(
     defaultCompareFieldDateFormat,
   );
 
-  if (!next.compareFieldDateFormat || next.compareFieldDateFormat === defaultFormat) {
+  if (
+    !next.compareFieldDateFormat ||
+    next.compareFieldDateFormat === defaultFormat
+  ) {
     const { compareFieldDateFormat: _removed, ...rest } = next;
+    void _removed;
     next = rest;
   }
 
@@ -401,10 +406,10 @@ function ConditionalRuleForm({
           >
             <option value="">
               {defaultCompareFieldPath
-                ? resolveCompareFieldLabel(
+                ? (resolveCompareFieldLabel(
                     defaultCompareFieldPath,
                     fieldOptions,
-                  ) ?? defaultCompareFieldPath
+                  ) ?? defaultCompareFieldPath)
                 : (labels.compareField ?? "Compare field")}
             </option>
             {fieldOptions.map((field) => (
@@ -430,8 +435,7 @@ function ConditionalRuleForm({
             searchable
             value={effectiveDateFormat}
             onChange={(event) => {
-              const nextFormat = event.target
-                .value as FieldDateDisplayFormat;
+              const nextFormat = event.target.value as FieldDateDisplayFormat;
               onChange({
                 ...draft,
                 compareFieldDateFormat:
@@ -650,8 +654,7 @@ export function CollapsibleConditionalStylesEditor({
     if (!comparePath) {
       return rule.matchValue || "—";
     }
-    const compareLabel =
-      fieldLabelByPath.get(comparePath) ?? comparePath;
+    const compareLabel = fieldLabelByPath.get(comparePath) ?? comparePath;
     return `${compareLabel} = ${rule.matchValue || "—"}`;
   };
 

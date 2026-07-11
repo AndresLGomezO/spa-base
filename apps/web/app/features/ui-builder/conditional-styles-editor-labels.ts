@@ -33,7 +33,9 @@ export function useConditionalStylesEditorLabels(): {
         saveRule: t("entity.viewSettings.saveConditionalStyleRule"),
         cancel: t("entity.viewSettings.cancel"),
         removeRule: t("entity.viewSettings.remove"),
-        stylesWhenMatched: t("entity.viewSettings.conditionalStylesWhenMatched"),
+        stylesWhenMatched: t(
+          "entity.viewSettings.conditionalStylesWhenMatched",
+        ),
         badgeVariant: t("entity.viewSettings.conditionalStyleBadgeVariant"),
         styleRules,
       },

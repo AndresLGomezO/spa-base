@@ -13,7 +13,7 @@ import { EmbeddedLayoutRenderer } from "./EmbeddedLayoutRenderer.js";
 import { RecursiveLayoutRenderer } from "./RecursiveLayoutRenderer.js";
 
 const minimalContext: LayoutRenderContext = {
-  mode: "dashboardLayout",
+  mode: "mainPage",
   data: {},
   locale: "en",
   resolveField: () => undefined,
@@ -166,7 +166,10 @@ describe("RecursiveLayoutRenderer display range", () => {
     const context: LayoutRenderContext = {
       ...minimalContext,
       dashboardSectionRenderer: () => (
-        <EmbeddedLayoutRenderer layout={sectionLayout} context={minimalContext} />
+        <EmbeddedLayoutRenderer
+          layout={sectionLayout}
+          context={minimalContext}
+        />
       ),
     };
 

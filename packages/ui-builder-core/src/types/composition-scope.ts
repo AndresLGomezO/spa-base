@@ -22,6 +22,9 @@ const SURFACE_SCOPE_MAP: Readonly<Record<DesignSurface, CompositionScope>> = {
   formWizardShell: "screen",
   formModalFooter: "section",
   dashboardLayout: "screen",
+  sidebarLayout: "screen",
+  headerLayout: "screen",
+  footerLayout: "screen",
 };
 
 export function resolveCompositionScope(

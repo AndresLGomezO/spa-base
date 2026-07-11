@@ -32,6 +32,7 @@ describe("componentRowSchema user", () => {
         kind: "user",
         display: "profile-button",
         profileButtonContent: "photo",
+        profileButtonShowArrow: false,
         imageSize: 48,
         avatarShape: "circle",
       },
@@ -41,6 +42,7 @@ describe("componentRowSchema user", () => {
       kind: "user",
       display: "profile-button",
       profileButtonContent: "photo",
+      profileButtonShowArrow: false,
       imageSize: 48,
       avatarShape: "circle",
     });

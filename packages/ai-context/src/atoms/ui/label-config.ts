@@ -27,7 +27,7 @@ Display components and icons use \`label?: LabelConfig\` on the component config
 |----------|------|-------------|
 | \`show\` | boolean | \`false\` → no label rendered |
 | \`text\` | string | Custom label text; omit → auto from field path / entity metadata |
-| \`position\` | \`above\` \\| \`below\` | Label position relative to value (default: \`above\`) |
+| \`position\` | \`above\` \\| \`below\` \\| \`left\` \\| \`right\` | Label position relative to value (default: \`above\`) |
 | \`bold\` | boolean | Bold label text |
 | \`thin\` | boolean | Thin/light label text |
 | \`italic\` | boolean | Italic label |

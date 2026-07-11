@@ -161,6 +161,26 @@ export {
   toPersistedTenantDashboardLayout,
 } from "./ui/tenant-dashboard-layout-persistence.js";
 export {
+  DEFAULT_SIDEBAR_HAMBURGER_BREAKPOINT,
+  putTenantSidebarLayoutInputSchema,
+  tenantSidebarLayoutRecordSchema,
+  tenantSidebarLayoutSettingsSchema,
+  TENANT_SIDEBAR_LAYOUTS_COLLECTION,
+} from "./ui/sidebar-layout-types.js";
+export type {
+  PutTenantSidebarLayoutInput,
+  TenantSidebarLayoutRecord,
+  TenantSidebarLayoutSettings,
+} from "./ui/sidebar-layout-types.js";
+export {
+  createEmptyScreenLayout,
+  fromPersistedTenantSidebarLayout,
+  parseTenantSidebarLayoutRecord,
+  persistedTenantSidebarLayoutSchema,
+  safeFromPersistedTenantSidebarLayout,
+  toPersistedTenantSidebarLayout,
+} from "./ui/tenant-sidebar-layout-persistence.js";
+export {
   createDefaultMetricStripLayout,
   DEFAULT_METRIC_STRIP_COLUMN_COUNT,
   metricStripColumnCount,

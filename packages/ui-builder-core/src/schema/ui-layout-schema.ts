@@ -221,7 +221,7 @@ const labelConfigSchema = z
   .object({
     show: z.boolean().optional(),
     text: z.string().optional(),
-    position: z.enum(["above", "below"]).optional(),
+    position: z.enum(["above", "below", "left", "right"]).optional(),
     bold: z.boolean().optional(),
     thin: z.boolean().optional(),
     italic: z.boolean().optional(),
@@ -755,6 +755,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         imageSize: z.number().int().min(8).max(1024).optional(),
         avatarShape: z.enum(["circle", "rounded", "square"]).optional(),
         profileButtonContent: z.enum(["photo", "full"]).optional(),
+        profileButtonShowArrow: z.boolean().optional(),
         label: labelConfigSchema.optional(),
         styles: z.array(styleRuleSchema).optional(),
         ...optionalConditionalStylesSchema,
@@ -767,6 +768,36 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         iconSize: z.number().int().min(12).max(96).optional(),
         showBadge: z.boolean().optional(),
         label: labelConfigSchema.optional(),
+        styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("sidebar-collapse"),
+        iconName: z.string().trim().min(1).optional(),
+        expandIconName: z.string().trim().min(1).optional(),
+        iconSize: z.number().int().min(12).max(96).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("sidebar-trigger"),
+        iconName: z.string().trim().min(1).optional(),
+        iconSize: z.number().int().min(12).max(96).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("nav-tab"),
+        iconName: z.string().trim().min(1),
+        label: z.string().optional(),
+        to: z.string().trim().min(1),
+        matchPath: z.string().trim().min(1).optional(),
         styles: z.array(styleRuleSchema).optional(),
         ...optionalConditionalStylesSchema,
       })
@@ -920,6 +951,34 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         rows: z.array(rowNodeSchema),
         emptyStateRows: z.array(rowNodeSchema).optional(),
         stackDirection: z.enum(["column", "row"]).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("sidebar-nav"),
+        groupItem: z
+          .object({
+            rows: z.array(rowNodeSchema),
+            styles: z.array(styleRuleSchema).optional(),
+            motion: motionPresetSchema.optional(),
+          })
+          .strict(),
+        subgroupItem: z
+          .object({
+            rows: z.array(rowNodeSchema),
+            styles: z.array(styleRuleSchema).optional(),
+            motion: motionPresetSchema.optional(),
+          })
+          .strict(),
+        rawItem: z
+          .object({
+            rows: z.array(rowNodeSchema),
+            styles: z.array(styleRuleSchema).optional(),
+            motion: motionPresetSchema.optional(),
+          })
+          .strict(),
         styles: z.array(styleRuleSchema).optional(),
         ...optionalConditionalStylesSchema,
       })

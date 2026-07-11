@@ -3,7 +3,7 @@ export const UI_PERSISTENCE_KEYS_ATOM_ID = "ui.persistence.keys";
 export function buildUiPersistenceKeysAtom(): string {
   return `# UI persistence keys
 
-Layouts persist on **entity UI overrides** (\`entity_ui_overrides\`) and tenant dashboard config.
+Layouts persist on **entity UI overrides** (\`entity_ui_overrides\`) and tenant chrome configs (dashboard + sidebar).
 
 ## Entity UI override keys
 
@@ -21,6 +21,13 @@ Layouts persist on **entity UI overrides** (\`entity_ui_overrides\`) and tenant 
 | \`views[].fields\` | List toolbar | Column/filter field paths (table view config) |
 | \`views[].columns\` | Expandable table | Grouped columns with \`cellLayout\` |
 | \`views[].rowExpandLayout\` | Expandable table | Expanded row panel |
+
+## Tenant chrome
+
+| Collection / key | Description |
+|------------------|-------------|
+| \`tenant_dashboard_layouts\` | Dashboard sections + shell layout |
+| \`tenant_sidebar_layouts\` | App shell: \`sidebarLayout\`, \`headerLayout\`, \`footerLayout\` + breakpoint settings. Missing doc → hardcoded sidebar/header; no footer. |
 
 ## Tenant presets
 

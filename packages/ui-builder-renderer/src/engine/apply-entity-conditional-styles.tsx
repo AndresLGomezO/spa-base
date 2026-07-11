@@ -33,8 +33,7 @@ function buildCompareFieldMetaResolver(
       return {
         ...meta,
         fieldType: meta.fieldType ?? "date",
-        dateDisplayFormat:
-          meta.dateDisplayFormat ?? options.dateDisplayFormat,
+        dateDisplayFormat: meta.dateDisplayFormat ?? options.dateDisplayFormat,
       };
     }
     return meta;
@@ -81,10 +80,7 @@ export function wrapNodeWithConditionalStyles(
     readonly cssText?: string;
   },
 ): ReactNode {
-  const className = mergeMatchedConditionalClassName(
-    base?.className,
-    matched,
-  );
+  const className = mergeMatchedConditionalClassName(base?.className, matched);
   const style = { ...base?.style, ...matched.style };
   const cssText = mergeConditionalCssText(base?.cssText, matched.cssText);
   const hasStyle = Object.keys(style).length > 0;

@@ -2,7 +2,7 @@
 
 Displays the signed-in user (name, email, photo, photo with name, or profile button menu).
 
-**Properties:** display: name | email | photo | photo-and-name | profile-button, nameFormat?: full | first, imageSize?, avatarShape?: circle | rounded | square, profileButtonContent?: photo | full, label?, styles?
+**Properties:** display: name | email | photo | photo-and-name | profile-button, nameFormat?: full | first, imageSize?, avatarShape?: circle | rounded | square, profileButtonContent?: photo | full, profileButtonShowArrow?: boolean (default true), label?, styles?
 
 ```json
 {

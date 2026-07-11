@@ -1,7 +1,4 @@
-import {
-  useState,
-  type ComponentPropsWithoutRef,
-} from "react";
+import { useState, type ComponentPropsWithoutRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router";
 
@@ -25,11 +22,10 @@ import { resolveLucideIconBoxStyle } from "../../components/entity/LayoutLucideI
 import { NotificationListItem } from "./NotificationListItem";
 import { useNotifications } from "./notifications-context";
 
-export interface NotificationsMenuTriggerProps
-  extends Omit<
-    ComponentPropsWithoutRef<typeof Button>,
-    "children" | "fullWidth" | "variant" | "type"
-  > {
+interface NotificationsMenuTriggerProps extends Omit<
+  ComponentPropsWithoutRef<typeof Button>,
+  "children" | "fullWidth" | "variant" | "type"
+> {
   readonly iconName: string;
   readonly iconSize?: number;
   readonly presentation?: Pick<
@@ -45,7 +41,7 @@ export interface NotificationsMenuTriggerProps
   readonly customChrome?: boolean;
 }
 
-export function NotificationsMenuTrigger({
+function NotificationsMenuTrigger({
   iconName,
   iconSize,
   presentation,
@@ -129,7 +125,7 @@ export function NotificationsMenuTrigger({
   );
 }
 
-export function NotificationsMenuContent({
+function NotificationsMenuContent({
   onClose,
 }: {
   readonly onClose: () => void;
@@ -137,13 +133,8 @@ export function NotificationsMenuContent({
   const { t } = useTranslation("common");
   const location = useLocation();
   const returnTo = buildCurrentReturnTo(location);
-  const {
-    notifications,
-    unreadCount,
-    markRead,
-    markAllRead,
-    isLoading,
-  } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, isLoading } =
+    useNotifications();
 
   return (
     <>
@@ -198,7 +189,7 @@ export function NotificationsMenuContent({
   );
 }
 
-export interface NotificationsMenuProps {
+interface NotificationsMenuProps {
   readonly placement?: PopoverPlacement;
   readonly fullWidth?: boolean;
   readonly iconName?: string;

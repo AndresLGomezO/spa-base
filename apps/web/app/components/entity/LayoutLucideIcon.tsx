@@ -79,6 +79,7 @@ export function LayoutLucideIcon({
         label={labelText}
         showLabel={showLabel}
         labelPosition={config.label?.position ?? "above"}
+        labelUppercase={false}
         value={
           <Icon
             aria-hidden

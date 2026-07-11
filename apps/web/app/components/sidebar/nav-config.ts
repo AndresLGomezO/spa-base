@@ -56,6 +56,7 @@ export type NavLabelKey =
   | "designLayoutMetrics"
   | "designLayoutPresets"
   | "designLayoutDashboard"
+  | "designLayoutAppShell"
   | "aiChat"
   | "debugger"
   | "debuggerAiJobs"
@@ -182,6 +183,7 @@ export const DESIGN_LAYOUT_FORMS_NAV_ICON = ClipboardPen;
 export const DESIGN_LAYOUT_METRICS_NAV_ICON = ChartColumn;
 export const DESIGN_LAYOUT_PRESETS_NAV_ICON = Blocks;
 export const DESIGN_LAYOUT_DASHBOARD_NAV_ICON = LayoutDashboard;
+export const DESIGN_LAYOUT_SIDEBAR_NAV_ICON = Sidebar;
 
 export const SETTINGS_FORMULAS_NAV_ITEM: NavLinkConfig = {
   id: "formulas",

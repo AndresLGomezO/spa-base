@@ -6,6 +6,10 @@ import {
   isIconComponent,
   isNotificationBellComponent,
   isUserComponent,
+  isSidebarCollapseComponent,
+  isSidebarNavComponent,
+  isSidebarTriggerComponent,
+  isNavTabComponent,
   isDashboardSectionComponent,
   isMetricKpiComponent,
   isMetricDerivedKpiComponent,
@@ -476,6 +480,46 @@ export function renderUiComponent(
 
   if (isNotificationBellComponent(config)) {
     const node = context.notificationBellRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
+  }
+
+  if (isSidebarNavComponent(config)) {
+    const node = context.sidebarNavRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
+  }
+
+  if (isSidebarCollapseComponent(config)) {
+    const node = context.sidebarCollapseRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
+  }
+
+  if (isSidebarTriggerComponent(config)) {
+    const node = context.sidebarTriggerRenderer?.(config) ?? null;
+    const matched = resolveComponentConditionalStyles(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return wrapNodeWithConditionalStyles(node, matched);
+  }
+
+  if (isNavTabComponent(config)) {
+    const node = context.navTabRenderer?.(config) ?? null;
     const matched = resolveComponentConditionalStyles(
       config,
       context,

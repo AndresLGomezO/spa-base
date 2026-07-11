@@ -320,7 +320,8 @@ describe("RecursiveLayoutRenderer snapshot mini parity", () => {
       />,
     );
 
-    const directPreviewMarkers = extractSnapshotMiniMarkers(directPreviewMarkup);
+    const directPreviewMarkers =
+      extractSnapshotMiniMarkers(directPreviewMarkup);
     const sectionPreviewMarkers =
       extractSnapshotMiniMarkers(sectionPreviewMarkup);
     const runtimeMarkers = extractSnapshotMiniMarkers(runtimeMarkup);

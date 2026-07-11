@@ -130,10 +130,7 @@ export function resolveParentGridAlignItems(
   locator: RowLocator,
 ): FlexAlign | undefined {
   const parentRow = findParentRowNodeInLayout(layout, locator);
-  if (
-    parentRow?.type === "component" &&
-    isGridComponent(parentRow.component)
-  ) {
+  if (parentRow?.type === "component" && isGridComponent(parentRow.component)) {
     return parentRow.component.alignItems ?? "stretch";
   }
 
@@ -307,10 +304,17 @@ function resolveGridParentRowShellLayoutClasses(options: {
     return undefined;
   }
 
+  // `h-full` + `self-center|start|end` cancels cross-axis alignment; only stretch
+  // (and default fill) should fill the grid track height.
+  const fillTrackHeight =
+    options.parentGridAlignItems === undefined ||
+    options.parentGridAlignItems === "stretch";
+  const heightClass = fillTrackHeight ? "h-full " : "";
+
   if (options.isStructuralRow || options.preferFlexGrow) {
     return {
-      shell: `relative flex min-h-0 h-full w-full min-w-0 shrink-0 flex-col ${selfClass}`,
-      inner: "relative z-0 flex h-full min-h-0 w-full min-w-0 flex-col",
+      shell: `relative flex min-h-0 ${heightClass}w-full min-w-0 shrink-0 flex-col ${selfClass}`,
+      inner: `relative z-0 flex ${heightClass}min-h-0 w-full min-w-0 flex-col`,
     };
   }
 
@@ -322,8 +326,8 @@ function resolveGridParentRowShellLayoutClasses(options: {
   }
 
   return {
-    shell: `relative flex min-h-0 h-full min-w-0 max-w-full shrink-0 flex-col ${selfClass}`,
-    inner: "relative z-0 flex h-full min-h-0 min-w-0 flex-col",
+    shell: `relative flex min-h-0 ${heightClass}min-w-0 max-w-full shrink-0 flex-col ${selfClass}`,
+    inner: `relative z-0 flex ${heightClass}min-h-0 min-w-0 flex-col`,
   };
 }
 

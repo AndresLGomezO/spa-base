@@ -9,6 +9,7 @@ import {
   createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminTenantDashboardLayoutRepository,
+  createFirestoreAdminTenantSidebarLayoutRepository,
   createFirestoreAdminTenantRepository,
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminUiBuilderPresetRepository,
@@ -47,6 +48,8 @@ export async function exportTenantBundle(
     createFirestoreAdminTenantDashboardLayoutRepository(
       deps.firebaseAdminConfig,
     );
+  const sidebarLayoutRepository =
+    createFirestoreAdminTenantSidebarLayoutRepository(deps.firebaseAdminConfig);
   const roleRepository = createFirestoreAdminTenantRoleRepository(
     deps.firebaseAdminConfig,
   );
@@ -78,6 +81,7 @@ export async function exportTenantBundle(
     entityUiOverrides,
     uiBuilderPresets,
     tenantDashboardLayout,
+    tenantSidebarLayout,
     roles,
     hooks,
     formulaDefinitions,
@@ -91,6 +95,7 @@ export async function exportTenantBundle(
     uiOverrideRepository.list(tenantId),
     presetRepository.list(tenantId),
     dashboardLayoutRepository.get(tenantId),
+    sidebarLayoutRepository.get(tenantId),
     roleRepository.list(tenantId),
     hookRepository.list(tenantId),
     formulaDefinitionRepository.list(tenantId),
@@ -110,6 +115,7 @@ export async function exportTenantBundle(
     entityUiOverrides,
     uiBuilderPresets,
     tenantDashboardLayout,
+    tenantSidebarLayout,
     roles,
     hooks,
     formulaDefinitions: formulaDefinitions.filter(

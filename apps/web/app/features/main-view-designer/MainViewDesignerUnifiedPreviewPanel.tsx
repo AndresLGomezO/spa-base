@@ -1,18 +1,17 @@
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import {
-  resolvePreviewStrategy,
-  toEditableLayoutDocument,
-} from "@repo/ui-builder-core";
-import { useMemo } from "react";
+import { resolvePreviewStrategy } from "@repo/ui-builder-core";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
+import { EntityMainPageShell } from "../../components/entity/EntityMainPageShell";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
+import { LayoutStructureOverlay } from "../form-designer/LayoutStructureOverlay";
+import { useLayoutStructureOverlayAdapters } from "../form-designer/use-layout-structure-overlay-adapters";
 import { createEntityMainPageRenderContext } from "../ui-builder/create-entity-main-page-render-context";
 import { createDefaultMetricRowLayout } from "../ui-builder/create-default-metric-row-layout";
 import { UnifiedDesignerPreviewPanel } from "../unified-builder/UnifiedDesignerPreviewPanel";
 import { useMainViewDesigner } from "./main-view-designer-context";
+import { useOptionalMainViewDesignerStructureSession } from "./MainViewDesignerStructureSession";
 import { MainViewDesignerPreviewThemeSelect } from "./MainViewDesignerPreviewThemeSelect";
-import { useMainViewDesignerLayoutPreviewWrappers } from "./use-main-view-designer-layout-preview-wrappers";
 
 interface MainViewDesignerUnifiedPreviewPanelProps {
   readonly withStructureChrome?: boolean;
@@ -22,10 +21,14 @@ export function MainViewDesignerUnifiedPreviewPanel({
   withStructureChrome = false,
 }: MainViewDesignerUnifiedPreviewPanelProps) {
   const { i18n } = useTranslation("common");
-  const { editor, previewColorScheme } = useMainViewDesigner();
-
-  const structureWrappers =
-    useMainViewDesignerLayoutPreviewWrappers(withStructureChrome);
+  const {
+    editor,
+    previewColorScheme,
+    requestComponentRowPanel,
+    requestComponentColumnPanel,
+  } = useMainViewDesigner();
+  const structureSession = useOptionalMainViewDesignerStructureSession();
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const previewStrategy = useMemo(() => resolvePreviewStrategy("mainPage"), []);
 
@@ -79,19 +82,26 @@ export function MainViewDesignerUnifiedPreviewPanel({
     ],
   );
 
-  const editableLayout = useMemo(
-    () => toEditableLayoutDocument(editor.layout),
-    [editor.layout],
-  );
+  const layout = editor.layout;
+  const adapters = useLayoutStructureOverlayAdapters({
+    enabled: withStructureChrome,
+    layout,
+    structureSession,
+    requestComponentRowPanel,
+    requestComponentColumnPanel,
+    captureClicks: false,
+  });
 
   const previewBody = (
-    <RecursiveLayoutRenderer
-      layout={editableLayout}
-      context={previewContext}
-      rowWrapper={structureWrappers?.rowWrapper}
-      rootColumnWrapper={structureWrappers?.rootColumnWrapper}
-      nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
-    />
+    <LayoutStructureOverlay
+      frameRef={frameRef}
+      layout={layout}
+      enabled={withStructureChrome}
+      adapters={adapters}
+      className="relative min-h-0 min-w-0 flex-1"
+    >
+      <EntityMainPageShell layout={layout} context={previewContext} />
+    </LayoutStructureOverlay>
   );
 
   return (

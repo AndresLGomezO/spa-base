@@ -24,6 +24,7 @@ interface UnifiedDesignerLayoutTabProps {
   readonly previewPanel: ReactNode;
   readonly sessionWrapper?: (workbench: ReactNode) => ReactNode;
   readonly showSaveButton?: boolean;
+  readonly toolbarStart?: ReactNode;
 }
 
 export function UnifiedDesignerLayoutTab({
@@ -39,6 +40,7 @@ export function UnifiedDesignerLayoutTab({
   previewPanel,
   sessionWrapper,
   showSaveButton,
+  toolbarStart,
 }: UnifiedDesignerLayoutTabProps) {
   const { t } = useTranslation("common");
 
@@ -83,6 +85,7 @@ export function UnifiedDesignerLayoutTab({
       onSave={handleSave}
       sessionWrapper={sessionWrapper}
       showSaveButton={showSaveButton}
+      toolbarStart={toolbarStart}
     />
   );
 }

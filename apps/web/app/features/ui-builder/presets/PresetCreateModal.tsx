@@ -31,6 +31,7 @@ const DESIGN_SURFACES: readonly DesignSurface[] = [
   "metricWidget",
   "dashboardSection",
   "dashboardLayout",
+  "sidebarLayout",
 ];
 
 const EMPTY_TEMPLATE =

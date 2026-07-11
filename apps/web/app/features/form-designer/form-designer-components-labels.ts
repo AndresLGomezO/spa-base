@@ -78,7 +78,13 @@ export function formDesignerComponentsLabels(
       "dashboardLayoutDesigner.components.dashboardSection",
     ),
     user: t("dashboardLayoutDesigner.components.user"),
-    "notification-bell": t("dashboardLayoutDesigner.components.notificationBell"),
+    "notification-bell": t(
+      "dashboardLayoutDesigner.components.notificationBell",
+    ),
+    "sidebar-nav": t("sidebarLayoutDesigner.components.sidebarNav"),
+    "sidebar-collapse": t("sidebarLayoutDesigner.components.sidebarCollapse"),
+    "sidebar-trigger": t("sidebarLayoutDesigner.components.sidebarTrigger"),
+    "nav-tab": t("sidebarLayoutDesigner.components.navTab"),
     chart: t("formDesigner.components.options.chart"),
     "related-records": t("detailViewDesigner.components.relatedRecords"),
   };

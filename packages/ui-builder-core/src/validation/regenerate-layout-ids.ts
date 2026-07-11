@@ -8,9 +8,23 @@ import type {
   UiLayoutDocument,
 } from "../types/layout.js";
 import { isScreenRootNode } from "../types/layout.js";
-import { isRowHolderComponent } from "../types/component.js";
+import {
+  isRowHolderComponent,
+  isSidebarNavComponent,
+  mapSidebarNavTemplateRows,
+} from "../types/component.js";
 
 function regenerateRowIds(row: RowNode): RowNode {
+  if (isSidebarNavComponent(row.component)) {
+    return {
+      ...row,
+      id: createLayoutId("row"),
+      component: mapSidebarNavTemplateRows(row.component, (rows) =>
+        rows.map((child) => regenerateRowIds(child)),
+      ),
+    };
+  }
+
   if (isRowHolderComponent(row.component)) {
     return {
       ...row,
@@ -36,6 +50,16 @@ function regenerateColumnIds(column: ColumnNode): ColumnNode {
 export function regenerateComponentRowSubtree(
   row: ComponentRowNode,
 ): ComponentRowNode {
+  if (isSidebarNavComponent(row.component)) {
+    return {
+      ...row,
+      id: createLayoutId("row"),
+      component: mapSidebarNavTemplateRows(row.component, (rows) =>
+        rows.map((child) => regenerateRowIds(child)),
+      ),
+    };
+  }
+
   if (isRowHolderComponent(row.component)) {
     return {
       ...row,

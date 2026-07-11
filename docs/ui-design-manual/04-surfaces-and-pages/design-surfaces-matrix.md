@@ -26,6 +26,9 @@ Every surface also allows the universal structural kinds: `container` and `grid`
 | `metricWidget` | Component | Reusable widget inner layout | `metricWidgets[].layout` |
 | `dashboardSection` | Section | Dashboard section content | `dashboardSections[].layout` |
 | `dashboardLayout` | Screen | Tenant dashboard page shell | `dashboardLayout` |
+| `sidebarLayout` | Screen | Tenant app sidebar chrome (App shell) | `tenant_sidebar_layouts.sidebarLayout` |
+| `headerLayout` | Screen | Global app header / hamburger bar | `tenant_sidebar_layouts.headerLayout` |
+| `footerLayout` | Screen | Global bottom navigation tabs | `tenant_sidebar_layouts.footerLayout` |
 
 Envelope surfaces (`design-layout-slice`) are coarser: `list`, `forms`, `mainPage`, `recordDetail`, `metricsRowDesigner`. See [Envelope examples](../appendix/envelope-examples.md).
 
@@ -73,6 +76,14 @@ Display kinds: `text`, `image`, `icon`, `date`, `numeric`, `badge`, `metric-kpi`
 |---------|------------------------------------------|
 | `dashboardSection` | Display kinds, `user`, `metric-widget` |
 | `dashboardLayout` | Display kinds, `user`, `metric-widget`, `dashboard-section` |
+
+### App shell
+
+| Surface | Allowed kinds (plus `container`, `grid`) |
+|---------|------------------------------------------|
+| `sidebarLayout` | `image`, `icon`, `text`, `user`, `notification-bell`, `sidebar-nav`, `sidebar-collapse` |
+| `headerLayout` | `image`, `icon`, `text`, `user`, `sidebar-trigger` |
+| `footerLayout` | `image`, `icon`, `text`, `user`, `nav-tab` |
 
 ---
 

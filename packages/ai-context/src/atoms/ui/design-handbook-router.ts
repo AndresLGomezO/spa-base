@@ -16,6 +16,9 @@ Human-readable manual: \`docs/ui-design-manual/\`. This fragment is a compact ro
 | mainPage | page-header, page-toolbar, page-metrics, page-list, view-search, view-filters, view-date-filter |
 | recordDetail | display kinds, related-records, metric-*, view-search, view-filters, view-date-filter |
 | metricRow | display kinds, metric-widget |
+| sidebarLayout | image, icon, text, user, notification-bell, sidebar-nav, sidebar-collapse + container, grid |
+| headerLayout | image, icon, text, user, sidebar-trigger + container, grid |
+| footerLayout | image, icon, text, user, nav-tab + container, grid |
 
 ## Default presets
 

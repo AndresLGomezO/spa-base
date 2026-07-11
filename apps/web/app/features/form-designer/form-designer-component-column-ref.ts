@@ -52,3 +52,50 @@ export function areComponentColumnRefsEqual(
 
   return componentColumnRefKey(left) === componentColumnRefKey(right);
 }
+
+/** Stable DOM attribute value for runtime column shells (preview overlay). */
+export function toLayoutColumnIdAttr(columnRef: ComponentColumnRef): string {
+  return componentColumnRefKey(columnRef);
+}
+
+export function parseLayoutColumnIdAttr(
+  value: string,
+): ComponentColumnRef | null {
+  if (!value) {
+    return null;
+  }
+
+  const parts = value.split(":");
+  if (parts.length === 1) {
+    const rootColumnIndex = Number(parts[0]);
+    if (
+      !Number.isInteger(rootColumnIndex) ||
+      String(rootColumnIndex) !== parts[0]
+    ) {
+      return null;
+    }
+    return { rootColumnIndex };
+  }
+
+  if (parts.length === 3) {
+    const rootColumnIndex = Number(parts[0]);
+    const nestedColumnIndex = Number(parts[2]);
+    const nestedParentRowId = parts[1];
+    if (
+      !Number.isInteger(rootColumnIndex) ||
+      !Number.isInteger(nestedColumnIndex) ||
+      String(rootColumnIndex) !== parts[0] ||
+      String(nestedColumnIndex) !== parts[2] ||
+      !nestedParentRowId
+    ) {
+      return null;
+    }
+    return {
+      rootColumnIndex,
+      nestedParentRowId,
+      nestedColumnIndex,
+    };
+  }
+
+  return null;
+}

@@ -124,6 +124,14 @@ export default [
       "settings/design-layout/dashboard",
       "./routes/settings/design-layout/dashboard.tsx",
     ),
+    route(
+      "settings/design-layout/app-shell",
+      "./routes/settings/design-layout/app-shell.tsx",
+    ),
+    route(
+      "settings/design-layout/sidebar",
+      "./routes/settings/design-layout/sidebar-redirect.tsx",
+    ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
       ...buildEntityRouteConfig(),

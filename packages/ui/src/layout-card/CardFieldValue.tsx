@@ -12,6 +12,8 @@ export interface CardFieldValueProps {
   readonly label?: string;
   readonly showLabel?: boolean;
   readonly labelPosition?: CardLabelPosition;
+  /** When true (default), label text is rendered uppercase. */
+  readonly labelUppercase?: boolean;
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly valueClassName?: string;
@@ -26,11 +28,18 @@ export interface CardFieldValueProps {
   readonly allowEmpty?: boolean;
 }
 
+function isHorizontalLabelPosition(
+  position: CardLabelPosition,
+): position is "left" | "right" {
+  return position === "left" || position === "right";
+}
+
 export function CardFieldValue({
   value,
   label,
   showLabel = false,
   labelPosition = "above",
+  labelUppercase = true,
   className,
   style,
   valueClassName,
@@ -54,7 +63,8 @@ export function CardFieldValue({
     showLabel && label ? (
       <Text
         className={cn(
-          "text-muted-foreground text-[11px] uppercase tracking-wide",
+          "text-muted-foreground text-[11px]",
+          labelUppercase && "uppercase tracking-wide",
           labelClassName,
         )}
       >
@@ -84,20 +94,27 @@ export function CardFieldValue({
     </span>
   );
 
+  const horizontal = isHorizontalLabelPosition(labelPosition);
+  const labelFirst = labelPosition === "above" || labelPosition === "left";
+
   return (
     <div
-      className={cn("flex min-w-0 flex-col gap-0.5", className)}
+      className={cn(
+        "flex min-w-0 gap-0.5",
+        horizontal ? "flex-row items-center gap-2" : "flex-col",
+        className,
+      )}
       style={style}
     >
-      {labelPosition === "below" ? (
+      {labelFirst ? (
         <>
-          {valueElement}
           {labelElement}
+          {valueElement}
         </>
       ) : (
         <>
-          {labelElement}
           {valueElement}
+          {labelElement}
         </>
       )}
     </div>

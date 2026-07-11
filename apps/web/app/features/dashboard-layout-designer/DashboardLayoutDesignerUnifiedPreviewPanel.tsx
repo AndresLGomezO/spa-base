@@ -3,22 +3,23 @@ import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
   ensureContainerRoot,
   resolvePreviewStrategy,
-  toEditableLayoutDocument,
 } from "@repo/ui-builder-core";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
+import { LayoutStructureOverlay } from "../form-designer/LayoutStructureOverlay";
+import { useLayoutStructureOverlayAdapters } from "../form-designer/use-layout-structure-overlay-adapters";
 import { createTenantDashboardLayoutRenderContext } from "../ui-builder/create-tenant-dashboard-layout-render-context";
 import { useDashboardViewFilterUrlState } from "../ui-builder/use-dashboard-view-filter-url-state";
 import { ViewFilterPageProvider } from "../ui-builder/view-filter-page-context";
 import { UnifiedDesignerPreviewPanel } from "../unified-builder/UnifiedDesignerPreviewPanel";
 import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
+import { useOptionalDashboardLayoutDesignerStructureSession } from "./DashboardLayoutDesignerStructureSession";
 import { DashboardLayoutDesignerPreviewThemeSelect } from "./DashboardLayoutDesignerPreviewThemeSelect";
-import { useDashboardLayoutDesignerLayoutPreviewWrappers } from "./use-dashboard-layout-designer-layout-preview-wrappers";
 
 interface DashboardLayoutDesignerUnifiedPreviewPanelProps {
   readonly withStructureChrome?: boolean;
@@ -30,12 +31,18 @@ export function DashboardLayoutDesignerUnifiedPreviewPanel({
   const { t, i18n } = useTranslation("common");
   const { user } = useAuth();
   const { getDefinition, items } = useEntityCatalog();
-  const { editor, designFocus, previewColorScheme } =
-    useDashboardLayoutDesigner();
+  const {
+    editor,
+    designFocus,
+    previewColorScheme,
+    requestComponentRowPanel,
+    requestComponentColumnPanel,
+  } = useDashboardLayoutDesigner();
+  const structureSession = useOptionalDashboardLayoutDesignerStructureSession();
+  const frameRef = useRef<HTMLDivElement>(null);
 
-  const structureWrappers = useDashboardLayoutDesignerLayoutPreviewWrappers(
-    withStructureChrome && !isShellLayoutFocus(designFocus),
-  );
+  const structureChromeEnabled =
+    withStructureChrome && !isShellLayoutFocus(designFocus);
 
   const previewLayout = isShellLayoutFocus(designFocus)
     ? editor.dashboardLayout
@@ -112,19 +119,44 @@ export function DashboardLayoutDesignerUnifiedPreviewPanel({
       return ensureContainerRoot(previewLayout);
     }
 
-    return toEditableLayoutDocument(previewLayout);
+    // Canonical layout — never toEditableLayoutDocument on the render path.
+    return previewLayout;
   }, [designFocus, previewLayout]);
+
+  const adapters = useLayoutStructureOverlayAdapters({
+    enabled: structureChromeEnabled && renderLayout != null,
+    layout:
+      renderLayout ??
+      ({
+        root: {
+          type: "root",
+          id: "empty",
+          columnCount: 1,
+          columns: [],
+        },
+        showActions: false,
+      } as const),
+    structureSession,
+    requestComponentRowPanel,
+    requestComponentColumnPanel,
+    captureClicks: false,
+  });
 
   const previewBody =
     renderLayout != null ? (
       <ViewFilterPageProvider value={pageState}>
-        <RecursiveLayoutRenderer
+        <LayoutStructureOverlay
+          frameRef={frameRef}
           layout={renderLayout}
-          context={previewContext}
-          rowWrapper={structureWrappers?.rowWrapper}
-          rootColumnWrapper={structureWrappers?.rootColumnWrapper}
-          nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
-        />
+          enabled={structureChromeEnabled}
+          adapters={adapters}
+          className="relative min-h-0 min-w-0 flex-1"
+        >
+          <RecursiveLayoutRenderer
+            layout={renderLayout}
+            context={previewContext}
+          />
+        </LayoutStructureOverlay>
       </ViewFilterPageProvider>
     ) : (
       <Text className="text-muted-foreground text-sm">

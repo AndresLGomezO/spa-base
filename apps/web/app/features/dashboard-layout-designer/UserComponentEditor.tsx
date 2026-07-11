@@ -61,6 +61,10 @@ export function UserComponentEditor({
                 display === "profile-button"
                   ? (config.profileButtonContent ?? "full")
                   : undefined,
+              profileButtonShowArrow:
+                display === "profile-button"
+                  ? (config.profileButtonShowArrow ?? true)
+                  : undefined,
             });
           }}
         >
@@ -137,30 +141,54 @@ export function UserComponentEditor({
       ) : null}
 
       {showProfileButtonContent ? (
-        <div className="flex flex-col gap-2">
-          <FieldLabel htmlFor="dashboard-user-profile-button-content">
-            {t("dashboardLayoutDesigner.userComponent.profileButtonContent")}
-          </FieldLabel>
-          <Select
-            id="dashboard-user-profile-button-content"
-            className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
-            value={config.profileButtonContent ?? "full"}
-            onChange={(event) =>
-              onChange({
-                ...config,
-                profileButtonContent: event.target
-                  .value as UserComponentConfig["profileButtonContent"],
-              })
-            }
-          >
-            <option value="photo">
-              {t("dashboardLayoutDesigner.userComponent.profileButtonContentPhoto")}
-            </option>
-            <option value="full">
-              {t("dashboardLayoutDesigner.userComponent.profileButtonContentFull")}
-            </option>
-          </Select>
-        </div>
+        <>
+          <div className="flex flex-col gap-2">
+            <FieldLabel htmlFor="dashboard-user-profile-button-content">
+              {t("dashboardLayoutDesigner.userComponent.profileButtonContent")}
+            </FieldLabel>
+            <Select
+              id="dashboard-user-profile-button-content"
+              className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+              value={config.profileButtonContent ?? "full"}
+              onChange={(event) =>
+                onChange({
+                  ...config,
+                  profileButtonContent: event.target
+                    .value as UserComponentConfig["profileButtonContent"],
+                })
+              }
+            >
+              <option value="photo">
+                {t(
+                  "dashboardLayoutDesigner.userComponent.profileButtonContentPhoto",
+                )}
+              </option>
+              <option value="full">
+                {t(
+                  "dashboardLayoutDesigner.userComponent.profileButtonContentFull",
+                )}
+              </option>
+            </Select>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="border-input size-4 rounded"
+              checked={config.profileButtonShowArrow !== false}
+              onChange={(event) =>
+                onChange({
+                  ...config,
+                  profileButtonShowArrow: event.target.checked,
+                })
+              }
+            />
+            <span>
+              {t(
+                "dashboardLayoutDesigner.userComponent.profileButtonShowArrow",
+              )}
+            </span>
+          </label>
+        </>
       ) : null}
 
       {showAvatarShape ? (

@@ -3,19 +3,20 @@ import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
   defaultDateFilterParam,
   resolvePreviewStrategy,
-  toEditableLayoutDocument,
 } from "@repo/ui-builder-core";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
+import { LayoutStructureOverlay } from "../form-designer/LayoutStructureOverlay";
+import { useLayoutStructureOverlayAdapters } from "../form-designer/use-layout-structure-overlay-adapters";
 import { createEntityLayoutRenderContext } from "../ui-builder/create-entity-layout-render-context";
 import { getCurrentDateBucket } from "../ui-builder/use-dashboard-date-filter-url-state";
 import { UnifiedDesignerPreviewPanel } from "../unified-builder/UnifiedDesignerPreviewPanel";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
+import { useOptionalMetricsRowDesignerStructureSession } from "./MetricsRowDesignerStructureSession";
 import { MetricsRowDesignerPreviewThemeSelect } from "./MetricsRowDesignerPreviewThemeSelect";
-import { useMetricsRowDesignerLayoutPreviewWrappers } from "./use-metrics-row-designer-layout-preview-wrappers";
 
 interface MetricsRowDesignerUnifiedPreviewPanelProps {
   readonly withStructureChrome?: boolean;
@@ -25,11 +26,16 @@ export function MetricsRowDesignerUnifiedPreviewPanel({
   withStructureChrome = false,
 }: MetricsRowDesignerUnifiedPreviewPanelProps) {
   const { t, i18n } = useTranslation("common");
-  const { editor, activeTabId, previewColorScheme } = useMetricsRowDesigner();
+  const {
+    editor,
+    activeTabId,
+    previewColorScheme,
+    requestComponentRowPanel,
+    requestComponentColumnPanel,
+  } = useMetricsRowDesigner();
+  const structureSession = useOptionalMetricsRowDesignerStructureSession();
   const { getDefinition, items } = useEntityCatalog();
-
-  const structureWrappers =
-    useMetricsRowDesignerLayoutPreviewWrappers(withStructureChrome);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const previewLayout =
     activeTabId === "row"
@@ -78,20 +84,39 @@ export function MetricsRowDesignerUnifiedPreviewPanel({
     ],
   );
 
-  const editableLayout = useMemo(
-    () => (previewLayout ? toEditableLayoutDocument(previewLayout) : null),
-    [previewLayout],
-  );
+  const adapters = useLayoutStructureOverlayAdapters({
+    enabled: withStructureChrome && previewLayout != null,
+    layout:
+      previewLayout ??
+      ({
+        root: {
+          type: "root",
+          id: "empty",
+          columnCount: 1,
+          columns: [],
+        },
+        showActions: false,
+      } as const),
+    structureSession,
+    requestComponentRowPanel,
+    requestComponentColumnPanel,
+    captureClicks: false,
+  });
 
   const previewBody =
-    editableLayout != null ? (
-      <RecursiveLayoutRenderer
-        layout={editableLayout}
-        context={previewContext}
-        rowWrapper={structureWrappers?.rowWrapper}
-        rootColumnWrapper={structureWrappers?.rootColumnWrapper}
-        nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
-      />
+    previewLayout != null ? (
+      <LayoutStructureOverlay
+        frameRef={frameRef}
+        layout={previewLayout}
+        enabled={withStructureChrome}
+        adapters={adapters}
+        className="relative min-h-0 min-w-0 flex-1"
+      >
+        <RecursiveLayoutRenderer
+          layout={previewLayout}
+          context={previewContext}
+        />
+      </LayoutStructureOverlay>
     ) : (
       <Text className="text-muted-foreground text-sm">
         {t("metricsRowDesigner.widgets.noWidgetSelected")}

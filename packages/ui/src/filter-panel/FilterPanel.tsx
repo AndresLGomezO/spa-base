@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { ChevronDown, Filter } from "lucide-react";
 
 import { cn } from "@repo/theme/utils";

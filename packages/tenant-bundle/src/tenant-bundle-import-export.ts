@@ -298,6 +298,12 @@ export function rewriteTenantBundleTenantId(
           tenantId: targetTenantId,
         }
       : null,
+    tenantSidebarLayout: bundle.tenantSidebarLayout
+      ? {
+          ...bundle.tenantSidebarLayout,
+          tenantId: targetTenantId,
+        }
+      : null,
     roles: bundle.roles.map((record) => ({
       ...record,
       tenantId: targetTenantId,
@@ -335,6 +341,7 @@ export const TENANT_BUNDLE_COLLECTION_IMPORT_ORDER = [
   "entity_ui_overrides",
   "ui_builder_presets",
   "tenant_dashboard_layouts",
+  "tenant_sidebar_layouts",
   "roles",
   "__formula_definitions",
   "__data_hooks",

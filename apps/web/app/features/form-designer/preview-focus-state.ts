@@ -96,7 +96,7 @@ function findRowRefInRows(
   return null;
 }
 
-function findRowRefById(
+export function findRowRefById(
   layout: UiLayoutDocument,
   rowId: string,
 ): ComponentRowRef | null {
@@ -401,24 +401,4 @@ export function resolvePreviewColumnFocusState(
   }
 
   return "none";
-}
-
-export function resolvePreviewColumnChromeProps(
-  columnRef: ComponentColumnRef,
-  focusedRow: ComponentRowRef | null,
-  focusedColumn: ComponentColumnRef | null,
-): {
-  readonly isColumnFocused: boolean;
-  readonly hasPeerColumnFocus: boolean;
-  readonly focusedColumn: ComponentColumnRef | null;
-  readonly focusedRow: ComponentRowRef | null;
-} {
-  return {
-    isColumnFocused:
-      focusedColumn != null &&
-      areComponentColumnRefsEqual(focusedColumn, columnRef),
-    hasPeerColumnFocus: focusedColumn != null,
-    focusedColumn,
-    focusedRow,
-  };
 }

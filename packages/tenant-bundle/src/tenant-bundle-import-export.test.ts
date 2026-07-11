@@ -44,6 +44,7 @@ function createMinimalBundle(): TenantBundleExportDocument {
     entityUiOverrides: [],
     uiBuilderPresets: [],
     tenantDashboardLayout: null,
+    tenantSidebarLayout: null,
     roles: [],
     formulaDefinitions: [],
     hooks: [],

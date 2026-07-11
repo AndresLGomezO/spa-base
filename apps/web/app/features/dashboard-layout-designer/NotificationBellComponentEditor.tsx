@@ -3,7 +3,7 @@ import type {
   UiComponentConfig,
 } from "@repo/ui-builder-core";
 import { LabelConfigEditor } from "@repo/ui-builder-react";
-import { FieldLabel, Input } from "@repo/ui";
+import { Input } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { LucideIconField } from "../../components/shared/LucideIconField";
@@ -26,7 +26,9 @@ export function NotificationBellComponentEditor({
       <LucideIconField
         id="dashboard-notification-bell-icon"
         label={t("dashboardLayoutDesigner.notificationBellComponent.iconName")}
-        hint={t("dashboardLayoutDesigner.notificationBellComponent.iconNameHint")}
+        hint={t(
+          "dashboardLayoutDesigner.notificationBellComponent.iconNameHint",
+        )}
         value={config.iconName ?? "Bell"}
         onChange={(iconName) => onChange({ ...config, iconName })}
       />
@@ -64,7 +66,9 @@ export function NotificationBellComponentEditor({
             onChange({ ...config, showBadge: event.target.checked })
           }
         />
-        <span>{t("dashboardLayoutDesigner.notificationBellComponent.showBadge")}</span>
+        <span>
+          {t("dashboardLayoutDesigner.notificationBellComponent.showBadge")}
+        </span>
       </label>
 
       <LabelConfigEditor

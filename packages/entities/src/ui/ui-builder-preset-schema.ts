@@ -46,6 +46,9 @@ export const designSurfaceSchema = z.enum([
   "metricWidget",
   "dashboardSection",
   "dashboardLayout",
+  "sidebarLayout",
+  "headerLayout",
+  "footerLayout",
 ]);
 
 export const uiBuilderPresetRecordSchema = z

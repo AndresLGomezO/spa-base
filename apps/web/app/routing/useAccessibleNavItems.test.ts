@@ -103,6 +103,13 @@ vi.mock("./design-layout-nav", () => ({
     matchPath: "/settings/design-layout/dashboard",
     icon: DESIGN_LAYOUT_DASHBOARD_NAV_ICON,
   },
+  DESIGN_LAYOUT_APP_SHELL_NAV_ITEM: {
+    id: "design-layout-app-shell",
+    labelKey: "designLayoutAppShell",
+    to: "/settings/design-layout/app-shell",
+    matchPath: "/settings/design-layout/app-shell",
+    icon: DESIGN_LAYOUT_DASHBOARD_NAV_ICON,
+  },
   useDesignLayoutNavLinks: () => mockDesignLayoutNavLinks,
 }));
 
@@ -342,10 +349,10 @@ describe("useAccessibleNavItems", () => {
 
     expect(designLayout && isNavGroup(designLayout)).toBe(true);
     if (designLayout && isNavGroup(designLayout)) {
-      expect(designLayout.children.length).toBe(6);
+      expect(designLayout.children.length).toBe(7);
       expect(
         designLayout.children.some(
-          (child) => child.id === "design-layout-detail",
+          (child) => child.id === "design-layout-app-shell",
         ),
       ).toBe(true);
       expect(

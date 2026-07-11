@@ -19,9 +19,9 @@ describe("entityBoundComponentSupportsConditionalStyles", () => {
   });
 
   it("excludes wizard-only and page-level components", () => {
-    expect(entityBoundComponentSupportsConditionalStyles("wizard-progress")).toBe(
-      false,
-    );
+    expect(
+      entityBoundComponentSupportsConditionalStyles("wizard-progress"),
+    ).toBe(false);
     expect(entityBoundComponentSupportsConditionalStyles("page-header")).toBe(
       false,
     );

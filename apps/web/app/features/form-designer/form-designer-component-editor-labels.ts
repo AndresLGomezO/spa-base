@@ -25,14 +25,18 @@ export function formDesignerComponentEditorLabels(
     componentStyles: t("entity.viewSettings.componentStyles"),
     badgeColorRules: t("entity.viewSettings.badgeColorRules"),
     conditionalStyleRules: t("entity.viewSettings.conditionalStyleRules"),
-    conditionalStyleRulesHint: t("entity.viewSettings.conditionalStyleRulesHint"),
+    conditionalStyleRulesHint: t(
+      "entity.viewSettings.conditionalStyleRulesHint",
+    ),
     daysRemainingConditionalHint: t(
       "entity.viewSettings.daysRemainingConditionalHint",
     ),
     conditionalStyleBackgroundColor: t(
       "entity.viewSettings.conditionalStyleBackgroundColor",
     ),
-    conditionalStyleTextColor: t("entity.viewSettings.conditionalStyleTextColor"),
+    conditionalStyleTextColor: t(
+      "entity.viewSettings.conditionalStyleTextColor",
+    ),
     conditionalStyleBadgeVariant: t(
       "entity.viewSettings.conditionalStyleBadgeVariant",
     ),
@@ -176,6 +180,8 @@ export function formDesignerComponentEditorLabels(
       labelPosition: t("entity.viewSettings.labelPosition"),
       labelAbove: t("entity.viewSettings.labelAbove"),
       labelBelow: t("entity.viewSettings.labelBelow"),
+      labelLeft: t("entity.viewSettings.labelLeft"),
+      labelRight: t("entity.viewSettings.labelRight"),
       labelAlignLeft: t("entity.viewSettings.labelAlignLeft"),
       labelAlignCenter: t("entity.viewSettings.labelAlignCenter"),
       labelAlignRight: t("entity.viewSettings.labelAlignRight"),

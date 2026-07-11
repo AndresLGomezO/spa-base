@@ -43,10 +43,6 @@ import {
 
 export type ComponentsTreeScope = "shell" | "step" | "footer" | "main";
 
-export function isStructuralPreviewRow(row: RowNode): boolean {
-  return isRowHolderComponent(row.component);
-}
-
 export function resolveComponentsDesignSurface(
   presentation: "plain" | "wizard",
   treeScope: ComponentsTreeScope,

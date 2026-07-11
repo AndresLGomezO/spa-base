@@ -39,7 +39,7 @@ describe("buildDisplayRangeClassName", () => {
   });
 
   it("builds mobile through medium only", () => {
-    expect(buildDisplayRangeClassName("base", "md")).toBe("lg:hidden");
+    expect(buildDisplayRangeClassName("base", "md")).toBe("hidden max-lg:flex");
   });
 
   it("builds middle band classes", () => {
@@ -49,7 +49,9 @@ describe("buildDisplayRangeClassName", () => {
   });
 
   it("builds mobile-only classes", () => {
-    expect(buildDisplayRangeClassName("base", "base")).toBe("sm:hidden");
+    expect(buildDisplayRangeClassName("base", "base")).toBe(
+      "hidden max-sm:flex",
+    );
   });
 
   it("supports block display mode", () => {
@@ -77,7 +79,7 @@ describe("resolveDisplayRangeVisibility", () => {
       resolveDisplayRangeVisibility("base", "base", undefined, "flex"),
     ).toEqual({
       hidden: false,
-      className: "sm:hidden",
+      className: "hidden max-sm:flex",
     });
   });
 

@@ -22,9 +22,7 @@ export function renderDashboardLayoutStructurePanelContent(
           columnRef={target.columnRef}
         />
       ),
-      body: (
-        <DashboardLayoutStructurePanelBody session={session} />
-      ),
+      body: <DashboardLayoutStructurePanelBody session={session} />,
       footer: <DashboardLayoutDesignerStructurePanelFooter />,
     };
   }

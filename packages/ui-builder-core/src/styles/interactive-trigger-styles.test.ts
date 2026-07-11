@@ -57,7 +57,9 @@ describe("interactiveSearchFieldClass", () => {
     expect(interactiveSearchFieldClass()).toContain(
       "hover:border-[var(--color-primary-hover)]",
     );
-    expect(interactiveSearchFieldClass()).toContain("focus-visible:border-primary");
+    expect(interactiveSearchFieldClass()).toContain(
+      "focus-visible:border-primary",
+    );
     expect(interactiveSearchFieldClass()).toContain(
       "active:border-[var(--color-primary-active)]",
     );

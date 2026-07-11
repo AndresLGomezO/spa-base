@@ -121,9 +121,9 @@ function resolveStepperCirclePresentation(
     backgroundColor?: string;
     background?: string;
     color?: string;
-    width?: number;
-    height?: number;
-    fontSize?: number;
+    width?: number | string;
+    height?: number | string;
+    fontSize?: number | string;
   };
 } {
   const matched = matchConditionalStyles(status, conditionalStyles);

@@ -142,6 +142,55 @@ export async function uploadTenantDashboardImage(params: {
   return buildFirebaseStorageDownloadUrl(bucketName, objectPath, downloadToken);
 }
 
+export async function uploadTenantSidebarImage(params: {
+  readonly config: FirebaseAdminConfig;
+  readonly tenantId: string;
+  readonly objectId: string;
+  readonly buffer: Buffer;
+  readonly contentType: string;
+}): Promise<string> {
+  if (!validateStorageObjectId(params.objectId)) {
+    throw new Error("Invalid storage object id.");
+  }
+
+  const bucketName = resolveStorageBucket(params.config);
+  const app = getFirebaseAdminApp(params.config);
+  const bucket = getStorage(app).bucket(bucketName);
+  const extension = extensionForContentType(params.contentType);
+  const objectPath = `tenants/${params.tenantId}/sidebar/${params.objectId}.${extension}`;
+  const file = bucket.file(objectPath);
+
+  if (params.config.storageEmulatorHost) {
+    await file.save(params.buffer, {
+      metadata: {
+        contentType: params.contentType,
+        cacheControl: "public,max-age=3600",
+      },
+      resumable: false,
+    });
+
+    const publicHost =
+      params.config.storageEmulatorPublicHost?.trim() ||
+      params.config.storageEmulatorHost;
+    const encodedPath = encodeURIComponent(objectPath);
+    return `http://${publicHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
+  }
+
+  const downloadToken = randomUUID();
+  await file.save(params.buffer, {
+    metadata: {
+      contentType: params.contentType,
+      cacheControl: "public,max-age=3600",
+      metadata: {
+        firebaseStorageDownloadTokens: downloadToken,
+      },
+    },
+    resumable: false,
+  });
+
+  return buildFirebaseStorageDownloadUrl(bucketName, objectPath, downloadToken);
+}
+
 export async function deleteTenantStoragePrefix(
   config: FirebaseAdminConfig,
   tenantId: string,

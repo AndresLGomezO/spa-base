@@ -53,6 +53,18 @@ describe("resolvePreviewStrategy", () => {
     }
   });
 
+  it("maps sidebarLayout, headerLayout, and footerLayout to section width slider", () => {
+    expect(resolvePreviewStrategy("sidebarLayout")).toEqual(
+      SECTION_WIDTH_STRATEGY,
+    );
+    expect(resolvePreviewStrategy("headerLayout")).toEqual(
+      SECTION_WIDTH_STRATEGY,
+    );
+    expect(resolvePreviewStrategy("footerLayout")).toEqual(
+      SECTION_WIDTH_STRATEGY,
+    );
+  });
+
   it("falls back to scope mapping for surfaces without overrides", () => {
     expect(resolvePreviewStrategy("formWizardStep")).toEqual(
       SECTION_WIDTH_STRATEGY,

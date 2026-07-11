@@ -1,6 +1,9 @@
 import type { DashboardSectionDefinition } from "@repo/entities";
 import { CardFieldImage } from "@repo/ui";
-import type { UserComponentConfig, NotificationBellComponentConfig } from "@repo/ui-builder-core";
+import type {
+  UserComponentConfig,
+  NotificationBellComponentConfig,
+} from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { TFunction } from "i18next";
 

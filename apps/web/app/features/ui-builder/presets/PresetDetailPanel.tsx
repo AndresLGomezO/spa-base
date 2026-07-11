@@ -1,9 +1,6 @@
 import { useMemo } from "react";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import {
-  resolvePreviewStrategy,
-  toEditableLayoutDocument,
-} from "@repo/ui-builder-core";
+import { resolvePreviewStrategy } from "@repo/ui-builder-core";
 import { Button, Input, Text, toast } from "@repo/ui";
 import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { useColorScheme } from "@repo/theme/react";
@@ -90,11 +87,6 @@ export function PresetDetailPanel() {
     });
   }, [entities, getDefinition, i18n.language, previewDefinition, t]);
 
-  const editableLayout = useMemo(
-    () => (previewLayout ? toEditableLayoutDocument(previewLayout) : null),
-    [previewLayout],
-  );
-
   if (!entry) {
     return (
       <div
@@ -158,7 +150,7 @@ export function PresetDetailPanel() {
       <div
         className={`${designerPreviewPanelBodyFillClassName} min-h-[240px] overflow-hidden rounded-lg border`}
       >
-        {!previewDefinition || !editableLayout || !previewContext ? (
+        {!previewDefinition || !previewLayout || !previewContext ? (
           <div className="flex h-full items-center justify-center p-4">
             <Text className="text-muted-foreground text-sm">
               {t("designLayout.presets.list.previewUnavailable")}
@@ -171,7 +163,7 @@ export function PresetDetailPanel() {
             fillHeight
             previewBody={
               <RecursiveLayoutRenderer
-                layout={editableLayout}
+                layout={previewLayout}
                 context={previewContext}
               />
             }

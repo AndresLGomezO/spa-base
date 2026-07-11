@@ -26,6 +26,7 @@
 | `metricWidget` | No |
 | `dashboardSection` | Yes |
 | `dashboardLayout` | Yes |
+| `sidebarLayout` | Yes |
 
 ## Properties
 

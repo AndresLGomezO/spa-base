@@ -1,5 +1,9 @@
 /**
  * Migrates legacy container layout to grid structural primitives (Section 15.1).
+ *
+ * Grid tracks must be containers so the structure tree can insert into them.
+ * Leaf components used as tracks are wrapped; track containers are preserved
+ * (not re-converted to grids) so inserts keep working after normalize.
  */
 import { createLayoutId } from "../builder/id.js";
 import type {
@@ -7,7 +11,7 @@ import type {
   GridComponentConfig,
   UiComponentConfig,
 } from "../types/component.js";
-import { isContainerComponent } from "../types/component.js";
+import { isContainerComponent, isGridComponent } from "../types/component.js";
 import type {
   ColumnNode,
   ComponentRowNode,
@@ -34,6 +38,52 @@ function resolveGridTemplateColumns(
   return "1fr";
 }
 
+function wrapAsContainerTrack(row: ComponentRowNode): ComponentRowNode {
+  if (isContainerComponent(row.component)) {
+    return row;
+  }
+
+  return {
+    type: "component",
+    id: createLayoutId("row"),
+    component: {
+      kind: "container",
+      rows: [row],
+    },
+  };
+}
+
+function ensureGridTrackRow(row: RowNode): RowNode {
+  if (row.type !== "component") {
+    return row;
+  }
+
+  return wrapAsContainerTrack(row);
+}
+
+function migrateTrackContainerRows(
+  rows: readonly RowNode[],
+): readonly RowNode[] {
+  return rows.map((row) => migrateRow(row));
+}
+
+function migrateGridTracks(rows: readonly RowNode[]): readonly RowNode[] {
+  return rows.map((row) => {
+    const track = ensureGridTrackRow(row);
+    if (track.type !== "component" || !isContainerComponent(track.component)) {
+      return track;
+    }
+
+    return {
+      ...track,
+      component: {
+        ...track.component,
+        rows: migrateTrackContainerRows(track.component.rows),
+      },
+    };
+  });
+}
+
 function migrateComponentConfig(
   component: UiComponentConfig,
 ): UiComponentConfig {
@@ -48,7 +98,7 @@ function migrateComponentConfig(
       component.stackDirection,
       migratedRows.length,
     ),
-    rows: migratedRows,
+    rows: migratedRows.map(ensureGridTrackRow),
     styles: component.styles
       ? filterVisualStyleRules(component.styles)
       : undefined,
@@ -111,12 +161,12 @@ function migrateRow(row: RowNode): RowNode {
     };
   }
 
-  if (row.type === "component" && row.component.kind === "grid") {
+  if (row.type === "component" && isGridComponent(row.component)) {
     return {
       ...row,
       component: {
         ...row.component,
-        rows: migrateRows(row.component.rows),
+        rows: migrateGridTracks(row.component.rows),
       },
     };
   }
@@ -198,5 +248,70 @@ export function ensureScreenRootDocument(
   return {
     ...migrated,
     root: layoutRootToScreenRoot(migrated.root),
+  };
+}
+
+/**
+ * Converts a legacy column root to screen-root without container→grid migration.
+ * Used by app-shell layouts that keep plain containers as main sections.
+ */
+export function layoutRootToAppShellScreenRoot(
+  root: LayoutRootNode,
+): ScreenRootNode {
+  if (root.columns.length === 1) {
+    return createScreenRootNode(root.columns[0]?.rows ?? [], {
+      gridTemplateColumns: "1fr",
+    });
+  }
+
+  const gridTemplateColumns = buildGridTemplateColumnsFromPercents(
+    resolveColumnWidthPercents(root.columns),
+  );
+  const gridRow: ComponentRowNode = {
+    type: "component",
+    id: createLayoutId("row"),
+    component: {
+      kind: "grid",
+      gridTemplateColumns,
+      rows: root.columns.map((column) => ({
+        type: "component" as const,
+        id: column.id,
+        name: column.name,
+        component: {
+          kind: "container" as const,
+          rows: column.rows,
+          styles: column.styles,
+        },
+        displayFrom: column.displayFrom,
+        displayTo: column.displayTo,
+      })),
+      styles: root.styles,
+    },
+  };
+
+  return createScreenRootNode([gridRow], {
+    gridTemplateColumns:
+      root.columnCount > 1 ? `repeat(${root.columnCount}, 1fr)` : "1fr",
+  });
+}
+
+/**
+ * Ensures app-shell layouts use screen-root without converting nested containers
+ * to grids. Main sections stay plain containers.
+ */
+export function ensureAppShellScreenRoot(
+  layout: UiLayoutDocument,
+): UiLayoutDocument {
+  if (isScreenRootNode(layout.root)) {
+    return layout;
+  }
+
+  if (!isLayoutRootNode(layout.root)) {
+    return layout;
+  }
+
+  return {
+    ...layout,
+    root: layoutRootToAppShellScreenRoot(layout.root),
   };
 }

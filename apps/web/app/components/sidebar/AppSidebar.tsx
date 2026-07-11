@@ -23,6 +23,8 @@ import { NavMain, NavigationProgressBar } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
 import { TenantSwitcher } from "../TenantSwitcher";
 import { NotificationBell } from "../../features/notifications/NotificationBell";
+import { useTenantSidebarLayoutRuntime } from "../../features/ui-builder/use-tenant-sidebar-layout-runtime";
+import { DesignedAppHeader, DesignedAppSidebar } from "./DesignedAppSidebar";
 
 function SidebarBrand({ onNavigate }: { readonly onNavigate?: () => void }) {
   const { activeTenantName, tenantAppearance } = useAuth();
@@ -58,7 +60,7 @@ function SidebarBrand({ onNavigate }: { readonly onNavigate?: () => void }) {
   );
 }
 
-function SidebarBody({
+function HardcodedSidebarBody({
   showCollapse = true,
   onNavigate,
 }: {
@@ -106,7 +108,7 @@ function SidebarBody({
   );
 }
 
-export function AppSidebar() {
+function HardcodedAppSidebar() {
   const { t } = useTranslation("common");
   const { setMobileOpen } = useSidebar();
 
@@ -117,25 +119,46 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar>
-        <SidebarBody />
+        <HardcodedSidebarBody />
       </Sidebar>
       <SidebarMobile title={t("nav.open")}>
         <div
           className="group/sidebar flex h-full flex-col"
           data-collapsible="expanded"
         >
-          <SidebarBody showCollapse={false} onNavigate={closeMobile} />
+          <HardcodedSidebarBody showCollapse={false} onNavigate={closeMobile} />
         </div>
       </SidebarMobile>
     </>
   );
 }
 
+export function AppSidebar() {
+  const runtime = useTenantSidebarLayoutRuntime();
+
+  if (runtime.exists) {
+    return <DesignedAppSidebar layout={runtime.config.sidebarLayout} />;
+  }
+
+  return <HardcodedAppSidebar />;
+}
+
 export function AppHeader() {
+  const runtime = useTenantSidebarLayoutRuntime();
   const { t } = useTranslation("common");
+  const { hamburgerHiddenClassName } = useSidebar();
+
+  if (runtime.exists) {
+    return <DesignedAppHeader layout={runtime.config.headerLayout} />;
+  }
 
   return (
-    <header className="border-border relative z-20 flex h-14 shrink-0 items-center border-b px-4 md:hidden">
+    <header
+      className={cn(
+        "border-border relative z-20 flex h-14 shrink-0 items-center border-b px-4",
+        hamburgerHiddenClassName,
+      )}
+    >
       <NavigationProgressBar />
       <SidebarTrigger label={t("nav.open")} />
     </header>

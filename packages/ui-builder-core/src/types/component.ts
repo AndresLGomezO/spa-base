@@ -6,6 +6,7 @@
  */
 import type { StyleRule } from "../styles/style-types.js";
 import type { RowNode, ColumnStackDirection, LayoutAlign } from "./layout.js";
+import type { MotionPreset } from "./motion.js";
 import type { ConditionalStyleRule, LabelConfig } from "./styling.js";
 
 export type UiComponentKind =
@@ -16,6 +17,10 @@ export type UiComponentKind =
   | "icon"
   | "user"
   | "notification-bell"
+  | "sidebar-nav"
+  | "sidebar-collapse"
+  | "sidebar-trigger"
+  | "nav-tab"
   | "date"
   | "numeric"
   | "badge"
@@ -405,7 +410,52 @@ export interface UserComponentConfig {
   readonly imageSize?: number;
   readonly avatarShape?: UserAvatarShape;
   readonly profileButtonContent?: UserProfileButtonContent;
+  /** When `display` is `profile-button`. Default: true. */
+  readonly profileButtonShowArrow?: boolean;
   readonly label?: LabelConfig;
+  readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+}
+
+/** Shared template for sidebar group / subgroup / raw nav items. */
+export interface SidebarNavItemTemplate {
+  readonly rows: readonly RowNode[];
+  readonly styles?: readonly StyleRule[];
+  readonly motion?: MotionPreset;
+}
+
+export interface SidebarNavComponentConfig {
+  readonly kind: "sidebar-nav";
+  readonly groupItem: SidebarNavItemTemplate;
+  readonly subgroupItem: SidebarNavItemTemplate;
+  readonly rawItem: SidebarNavItemTemplate;
+  readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+}
+
+export interface SidebarCollapseComponentConfig {
+  readonly kind: "sidebar-collapse";
+  readonly iconName?: string;
+  readonly expandIconName?: string;
+  readonly iconSize?: number;
+  readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+}
+
+export interface SidebarTriggerComponentConfig {
+  readonly kind: "sidebar-trigger";
+  readonly iconName?: string;
+  readonly iconSize?: number;
+  readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+}
+
+export interface NavTabComponentConfig {
+  readonly kind: "nav-tab";
+  readonly iconName: string;
+  readonly label?: string;
+  readonly to: string;
+  readonly matchPath?: string;
   readonly styles?: readonly StyleRule[];
   readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
@@ -633,6 +683,10 @@ export type UiComponentConfig =
   | IconComponentConfig
   | NotificationBellComponentConfig
   | UserComponentConfig
+  | SidebarNavComponentConfig
+  | SidebarCollapseComponentConfig
+  | SidebarTriggerComponentConfig
+  | NavTabComponentConfig
   | MetricKpiComponentConfig
   | MetricDerivedKpiComponentConfig
   | MetricWidgetComponentConfig
@@ -730,6 +784,107 @@ export function isUserComponent(
   config: UiComponentConfig,
 ): config is UserComponentConfig {
   return config.kind === "user";
+}
+
+export function isSidebarNavComponent(
+  config: UiComponentConfig,
+): config is SidebarNavComponentConfig {
+  return config.kind === "sidebar-nav";
+}
+
+export function isSidebarCollapseComponent(
+  config: UiComponentConfig,
+): config is SidebarCollapseComponentConfig {
+  return config.kind === "sidebar-collapse";
+}
+
+export function isSidebarTriggerComponent(
+  config: UiComponentConfig,
+): config is SidebarTriggerComponentConfig {
+  return config.kind === "sidebar-trigger";
+}
+
+export function isNavTabComponent(
+  config: UiComponentConfig,
+): config is NavTabComponentConfig {
+  return config.kind === "nav-tab";
+}
+
+export function createDefaultSidebarNavItemTemplate(): SidebarNavItemTemplate {
+  return { rows: [] };
+}
+
+export function createDefaultSidebarNavComponent(): SidebarNavComponentConfig {
+  return {
+    kind: "sidebar-nav",
+    groupItem: createDefaultSidebarNavItemTemplate(),
+    subgroupItem: createDefaultSidebarNavItemTemplate(),
+    rawItem: createDefaultSidebarNavItemTemplate(),
+  };
+}
+
+export function createDefaultSidebarCollapseComponent(): SidebarCollapseComponentConfig {
+  return {
+    kind: "sidebar-collapse",
+    iconName: "PanelLeftClose",
+    expandIconName: "PanelLeft",
+  };
+}
+
+export function createDefaultSidebarTriggerComponent(): SidebarTriggerComponentConfig {
+  return {
+    kind: "sidebar-trigger",
+    iconName: "PanelLeft",
+  };
+}
+
+export function createDefaultNavTabComponent(): NavTabComponentConfig {
+  return {
+    kind: "nav-tab",
+    iconName: "Home",
+    to: "/",
+  };
+}
+
+export function mapSidebarNavTemplateRows(
+  config: SidebarNavComponentConfig,
+  mapRows: (rows: readonly RowNode[]) => readonly RowNode[],
+): SidebarNavComponentConfig {
+  return {
+    ...config,
+    groupItem: {
+      ...config.groupItem,
+      rows: mapRows(config.groupItem.rows),
+    },
+    subgroupItem: {
+      ...config.subgroupItem,
+      rows: mapRows(config.subgroupItem.rows),
+    },
+    rawItem: {
+      ...config.rawItem,
+      rows: mapRows(config.rawItem.rows),
+    },
+  };
+}
+
+export type SidebarNavTemplateKey = "groupItem" | "subgroupItem" | "rawItem";
+
+export function getSidebarNavTemplate(
+  config: SidebarNavComponentConfig,
+  key: SidebarNavTemplateKey,
+): SidebarNavItemTemplate {
+  return config[key];
+}
+
+export function updateSidebarNavTemplate(
+  config: SidebarNavComponentConfig,
+  key: SidebarNavTemplateKey,
+  template: SidebarNavItemTemplate,
+): SidebarNavComponentConfig {
+  return {
+    ...config,
+    [key]: template,
+  };
 }
 
 export function isFieldUiComponent(

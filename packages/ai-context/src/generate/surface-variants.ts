@@ -166,6 +166,57 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     extraNotes:
       "Requires `metricWidgets[]` definitions and `metricRowLayout` with metric-widget refs.",
   },
+  {
+    fragmentId: "ui.surface.sidebarLayout",
+    title: "App shell — Sidebar",
+    designSurface: "sidebarLayout",
+    description:
+      "Tenant app sidebar chrome: logo, collapse control, nav item templates, notifications, and profile.",
+    extraNotes:
+      "Part of App shell (Design Layout → App shell → Sidebar tab). Persisted on tenant_sidebar_layouts.sidebarLayout. No tenant doc → hardcoded AppSidebar. System Configuration and tenant switcher are injected at runtime for admins.",
+    buildSkeleton: () =>
+      JSON.stringify(
+        {
+          kind: "sidebar-nav",
+          groupItem: { rows: [] },
+          subgroupItem: { rows: [] },
+          rawItem: { rows: [] },
+        },
+        null,
+        2,
+      ),
+  },
+  {
+    fragmentId: "ui.surface.headerLayout",
+    title: "App shell — Header",
+    designSurface: "headerLayout",
+    description:
+      "Global app header (mobile hamburger bar). Independent of the sidebar layout.",
+    extraNotes:
+      "Part of App shell → Header tab. Use sidebar-trigger for the menu button. Visibility via hamburgerBreakpoint settings and displayFrom/displayTo.",
+    buildSkeleton: () =>
+      JSON.stringify({ kind: "sidebar-trigger", iconName: "Menu" }, null, 2),
+  },
+  {
+    fragmentId: "ui.surface.footerLayout",
+    title: "App shell — Footer",
+    designSurface: "footerLayout",
+    description:
+      "Global bottom navigation tabs. Independent of the sidebar layout.",
+    extraNotes:
+      "Part of App shell → Footer tab. Use nav-tab components for icon+label route links. Empty footer → not rendered at runtime.",
+    buildSkeleton: () =>
+      JSON.stringify(
+        {
+          kind: "nav-tab",
+          iconName: "Home",
+          label: "Home",
+          to: "/",
+        },
+        null,
+        2,
+      ),
+  },
 ];
 
 /** Replace random layout ids so generated fragments are deterministic in CI. */

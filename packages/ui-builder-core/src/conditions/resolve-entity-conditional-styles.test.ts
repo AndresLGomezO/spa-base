@@ -70,7 +70,10 @@ describe("resolveEntityConditionalStyles", () => {
       ],
       {
         resolveField: () => "2026-07-15T00:00:00.000Z",
-        resolveFieldMeta: () => ({ fieldType: "date", dateDisplayFormat: "date" }),
+        resolveFieldMeta: () => ({
+          fieldType: "date",
+          dateDisplayFormat: "date",
+        }),
         referenceDate: new Date("2026-07-09T12:00:00.000Z"),
       },
     );
@@ -94,7 +97,9 @@ describe("resolveEntityConditionalStyles", () => {
     );
 
     expect(matched.className).toContain("bg-destructive/10");
-    expect(matched.style?.backgroundColor).toContain("var(--color-destructive)");
+    expect(matched.style?.backgroundColor).toContain(
+      "var(--color-destructive)",
+    );
   });
 
   it("emits inline theme token text colors for conditional rules", () => {

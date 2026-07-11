@@ -14,7 +14,10 @@ import {
   LayoutGrid,
   ListChecks,
   MousePointerClick,
+  PanelLeftClose,
+  PanelLeft,
   PanelTop,
+  Menu,
   Route,
   Search,
   Sparkles,
@@ -22,6 +25,7 @@ import {
   Type,
   UserRound,
   Bell,
+  LayoutPanelTop,
 } from "lucide-react";
 import {
   isComponentKindAllowedOnSurface,
@@ -149,7 +153,10 @@ export function getFilteredComponentCatalog(
     designSurface !== "metricRow" &&
     designSurface !== "metricWidget" &&
     designSurface !== "dashboardLayout" &&
-    designSurface !== "dashboardSection"
+    designSurface !== "dashboardSection" &&
+    designSurface !== "sidebarLayout" &&
+    designSurface !== "headerLayout" &&
+    designSurface !== "footerLayout"
   ) {
     return sections;
   }
@@ -172,13 +179,30 @@ export function getFilteredComponentCatalog(
               { kind: "notification-bell" as const, icon: Bell },
               { kind: "metric-widget" as const, icon: LayoutGrid },
             ]
-          : designSurface === "metricWidget"
+          : designSurface === "sidebarLayout"
             ? [
-                { kind: "metric-kpi" as const, icon: ChartLine },
-                { kind: "metric-derived-kpi" as const, icon: ChartLine },
-                { kind: "query-viewer" as const, icon: ListChecks },
+                { kind: "user" as const, icon: UserRound },
+                { kind: "notification-bell" as const, icon: Bell },
+                { kind: "sidebar-nav" as const, icon: PanelLeft },
+                { kind: "sidebar-collapse" as const, icon: PanelLeftClose },
               ]
-            : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
+            : designSurface === "headerLayout"
+              ? [
+                  { kind: "user" as const, icon: UserRound },
+                  { kind: "sidebar-trigger" as const, icon: Menu },
+                ]
+              : designSurface === "footerLayout"
+                ? [
+                    { kind: "user" as const, icon: UserRound },
+                    { kind: "nav-tab" as const, icon: LayoutPanelTop },
+                  ]
+                : designSurface === "metricWidget"
+                  ? [
+                      { kind: "metric-kpi" as const, icon: ChartLine },
+                      { kind: "metric-derived-kpi" as const, icon: ChartLine },
+                      { kind: "query-viewer" as const, icon: ListChecks },
+                    ]
+                  : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
 
     return {
       ...section,
@@ -186,6 +210,20 @@ export function getFilteredComponentCatalog(
     };
   });
 }
+
+const SURFACE_EXTRA_ICONS: Partial<Record<CatalogEntryKind, LucideIcon>> = {
+  user: UserRound,
+  "notification-bell": Bell,
+  "sidebar-nav": PanelLeft,
+  "sidebar-collapse": PanelLeftClose,
+  "sidebar-trigger": Menu,
+  "nav-tab": LayoutPanelTop,
+  "metric-widget": LayoutGrid,
+  "metric-kpi": ChartLine,
+  "metric-derived-kpi": ChartLine,
+  "query-viewer": ListChecks,
+  "dashboard-section": LayoutGrid,
+};
 
 function getComponentCatalogIcon(
   kind: CatalogEntryKind,
@@ -197,7 +235,7 @@ function getComponentCatalogIcon(
     }
   }
 
-  return undefined;
+  return SURFACE_EXTRA_ICONS[kind];
 }
 
 export function getTreeNodeIcon(kind: CatalogEntryKind): LucideIcon {
