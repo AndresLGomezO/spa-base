@@ -28,11 +28,11 @@ interface AppFooterProps {
 
 /** Structural host only — layout styles own background, border, and padding. */
 const FOOTER_HOST_STRUCTURAL_CLASS_NAME =
-  "sticky bottom-0 z-20 flex w-full min-w-0 shrink-0";
+  "sticky bottom-0 z-20 flex w-full min-w-0 shrink-0 pb-[env(safe-area-inset-bottom)]";
 
 /** Fallback chrome when there is no promoted root container to style the host. */
 const FOOTER_HOST_DEFAULT_CHROME_CLASS_NAME =
-  "border-border bg-background sticky bottom-0 z-20 flex shrink-0 items-center border-t px-2 py-1";
+  "border-border bg-background sticky bottom-0 z-20 flex shrink-0 items-center border-t px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]";
 
 export function AppFooter({ layout }: AppFooterProps) {
   const { t, i18n } = useTranslation("common");

@@ -14,6 +14,7 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
 import { PwaRegistration } from "./components/PwaRegistration";
+import { ThemeColorSync } from "./components/ThemeColorSync";
 import { DEFAULT_SITE_NAME, SiteTitleSync } from "./components/SiteTitleSync";
 import { TenantBrandingProvider } from "./theme/TenantBrandingProvider";
 import { DEV_CONTENT_SECURITY_POLICY } from "./dev-content-security-policy";
@@ -38,8 +39,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#00a1e5" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/* Translucent status bar; page background paints edge-to-edge underneath. */}
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="theme-color" content="transparent" />
         {import.meta.env.DEV ? (
           <meta
             httpEquiv="Content-Security-Policy"
@@ -48,7 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ) : null}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})();`,
+            __html: `(function(){try{var d=document.documentElement;if(localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark"){d.classList.add("dark");d.style.colorScheme="dark"}else{d.style.colorScheme="light"}}catch(e){}})();`,
           }}
         />
         <title>{DEFAULT_SITE_NAME}</title>
@@ -72,6 +83,7 @@ function AppShell() {
   return (
     <>
       <PwaRegistration />
+      <ThemeColorSync />
       <I18nSync />
       <SiteTitleSync />
       <Outlet />

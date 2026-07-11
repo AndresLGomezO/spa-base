@@ -88,7 +88,7 @@ function SheetPanel({
       onClick={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       className={cn(
-        "bg-sidebar text-sidebar-foreground border-sidebar-border pointer-events-auto absolute top-0 flex h-full w-(--sidebar-width) flex-col border-r shadow-xl",
+        "bg-sidebar text-sidebar-foreground border-sidebar-border pointer-events-auto absolute top-0 flex h-full w-(--sidebar-width) flex-col border-r pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-xl",
         side === "left" ? "left-0" : "right-0",
         animate &&
           (side === "left"

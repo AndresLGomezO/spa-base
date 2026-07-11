@@ -98,7 +98,7 @@ describe("PrivateLayoutRoute", () => {
     );
 
     const shell = screen.getByTestId("sidebar").parentElement;
-    expect(shell).toHaveClass("h-dvh", "overflow-hidden");
+    expect(shell).toHaveClass("h-dvh", "overflow-hidden", "bg-background");
 
     const main = screen.getByRole("main");
     expect(main).toHaveClass(
@@ -108,6 +108,7 @@ describe("PrivateLayoutRoute", () => {
       "max-w-none",
       "flex-1",
       "overflow-hidden",
+      "pb-[env(safe-area-inset-bottom)]",
     );
 
     const pageScroll = main.firstElementChild;

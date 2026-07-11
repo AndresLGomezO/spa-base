@@ -242,7 +242,7 @@ export function DesignedAppHeader({ layout }: DesignedAppHeaderProps) {
       </div>
       <header
         className={cn(
-          "border-border relative z-20 h-14 shrink-0 items-center border-b px-4",
+          "border-border relative z-20 min-h-14 shrink-0 items-center border-b px-4 pt-[env(safe-area-inset-top)]",
           resolveAppShellChromeDisplayClassName(layout, atBreakpoint),
         )}
       >

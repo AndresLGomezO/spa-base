@@ -20,7 +20,7 @@ export default defineConfig(({ command }) => ({
         start_url: "/",
         scope: "/",
         display: "standalone",
-        theme_color: "#00a1e5",
+        theme_color: "#ffffff",
         background_color: "#ffffff",
         icons: [
           {

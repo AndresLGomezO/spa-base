@@ -582,7 +582,7 @@
                     },
                     {
                       "property": "backgroundColor",
-                      "value": "#121212"
+                      "value": "var(--color-background)"
                     },
                     {
                       "property": "borderRadius",

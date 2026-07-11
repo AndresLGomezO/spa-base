@@ -28,7 +28,7 @@ export function Sidebar({ children, className, ...props }: SidebarProps) {
     <aside
       data-collapsible={collapsed ? "icon" : "expanded"}
       className={cn(
-        "group/sidebar bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-dvh shrink-0 flex-col overflow-hidden overscroll-y-contain border-r transition-[width] duration-200 ease-linear",
+        "group/sidebar bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-dvh shrink-0 flex-col overflow-hidden overscroll-y-contain border-r pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-[width] duration-200 ease-linear",
         collapsed ? "w-(--sidebar-width-icon)" : "w-(--sidebar-width)",
         className,
       )}
