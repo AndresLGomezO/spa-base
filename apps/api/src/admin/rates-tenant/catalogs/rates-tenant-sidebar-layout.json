@@ -610,7 +610,7 @@
                     },
                     {
                       "property": "bottom",
-                      "value": "10"
+                      "value": "0"
                     },
                     {
                       "property": "marginLeft",

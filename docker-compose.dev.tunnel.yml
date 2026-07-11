@@ -1,0 +1,26 @@
+# Overlay for temporary Cloudflare quick-tunnel demos.
+# Applied by `pnpm dev:docker:tunnel` after writing `.local/tunnel/urls.env`.
+# Do not use for normal localhost development.
+#
+# Required env vars (from --env-file .local/tunnel/urls.env):
+#   VITE_API_URL
+#   VITE_FIREBASE_AUTH_EMULATOR_HOST
+#   VITE_FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST
+#   API_CORS_ORIGINS
+#   FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST
+
+services:
+  web:
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_FIREBASE_AUTH_EMULATOR_HOST=${VITE_FIREBASE_AUTH_EMULATOR_HOST}
+      - VITE_FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=${VITE_FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST}
+
+  api:
+    environment:
+      - API_CORS_ORIGINS=${API_CORS_ORIGINS}
+      - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=${FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST}
+
+  worker-service:
+    environment:
+      - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=${FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST}

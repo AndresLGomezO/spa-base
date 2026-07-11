@@ -10,6 +10,7 @@
  *   pnpm dev:docker:reset -- --hard --only api       # rebuild api from scratch
  *   pnpm dev:docker:reset -- --only ai --use-real-vertex
  *   pnpm dev:docker:reset -- --only ai --mock-vertex
+ *   pnpm dev:docker:reset -- --tunnel              # reset then wire Cloudflare tunnels
  */
 
 import { spawnSync } from "node:child_process";
@@ -63,6 +64,7 @@ Options:
   --hard                       Remove images and build cache before recreate
   --use-real-vertex            Set USE_REAL_VERTEX=true and mount gcloud ADC
   --mock-vertex                Set USE_REAL_VERTEX=false (local Vertex mock)
+  --tunnel                     After reset, mint Cloudflare tunnels and wire web/api
   --help, -h                   Show this help
 
 Services: ${ALL_SERVICES.join(", ")}
@@ -73,6 +75,7 @@ Examples:
   pnpm dev:docker:reset -- --only ai --use-real-vertex
   pnpm dev:docker:reset -- --only ai --mock-vertex
   pnpm dev:docker:reset -- --hard
+  pnpm dev:docker:reset -- --tunnel
 `);
 }
 
@@ -138,7 +141,10 @@ function parseVertexMode(argv: string[]): VertexMode {
 
 function filterResetArgs(argv: string[]): string[] {
   return argv.filter(
-    (arg) => arg !== "--use-real-vertex" && arg !== "--mock-vertex",
+    (arg) =>
+      arg !== "--use-real-vertex" &&
+      arg !== "--mock-vertex" &&
+      arg !== "--tunnel",
   );
 }
 
@@ -297,9 +303,15 @@ function applyVertexMode(vertexMode: VertexMode): boolean {
   return useRealVertex;
 }
 
+function wireTunnels(): void {
+  console.log("\nWiring Cloudflare tunnels after reset…");
+  run("pnpm exec tsx scripts/dev-docker-tunnel.ts refresh");
+}
+
 function main(): void {
   const rawArgv = process.argv.slice(2);
   const vertexMode = parseVertexMode(rawArgv);
+  const useTunnel = rawArgv.includes("--tunnel");
   const { services, hard } = parseArgs(filterResetArgs(rawArgv));
   const useRealVertex = applyVertexMode(vertexMode);
   const isFullReset =
@@ -307,11 +319,18 @@ function main(): void {
     ALL_SERVICES.every((service) => services.includes(service));
 
   console.log(`${hard ? "Hard" : "Soft"} reset: ${services.join(", ")}`);
+  if (useTunnel) {
+    console.log("Tunnel mode: will re-wire trycloudflare URLs after reset");
+  }
 
   if (isFullReset) {
     resetAll(hard, useRealVertex);
   } else {
     resetSelected(services, hard, useRealVertex);
+  }
+
+  if (useTunnel) {
+    wireTunnels();
   }
 
   console.log(

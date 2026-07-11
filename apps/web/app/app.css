@@ -7,6 +7,19 @@
 @import "@repo/theme/dark.css";
 @import "@repo/theme/base.css";
 
+/*
+ * Chrome edge-to-edge bottom chrome: bleed into the gesture inset while keeping
+ * interactive content clear. Uses the documented safe-area-max-inset calc fast path.
+ * https://developer.chrome.com/docs/css-ui/edge-to-edge
+ */
+.app-shell-footer-edge {
+  bottom: 0;
+  padding-bottom: env(safe-area-max-inset-bottom, 36px);
+  bottom: calc(
+    env(safe-area-inset-bottom, 0px) - env(safe-area-max-inset-bottom, 36px)
+  );
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .ui-motion-entrance-fade {
     animation: ui-motion-fade-in 0.4s ease-out both;

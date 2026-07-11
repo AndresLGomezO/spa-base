@@ -38,6 +38,7 @@ describe("rates tenant sidebar layout catalog", () => {
     expect(footerJson).toMatch(/"name":"Footer"/);
     expect(footerJson).toMatch(/"backgroundColor","value":"transparent"/);
     expect(footerJson).toContain("var(--color-background)");
+    expect(footerJson).toMatch(/"property":"bottom","value":"0"/);
     expect(footerJson).toContain("#6c5cff");
     expect(footerJson).toMatch(/"iconName":"Home"/);
     expect(footerJson).toMatch(/"iconName":"ArrowLeftRight"/);

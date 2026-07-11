@@ -18,7 +18,6 @@ import {
 } from "@repo/ui";
 
 import { useAuth } from "../../auth/AuthContext";
-import { NavigationProgressBar } from "./NavMain";
 import { TenantSwitcher } from "../TenantSwitcher";
 import { useNavItems } from "../../routing/nav-items-context";
 import {
@@ -228,28 +227,18 @@ export function DesignedAppHeader({ layout }: DesignedAppHeaderProps) {
   );
 
   if (!appShellLayoutHasContent(layout)) {
-    // Keep a borderless safe-area spacer so dashboard content doesn't seam
-    // against the status bar when the designed header is empty.
-    return (
-      <div className="bg-background relative shrink-0 pt-[env(safe-area-inset-top)]">
-        <NavigationProgressBar />
-      </div>
-    );
+    // Empty designed header: no spacer/border (those caused a seam under the status bar).
+    return null;
   }
 
   return (
-    <>
-      <div className="relative">
-        <NavigationProgressBar />
-      </div>
-      <header
-        className={cn(
-          "bg-background relative z-20 flex min-h-14 shrink-0 items-center px-4 pt-[env(safe-area-inset-top)]",
-          resolveAppShellChromeDisplayClassName(layout, atBreakpoint),
-        )}
-      >
-        <RecursiveLayoutRenderer layout={layout} context={context} />
-      </header>
-    </>
+    <header
+      className={cn(
+        "bg-background relative z-20 flex min-h-14 shrink-0 items-center px-4 pt-[env(safe-area-inset-top,0px)]",
+        resolveAppShellChromeDisplayClassName(layout, atBreakpoint),
+      )}
+    >
+      <RecursiveLayoutRenderer layout={layout} context={context} />
+    </header>
   );
 }

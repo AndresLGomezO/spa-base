@@ -19,7 +19,7 @@ import {
 
 import { useAuth } from "../../auth/AuthContext";
 import { DEFAULT_SITE_NAME } from "../SiteTitleSync";
-import { NavMain, NavigationProgressBar } from "./NavMain";
+import { NavMain } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
 import { TenantSwitcher } from "../TenantSwitcher";
 import { NotificationBell } from "../../features/notifications/NotificationBell";
@@ -155,11 +155,10 @@ export function AppHeader() {
   return (
     <header
       className={cn(
-        "bg-background relative z-20 flex min-h-14 shrink-0 items-center px-4 pt-[env(safe-area-inset-top)]",
+        "bg-background relative z-20 flex min-h-14 shrink-0 items-center px-4 pt-[env(safe-area-inset-top,0px)]",
         hamburgerHiddenClassName,
       )}
     >
-      <NavigationProgressBar />
       <SidebarTrigger label={t("nav.open")} />
     </header>
   );

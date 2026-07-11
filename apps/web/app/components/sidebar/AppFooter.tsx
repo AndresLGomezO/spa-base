@@ -26,13 +26,13 @@ interface AppFooterProps {
   readonly layout: UiLayoutDocument;
 }
 
-/** Overlay host — layout styles own background/border; does not shrink the page. */
-const FOOTER_HOST_STRUCTURAL_CLASS_NAME =
-  "absolute inset-x-0 bottom-0 z-20 flex w-full min-w-0 pb-[env(safe-area-inset-bottom)]";
+/** Overlay host — does not shrink the page. Chrome edge-to-edge bleed via `.app-shell-footer-edge`. */
+export const FOOTER_HOST_STRUCTURAL_CLASS_NAME =
+  "app-shell-footer-edge absolute inset-x-0 z-20 flex w-full min-w-0";
 
 /** Fallback chrome when there is no promoted root container to style the host. */
-const FOOTER_HOST_DEFAULT_CHROME_CLASS_NAME =
-  "bg-background absolute inset-x-0 bottom-0 z-20 flex items-center px-2 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]";
+export const FOOTER_HOST_DEFAULT_CHROME_CLASS_NAME =
+  "app-shell-footer-edge bg-background absolute inset-x-0 z-20 flex items-center px-2 py-1";
 
 export function AppFooter({ layout }: AppFooterProps) {
   const { t, i18n } = useTranslation("common");

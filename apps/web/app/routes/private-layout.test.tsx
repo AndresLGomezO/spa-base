@@ -19,6 +19,10 @@ vi.mock("../components/sidebar/AppSidebar", () => ({
   AppHeader: () => <header data-testid="header" />,
 }));
 
+vi.mock("../components/sidebar/NavMain", () => ({
+  NavigationProgressBar: () => null,
+}));
+
 vi.mock("../entities/entity-catalog-context", () => ({
   EntityCatalogProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
@@ -98,7 +102,12 @@ describe("PrivateLayoutRoute", () => {
     );
 
     const shell = screen.getByTestId("sidebar").parentElement;
-    expect(shell).toHaveClass("h-dvh", "overflow-hidden", "bg-background");
+    expect(shell).toHaveClass(
+      "fixed",
+      "inset-0",
+      "overflow-hidden",
+      "bg-background",
+    );
 
     const main = screen.getByRole("main");
     expect(main).toHaveClass(

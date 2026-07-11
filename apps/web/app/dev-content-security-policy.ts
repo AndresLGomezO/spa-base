@@ -20,6 +20,8 @@ export const DEV_CONTENT_SECURITY_POLICY = [
     // Firebase Auth emulator popup relay (signInWithPopup + connectAuthEmulator).
     "http://127.0.0.1:9099",
     "http://localhost:9099",
+    // Cloudflare quick tunnels (pnpm dev:docker:tunnel).
+    "https://*.trycloudflare.com",
   ].join(" "),
   "worker-src 'self' blob:",
 ].join("; ");

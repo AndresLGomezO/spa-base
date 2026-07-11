@@ -5,15 +5,19 @@
     box-sizing: border-box;
   }
 
-  /* Paint under translucent system bars when viewport-fit=cover is set. */
+  /*
+   * Edge-to-edge PWA shell: fill the layout viewport (including system bar
+   * regions when viewport-fit=cover). Avoid min-height tricks that leave a
+   * "chin" below the app on Android Chrome.
+   */
   html {
+    height: 100%;
     @apply bg-background;
   }
 
   body {
     margin: 0;
-    min-height: 100dvh;
-    min-height: 100svh;
+    height: 100%;
     @apply bg-background font-sans text-foreground leading-normal;
   }
 

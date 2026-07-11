@@ -198,6 +198,7 @@ services:
     environment:
       - NODE_ENV=development
       # Browser uses published host ports (127.0.0.1), not Docker service names.
+      # Tunnel mode overrides these via docker-compose.dev.tunnel.yml
       - VITE_API_URL=http://127.0.0.1:3000
       - VITE_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
       - VITE_FIREBASE_AUTH_EMULATOR_DISABLE_WARNINGS=true
