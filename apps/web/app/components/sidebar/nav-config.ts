@@ -66,6 +66,7 @@ export type NavLabelKey =
   | "debuggerAudit"
   | "debuggerRequestPerf"
   | "debuggerIndexProvision"
+  | "debuggerEmailIngest"
   | "systemConfiguration";
 
 export interface NavLinkConfig {

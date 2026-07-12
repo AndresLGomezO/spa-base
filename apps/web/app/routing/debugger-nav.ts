@@ -2,6 +2,7 @@ import {
   Bot,
   Database,
   Gauge,
+  Mail,
   ScrollText,
   Shield,
   Workflow,
@@ -25,6 +26,7 @@ const DEBUGGER_SOURCE_NAV_IDS: Record<DebugEventSource, string> = {
   audit: "debugger-audit",
   requestPerf: "debugger-request-performance",
   indexProvision: "debugger-index-provisioning",
+  emailIngest: "debugger-email-ingest",
 };
 
 const DEBUGGER_SOURCE_NAV_LABEL_KEYS: Record<
@@ -37,6 +39,7 @@ const DEBUGGER_SOURCE_NAV_LABEL_KEYS: Record<
   audit: "debuggerAudit",
   requestPerf: "debuggerRequestPerf",
   indexProvision: "debuggerIndexProvision",
+  emailIngest: "debuggerEmailIngest",
 };
 
 const DEBUGGER_SOURCE_ICONS: Record<DebugEventSource, LucideIcon> = {
@@ -46,6 +49,7 @@ const DEBUGGER_SOURCE_ICONS: Record<DebugEventSource, LucideIcon> = {
   audit: Shield,
   requestPerf: Gauge,
   indexProvision: Database,
+  emailIngest: Mail,
 };
 
 export function canAccessDebuggerSource(
@@ -65,6 +69,7 @@ export function canAccessDebuggerSource(
       );
     case "hookExecution":
     case "hookLog":
+    case "emailIngest":
       return hasPermission("hook.read", permissions, { isSuperAdmin });
     case "audit":
     case "requestPerf":

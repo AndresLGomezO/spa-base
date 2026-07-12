@@ -37,6 +37,7 @@
     "@repo/aggregation-engine": "workspace:*",
     "@repo/event-engine": "workspace:*",
     "@repo/formula-definitions": "workspace:*",
+    "@repo/gmail-ingest": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/custom-views": "workspace:*",
     "@repo/chart-definitions": "workspace:*",

@@ -13,6 +13,7 @@ export const HOOK_OPERATIONS = [
   "update",
   "delete",
   "schedule",
+  "email",
 ] as const;
 export const HOOK_PHASES = ["before", "after"] as const;
 

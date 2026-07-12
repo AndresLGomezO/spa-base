@@ -1,5 +1,6 @@
 import {
   actionTargetEntities,
+  isEmailTrigger,
   isScheduleTrigger,
   MAX_AGGREGATE_ACTIONS,
   MAX_LOADED_RECORDS,
@@ -396,6 +397,13 @@ function validateDataHookTrigger(
   trigger: DataHookTrigger,
   phase: CreateDataHookInput["phase"] | PatchDataHookInput["phase"],
 ): void {
+  if (isEmailTrigger(trigger)) {
+    if (phase === "before") {
+      throw new HookExecutionError("Email hooks must use after phase.");
+    }
+    return;
+  }
+
   if (!isScheduleTrigger(trigger)) {
     return;
   }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveKey,
+  deriveUserKey,
   encryptValue,
   decryptValue,
   encryptFields,
@@ -23,6 +24,22 @@ describe("deriveKey", () => {
   it("produces different keys for different tenants", () => {
     const key1 = deriveKey(TEST_MASTER_KEY, "tenant-1");
     const key2 = deriveKey(TEST_MASTER_KEY, "tenant-2");
+    expect(key1.equals(key2)).toBe(false);
+  });
+});
+
+describe("deriveUserKey", () => {
+  it("returns a 32-byte buffer distinct from tenant keys", () => {
+    const userKey = deriveUserKey(TEST_MASTER_KEY, "uid-1");
+    const tenantKey = deriveKey(TEST_MASTER_KEY, "uid-1");
+    expect(userKey).toBeInstanceOf(Buffer);
+    expect(userKey.length).toBe(32);
+    expect(userKey.equals(tenantKey)).toBe(false);
+  });
+
+  it("produces different keys for different users", () => {
+    const key1 = deriveUserKey(TEST_MASTER_KEY, "uid-1");
+    const key2 = deriveUserKey(TEST_MASTER_KEY, "uid-2");
     expect(key1.equals(key2)).toBe(false);
   });
 });

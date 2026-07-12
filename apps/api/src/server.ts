@@ -105,6 +105,9 @@ import {
   createFirestoreAdminTenantDeletionJobRepository,
   createFirestoreAdminTenantRepository,
   createFirestoreAdminTenantAiContextRepository,
+  createFirestoreAdminGmailConnectionRepository,
+  createFirestoreAdminEmailMatchBindingRepository,
+  createFirestoreAdminEmailIngestJobRepository,
   createFirestoreIndexStatusStore,
   configureIndexProvisioningQueue,
 } from "@repo/gcp-firebase";
@@ -162,6 +165,8 @@ import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerDebugRoutes } from "./debug/register-debug-routes.js";
 import { registerNotificationRoutes } from "./notifications/register-notification-routes.js";
+import { registerGmailIngestRoutes } from "./gmail-ingest/register-gmail-ingest-routes.js";
+import { createGmailTasksClient } from "./gmail-ingest/gmail-tasks.client.js";
 import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
 import type { SyncTenantAiContextsDeps } from "./ai/sync-tenant-ai-contexts.js";
 import { registerRoleRoutes } from "./roles/register-role-routes.js";
@@ -912,6 +917,21 @@ export async function buildServer(options: BuildServerOptions = {}) {
     },
   });
 
+  const gmailConnectionRepository =
+    createFirestoreAdminGmailConnectionRepository(firebaseAdminConfig);
+  const emailMatchBindingRepository =
+    createFirestoreAdminEmailMatchBindingRepository(firebaseAdminConfig);
+  const emailIngestJobRepository =
+    createFirestoreAdminEmailIngestJobRepository(firebaseAdminConfig);
+  const gmailTasksClient = createGmailTasksClient({
+    projectId: apiEnv.GCP_PROJECT_ID,
+    region: apiEnv.GCP_REGION,
+    queueName: apiEnv.GMAIL_TASKS_QUEUE_NAME,
+    workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+    serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+    localDispatch: apiEnv.GMAIL_TASKS_LOCAL_DISPATCH,
+  });
+
   await registerDebugRoutes(server, {
     authenticate,
     permissionDeps,
@@ -921,12 +941,38 @@ export async function buildServer(options: BuildServerOptions = {}) {
     auditLogRepository,
     requestPerfLogRepository,
     indexProvisionEventRepository,
+    emailIngestJobRepository,
     entityRuntime,
   });
 
   await registerNotificationRoutes(server, {
     authenticate,
     userNotificationRepository,
+  });
+
+  const gmailOAuthConfigured =
+    Boolean(apiEnv.GMAIL_OAUTH_CLIENT_ID?.trim()) &&
+    Boolean(apiEnv.GMAIL_OAUTH_CLIENT_SECRET?.trim()) &&
+    Boolean(apiEnv.TENANT_ENCRYPTION_MASTER_KEY?.trim());
+
+  await registerGmailIngestRoutes(server, {
+    authenticate,
+    gmailConnectionRepository,
+    emailMatchBindingRepository,
+    emailIngestJobRepository,
+    gmailTasksClient,
+    oauth: gmailOAuthConfigured
+      ? {
+          clientId: apiEnv.GMAIL_OAUTH_CLIENT_ID!,
+          clientSecret: apiEnv.GMAIL_OAUTH_CLIENT_SECRET!,
+          redirectUri: apiEnv.GMAIL_OAUTH_REDIRECT_URI,
+          stateSecret: apiEnv.GMAIL_OAUTH_STATE_SECRET,
+          encryptionMasterKey: apiEnv.TENANT_ENCRYPTION_MASTER_KEY!,
+          ...(apiEnv.GMAIL_PUBSUB_TOPIC
+            ? { pubsubTopicName: apiEnv.GMAIL_PUBSUB_TOPIC }
+            : {}),
+        }
+      : null,
   });
 
   await registerUiBuilderAiSuggestionRoutes(server, {

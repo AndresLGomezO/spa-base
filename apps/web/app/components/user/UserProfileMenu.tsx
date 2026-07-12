@@ -1,10 +1,12 @@
 import { useMemo, useState, type ComponentPropsWithoutRef } from "react";
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
   ChevronsUpDown,
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  Settings,
 } from "lucide-react";
 
 import type {
@@ -16,6 +18,7 @@ import { Avatar, Button, Popover, Text, type PopoverPlacement } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { useAuth } from "../../auth/AuthContext";
+import { ACCOUNT_SETTINGS_BASE } from "../../features/account-settings/account-settings-nav";
 import { LanguageSwitcher } from "../LanguageSwitcher";
 import { ThemeToggle } from "../ThemeToggle";
 import { avatarShapeClassName, getUserInitials } from "./user-profile.utils";
@@ -170,8 +173,13 @@ function UserProfileMenuTrigger({
   );
 }
 
-function UserProfileMenuContent() {
+function UserProfileMenuContent({
+  onNavigate,
+}: {
+  readonly onNavigate?: () => void;
+}) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   const {
     user,
     logout,
@@ -230,6 +238,21 @@ function UserProfileMenuContent() {
         </div>
       </div>
       <div className="border-border border-t pt-3">
+        <Button
+          type="button"
+          variant="ghost"
+          fullWidth
+          className="justify-start gap-2"
+          onClick={() => {
+            onNavigate?.();
+            void navigate(`${ACCOUNT_SETTINGS_BASE}/general`);
+          }}
+        >
+          <Settings className="size-4 shrink-0" aria-hidden />
+          {t("nav.accountSettings")}
+        </Button>
+      </div>
+      <div>
         <Text variant="muted" className="mb-2 block text-xs">
           {t("theme.label")}
         </Text>
@@ -340,7 +363,7 @@ export function UserProfileMenu({
         />
       }
     >
-      <UserProfileMenuContent />
+      <UserProfileMenuContent onNavigate={() => setOpen(false)} />
     </Popover>
   );
 }

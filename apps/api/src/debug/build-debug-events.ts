@@ -201,6 +201,43 @@ export function toIndexProvisionDebugEvent(
   };
 }
 
+export function toEmailIngestDebugEvent(record: {
+  readonly id: string;
+  readonly title: string;
+  readonly status: string;
+  readonly kind: string;
+  readonly updatedAt: string;
+  readonly createdAt: string;
+  readonly errorMessage?: string | null;
+  readonly stepTrace?: readonly unknown[];
+  readonly userId?: string;
+}): DebugEvent {
+  const status =
+    record.status === "completed"
+      ? "completed"
+      : record.status === "failed"
+        ? "failed"
+        : record.status === "running"
+          ? "running"
+          : "pending";
+  return {
+    id: record.id,
+    source: "emailIngest",
+    timestamp: record.updatedAt || record.createdAt,
+    title: record.title,
+    subtitle: record.kind,
+    status,
+    summary: {
+      kind: record.kind,
+      status: record.status,
+      userId: record.userId,
+      errorMessage: record.errorMessage,
+      stepCount: record.stepTrace?.length ?? 0,
+    },
+    payload: record,
+  };
+}
+
 export function mergeDebugEvents(
   groups: readonly (readonly DebugEvent[])[],
   limit: number,
@@ -222,6 +259,7 @@ export function parseDebugSources(
       "audit",
       "requestPerf",
       "indexProvision",
+      "emailIngest",
     ];
   }
 
@@ -232,6 +270,7 @@ export function parseDebugSources(
     "audit",
     "requestPerf",
     "indexProvision",
+    "emailIngest",
   ]);
   const aliases: Record<string, DebugEventSource> = {
     ai: "ai",
@@ -244,6 +283,8 @@ export function parseDebugSources(
     requestPerf: "requestPerf",
     indexProvision: "indexProvision",
     indexProvisioning: "indexProvision",
+    emailIngest: "emailIngest",
+    email: "emailIngest",
   };
 
   const parsed = raw
@@ -263,5 +304,6 @@ export function parseDebugSources(
         "audit",
         "requestPerf",
         "indexProvision",
+        "emailIngest",
       ];
 }

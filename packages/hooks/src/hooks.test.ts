@@ -86,6 +86,17 @@ describe("hook events", () => {
     expect(parseHookEvent("task.afterSchedule")).toEqual(parsed);
   });
 
+  it("formats and parses email events", () => {
+    const parsed = {
+      entity: "financialItem",
+      phase: "after" as const,
+      operation: "email" as const,
+    };
+
+    expect(formatHookEvent(parsed)).toBe("financialItem.afterEmail");
+    expect(parseHookEvent("financialItem.afterEmail")).toEqual(parsed);
+  });
+
   it("rejects invalid events", () => {
     expect(() => parseHookEvent("loan.created")).toThrow(HookExecutionError);
   });

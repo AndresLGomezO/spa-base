@@ -67,3 +67,28 @@ output "hook_jobs_queue_name" {
   description = "Cloud Tasks queue for data hook jobs (empty when disabled)"
   value       = local.enable_ai_worker ? google_cloud_tasks_queue.hook_jobs[0].name : ""
 }
+
+output "gmail_jobs_queue_name" {
+  description = "Cloud Tasks queue for Gmail ingest jobs (empty when disabled)"
+  value       = local.enable_ai_worker ? google_cloud_tasks_queue.gmail_jobs[0].name : ""
+}
+
+output "gmail_pubsub_topic" {
+  description = "Full Pub/Sub topic id for Gmail watch push (empty when disabled)"
+  value       = local.enable_ai_worker ? google_pubsub_topic.gmail_push[0].id : ""
+}
+
+output "gmail_oauth_client_id_secret_id" {
+  description = "Secret Manager secret id for GMAIL_OAUTH_CLIENT_ID"
+  value       = google_secret_manager_secret.gmail_oauth_client_id.secret_id
+}
+
+output "gmail_oauth_client_secret_secret_id" {
+  description = "Secret Manager secret id for GMAIL_OAUTH_CLIENT_SECRET"
+  value       = google_secret_manager_secret.gmail_oauth_client_secret.secret_id
+}
+
+output "gmail_oauth_state_secret_secret_id" {
+  description = "Secret Manager secret id for GMAIL_OAUTH_STATE_SECRET"
+  value       = google_secret_manager_secret.gmail_oauth_state_secret.secret_id
+}

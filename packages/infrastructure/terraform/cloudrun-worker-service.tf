@@ -11,11 +11,17 @@ resource "google_cloud_run_v2_service" "worker_service" {
     google_firebase_project.default,
     google_project_service.run_api,
     google_cloud_tasks_queue.ai_jobs,
+    google_cloud_tasks_queue.gmail_jobs,
+    google_secret_manager_secret.tenant_encryption_master_key,
+    google_secret_manager_secret.gmail_oauth_client_id,
+    google_secret_manager_secret.gmail_oauth_client_secret,
     google_project_iam_member.worker_service_firestore,
     google_project_iam_member.worker_service_vertex_ai,
     google_project_iam_member.worker_service_storage,
+    google_project_iam_member.worker_service_secrets,
     google_service_account_iam_member.ci_deployer_act_as_worker_service_sa,
     google_project_service.aiplatform_api,
+    google_project_service.gmail_api,
   ]
 
   template {
@@ -82,6 +88,45 @@ resource "google_cloud_run_v2_service" "worker_service" {
       env {
         name  = "TASKS_SA_EMAIL"
         value = google_service_account.tasks_sa[0].email
+      }
+      env {
+        name = "TENANT_ENCRYPTION_MASTER_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.tenant_encryption_master_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "GMAIL_OAUTH_CLIENT_ID"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.gmail_oauth_client_id.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "GMAIL_OAUTH_CLIENT_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.gmail_oauth_client_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name  = "GMAIL_PUBSUB_TOPIC"
+        value = google_pubsub_topic.gmail_push[0].id
+      }
+      env {
+        name  = "GMAIL_TASKS_LOCAL_DISPATCH"
+        value = "false"
+      }
+      env {
+        name  = "WORKER_SERVICE_URL"
+        value = local.worker_service_url_full
       }
 
       dynamic "env" {

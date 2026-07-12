@@ -85,6 +85,28 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))" | \
 
 > **Warning:** changing the encryption master key invalidates all previously encrypted field data.
 
+### Gmail ingest secrets (required for Cloud Run after Terraform creates the shells)
+
+Terraform mounts `GMAIL_OAUTH_*` on the API (and client id/secret on the worker). Cloud Run **will not start** until each secret has at least one version. Placeholders are fine until you create a real OAuth Web client:
+
+```bash
+echo -n 'pending' | gcloud secrets versions add GMAIL_OAUTH_CLIENT_ID \
+  --project=entitysystem-development --data-file=-
+echo -n 'pending' | gcloud secrets versions add GMAIL_OAUTH_CLIENT_SECRET \
+  --project=entitysystem-development --data-file=-
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" | \
+  gcloud secrets versions add GMAIL_OAUTH_STATE_SECRET \
+  --project=entitysystem-development --data-file=-
+```
+
+When enabling Email settings for users:
+
+- [ ] OAuth consent screen (External) with scope `gmail.readonly`
+- [ ] OAuth **Web** client; redirect URI = `https://{backend_url}/api/gmail/oauth/callback`
+- [ ] Replace placeholder versions with real client id/secret (same `gcloud secrets versions add` commands)
+
+See [environment-variables.md](./environment-variables.md) → Gmail OAuth.
+
 ## Terraform brownfield (if apply failed with 409)
 
 ```bash

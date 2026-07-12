@@ -23,6 +23,7 @@
     "@repo/ai-engine",
     "@repo/event-engine",
     "@repo/formula-definitions",
+    "@repo/gmail-ingest",
     "@repo/chart-definitions",
     "@repo/metrics-engine",
     "@repo/hooks",

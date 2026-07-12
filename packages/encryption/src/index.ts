@@ -1,5 +1,6 @@
 export {
   deriveKey,
+  deriveUserKey,
   encryptValue,
   decryptValue,
   encryptFields,

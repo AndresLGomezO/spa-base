@@ -53,6 +53,7 @@
     "open": "Open menu",
     "userMenu": "Account menu",
     "signOut": "Sign out",
+    "accountSettings": "Settings",
     "fallbackName": "User",
     "dataModels": "Data Entities",
     "dataStructure": "Data structure",
@@ -89,6 +90,7 @@
     "debuggerAudit": "Audit",
     "debuggerRequestPerf": "Request Performance",
     "debuggerIndexProvision": "Index Provisioning",
+    "debuggerEmailIngest": "Email Ingest",
     "systemConfiguration": "System configuration"
   },
   "debugger": {
@@ -102,7 +104,8 @@
       "hookLog": "Hook Logs",
       "audit": "Audit",
       "requestPerf": "Request Performance",
-      "indexProvision": "Index Provisioning"
+      "indexProvision": "Index Provisioning",
+      "emailIngest": "Email Ingest"
     },
     "status": {
       "success": "Success",
@@ -1773,6 +1776,37 @@
     "platformSuperadmin": "Platform Superadmin",
     "noRole": "No role"
   },
+  "accountSettings": {
+    "title": "Settings",
+    "nav": {
+      "general": "General",
+      "profile": "Your Profile",
+      "tenants": "Tenants",
+      "integrations": "Integrations",
+      "email": "Email"
+    },
+    "general": {
+      "title": "General",
+      "description": "Choose how the app looks and which language you prefer.",
+      "themeHint": "Switch between light and dark appearance.",
+      "languageHint": "Choose the language used across the app."
+    },
+    "profile": {
+      "name": "Name",
+      "email": "Email",
+      "roles": "Roles",
+      "managedByGoogle": "Your name and photo come from Google sign-in."
+    },
+    "tenants": {
+      "title": "Tenants",
+      "description": "Workspaces you belong to. Switch to change the active tenant.",
+      "empty": "You are not a member of any tenant yet.",
+      "active": "Active",
+      "switch": "Switch",
+      "switched": "Switched to {{name}}.",
+      "switchFailed": "Unable to switch tenant."
+    }
+  },
   "platform": {
     "createTenant": {
       "title": "Create tenant",
@@ -1849,6 +1883,44 @@
       "seedHookObservability": {
         "title": "Seed hook observability",
         "description": "Persist hook executions, hook logs, and notifications while replaying hooks during database seed."
+      }
+    },
+    "email": {
+      "title": "Email sync",
+      "description": "Connect your Gmail account and manage per-record match rules. Matched emails fire Automation hooks you configure.",
+      "privacy": "Only messages matching your rules are fetched. Mail is read-only; tokens stay encrypted and are never shared across tenants.",
+      "connection": "Gmail connection",
+      "loading": "Loading connection status…",
+      "connectedAs": "Connected as {{email}}",
+      "notConnected": "Gmail is not connected.",
+      "connect": "Connect Gmail",
+      "disconnect": "Disconnect",
+      "disconnected": "Gmail disconnected.",
+      "backfill": "Backfill recent mail",
+      "backfillStarted": "Backfill started (job {{jobId}}).",
+      "bindings": "Match bindings",
+      "bindingsHint": "Bindings are also editable on each entity record detail page.",
+      "noBindings": "No bindings yet.",
+      "noSenders": "No senders",
+      "aiEnabled": "AI on",
+      "deleteBinding": "Delete",
+      "bindingDeleted": "Binding deleted.",
+      "bindingSaved": "Binding saved.",
+      "recordPanelTitle": "Email matching",
+      "recordPanelHint": "Define senders and subject patterns for this record. Configure Automation → On matched email to decide what happens.",
+      "fromAddresses": "From addresses",
+      "subjectPatterns": "Subject patterns",
+      "useAi": "Use AI to structure and decide relevance",
+      "aiInstructions": "AI instructions",
+      "saveBinding": "Save binding",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enable": "Enable",
+      "disable": "Disable",
+      "oauthResult": {
+        "connected": "Gmail connected successfully.",
+        "error": "Gmail connection failed.",
+        "reauth_required": "Reconnect Gmail and grant consent again."
       }
     },
     "appearance": {
@@ -3311,6 +3383,7 @@
       "statusDisabled": "Disabled",
       "triggerKindCrud": "Record change",
       "triggerKindSchedule": "Schedule",
+      "triggerKindEmail": "Email",
       "filters": {
         "entity": "Entity",
         "phase": "Timing",
@@ -3328,6 +3401,7 @@
       "triggerKind": "Trigger type",
       "cron": "Cron schedule",
       "cronHint": "Five-field cron (minute hour day month weekday). Evaluated in the timezone below.",
+      "emailHint": "Runs when an inbound email matches a binding for this entity record. Use conditions on __emailRelevant and __extracted fields.",
       "timezone": "Timezone",
       "scheduleScope": "Run scope",
       "scheduleScopeHint": "Once runs batch actions (e.g. updateMatching). Each record runs the hook once per matched row.",
@@ -3392,7 +3466,8 @@
     },
     "triggerKind": {
       "crud": "On record change",
-      "schedule": "On schedule"
+      "schedule": "On schedule",
+      "email": "On matched email"
     },
     "scheduleScope": {
       "once": "Once per tick",
@@ -3625,6 +3700,7 @@
           }
         },
         "schedule": "Runs on a schedule for {{entity}} — {{cron}} ({{timezone}}, {{scope}})",
+        "email": "Runs when a matched email arrives for {{entity}}",
         "updateFields": "Only when these fields change: {{fields}}"
       },
       "conditionGroupAnd": "All of the following must be true",

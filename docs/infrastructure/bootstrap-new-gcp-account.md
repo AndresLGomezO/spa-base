@@ -124,6 +124,10 @@ echo -n 'you@company.com,other@company.com' | gcloud secrets versions add PLATFO
 
 Repeat for staging and production when you deploy those environments. Cloud Run mounts **latest**; update emails anytime with another `gcloud secrets versions add`.
 
+### Gmail OAuth (when enabling email ingest)
+
+Terraform creates `GMAIL_OAUTH_*` Secret Manager shells, enables the Gmail API, and wires Pub/Sub + Cloud Tasks. Create the OAuth Web client in Console once per project, then add secret versions (see [environment-variables.md](./environment-variables.md) and [github-secrets-checklist.md](./github-secrets-checklist.md)).
+
 ---
 
 ## Step 5b — Brownfield import (if Console or CI created resources first)

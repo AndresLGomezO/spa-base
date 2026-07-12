@@ -17,6 +17,7 @@ import {
   DATA_HOOK_PHASES,
   DATA_HOOK_SCHEDULE_SCOPES,
   DATA_HOOK_TRIGGER_KINDS,
+  isEmailTrigger,
   isScheduleTrigger,
 } from "@repo/hooks";
 
@@ -98,8 +99,10 @@ function HookRecentExecutions({ hookId }: { readonly hookId: string }) {
   );
 }
 
-function triggerKind(trigger: DataHookTrigger): "crud" | "schedule" {
-  return isScheduleTrigger(trigger) ? "schedule" : "crud";
+function triggerKind(trigger: DataHookTrigger): "crud" | "schedule" | "email" {
+  if (isScheduleTrigger(trigger)) return "schedule";
+  if (isEmailTrigger(trigger)) return "email";
+  return "crud";
 }
 
 function defaultCrudTrigger(
@@ -115,6 +118,10 @@ function defaultScheduleTrigger(): DataHookTrigger {
     timezone: "UTC",
     scope: "once",
   };
+}
+
+function defaultEmailTrigger(): DataHookTrigger {
+  return { kind: "email" };
 }
 
 export function DataHookSettingsPanel() {
@@ -170,6 +177,7 @@ export function DataHookSettingsPanel() {
 
   const conditionEnabled = draft.condition !== null;
   const isScheduled = isScheduleTrigger(draft.trigger);
+  const isEmail = isEmailTrigger(draft.trigger);
 
   return (
     <div
@@ -236,7 +244,10 @@ export function DataHookSettingsPanel() {
                   value={triggerKind(draft.trigger)}
                   disabled={!canUpdate}
                   onChange={(event) => {
-                    const kind = event.target.value as "crud" | "schedule";
+                    const kind = event.target.value as
+                      | "crud"
+                      | "schedule"
+                      | "email";
                     if (kind === "schedule") {
                       editor.updateDraft({
                         phase: "after",
@@ -248,10 +259,19 @@ export function DataHookSettingsPanel() {
                       });
                       return;
                     }
+                    if (kind === "email") {
+                      editor.updateDraft({
+                        phase: "after",
+                        trigger: defaultEmailTrigger(),
+                      });
+                      return;
+                    }
 
-                    const operation = isScheduleTrigger(draft.trigger)
-                      ? "create"
-                      : draft.trigger.operation;
+                    const operation =
+                      isScheduleTrigger(draft.trigger) ||
+                      isEmailTrigger(draft.trigger)
+                        ? "create"
+                        : draft.trigger.operation;
                     editor.updateDraft({
                       trigger: defaultCrudTrigger(operation),
                     });
@@ -266,19 +286,18 @@ export function DataHookSettingsPanel() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {!isScheduled ? (
+                {!isScheduled && !isEmail ? (
                   <div className="space-y-1">
                     <FieldLabel>{t("dataHooks.settings.operation")}</FieldLabel>
                     <Select
                       className={controlClassName}
-                      value={
-                        isScheduleTrigger(draft.trigger)
-                          ? "create"
-                          : draft.trigger.operation
-                      }
+                      value={draft.trigger.operation}
                       disabled={!canUpdate}
                       onChange={(event) => {
-                        if (isScheduleTrigger(draft.trigger)) {
+                        if (
+                          isScheduleTrigger(draft.trigger) ||
+                          isEmailTrigger(draft.trigger)
+                        ) {
                           return;
                         }
                         editor.updateDraft({
@@ -296,7 +315,9 @@ export function DataHookSettingsPanel() {
                       ))}
                     </Select>
                   </div>
-                ) : (
+                ) : null}
+
+                {isScheduled ? (
                   <div className="space-y-1 sm:col-span-2">
                     <FieldLabel>{t("dataHooks.settings.cron")}</FieldLabel>
                     <input
@@ -319,14 +340,22 @@ export function DataHookSettingsPanel() {
                       {t("dataHooks.settings.cronHint")}
                     </Text>
                   </div>
-                )}
+                ) : null}
+
+                {isEmail ? (
+                  <div className="space-y-1 sm:col-span-2">
+                    <Text className="text-muted-foreground text-sm">
+                      {t("dataHooks.settings.emailHint")}
+                    </Text>
+                  </div>
+                ) : null}
 
                 <div className="space-y-1">
                   <FieldLabel>{t("dataHooks.settings.phase")}</FieldLabel>
                   <Select
                     className={controlClassName}
                     value={draft.phase}
-                    disabled={!canUpdate || isScheduled}
+                    disabled={!canUpdate || isScheduled || isEmail}
                     onChange={(event) => {
                       const phase = event.target.value as DataHookPhase;
                       editor.updateDraft({
@@ -464,7 +493,9 @@ export function DataHookSettingsPanel() {
               ) : null}
 
               {!isScheduled &&
+              !isEmail &&
               !isScheduleTrigger(draft.trigger) &&
+              !isEmailTrigger(draft.trigger) &&
               draft.trigger.operation === "update" ? (
                 <CollapsibleEditorCard
                   title={t("dataHooks.settings.sections.updateFields")}
@@ -479,6 +510,7 @@ export function DataHookSettingsPanel() {
                       const crudTrigger = draft.trigger;
                       const checked =
                         !isScheduleTrigger(crudTrigger) &&
+                        !isEmailTrigger(crudTrigger) &&
                         (crudTrigger.updateFields?.includes(name) ?? false);
                       return (
                         <label
@@ -490,13 +522,18 @@ export function DataHookSettingsPanel() {
                             checked={checked}
                             disabled={!canUpdate}
                             onChange={(event) => {
-                              if (isScheduleTrigger(draft.trigger)) {
+                              if (
+                                isScheduleTrigger(draft.trigger) ||
+                                isEmailTrigger(draft.trigger)
+                              ) {
                                 return;
                               }
                               const current = draft.trigger.updateFields ?? [];
                               const next = event.target.checked
                                 ? [...current, name]
-                                : current.filter((field) => field !== name);
+                                : current.filter(
+                                    (field: string) => field !== name,
+                                  );
                               editor.updateDraft({
                                 trigger: {
                                   ...draft.trigger,

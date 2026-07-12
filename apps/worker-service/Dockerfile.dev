@@ -20,11 +20,13 @@ COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
 COPY packages/custom-views/package.json ./packages/custom-views/
 COPY packages/debug-logs/package.json ./packages/debug-logs/
+COPY packages/encryption/package.json ./packages/encryption/
 COPY packages/entity-queries/package.json ./packages/entity-queries/
 COPY packages/event-engine/package.json ./packages/event-engine/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
+COPY packages/gmail-ingest/package.json ./packages/gmail-ingest/
 COPY packages/hooks/package.json ./packages/hooks/
 COPY packages/formula-definitions/package.json ./packages/formula-definitions/
 COPY packages/chart-definitions/package.json ./packages/chart-definitions/

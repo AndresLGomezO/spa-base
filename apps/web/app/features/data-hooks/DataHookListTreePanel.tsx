@@ -14,7 +14,7 @@ import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 import type { DataHooksCatalogEnvelope } from "@repo/hooks/browser";
-import { isScheduleTrigger } from "@repo/hooks";
+import { isEmailTrigger, isScheduleTrigger } from "@repo/hooks";
 
 import { getEntityLabel } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -135,7 +135,9 @@ export function DataHookListTreePanel() {
             label:
               triggerKind === "crud"
                 ? t("dataHooks.list.triggerKindCrud")
-                : t("dataHooks.list.triggerKindSchedule"),
+                : triggerKind === "schedule"
+                  ? t("dataHooks.list.triggerKindSchedule")
+                  : t("dataHooks.list.triggerKindEmail"),
           };
         }
         if (badge.id.startsWith("status:")) {
@@ -228,7 +230,9 @@ export function DataHookListTreePanel() {
               label={
                 triggerKind === "crud"
                   ? t("dataHooks.list.triggerKindCrud")
-                  : t("dataHooks.list.triggerKindSchedule")
+                  : triggerKind === "schedule"
+                    ? t("dataHooks.list.triggerKindSchedule")
+                    : t("dataHooks.list.triggerKindEmail")
               }
             />
           ))}
@@ -426,11 +430,13 @@ export function DataHookListTreePanel() {
                   entityLabelByName.get(definition.entity) ?? definition.entity;
                 const operationLabel = isScheduleTrigger(definition.trigger)
                   ? t("dataHooks.triggerKind.schedule")
-                  : definition.trigger.operation === "update"
-                    ? t("dataHooks.operation.update")
-                    : definition.trigger.operation === "delete"
-                      ? t("dataHooks.operation.delete")
-                      : t("dataHooks.operation.create");
+                  : isEmailTrigger(definition.trigger)
+                    ? t("dataHooks.triggerKind.email")
+                    : definition.trigger.operation === "update"
+                      ? t("dataHooks.operation.update")
+                      : definition.trigger.operation === "delete"
+                        ? t("dataHooks.operation.delete")
+                        : t("dataHooks.operation.create");
                 const subtitle = `${entityLabel} · ${
                   definition.phase === "before"
                     ? t("dataHooks.phase.before")

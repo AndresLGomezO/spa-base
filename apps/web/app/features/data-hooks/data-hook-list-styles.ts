@@ -7,7 +7,7 @@ export type DataHookListSort =
 
 export type DataHookPhaseFilter = "before" | "after";
 
-export type DataHookTriggerKindFilter = "crud" | "schedule";
+export type DataHookTriggerKindFilter = "crud" | "schedule" | "email";
 
 export type DataHookStatusFilter = "enabled" | "disabled";
 
@@ -19,7 +19,7 @@ export const DATA_HOOK_PHASE_FILTERS: readonly DataHookPhaseFilter[] = [
 ];
 
 export const DATA_HOOK_TRIGGER_KIND_FILTERS: readonly DataHookTriggerKindFilter[] =
-  ["crud", "schedule"];
+  ["crud", "schedule", "email"];
 
 export const DATA_HOOK_STATUS_FILTERS: readonly DataHookStatusFilter[] = [
   "enabled",

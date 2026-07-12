@@ -1506,7 +1506,8 @@ export type DebugEventSource =
   | "hookLog"
   | "audit"
   | "requestPerf"
-  | "indexProvision";
+  | "indexProvision"
+  | "emailIngest";
 
 export type DebugEventStatus =
   | "success"
@@ -1805,4 +1806,121 @@ export async function replaceFormulaDefinitionsCatalog(body: unknown): Promise<{
     method: "PUT",
     body,
   });
+}
+
+interface GmailConnectionStatus {
+  readonly connected: boolean;
+  readonly status: string;
+  readonly emailAddress: string | null;
+  readonly scopes: readonly string[];
+  readonly lastSyncAt: string | null;
+  readonly watchExpiration: string | null;
+  readonly lastError: string | null;
+}
+
+interface EmailMatchBindingRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly enabled: boolean;
+  readonly fromAddresses: readonly string[];
+  readonly subjectPatterns: readonly string[];
+  readonly bodyPatterns: readonly string[];
+  readonly gmailQueryExtra?: string | null;
+  readonly useAi: boolean;
+  readonly aiInstructions?: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function getGmailStatus(): Promise<GmailConnectionStatus> {
+  return apiRequest<GmailConnectionStatus>("/api/gmail/status");
+}
+
+export async function startGmailConnect(): Promise<{
+  readonly authorizeUrl: string;
+}> {
+  return apiRequest<{ readonly authorizeUrl: string }>("/api/gmail/connect", {
+    method: "POST",
+    body: {},
+  });
+}
+
+export async function disconnectGmail(): Promise<{
+  readonly disconnected: boolean;
+}> {
+  return apiRequest<{ readonly disconnected: boolean }>(
+    "/api/gmail/disconnect",
+    { method: "POST", body: {} },
+  );
+}
+
+export async function startGmailBackfill(input?: {
+  readonly afterDate?: string;
+  readonly beforeDate?: string;
+  readonly maxMessages?: number;
+}): Promise<{ readonly jobId: string }> {
+  return apiRequest<{ readonly jobId: string }>("/api/gmail/backfill", {
+    method: "POST",
+    body: input ?? {},
+  });
+}
+
+export async function listEmailMatchBindings(options?: {
+  readonly entityName?: string;
+  readonly recordId?: string;
+}): Promise<{ readonly items: readonly EmailMatchBindingRecord[] }> {
+  const params = new URLSearchParams();
+  if (options?.entityName) params.set("entityName", options.entityName);
+  if (options?.recordId) params.set("recordId", options.recordId);
+  const query = params.toString();
+  return apiRequest<{ readonly items: readonly EmailMatchBindingRecord[] }>(
+    `/api/gmail/bindings${query ? `?${query}` : ""}`,
+  );
+}
+
+export async function createEmailMatchBinding(input: {
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly enabled?: boolean;
+  readonly fromAddresses?: readonly string[];
+  readonly subjectPatterns?: readonly string[];
+  readonly bodyPatterns?: readonly string[];
+  readonly gmailQueryExtra?: string | null;
+  readonly useAi?: boolean;
+  readonly aiInstructions?: string | null;
+}): Promise<EmailMatchBindingRecord> {
+  return apiRequest<EmailMatchBindingRecord>("/api/gmail/bindings", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function patchEmailMatchBinding(
+  bindingId: string,
+  input: Partial<{
+    enabled: boolean;
+    fromAddresses: readonly string[];
+    subjectPatterns: readonly string[];
+    bodyPatterns: readonly string[];
+    gmailQueryExtra: string | null;
+    useAi: boolean;
+    aiInstructions: string | null;
+  }>,
+): Promise<EmailMatchBindingRecord> {
+  return apiRequest<EmailMatchBindingRecord>(
+    `/api/gmail/bindings/${encodeURIComponent(bindingId)}`,
+    { method: "PATCH", body: input },
+  );
+}
+
+export async function deleteEmailMatchBinding(
+  bindingId: string,
+): Promise<{ readonly deleted: boolean }> {
+  return apiRequest<{ readonly deleted: boolean }>(
+    `/api/gmail/bindings/${encodeURIComponent(bindingId)}`,
+    { method: "DELETE" },
+  );
 }

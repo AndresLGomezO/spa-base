@@ -10,6 +10,7 @@ const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
 const HKDF_INFO = "field-encryption";
+const HKDF_INFO_USER = "user-field-encryption";
 
 /**
  * Derives a per-tenant 256-bit key from the master key using HKDF-SHA256.
@@ -18,6 +19,17 @@ const HKDF_INFO = "field-encryption";
 export function deriveKey(masterKey: string, tenantId: string): Buffer {
   const ikm = Buffer.from(masterKey, "base64");
   return Buffer.from(hkdfSync("sha256", ikm, tenantId, HKDF_INFO, KEY_LENGTH));
+}
+
+/**
+ * Derives a per-user 256-bit key from the master key using HKDF-SHA256.
+ * Used for auth-global secrets (e.g. Gmail OAuth tokens) that are not tenant-scoped.
+ */
+export function deriveUserKey(masterKey: string, userId: string): Buffer {
+  const ikm = Buffer.from(masterKey, "base64");
+  return Buffer.from(
+    hkdfSync("sha256", ikm, userId, HKDF_INFO_USER, KEY_LENGTH),
+  );
 }
 
 /**

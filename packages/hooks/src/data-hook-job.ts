@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   DATA_HOOK_JOB_OPERATIONS,
+  isEmailTrigger,
   isScheduleTrigger,
   type DataHookDefinition,
 } from "./data-hook-definition.js";
@@ -26,7 +27,7 @@ export const dataHookJobPayloadSchema = z.object({
   }),
   depth: z.number().int().nonnegative(),
   visitedHookIds: z.array(z.string().trim().min(1)),
-  triggerKind: z.enum(["crud", "schedule"]).optional(),
+  triggerKind: z.enum(["crud", "schedule", "email"]).optional(),
   executionId: z.string().trim().min(1).optional(),
 });
 
@@ -39,7 +40,9 @@ export function buildDataHookJobPayload(
 ): DataHookJobPayload {
   const operation = isScheduleTrigger(definition.trigger)
     ? "schedule"
-    : definition.trigger.operation;
+    : isEmailTrigger(definition.trigger)
+      ? "email"
+      : definition.trigger.operation;
 
   return {
     hookId: definition.id,
@@ -59,7 +62,9 @@ export function buildDataHookJobPayload(
     visitedHookIds: [...(context.visitedHookIds ?? [])],
     ...(isScheduleTrigger(definition.trigger)
       ? { triggerKind: "schedule" as const }
-      : {}),
+      : isEmailTrigger(definition.trigger)
+        ? { triggerKind: "email" as const }
+        : {}),
     ...(executionId ? { executionId } : {}),
   };
 }

@@ -11,12 +11,16 @@ import { aiUiBuilderTaskRoute } from "./ai-ui-builder-task.route.js";
 import { dataHookTaskRoute } from "./data-hook-task.route.js";
 import { scheduleTickRoute } from "./schedule-tick.route.js";
 import { tenantDeletionTaskRoute } from "./tenant-deletion-task.route.js";
+import { gmailIngestTaskRoute } from "./gmail-ingest-task.route.js";
+import type { GmailIngestProcessorDeps } from "../services/gmail-ingest-processor.js";
 
 export type WorkerTaskScopeDeps = AiChatProcessorDeps &
   AiUiBuilderProcessorDeps &
   DataHookProcessorDeps &
   ScheduleTickRouteDeps &
-  TenantDeletionTaskRouteDeps;
+  TenantDeletionTaskRouteDeps & {
+    readonly gmailIngest?: GmailIngestProcessorDeps;
+  };
 
 export async function taskScope(
   app: FastifyInstance,
@@ -28,4 +32,7 @@ export async function taskScope(
   await app.register(dataHookTaskRoute, deps);
   await app.register(scheduleTickRoute, deps);
   await app.register(tenantDeletionTaskRoute, deps);
+  if (deps.gmailIngest) {
+    await app.register(gmailIngestTaskRoute, deps.gmailIngest);
+  }
 }

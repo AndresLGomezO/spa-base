@@ -29,6 +29,7 @@ import {
   listManyToManyFieldNames,
   useEntityRecordExportEnvelope,
 } from "./json/build-entity-record-export-envelope";
+import { EntityEmailMatchingPanel } from "./EntityEmailMatchingPanel";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -264,6 +265,10 @@ export function EntityRecordDetail({
           </dl>
         </div>
       )}
+
+      <div className="bg-card border-border rounded-lg border p-4">
+        <EntityEmailMatchingPanel entityName={entityName} recordId={recordId} />
+      </div>
 
       {reverseRelations.length > 0 ? (
         <div className="space-y-4">

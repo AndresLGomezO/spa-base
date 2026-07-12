@@ -93,6 +93,9 @@ services:
       - WORKER_SERVICE_URL=http://worker-service:3001
       - AI_TASKS_LOCAL_DISPATCH=true
       - CLOUD_TASKS_QUEUE_NAME=ai-jobs
+      - GMAIL_TASKS_LOCAL_DISPATCH=true
+      - GMAIL_TASKS_QUEUE_NAME=gmail-jobs
+      - GMAIL_OAUTH_REDIRECT_URI=http://127.0.0.1:3000/api/gmail/oauth/callback
     healthcheck:
       test:
         [
@@ -171,6 +174,8 @@ services:
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
       - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=127.0.0.1:9199
       - TASKS_SA_EMAIL=local-tasks-sa@demo-project-base.iam.gserviceaccount.com
+      - WORKER_SERVICE_URL=http://worker-service:3001
+      - GMAIL_TASKS_LOCAL_DISPATCH=true
     depends_on:
       firebase-emulator:
         condition: service_healthy

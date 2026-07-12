@@ -7,6 +7,7 @@ export const DEBUG_EVENT_SOURCES = [
   "audit",
   "requestPerf",
   "indexProvision",
+  "emailIngest",
 ] as const;
 export type DebugEventSource = (typeof DEBUG_EVENT_SOURCES)[number];
 

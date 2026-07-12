@@ -15,6 +15,7 @@ import type {
   RequestPerfLogRepository,
   IndexProvisionEventRepository,
 } from "@repo/firestore-converters";
+import type { EmailIngestJobRepository } from "@repo/gcp-firebase";
 import {
   decodeHookExecutionListCursor,
   encodeHookExecutionListCursor,
@@ -33,6 +34,7 @@ import {
   parseDebugSources,
   toAiDebugEvent,
   toAuditDebugEvent,
+  toEmailIngestDebugEvent,
   toHookLogDebugEvent,
   toIndexProvisionDebugEvent,
   toRequestPerfDebugEvent,
@@ -49,6 +51,7 @@ interface RegisterDebugRoutesOptions {
   readonly auditLogRepository: AuditLogRepository;
   readonly requestPerfLogRepository: RequestPerfLogRepository;
   readonly indexProvisionEventRepository: IndexProvisionEventRepository;
+  readonly emailIngestJobRepository?: EmailIngestJobRepository;
   readonly entityRuntime: EntityRuntimeContext;
 }
 
@@ -184,6 +187,14 @@ export async function registerDebugRoutes(
             { limit: perSourceLimit },
           );
         groups.push(indexEvents.map(toIndexProvisionDebugEvent));
+      }
+
+      if (sources.includes("emailIngest") && options.emailIngestJobRepository) {
+        const jobs = await options.emailIngestJobRepository.listRecent(
+          tenantId,
+          { limit: perSourceLimit },
+        );
+        groups.push(jobs.map(toEmailIngestDebugEvent));
       }
 
       return reply.send(

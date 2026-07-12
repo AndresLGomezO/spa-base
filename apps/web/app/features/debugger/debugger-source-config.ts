@@ -7,6 +7,7 @@ export const DEBUGGER_SOURCE_ORDER: readonly DebugEventSource[] = [
   "audit",
   "requestPerf",
   "indexProvision",
+  "emailIngest",
 ];
 
 export const DEBUGGER_SOURCE_ROUTE_SLUGS: Record<DebugEventSource, string> = {
@@ -16,6 +17,7 @@ export const DEBUGGER_SOURCE_ROUTE_SLUGS: Record<DebugEventSource, string> = {
   audit: "audit",
   requestPerf: "request-performance",
   indexProvision: "index-provisioning",
+  emailIngest: "email-ingest",
 };
 
 export const DEBUGGER_SOURCE_API_NAMES: Record<DebugEventSource, string> = {
@@ -25,6 +27,7 @@ export const DEBUGGER_SOURCE_API_NAMES: Record<DebugEventSource, string> = {
   audit: "audit",
   requestPerf: "perf",
   indexProvision: "indexProvision",
+  emailIngest: "emailIngest",
 };
 
 export function debuggerSourceLabelKey(

@@ -14,6 +14,7 @@ export const DEBUGGER_STATUSES_BY_SOURCE: Record<
   audit: ["info"],
   requestPerf: ["success", "error"],
   indexProvision: ["running", "success", "error", "info"],
+  emailIngest: ["running", "pending", "failed", "completed", "info", "skipped"],
 };
 
 /** Badge surfaces — aligned with CardFieldBadge / theme badge tokens. */

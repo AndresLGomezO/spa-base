@@ -79,6 +79,23 @@ const ApiEnvSchema = z.object({
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
   TENANT_DELETION_PROTECTED_IDS: z.string().trim().default("rates"),
+  GMAIL_OAUTH_CLIENT_ID: z.string().trim().optional(),
+  GMAIL_OAUTH_CLIENT_SECRET: z.string().trim().optional(),
+  GMAIL_OAUTH_REDIRECT_URI: z
+    .string()
+    .trim()
+    .default("http://127.0.0.1:3000/api/gmail/oauth/callback"),
+  GMAIL_OAUTH_STATE_SECRET: z
+    .string()
+    .trim()
+    .min(16)
+    .default("dev-gmail-oauth-state-secret"),
+  GMAIL_PUBSUB_TOPIC: z.string().trim().optional(),
+  GMAIL_TASKS_QUEUE_NAME: z.string().trim().default("gmail-jobs"),
+  GMAIL_TASKS_LOCAL_DISPATCH: z
+    .enum(["true", "false"])
+    .default(process.env.NODE_ENV === "production" ? "false" : "true")
+    .transform((value) => value === "true"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

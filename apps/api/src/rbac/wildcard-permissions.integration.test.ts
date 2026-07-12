@@ -103,6 +103,15 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
   buildInMemoryListSnapshotInvalidationPrefix,
   createInMemoryListSnapshotCache: mockCreateInMemoryListSnapshotCache,
+  createFirestoreAdminGmailConnectionRepository: vi.fn(() => ({})),
+  createFirestoreAdminEmailMatchBindingRepository: vi.fn(() => ({})),
+  createFirestoreAdminEmailIngestJobRepository: vi.fn(() => ({
+    listRecent: vi.fn(async () => []),
+    get: vi.fn(async () => null),
+    create: vi.fn(),
+    appendStep: vi.fn(),
+    complete: vi.fn(),
+  })),
 }));
 
 import { buildServer } from "../server.js";

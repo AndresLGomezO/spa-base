@@ -1,4 +1,4 @@
-import { isScheduleTrigger } from "@repo/hooks";
+import { isEmailTrigger, isScheduleTrigger } from "@repo/hooks";
 
 import { buildActionSteps } from "./hook-preview-actions.js";
 import { collectFormulaNamesInCondition } from "./collect-hook-formula-names.js";
@@ -36,6 +36,16 @@ function buildTriggerStep(
     };
   }
 
+  if (isEmailTrigger(hook.trigger)) {
+    return {
+      id: "trigger",
+      kind: "trigger",
+      icon: "trigger",
+      title: context.t("dataHooks.preview.steps.trigger"),
+      summary: context.t("dataHooks.preview.trigger.email", { entity }),
+    };
+  }
+
   const operation = hook.trigger.operation;
   const phase = hook.phase;
   const summary = context.t(
@@ -52,7 +62,7 @@ function buildTriggerStep(
     bullets.push(
       context.t("dataHooks.preview.trigger.updateFields", {
         fields: hook.trigger.updateFields
-          .map((field) => context.fieldLabel(hook.entity, field))
+          .map((field: string) => context.fieldLabel(hook.entity, field))
           .join(", "),
       }),
     );

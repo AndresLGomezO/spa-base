@@ -72,6 +72,16 @@ export { createFirestoreAdminTenantSidebarLayoutRepository } from "./firestore-a
 export { createFirestoreAdminDataHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminDataHookExecutionRepository } from "./firestore-admin-hook-execution-repository.js";
 export { createFirestoreAdminHookLogMessageRepository } from "./firestore-admin-hook-log-message-repository.js";
+export {
+  createFirestoreAdminGmailConnectionRepository,
+  createFirestoreAdminEmailMatchBindingRepository,
+  createFirestoreAdminEmailIngestProcessedRepository,
+  createFirestoreAdminEmailIngestJobRepository,
+  type GmailConnectionRepository,
+  type EmailMatchBindingRepository,
+  type EmailIngestProcessedRepository,
+  type EmailIngestJobRepository,
+} from "./firestore-admin-gmail-ingest-repositories.js";
 export { createFirestoreAdminUserNotificationRepository } from "./firestore-admin-user-notification-repository.js";
 export { createFirestoreAdminRequestPerfLogRepository } from "./firestore-admin-request-perf-log-repository.js";
 export { createFirestoreAdminIndexProvisionEventRepository } from "./firestore-admin-index-provision-event-repository.js";

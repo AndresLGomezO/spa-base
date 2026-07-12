@@ -10,6 +10,7 @@ import { createFirestoreAdminPlatformRuntimeSettingsRepository } from "@repo/gcp
 
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
+import { createGmailIngestProcessorDeps } from "./services/gmail-ingest-processor.js";
 import { buildWorkerServer } from "./server.js";
 
 const firebaseAdminConfig = {
@@ -38,6 +39,52 @@ const runtimeSettingsCache = createRuntimeSettingsCache(
 );
 const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig);
 
+async function enqueueGmailProcessMessage(payload: {
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly jobId: string;
+  readonly gmailMessageId: string;
+}): Promise<void> {
+  const response = await fetch(
+    `${workerEnv.WORKER_SERVICE_URL}/tasks/gmail-process-message`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Local-Task-Dispatcher": "true",
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
+    },
+  );
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `Failed to enqueue Gmail process-message: ${response.status} ${body.slice(0, 300)}`,
+    );
+  }
+}
+
+const gmailIngest =
+  workerEnv.TENANT_ENCRYPTION_MASTER_KEY &&
+  workerEnv.GMAIL_OAUTH_CLIENT_ID &&
+  workerEnv.GMAIL_OAUTH_CLIENT_SECRET
+    ? createGmailIngestProcessorDeps(
+        firebaseAdminConfig,
+        dataHookProcessorDeps,
+        {
+          encryptionMasterKey: workerEnv.TENANT_ENCRYPTION_MASTER_KEY,
+          gmailOAuthClientId: workerEnv.GMAIL_OAUTH_CLIENT_ID,
+          gmailOAuthClientSecret: workerEnv.GMAIL_OAUTH_CLIENT_SECRET,
+          ...(workerEnv.GMAIL_PUBSUB_TOPIC
+            ? { gmailPubsubTopic: workerEnv.GMAIL_PUBSUB_TOPIC }
+            : {}),
+          vertexAiConfig,
+          enqueueProcessMessage: enqueueGmailProcessMessage,
+        },
+      )
+    : undefined;
+
 const server = await buildWorkerServer({
   aiJobRepository,
   tenantAiContextRepository,
@@ -48,6 +95,7 @@ const server = await buildWorkerServer({
   indexProjectId: workerEnv.GCP_PROJECT_ID,
   isAiStepTraceEnabled: () => runtimeSettingsCache.isAiStepTraceEnabled(),
   ...dataHookProcessorDeps,
+  ...(gmailIngest ? { gmailIngest } : {}),
 });
 
 await server.listen({
@@ -64,5 +112,6 @@ console.log(
     gcpProjectId: workerEnv.GCP_PROJECT_ID,
     vertexProjectId: vertexAiConfig.projectId,
     vertexMock: vertexAiConfig.mockEnabled,
+    gmailIngestEnabled: Boolean(gmailIngest),
   }),
 );

@@ -37,16 +37,17 @@ export type DataHookConditionOperator =
 export const VALUELESS_CONDITION_OPERATORS: readonly DataHookConditionOperator[] =
   ["isEmpty", "isNotEmpty", "changed"];
 
-export const DATA_HOOK_TRIGGER_KINDS = ["crud", "schedule"] as const;
+export const DATA_HOOK_TRIGGER_KINDS = ["crud", "schedule", "email"] as const;
 export type DataHookTriggerKind = (typeof DATA_HOOK_TRIGGER_KINDS)[number];
 
 export const DATA_HOOK_SCHEDULE_SCOPES = ["once", "eachRecord"] as const;
 export type DataHookScheduleScope = (typeof DATA_HOOK_SCHEDULE_SCOPES)[number];
 
-/** Job payload and event dispatch include schedule alongside CRUD operations. */
+/** Job payload and event dispatch include schedule/email alongside CRUD operations. */
 export const DATA_HOOK_JOB_OPERATIONS = [
   ...DATA_HOOK_OPERATIONS,
   "schedule",
+  "email",
 ] as const;
 export type DataHookJobOperation = (typeof DATA_HOOK_JOB_OPERATIONS)[number];
 
@@ -73,14 +74,25 @@ export type DataHookScheduleTrigger = {
   readonly eachRecordWhere?: DataHookConditionNode;
 };
 
-export type DataHookTrigger = DataHookCrudTrigger | DataHookScheduleTrigger;
+export type DataHookEmailTrigger = {
+  readonly kind: "email";
+};
+
+export type DataHookTrigger =
+  | DataHookCrudTrigger
+  | DataHookScheduleTrigger
+  | DataHookEmailTrigger;
 
 function coerceTriggerKind(value: unknown): unknown {
   if (value == null || typeof value !== "object" || Array.isArray(value)) {
     return value;
   }
   const record = value as Record<string, unknown>;
-  if (record.kind === "schedule" || record.kind === "crud") {
+  if (
+    record.kind === "schedule" ||
+    record.kind === "crud" ||
+    record.kind === "email"
+  ) {
     return value;
   }
   if (typeof record.cron === "string") {
@@ -171,11 +183,16 @@ export const dataHookScheduleTriggerSchema = z.object({
     .optional(),
 });
 
+export const dataHookEmailTriggerSchema = z.object({
+  kind: z.literal("email"),
+});
+
 export const dataHookTriggerSchema = z.preprocess(
   coerceTriggerKind,
   z.discriminatedUnion("kind", [
     dataHookCrudTriggerSchema,
     dataHookScheduleTriggerSchema,
+    dataHookEmailTriggerSchema,
   ]),
 );
 
@@ -185,10 +202,16 @@ export function isScheduleTrigger(
   return trigger.kind === "schedule";
 }
 
+export function isEmailTrigger(
+  trigger: DataHookTrigger,
+): trigger is DataHookEmailTrigger {
+  return trigger.kind === "email";
+}
+
 export function isCrudTrigger(
   trigger: DataHookTrigger,
 ): trigger is DataHookCrudTrigger {
-  return trigger.kind !== "schedule";
+  return trigger.kind !== "schedule" && trigger.kind !== "email";
 }
 
 export const dataHookUpdateMatchingWhereSchema = z.preprocess(

@@ -53,7 +53,8 @@ terraform/
   cloudrun.tf          # API service
   firestore.tf         # DB, rules, indexes (repo root JSON)
   firebase_project.tf
-  backend-secrets.tf    # PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS (Secret Manager)
+  backend-secrets.tf    # PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS, TENANT_ENCRYPTION_MASTER_KEY
+  gmail-ingest.tf       # Gmail API, OAuth secrets, gmail-jobs queue, gmail-push Pub/Sub
   iam.tf / ci_deployer.tf
   backend-configs/*.hcl
 ```

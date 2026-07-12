@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { isScheduleTrigger } from "@repo/hooks";
+import { isEmailTrigger, isScheduleTrigger } from "@repo/hooks";
 import { useSearchParams } from "react-router";
 
 import type { DataHookDefinitionRecord } from "../../lib/api-client";
@@ -66,7 +66,9 @@ function dataHookSearchHaystack(definition: DataHookDefinitionRecord): string {
 function definitionTriggerKind(
   definition: DataHookDefinitionRecord,
 ): DataHookTriggerKindFilter {
-  return isScheduleTrigger(definition.trigger) ? "schedule" : "crud";
+  if (isScheduleTrigger(definition.trigger)) return "schedule";
+  if (isEmailTrigger(definition.trigger)) return "email";
+  return "crud";
 }
 
 function definitionStatus(

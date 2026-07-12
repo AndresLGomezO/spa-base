@@ -1,4 +1,5 @@
 import {
+  isEmailTrigger,
   isScheduleTrigger,
   type DataHookDefinition,
 } from "./data-hook-definition.js";
@@ -51,6 +52,14 @@ function dataHookEvent(definition: DataHookDefinition): string {
       entity: definition.entity,
       phase: definition.phase,
       operation: "schedule",
+    });
+  }
+
+  if (isEmailTrigger(definition.trigger)) {
+    return formatHookEvent({
+      entity: definition.entity,
+      phase: definition.phase,
+      operation: "email",
     });
   }
 

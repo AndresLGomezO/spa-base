@@ -32,6 +32,15 @@ const workerEnvSchema = z.object({
     .default("false")
     .transform((value) => value === "true"),
   SCHEDULED_HOOK_USER_UID: z.string().trim().optional(),
+  TENANT_ENCRYPTION_MASTER_KEY: z.string().trim().optional(),
+  GMAIL_OAUTH_CLIENT_ID: z.string().trim().optional(),
+  GMAIL_OAUTH_CLIENT_SECRET: z.string().trim().optional(),
+  GMAIL_PUBSUB_TOPIC: z.string().trim().optional(),
+  WORKER_SERVICE_URL: z.string().trim().default("http://127.0.0.1:3001"),
+  GMAIL_TASKS_LOCAL_DISPATCH: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
 });
 
 const parsed = workerEnvSchema.safeParse(process.env);

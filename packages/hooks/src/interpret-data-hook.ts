@@ -5,7 +5,7 @@ import type {
   DataHookDefinition,
   DataHookExecutionMode,
 } from "./data-hook-definition.js";
-import { isScheduleTrigger } from "./data-hook-definition.js";
+import { isEmailTrigger, isScheduleTrigger } from "./data-hook-definition.js";
 import { computeAggregateMatching } from "./aggregate-matching-utils.js";
 import {
   assertCreateRecordsRuntimeCount,
@@ -274,7 +274,10 @@ function updateFieldsChanged(
   definition: DataHookDefinition,
   context: HookContext,
 ): boolean {
-  if (isScheduleTrigger(definition.trigger)) {
+  if (
+    isScheduleTrigger(definition.trigger) ||
+    isEmailTrigger(definition.trigger)
+  ) {
     return true;
   }
 

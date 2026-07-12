@@ -8,8 +8,12 @@ resource "google_cloud_run_v2_service" "backend" {
   depends_on = [
     google_firebase_project.default,
     google_project_service.run_api,
+    google_project_service.gmail_api,
     google_secret_manager_secret.bootstrap_superadmin_emails,
     google_secret_manager_secret.tenant_encryption_master_key,
+    google_secret_manager_secret.gmail_oauth_client_id,
+    google_secret_manager_secret.gmail_oauth_client_secret,
+    google_secret_manager_secret.gmail_oauth_state_secret,
     google_project_iam_member.backend_firestore,
     google_project_iam_member.backend_secrets,
     google_project_iam_member.backend_firebase_auth,
@@ -186,6 +190,62 @@ resource "google_cloud_run_v2_service" "backend" {
         for_each = local.enable_ai_worker ? [1] : []
         content {
           name  = "HOOK_TASKS_LOCAL_DISPATCH"
+          value = "false"
+        }
+      }
+
+      env {
+        name = "GMAIL_OAUTH_CLIENT_ID"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.gmail_oauth_client_id.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "GMAIL_OAUTH_CLIENT_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.gmail_oauth_client_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "GMAIL_OAUTH_STATE_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.gmail_oauth_state_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name  = "GMAIL_OAUTH_REDIRECT_URI"
+        value = "${local.backend_url_full}/api/gmail/oauth/callback"
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "GMAIL_PUBSUB_TOPIC"
+          value = google_pubsub_topic.gmail_push[0].id
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "GMAIL_TASKS_QUEUE_NAME"
+          value = google_cloud_tasks_queue.gmail_jobs[0].name
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "GMAIL_TASKS_LOCAL_DISPATCH"
           value = "false"
         }
       }

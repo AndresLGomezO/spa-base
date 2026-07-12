@@ -36,6 +36,13 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `CLOUD_TASKS_QUEUE_NAME` | `ai-jobs` | `ai-jobs` | Cloud Tasks queue for AI jobs (production) |
 | `HOOK_TASKS_QUEUE_NAME` | `hook-jobs` | `hook-jobs` | Cloud Tasks queue for data hook jobs (production) |
 | `HOOK_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST data hook jobs directly to worker instead of Cloud Tasks |
+| `GMAIL_OAUTH_CLIENT_ID` | OAuth Web client id in `.env` | **Secret Manager** `GMAIL_OAUTH_CLIENT_ID` (latest) | Google OAuth client for Gmail connect |
+| `GMAIL_OAUTH_CLIENT_SECRET` | OAuth Web client secret in `.env` | **Secret Manager** `GMAIL_OAUTH_CLIENT_SECRET` (latest) | Google OAuth client secret |
+| `GMAIL_OAUTH_REDIRECT_URI` | `http://127.0.0.1:3000/api/gmail/oauth/callback` | `https://{api}/api/gmail/oauth/callback` | Authorized redirect URI (must match Console OAuth client) |
+| `GMAIL_OAUTH_STATE_SECRET` | local secret (≥16 chars) | **Secret Manager** `GMAIL_OAUTH_STATE_SECRET` (latest) | HMAC secret for OAuth state |
+| `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Full topic id for Gmail `users.watch` |
+| `GMAIL_TASKS_QUEUE_NAME` | `gmail-jobs` | Terraform queue name | Cloud Tasks queue for Gmail ingest jobs |
+| `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST Gmail jobs directly to worker instead of Cloud Tasks |
 
 Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps/api/.env.example`](../../apps/api/.env.example).
 
@@ -59,6 +66,12 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `SCHEDULED_HOOK_USER_UID` | optional in dev | required | Firebase Auth uid used as the triggering user for scheduled data hook ticks (`/tasks/schedule-tick`); must have permissions to run hook actions in each tenant |
 | `WORKER_AUTH_ENABLED` | `false` | `true` in prod | Force OIDC verification even when `IS_LOCAL=true` |
 | `AI_STEP_TRACE_ENABLED` | `true` in local non-prod | `false` in prod unless set | UI Builder orchestrator step trace persistence on AI jobs. Can be overridden at runtime via **Platform → Observability**. |
+| `TENANT_ENCRYPTION_MASTER_KEY` | same base64 key as API `.env.dev` | **Secret Manager** `TENANT_ENCRYPTION_MASTER_KEY` (latest) | Decrypts Gmail refresh tokens (and other encrypted fields) |
+| `GMAIL_OAUTH_CLIENT_ID` | same as API | **Secret Manager** `GMAIL_OAUTH_CLIENT_ID` (latest) | Refresh Gmail OAuth tokens during ingest |
+| `GMAIL_OAUTH_CLIENT_SECRET` | same as API | **Secret Manager** `GMAIL_OAUTH_CLIENT_SECRET` (latest) | Refresh Gmail OAuth tokens during ingest |
+| `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Renew Gmail watch subscriptions |
+| `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (local default) | `false` | Local re-dispatch of follow-up Gmail tasks |
+| `WORKER_SERVICE_URL` | `http://127.0.0.1:3001` / compose hostname | Cloud Run worker URL | Base URL when local-dispatching Gmail tasks |
 
 Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).
 
@@ -121,15 +134,30 @@ Example: [`apps/web/.env.development.example`](../../apps/web/.env.development.e
 | `ci_deployer_sa_email` | CI | GitHub deployer SA; grants `actAs` for Cloud Run + Firebase CLI |
 | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (Secret Manager) | Before first Cloud Run deploy | Add versions with `gcloud secrets versions add` (Terraform creates the secret only) |
 | `TENANT_ENCRYPTION_MASTER_KEY` (Secret Manager) | Before first Cloud Run deploy | 256-bit base64 key for field-level encryption. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `GMAIL_OAUTH_*` (Secret Manager) | Before Cloud Run revision with Gmail env (required once shells exist) | Create OAuth Web client in Console when enabling Email; until then add placeholder versions so Run can start (see below) |
 
-### Secret Manager (API runtime)
+### Secret Manager (API + worker runtime)
 
 | Secret ID | Cloud Run env | How to update after bootstrap |
 | --------- | ------------- | ----------------------------- |
 | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` | [Google Cloud Console](https://console.cloud.google.com/security/secret-manager) → secret → **New version**, or `gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS --project=PROJECT_ID --data-file=-` |
 | `TENANT_ENCRYPTION_MASTER_KEY` | `TENANT_ENCRYPTION_MASTER_KEY` | `gcloud secrets versions add TENANT_ENCRYPTION_MASTER_KEY --project=PROJECT_ID --data-file=-`. **Changing this key invalidates all previously encrypted data.** |
+| `GMAIL_OAUTH_CLIENT_ID` | `GMAIL_OAUTH_CLIENT_ID` | Pipe OAuth client id: `echo -n 'CLIENT_ID' \| gcloud secrets versions add GMAIL_OAUTH_CLIENT_ID --project=PROJECT_ID --data-file=-` |
+| `GMAIL_OAUTH_CLIENT_SECRET` | `GMAIL_OAUTH_CLIENT_SECRET` | Pipe OAuth client secret the same way |
+| `GMAIL_OAUTH_STATE_SECRET` | `GMAIL_OAUTH_STATE_SECRET` (API only) | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" \| gcloud secrets versions add GMAIL_OAUTH_STATE_SECRET --project=PROJECT_ID --data-file=-` |
 
 Value format for `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`: comma-separated emails, e.g. `admin@example.com,ops@example.com`. Cloud Run always mounts **latest**; no redeploy required for new versions (Run picks up `latest` on new instances).
+
+### Gmail OAuth (one-time per GCP project)
+
+Terraform enables `gmail.googleapis.com`, creates Secret Manager shells, the `gmail-push` Pub/Sub topic (+ publisher IAM for `gmail-api-push@system.gserviceaccount.com`), push subscription to `POST /api/gmail/pubsub`, and the `gmail-jobs` Cloud Tasks queue. It **cannot** create a production-ready OAuth consent screen / Web client with `gmail.readonly`.
+
+1. Google Cloud Console → **APIs & Services** → **OAuth consent screen** (External) → add scope `https://www.googleapis.com/auth/gmail.readonly`
+2. Create an OAuth **Web** client; authorized redirect URI = Terraform `backend_url` + `/api/gmail/oauth/callback`
+3. Add secret versions for `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, and `GMAIL_OAUTH_STATE_SECRET` (commands above)
+4. Redeploy or restart Cloud Run so new secret versions are picked up on fresh instances
+
+Sensitive Gmail scopes may require Google verification for multi-user production apps — same class of friction as other Google OAuth clients.
 
 ---
 
@@ -142,6 +170,9 @@ Value format for `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`: comma-separated emails,
 | `firebase_hosting_site_id` | `firebase target:apply hosting live` |
 | `gcp_project_id` | Verification |
 | `artifact_registry_url` | Image push path |
+| `gmail_jobs_queue_name` | Gmail Cloud Tasks queue |
+| `gmail_pubsub_topic` | Full topic id for Gmail watch |
+| `gmail_oauth_*_secret_id` | Secret Manager ids for Gmail OAuth shells |
 
 ---
 

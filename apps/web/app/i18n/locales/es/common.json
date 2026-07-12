@@ -53,6 +53,7 @@
     "open": "Open menu",
     "userMenu": "Account menu",
     "signOut": "Sign out",
+    "accountSettings": "Configuración",
     "fallbackName": "User",
     "dataModels": "Data Entities",
     "dataStructure": "Data structure",
@@ -89,6 +90,7 @@
     "debuggerAudit": "Audit",
     "debuggerRequestPerf": "Request Performance",
     "debuggerIndexProvision": "Index Provisioning",
+    "debuggerEmailIngest": "Ingesta de correo",
     "systemConfiguration": "System configuration"
   },
   "debugger": {
@@ -102,7 +104,8 @@
       "hookLog": "Logs de hooks",
       "audit": "Auditoría",
       "requestPerf": "Rendimiento de peticiones",
-      "indexProvision": "Aprovisionamiento de índices"
+      "indexProvision": "Aprovisionamiento de índices",
+      "emailIngest": "Ingesta de correo"
     },
     "status": {
       "success": "Éxito",
@@ -1773,6 +1776,37 @@
     "platformSuperadmin": "Superadmin de plataforma",
     "noRole": "Sin rol"
   },
+  "accountSettings": {
+    "title": "Configuración",
+    "nav": {
+      "general": "General",
+      "profile": "Tu perfil",
+      "tenants": "Tenants",
+      "integrations": "Integraciones",
+      "email": "Correo"
+    },
+    "general": {
+      "title": "General",
+      "description": "Elige la apariencia de la app y el idioma que prefieres.",
+      "themeHint": "Cambia entre apariencia clara y oscura.",
+      "languageHint": "Elige el idioma usado en toda la aplicación."
+    },
+    "profile": {
+      "name": "Nombre",
+      "email": "Correo",
+      "roles": "Roles",
+      "managedByGoogle": "Tu nombre y foto provienen del inicio de sesión con Google."
+    },
+    "tenants": {
+      "title": "Tenants",
+      "description": "Espacios de trabajo a los que perteneces. Cambia para activar otro tenant.",
+      "empty": "Aún no eres miembro de ningún tenant.",
+      "active": "Activo",
+      "switch": "Cambiar",
+      "switched": "Cambiado a {{name}}.",
+      "switchFailed": "No se pudo cambiar de tenant."
+    }
+  },
   "platform": {
     "createTenant": {
       "title": "Crear tenant",
@@ -1849,6 +1883,44 @@
       "seedHookObservability": {
         "title": "Observabilidad de hooks en seed",
         "description": "Persiste ejecuciones de hooks, logs de hooks y notificaciones al reproducir hooks durante el seed de la base de datos."
+      }
+    },
+    "email": {
+      "title": "Sincronización de correo",
+      "description": "Conecta tu cuenta de Gmail y administra reglas de coincidencia por registro. Los correos coincidentes disparan los hooks de Automatización que configures.",
+      "privacy": "Solo se obtienen mensajes que coincidan con tus reglas. El correo es de solo lectura; los tokens permanecen cifrados y no se comparten entre tenants.",
+      "connection": "Conexión de Gmail",
+      "loading": "Cargando estado de conexión…",
+      "connectedAs": "Conectado como {{email}}",
+      "notConnected": "Gmail no está conectado.",
+      "connect": "Conectar Gmail",
+      "disconnect": "Desconectar",
+      "disconnected": "Gmail desconectado.",
+      "backfill": "Importar correo reciente",
+      "backfillStarted": "Importación iniciada (trabajo {{jobId}}).",
+      "bindings": "Reglas de coincidencia",
+      "bindingsHint": "También puedes editar las reglas en la página de detalle de cada registro.",
+      "noBindings": "Aún no hay reglas.",
+      "noSenders": "Sin remitentes",
+      "aiEnabled": "IA activa",
+      "deleteBinding": "Eliminar",
+      "bindingDeleted": "Regla eliminada.",
+      "bindingSaved": "Regla guardada.",
+      "recordPanelTitle": "Coincidencia de correo",
+      "recordPanelHint": "Define remitentes y patrones de asunto para este registro. Configura Automatización → Al recibir correo coincidente para decidir qué ocurre.",
+      "fromAddresses": "Remitentes",
+      "subjectPatterns": "Patrones de asunto",
+      "useAi": "Usar IA para estructurar y decidir relevancia",
+      "aiInstructions": "Instrucciones de IA",
+      "saveBinding": "Guardar regla",
+      "enabled": "Activa",
+      "disabled": "Inactiva",
+      "enable": "Activar",
+      "disable": "Desactivar",
+      "oauthResult": {
+        "connected": "Gmail conectado correctamente.",
+        "error": "Falló la conexión de Gmail.",
+        "reauth_required": "Vuelve a conectar Gmail y otorga el consentimiento."
       }
     },
     "appearance": {
@@ -3311,6 +3383,7 @@
       "statusDisabled": "Inactivo",
       "triggerKindCrud": "Cambio de registro",
       "triggerKindSchedule": "Programación",
+      "triggerKindEmail": "Correo",
       "filters": {
         "entity": "Entidad",
         "phase": "Momento",
@@ -3328,6 +3401,7 @@
       "triggerKind": "Tipo de disparador",
       "cron": "Programación cron",
       "cronHint": "Cron de cinco campos (minuto hora día mes día de semana). Se evalúa en la zona horaria indicada.",
+      "emailHint": "Se ejecuta cuando un correo entrante coincide con una regla de este registro. Usa condiciones sobre __emailRelevant y __extracted.",
       "timezone": "Zona horaria",
       "scheduleScope": "Alcance de ejecución",
       "scheduleScopeHint": "Una vez ejecuta acciones por lote (p. ej. updateMatching). Cada registro ejecuta el hook una vez por fila coincidente.",
@@ -3392,7 +3466,8 @@
     },
     "triggerKind": {
       "crud": "Al cambiar un registro",
-      "schedule": "Programado"
+      "schedule": "Programado",
+      "email": "Al recibir correo coincidente"
     },
     "scheduleScope": {
       "once": "Una vez por tick",
@@ -3625,6 +3700,7 @@
           }
         },
         "schedule": "Se ejecuta según programación para {{entity}} — {{cron}} ({{timezone}}, {{scope}})",
+        "email": "Se ejecuta cuando llega un correo coincidente para {{entity}}",
         "updateFields": "Solo cuando cambien estos campos: {{fields}}"
       },
       "conditionGroupAnd": "Deben cumplirse todas las siguientes",
