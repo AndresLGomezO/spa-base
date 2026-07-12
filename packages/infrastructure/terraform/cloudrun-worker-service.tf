@@ -2,7 +2,7 @@
 resource "google_cloud_run_v2_service" "worker_service" {
   count = local.enable_ai_worker ? 1 : 0
 
-  name                = "${local.app_name}-worker-service-${local.prefix}"
+  name                = local.worker_service_name
   location            = var.region
   ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
   deletion_protection = false

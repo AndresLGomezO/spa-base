@@ -18,7 +18,12 @@ locals {
     var.enable_observability_traces,
   )
 
-  worker_service_url_full = local.enable_ai_worker ? "https://${google_cloud_run_v2_service.worker_service[0].name}-${data.google_project.project.number}.${var.region}.run.app" : ""
+  # Predictable Cloud Run names (do not reference the resources — env vars on those
+  # services need their own URLs and would create Terraform cycles otherwise).
+  backend_service_name    = "${local.app_name}-backend-service-${local.prefix}"
+  worker_service_name     = "${local.app_name}-worker-service-${local.prefix}"
+  backend_url_full        = "https://${local.backend_service_name}-${data.google_project.project.number}.${var.region}.run.app"
+  worker_service_url_full = local.enable_ai_worker ? "https://${local.worker_service_name}-${data.google_project.project.number}.${var.region}.run.app" : ""
 
   environment_tier = contains(["dev", "staging", "default"], local.workspace) ? "development" : (
     local.workspace == "prod" ? "production" : "development"
@@ -64,8 +69,6 @@ locals {
   current_config = local.cloud_run_configs[local.environment_tier]
 
   default_storage_bucket = "${local.gcp_project_id}.appspot.com"
-
-  backend_url_full = "https://${google_cloud_run_v2_service.backend.name}-${data.google_project.project.number}.${var.region}.run.app"
 
   # Default Firebase Hosting site (site_id = project_id): https://{project_id}.web.app and .firebaseapp.com
   firebase_hosting_primary_url = "https://${local.gcp_project_id}.web.app"

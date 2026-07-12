@@ -1,6 +1,6 @@
 # API (backend) Cloud Run service — scale-to-zero MVP.
 resource "google_cloud_run_v2_service" "backend" {
-  name                = "${local.app_name}-backend-service-${local.prefix}"
+  name                = local.backend_service_name
   location            = var.region
   ingress             = "INGRESS_TRAFFIC_ALL"
   deletion_protection = false
