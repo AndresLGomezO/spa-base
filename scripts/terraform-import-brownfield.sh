@@ -73,4 +73,34 @@ if gcloud firestore databases describe --database="(default)" --project="$PROJEC
     "projects/${PROJECT}/releases/cloud.firestore"
 fi
 
+# --- Secret Manager shells (may exist from Console / prior manual setup) ---
+import_secret_if_present() {
+  local address="$1"
+  local secret_id="$2"
+
+  if gcloud secrets describe "$secret_id" --project="$PROJECT" &>/dev/null; then
+    import_if_absent \
+      "$address" \
+      "projects/${PROJECT}/secrets/${secret_id}"
+  else
+    log "Skipping secret import (not found in GCP): ${secret_id}"
+  fi
+}
+
+import_secret_if_present \
+  "google_secret_manager_secret.bootstrap_superadmin_emails" \
+  "PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS"
+import_secret_if_present \
+  "google_secret_manager_secret.tenant_encryption_master_key" \
+  "TENANT_ENCRYPTION_MASTER_KEY"
+import_secret_if_present \
+  "google_secret_manager_secret.gmail_oauth_client_id" \
+  "GMAIL_OAUTH_CLIENT_ID"
+import_secret_if_present \
+  "google_secret_manager_secret.gmail_oauth_client_secret" \
+  "GMAIL_OAUTH_CLIENT_SECRET"
+import_secret_if_present \
+  "google_secret_manager_secret.gmail_oauth_state_secret" \
+  "GMAIL_OAUTH_STATE_SECRET"
+
 log "Brownfield import pass complete"

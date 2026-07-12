@@ -182,7 +182,7 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | `cloudtasks.queues.create` 403 | Grant `roles/cloudtasks.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
 | Cloud Run worker-aggregation startup probe failed | Check logs; often caused by bundling `@google-cloud/vertexai` into the worker image — rebuild after pulling latest worker-aggregation esbuild fix |
 | `iam.serviceAccounts.create` denied    | Same — `serviceAccountAdmin` on `github-deployer`                          |
-| Terraform 409 (AR / Firestore / rules)   | Run `scripts/terraform-import-brownfield.sh` before plan/apply             |
+| Terraform 409 (AR / Firestore / rules / secrets) | Run `scripts/terraform-import-brownfield.sh` before plan/apply |
 | Secret `payload required`              | Add version with `gcloud secrets versions add` (Terraform creates secret only) |
 | Cloud Run `reserved env PORT`            | Do not set `PORT` in Terraform; use `container_port = 3000` only (Cloud Run sets `PORT` automatically) |
 | Cloud Run startup probe failed           | Add bootstrap secret version; redeploy with `SKIP_PLATFORM_STARTUP_SEEDS=true` |
