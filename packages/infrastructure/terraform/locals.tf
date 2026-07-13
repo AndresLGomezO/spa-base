@@ -29,38 +29,39 @@ locals {
     local.workspace == "prod" ? "production" : "development"
   )
 
-  # Scale-to-zero MVP: min_instances=0 everywhere; cpu_idle reduces idle cost.
+  # Warm API (min=1) avoids cold-start UX; cpu_idle=true keeps idle CPU off the bill.
+  # Workers keep always-on CPU (cpu_idle=false) for Pub/Sub pull / long tasks.
   cloud_run_configs = {
     development = {
-      backend_min_instances            = 0
-      max_instances                    = 2
-      backend_cpu                      = "250m"
-      backend_memory                   = "256Mi"
-      cpu_idle                         = true
-      startup_cpu_boost                = true
-      timeout                          = "60s"
-      max_instance_request_concurrency = 1
-      worker_min_instances             = 1
-      worker_max_instances             = 1
-      # cpu_idle=false requires limits.cpu >= 1 and memory >= 512Mi on Cloud Run v2.
-      worker_cpu      = "1000m"
-      worker_memory   = "512Mi"
-      worker_cpu_idle = false
-      worker_timeout  = "3600s"
-    }
-    production = {
-      backend_min_instances            = 0
-      max_instances                    = 5
+      backend_min_instances            = 1
+      max_instances                    = 4
       backend_cpu                      = "1000m"
       backend_memory                   = "512Mi"
       cpu_idle                         = true
       startup_cpu_boost                = true
       timeout                          = "60s"
+      max_instance_request_concurrency = 20
+      worker_min_instances             = 1
+      worker_max_instances             = 2
+      # cpu_idle=false requires limits.cpu >= 1 and memory >= 512Mi on Cloud Run v2.
+      worker_cpu      = "1000m"
+      worker_memory   = "1Gi"
+      worker_cpu_idle = false
+      worker_timeout  = "3600s"
+    }
+    production = {
+      backend_min_instances            = 1
+      max_instances                    = 8
+      backend_cpu                      = "1000m"
+      backend_memory                   = "1Gi"
+      cpu_idle                         = true
+      startup_cpu_boost                = true
+      timeout                          = "60s"
       max_instance_request_concurrency = 40
       worker_min_instances             = 1
-      worker_max_instances             = 1
+      worker_max_instances             = 2
       worker_cpu                       = "1000m"
-      worker_memory                    = "512Mi"
+      worker_memory                    = "1Gi"
       worker_cpu_idle                  = false
       worker_timeout                   = "3600s"
     }

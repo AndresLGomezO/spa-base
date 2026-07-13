@@ -15,7 +15,7 @@ flowchart LR
 ```
 
 - **Web:** static SPA on Firebase Hosting (`apps/web/build/client`).
-- **API:** container on Cloud Run v2 (`es-backend-service-{dev|stg|prod}`), scale-to-zero.
+- **API:** container on Cloud Run v2 (`es-backend-service-{dev|stg|prod}`), min 1 warm instance (`cpu_idle` on).
 - **Aggregation worker:** Cloud Run v2 (`es-worker-aggregation-{dev|stg|prod}`), min 1 instance, internal ingress — consumes Pub/Sub when `enable_aggregation_pubsub` is true (default for all workspaces).
 - **Data:** Firestore rules/indexes via Terraform; Storage rules via `firebase deploy --only storage`.
 

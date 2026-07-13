@@ -59,7 +59,7 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 ## 2. Development (GCP)
 
 - **Deploy:** merge to `develop` or workflow_dispatch → dev.
-- **Cloud Run:** min instances `0`, 250m CPU / 256Mi (cold starts expected).
+- **Cloud Run:** min instances `1`, 1 vCPU / 512Mi, concurrency 20 (warm API; idle CPU not billed).
 - **Hosting:** default site (`entitysystem-development.web.app` / `.firebaseapp.com`).
 - **CORS:** Terraform sets `API_CORS_ORIGINS` to dev Hosting URLs.
 - **GitHub Environment:** `development` with secrets for `entitysystem-development`.
@@ -69,7 +69,7 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 ## 3. Staging (GCP)
 
 - **Deploy:** merge to `main` or workflow_dispatch → staging.
-- Same scaling tier as dev (scale-to-zero, small CPU).
+- Same sizing tier as development (warm API, 1 vCPU / 512Mi).
 - **Hosting:** default site = project id `entitysystem-staging`.
 - **Web `VITE_ENV`:** `dev` until app schema adds a staging mode (same API behavior as dev tier).
 
@@ -78,7 +78,7 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 ## 4. Production (GCP)
 
 - **Deploy:** git tag `v*` or workflow_dispatch → prod.
-- **Cloud Run:** scale-to-zero with higher max instances and 1 vCPU when warm.
+- **Cloud Run:** min instances `1`, 1 vCPU / 1Gi, concurrency 40, max 8.
 - **GitHub Environment:** `production` with optional separate WIF secrets (`GCP_*_PROD`).
 - Protect production environment in GitHub (required reviewers).
 
