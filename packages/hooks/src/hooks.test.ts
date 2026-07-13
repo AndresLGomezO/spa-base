@@ -954,6 +954,352 @@ describe("runDataHook", () => {
     ).rejects.toThrow(/not found/);
   });
 
+  it("getOrCreateRecord reuses an existing match", async () => {
+    const list = vi.fn(async () => [
+      {
+        id: "cat_1",
+        tenantId: "tenant_a",
+        name: "Transportation",
+        kind: "EXPENSE",
+      },
+    ]);
+    const create = vi.fn(async () => ({ id: "cat_new" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "getOrCreateRecord",
+            entity: "category",
+            as: "category",
+            where: {
+              type: "condition",
+              field: "name",
+              operator: "==",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "categoryName",
+              },
+            },
+            data: {
+              name: {
+                kind: "field",
+                source: "current",
+                path: "categoryName",
+              },
+              kind: { kind: "literal", value: "EXPENSE" },
+            },
+          },
+          {
+            type: "createRecord",
+            entity: "transaction",
+            data: {
+              categoryId: {
+                kind: "field",
+                source: "loaded",
+                alias: "category",
+                path: "id",
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "financialItem.afterEmail",
+        current: { id: "fi_1", categoryName: "Transportation" },
+        services: {
+          entities: {
+            create,
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith(
+      "transaction",
+      { categoryId: "cat_1" },
+      undefined,
+    );
+  });
+
+  it("getOrCreateRecord creates when no match exists", async () => {
+    const list = vi.fn(async () => []);
+    const create = vi.fn(
+      async (_entity: string, data: Record<string, unknown>) => {
+        if (_entity === "category") {
+          return { id: "cat_new", tenantId: "tenant_a", ...data };
+        }
+        return { id: "tx_1", ...data };
+      },
+    );
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "getOrCreateRecord",
+            entity: "category",
+            as: "category",
+            where: {
+              type: "condition",
+              field: "name",
+              operator: "==",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "categoryName",
+              },
+            },
+            data: {
+              name: {
+                kind: "field",
+                source: "current",
+                path: "categoryName",
+              },
+              kind: { kind: "literal", value: "EXPENSE" },
+            },
+          },
+          {
+            type: "createRecord",
+            entity: "transaction",
+            data: {
+              categoryId: {
+                kind: "field",
+                source: "loaded",
+                alias: "category",
+                path: "id",
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "financialItem.afterEmail",
+        current: { id: "fi_1", categoryName: "Transportation" },
+        services: {
+          entities: {
+            create,
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      "category",
+      { name: "Transportation", kind: "EXPENSE" },
+      undefined,
+    );
+    expect(create).toHaveBeenCalledWith(
+      "transaction",
+      { categoryId: "cat_new" },
+      undefined,
+    );
+  });
+
+  it("getOrCreateRecord with createIfMissing false loads null without creating", async () => {
+    const list = vi.fn(async () => []);
+    const create = vi.fn(async () => ({ id: "should_not_create" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "getOrCreateRecord",
+            entity: "financialItem",
+            as: "subscription",
+            createIfMissing: false,
+            where: {
+              type: "group",
+              combinator: "and",
+              children: [
+                {
+                  type: "condition",
+                  field: "name",
+                  operator: "==",
+                  value: {
+                    kind: "field",
+                    source: "current",
+                    path: "matchedSubscriptionName",
+                  },
+                },
+                {
+                  type: "condition",
+                  field: "parentFinancialItemId",
+                  operator: "==",
+                  value: {
+                    kind: "field",
+                    source: "current",
+                    path: "id",
+                  },
+                },
+              ],
+            },
+          },
+          {
+            type: "createRecord",
+            entity: "transaction",
+            data: {
+              financialItemId: {
+                kind: "call",
+                fn: "coalesce",
+                args: [
+                  {
+                    kind: "field",
+                    source: "loaded",
+                    alias: "subscription",
+                    path: "id",
+                  },
+                  {
+                    kind: "field",
+                    source: "current",
+                    path: "id",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "financialItem.afterEmail",
+        current: {
+          id: "card_1",
+          matchedSubscriptionName: "Netflix",
+        },
+        services: {
+          entities: {
+            create,
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith(
+      "transaction",
+      { financialItemId: "card_1" },
+      undefined,
+    );
+    expect(create).not.toHaveBeenCalledWith(
+      "financialItem",
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it("getOrCreateRecord loads null when lookup is empty", async () => {
+    const list = vi.fn(async () => []);
+    const create = vi.fn(async () => ({ id: "tx_1" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "getOrCreateRecord",
+            entity: "category",
+            as: "category",
+            where: {
+              type: "condition",
+              field: "name",
+              operator: "==",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "categoryName",
+              },
+            },
+            data: {
+              name: {
+                kind: "field",
+                source: "current",
+                path: "categoryName",
+              },
+              kind: { kind: "literal", value: "EXPENSE" },
+            },
+          },
+          {
+            type: "createRecord",
+            entity: "transaction",
+            data: {
+              categoryId: {
+                kind: "call",
+                fn: "coalesce",
+                args: [
+                  {
+                    kind: "field",
+                    source: "loaded",
+                    alias: "category",
+                    path: "id",
+                  },
+                  {
+                    kind: "field",
+                    source: "current",
+                    path: "fallbackCategoryId",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "financialItem.afterEmail",
+        current: {
+          id: "fi_1",
+          categoryName: null,
+          fallbackCategoryId: "cat_fallback",
+        },
+        services: {
+          entities: {
+            create,
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(list).not.toHaveBeenCalled();
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith(
+      "transaction",
+      { categoryId: "cat_fallback" },
+      undefined,
+    );
+  });
+
   it("aggregates matching records and uses aggregate alias in setField", async () => {
     const list = vi.fn(async () => [
       {

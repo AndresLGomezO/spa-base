@@ -88,3 +88,43 @@ describe("buildFieldSchema array fields", () => {
     ).toBe(false);
   });
 });
+
+describe("buildFieldSchema optional nullability", () => {
+  it("accepts null and undefined for optional relation foreign keys", () => {
+    const schema = buildFieldSchema(
+      {
+        type: "relation",
+        relation: {
+          target: "account",
+          type: "many-to-one",
+          onDelete: "nullify",
+        },
+      },
+      "create",
+    );
+
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse(null).success).toBe(true);
+    expect(schema.safeParse("acct_1").success).toBe(true);
+    expect(schema.safeParse("").success).toBe(false);
+  });
+
+  it("rejects null for required relation foreign keys", () => {
+    const schema = buildFieldSchema(
+      {
+        type: "relation",
+        required: true,
+        relation: {
+          target: "account",
+          type: "many-to-one",
+          onDelete: "restrict",
+        },
+      },
+      "create",
+    );
+
+    expect(schema.safeParse(null).success).toBe(false);
+    expect(schema.safeParse(undefined).success).toBe(false);
+    expect(schema.safeParse("acct_1").success).toBe(true);
+  });
+});

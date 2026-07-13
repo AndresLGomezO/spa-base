@@ -78,8 +78,10 @@ resource "google_cloud_tasks_queue" "gmail_jobs" {
   location = var.region
 
   rate_limits {
-    max_dispatches_per_second = 20
-    max_concurrent_dispatches = 10
+    # Keep low: email hooks update shared parents (schedules / financial items).
+    # Higher concurrency causes Firestore "Transaction lock timeout" during backfill.
+    max_dispatches_per_second = 5
+    max_concurrent_dispatches = 2
   }
 
   retry_config {
@@ -96,6 +98,14 @@ resource "google_cloud_tasks_queue_iam_member" "backend_gmail_enqueuer" {
   name   = google_cloud_tasks_queue.gmail_jobs[0].name
   role   = "roles/cloudtasks.enqueuer"
   member = "serviceAccount:${google_service_account.backend_sa.email}"
+}
+
+resource "google_cloud_tasks_queue_iam_member" "worker_gmail_enqueuer" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  name   = google_cloud_tasks_queue.gmail_jobs[0].name
+  role   = "roles/cloudtasks.enqueuer"
+  member = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
 }
 
 resource "google_pubsub_topic" "gmail_push" {

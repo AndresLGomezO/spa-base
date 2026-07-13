@@ -79,6 +79,7 @@ export const EXPRESSION_FUNCTION_SPECS: Record<
   toNumber: fixedArgs(1),
   toText: fixedArgs(1),
   dateParse: fixedArgs(1),
+  dateOnly: fixedArgs(1),
   isEmpty: fixedArgs(1),
   if: fixedArgs(3),
   length: fixedArgs(1),

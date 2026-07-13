@@ -1,5 +1,8 @@
 export const GMAIL_INTEGRATIONS_SUBCOLLECTION = "integrations" as const;
 export const GMAIL_INTEGRATION_DOC_ID = "gmail" as const;
+/** Top-level email → userId lookup for Pub/Sub push (mailbox emailAddress). */
+export const GMAIL_CONNECTIONS_BY_EMAIL_COLLECTION =
+  "gmailConnectionsByEmail" as const;
 
 export const EMAIL_MATCH_BINDINGS_COLLECTION =
   "__email_match_bindings" as const;

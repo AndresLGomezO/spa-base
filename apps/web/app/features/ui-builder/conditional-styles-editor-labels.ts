@@ -39,6 +39,15 @@ export function useConditionalStylesEditorLabels(): {
         conditionKindActivePath: t(
           "entity.viewSettings.conditionalStyleConditionKindActivePath",
         ),
+        conditionKindDashboardDateFilter: t(
+          "entity.viewSettings.visibleWhen.conditionKindDashboardDateFilter",
+        ),
+        dashboardDateFilterHint: t(
+          "entity.viewSettings.visibleWhen.dashboardDateFilterHint",
+        ),
+        matchCurrentPeriod: t(
+          "entity.viewSettings.visibleWhen.matchCurrentPeriod",
+        ),
         activePathHint: t("entity.viewSettings.conditionalStyleActivePathHint"),
         preview: t("entity.viewSettings.conditionalStylePreview"),
         addRule: t("entity.viewSettings.addRule"),

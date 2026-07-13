@@ -66,6 +66,10 @@ import {
   ComponentDisplayRangeEditor,
   type ComponentDisplayRangeEditorLabels,
 } from "./ComponentDisplayRangeEditor.js";
+import {
+  LayoutVisibleWhenEditor,
+  type LayoutVisibleWhenEditorLabels,
+} from "./LayoutVisibleWhenEditor.js";
 import type {
   CreateUiBuilderPresetInput,
   UiBuilderPresetRecord,
@@ -88,6 +92,7 @@ export interface ColumnRowsEditorLabels extends LayoutColumnControlsLabels {
   readonly rowLayoutStyles?: string;
   readonly responsiveGrid: ResponsiveGridEditorLabels;
   readonly displayRange: ComponentDisplayRangeEditorLabels;
+  readonly visibleWhen?: LayoutVisibleWhenEditorLabels;
   readonly componentEditor: ComponentConfigEditorLabels;
   readonly layoutJsonImport: LayoutJsonImportLabels;
 }
@@ -317,6 +322,19 @@ export function ColumnRowsEditor({
                   )
                 }
               />
+              {labels.visibleWhen ? (
+                <LayoutVisibleWhenEditor
+                  visibleWhen={row.visibleWhen}
+                  labels={labels.visibleWhen}
+                  onChange={(visibleWhen) =>
+                    onLayoutChange(
+                      updateComponentRowMetaAt(layout, locator, row.id, {
+                        visibleWhen,
+                      }),
+                    )
+                  }
+                />
+              ) : null}
               {labels.motion ? (
                 <CollapsibleSection
                   title={labels.rowEffects}
@@ -539,6 +557,19 @@ function GridRowEditor({
           onLayoutChange(updateGridRowMetaAt(layout, locator, row.id, patch))
         }
       />
+      {labels.visibleWhen ? (
+        <LayoutVisibleWhenEditor
+          visibleWhen={row.visibleWhen}
+          labels={labels.visibleWhen}
+          onChange={(visibleWhen) =>
+            onLayoutChange(
+              updateGridRowMetaAt(layout, locator, row.id, {
+                visibleWhen,
+              }),
+            )
+          }
+        />
+      ) : null}
 
       {grid.rows.length >= 1 ? (
         <ResponsiveGridEditor

@@ -241,9 +241,24 @@ const labelConfigSchema = z
   })
   .strict();
 
+const layoutConditionSchema = z
+  .object({
+    conditionKind: z
+      .enum(["field", "activePath", "dashboardDateFilter"])
+      .optional(),
+    matchValue: z.string(),
+    compareFieldPath: z.string().trim().min(1).optional(),
+    compareFieldDateFormat: z
+      .enum(["date", "datetime", "time", "daysRemaining"])
+      .optional(),
+  })
+  .strict();
+
 const conditionalStyleRuleSchema = z
   .object({
-    conditionKind: z.enum(["field", "activePath"]).optional(),
+    conditionKind: z
+      .enum(["field", "activePath", "dashboardDateFilter"])
+      .optional(),
     matchValue: z.string(),
     compareFieldPath: z.string().trim().min(1).optional(),
     compareFieldDateFormat: z
@@ -999,6 +1014,7 @@ export const componentRowSchema: z.ZodType<unknown> = z.lazy(() =>
       name: z.string().trim().min(1).optional(),
       displayFrom: responsiveGridBreakpointSchema.optional(),
       displayTo: responsiveGridBreakpointSchema.optional(),
+      visibleWhen: z.array(layoutConditionSchema).optional(),
     })
     .strict(),
 );
@@ -1012,6 +1028,12 @@ export const columnNodeSchema: z.ZodType<{
   styles?: unknown[];
   displayFrom?: "base" | "sm" | "md" | "lg" | "xl";
   displayTo?: "base" | "sm" | "md" | "lg" | "xl";
+  visibleWhen?: Array<{
+    conditionKind?: "field" | "activePath" | "dashboardDateFilter";
+    matchValue: string;
+    compareFieldPath?: string;
+    compareFieldDateFormat?: "date" | "datetime" | "time" | "daysRemaining";
+  }>;
 }> = z.lazy(() =>
   z
     .object({
@@ -1023,6 +1045,7 @@ export const columnNodeSchema: z.ZodType<{
       styles: z.array(styleRuleSchema).optional(),
       displayFrom: responsiveGridBreakpointSchema.optional(),
       displayTo: responsiveGridBreakpointSchema.optional(),
+      visibleWhen: z.array(layoutConditionSchema).optional(),
     })
     .strict(),
 );

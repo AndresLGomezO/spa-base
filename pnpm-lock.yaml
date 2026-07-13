@@ -484,6 +484,9 @@ importers:
       '@repo/formula-definitions':
         specifier: workspace:*
         version: link:../../packages/formula-definitions
+      '@repo/gmail-ingest':
+        specifier: workspace:*
+        version: link:../../packages/gmail-ingest
       '@repo/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
@@ -730,6 +733,9 @@ importers:
       '@google-cloud/pubsub':
         specifier: 'catalog:'
         version: 4.11.0
+      '@google-cloud/tasks':
+        specifier: 'catalog:'
+        version: 4.1.0
       '@google-cloud/vertexai':
         specifier: 'catalog:'
         version: 1.12.0

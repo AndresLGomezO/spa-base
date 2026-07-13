@@ -19,13 +19,10 @@ describe("rates entity UI overrides catalog", () => {
 
     expect(catalog.overrides).toHaveLength(2);
     expect(catalog.overrides[0]?.entityName).toBe("account");
-    expect(catalog.overrides[0]?.metricWidgets).toHaveLength(4);
+    expect(catalog.overrides[0]?.metricWidgets).toHaveLength(5);
     expect(catalog.overrides[1]?.entityName).toBe("transaction");
-    expect(catalog.overrides[1]?.metricWidgets).toHaveLength(2);
+    expect(catalog.overrides[1]?.metricWidgets).toHaveLength(1);
     expect(catalog.overrides[1]?.metricWidgets?.[0]?.id).toBe(
-      "top-expense-category-snapshot",
-    );
-    expect(catalog.overrides[1]?.metricWidgets?.[1]?.id).toBe(
       "recent-activity-transactions",
     );
     expect(catalog.overrides[1]?.metricRowLayout).toBeDefined();
@@ -88,22 +85,6 @@ describe("rates entity UI overrides catalog", () => {
     expect(
       findComponentById(totalBalance?.layout, "row-total-balance-card-glow"),
     ).toBeDefined();
-
-    const topCategory = catalog.overrides[1]?.metricWidgets?.find(
-      (widget) => widget.id === "top-expense-category-snapshot",
-    );
-    const topCategoryCardStyles = findComponentStyles(
-      topCategory?.layout,
-      "row-e592cf39-0520-45c0-a614-83e8c2b8dac9",
-    );
-    expect(topCategoryCardStyles).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          property: "backdropFilter",
-          value: "var(--backdrop-filter-card)",
-        }),
-      ]),
-    );
 
     const recentActivity = catalog.overrides[1]?.metricWidgets?.find(
       (widget) => widget.id === "recent-activity-transactions",

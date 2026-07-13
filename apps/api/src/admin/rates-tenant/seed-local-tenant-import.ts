@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
 import type { EntityFileReference } from "@repo/entities";
 import {
+  createFirestoreAdminEmailMatchBindingRepository,
   createFirestoreAdminRegisteredUserRepository,
   getFirebaseUserRecord,
   initializeFirebaseAdmin,
@@ -13,6 +14,7 @@ import {
   uploadEntityFile,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
+import { parseEmailMatchBindingsJson } from "@repo/gmail-ingest";
 import { getAuth } from "firebase-admin/auth";
 
 import { apiEnv } from "../../config/env.js";
@@ -23,6 +25,7 @@ import {
 } from "./constants.js";
 import {
   createRatesRecordSeedContext,
+  deleteRatesRecordsNotInSet,
   importRatesRecordsBatch,
 } from "./seed-record-helpers.js";
 
@@ -55,9 +58,102 @@ const LOCAL_GENERATED_IMPORT_SPECS = [
   },
 ] as const;
 
+const LOCAL_EMAIL_MATCH_BINDINGS_FILE = "emailMatchBindings.json";
+
 type LocalImportSpec = (typeof LOCAL_IMPORT_SPECS)[number];
 type LocalGeneratedImportSpec = (typeof LOCAL_GENERATED_IMPORT_SPECS)[number];
 
+function fromAddressesKey(addresses: readonly string[]): string {
+  return [...addresses]
+    .map((address) => address.trim().toLowerCase())
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
+
+function patternsKey(patterns: readonly string[] | undefined): string {
+  return [...(patterns ?? [])]
+    .map((pattern) => pattern.trim())
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
+
+function bindingSeedKey(binding: {
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly fromAddresses?: readonly string[];
+  readonly subjectPatterns?: readonly string[];
+  readonly bodyPatterns?: readonly string[];
+  readonly useAi?: boolean;
+}): string {
+  return [
+    binding.entityName,
+    binding.recordId,
+    fromAddressesKey(binding.fromAddresses ?? []),
+    patternsKey(binding.subjectPatterns),
+    patternsKey(binding.bodyPatterns),
+    binding.useAi === true ? "ai" : "manual",
+  ].join("\0");
+}
+
+async function seedLocalEmailMatchBindingsIfPresent(
+  tenantId: string,
+  firebaseAdminConfig: FirebaseAdminConfig,
+  ownerId: string,
+  importDir: string,
+): Promise<number> {
+  const filePath = join(importDir, LOCAL_EMAIL_MATCH_BINDINGS_FILE);
+  if (!existsSync(filePath)) {
+    return 0;
+  }
+
+  const parsed = parseEmailMatchBindingsJson(readFileSync(filePath, "utf8"));
+  if (!parsed.ok) {
+    const detail = parsed.errors
+      .map((error) => `${error.path}: ${error.message}`)
+      .join("; ");
+    throw new Error(
+      `Invalid ${LOCAL_EMAIL_MATCH_BINDINGS_FILE} in ${importDir}: ${detail}`,
+    );
+  }
+
+  const repository =
+    createFirestoreAdminEmailMatchBindingRepository(firebaseAdminConfig);
+  const existing = await repository.listForUser(tenantId, ownerId);
+  const existingByKey = new Map(
+    existing.map((binding) => [bindingSeedKey(binding), binding] as const),
+  );
+
+  let upserted = 0;
+  for (const portable of parsed.data) {
+    const key = bindingSeedKey(portable);
+    const match = existingByKey.get(key);
+    const patchInput = {
+      enabled: portable.enabled ?? true,
+      fromAddresses: portable.fromAddresses ?? [],
+      subjectPatterns: portable.subjectPatterns ?? [],
+      bodyPatterns: portable.bodyPatterns ?? [],
+      gmailQueryExtra: portable.gmailQueryExtra ?? null,
+      useAi: portable.useAi ?? false,
+      aiInstructions: portable.aiInstructions ?? null,
+      bodyFieldExtractors: portable.bodyFieldExtractors ?? [],
+    };
+
+    if (match) {
+      await repository.patch(tenantId, match.id, ownerId, patchInput);
+    } else {
+      await repository.create(tenantId, ownerId, {
+        entityName: portable.entityName,
+        recordId: portable.recordId,
+        ...patchInput,
+      });
+    }
+    upserted += 1;
+  }
+
+  return upserted;
+}
 export interface LocalTenantImportOptions {
   readonly requireOwner?: boolean;
   readonly expectedUid?: string;
@@ -564,6 +660,29 @@ async function importLocalRecords(
     const records = readImportRecords(filePath);
     const startedAt = Date.now();
 
+    if (
+      spec.entityName === "paymentSchedule" ||
+      spec.entityName === "transaction"
+    ) {
+      const keepIds = new Set(
+        records
+          .map((record) =>
+            typeof record.id === "string" ? record.id.trim() : "",
+          )
+          .filter((id) => id.length > 0),
+      );
+      const deleted = await deleteRatesRecordsNotInSet(
+        context,
+        spec.entityName,
+        keepIds,
+      );
+      if (deleted > 0) {
+        console.log(
+          `[seed]   Removed ${deleted} orphan ${spec.entityName} record(s) not in ${spec.fileName}.`,
+        );
+      }
+    }
+
     await importRatesRecordsBatch(
       context,
       spec.entityName,
@@ -644,6 +763,18 @@ export async function seedLocalTenantImportIfPresent(
       `[seed] Importing ${generatedSpecs.length} generated local JSON file(s)...`,
     );
     await importLocalRecords(context, importDir, generatedSpecs);
+  }
+
+  const bindingsUpserted = await seedLocalEmailMatchBindingsIfPresent(
+    tenantId,
+    firebaseAdminConfig,
+    ownerId,
+    importDir,
+  );
+  if (bindingsUpserted > 0) {
+    console.log(
+      `[seed] Upserted ${bindingsUpserted} email match binding(s) from ${LOCAL_EMAIL_MATCH_BINDINGS_FILE}.`,
+    );
   }
 
   console.log(`[seed] Local tenant import complete for ${ownerEmail}.`);

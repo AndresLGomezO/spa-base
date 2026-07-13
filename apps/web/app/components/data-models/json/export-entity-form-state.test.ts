@@ -15,6 +15,7 @@ describe("export-entity-form-state", () => {
       tenantWideRead: true,
       inMemoryListQueries: false,
       hiddenFromNav: false,
+      emailMatchingEnabled: true,
       navCategoryId: "cat_1",
       navOrder: "2",
       navIcon: "Wallet",
@@ -23,6 +24,7 @@ describe("export-entity-form-state", () => {
 
     expect(exported.navIcon).toBe("Wallet");
     expect(exported.navOrder).toBe(2);
+    expect(exported.emailMatchingEnabled).toBe(true);
 
     const imported = importEntityFormState(exported);
     expect(imported).toEqual({
@@ -33,6 +35,7 @@ describe("export-entity-form-state", () => {
       tenantWideRead: true,
       inMemoryListQueries: false,
       hiddenFromNav: false,
+      emailMatchingEnabled: true,
       navCategoryId: "cat_1",
       navOrder: "2",
       navIcon: "Wallet",

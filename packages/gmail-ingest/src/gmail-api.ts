@@ -44,17 +44,52 @@ function decodeBase64Url(data: string | undefined): string | null {
   }
 }
 
-function extractPlainText(part: GmailMessagePart | undefined): string | null {
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, code: string) =>
+      String.fromCharCode(Number.parseInt(code, 10)),
+    )
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+function extractPartText(
+  part: GmailMessagePart | undefined,
+  mimeType: "text/plain" | "text/html",
+): string | null {
   if (!part) return null;
-  if (part.mimeType === "text/plain") {
-    return decodeBase64Url(part.body?.data);
+  if (part.mimeType === mimeType) {
+    const decoded = decodeBase64Url(part.body?.data);
+    if (!decoded) return null;
+    return mimeType === "text/html" ? htmlToPlainText(decoded) : decoded;
   }
   if (part.parts) {
     for (const child of part.parts) {
-      const text = extractPlainText(child);
+      const text = extractPartText(child, mimeType);
       if (text) return text;
     }
   }
+  return null;
+}
+
+function extractBodyText(part: GmailMessagePart | undefined): string | null {
+  const plain = extractPartText(part, "text/plain");
+  if (plain?.trim()) return plain;
+  const html = extractPartText(part, "text/html");
+  if (html?.trim()) return html;
   return null;
 }
 
@@ -72,7 +107,7 @@ export function gmailApiMessageToEnvelope(
       ? new Date(internalMs).toISOString()
       : null;
 
-  const bodyText = extractPlainText(message.payload);
+  const bodyText = extractBodyText(message.payload);
   return {
     messageId: message.id,
     threadId: message.threadId ?? null,
@@ -107,8 +142,13 @@ export class GmailApiClient {
     return (await response.json()) as T;
   }
 
-  async getProfile(): Promise<{ readonly emailAddress: string }> {
-    return this.request<{ emailAddress: string }>("/users/me/profile");
+  async getProfile(): Promise<{
+    readonly emailAddress: string;
+    readonly historyId?: string;
+  }> {
+    return this.request<{ emailAddress: string; historyId?: string }>(
+      "/users/me/profile",
+    );
   }
 
   async listMessageIds(options: {

@@ -303,6 +303,7 @@ export function applyComponentsColumnPatch(
       name: patch.name,
       displayFrom: patch.displayFrom,
       displayTo: patch.displayTo,
+      ...("visibleWhen" in patch ? { visibleWhen: patch.visibleWhen } : {}),
     });
 
     if (patch.stackDirection !== undefined || patch.styles !== undefined) {

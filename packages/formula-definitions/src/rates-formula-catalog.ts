@@ -42,11 +42,11 @@ function layer1Formulas(): readonly PortableFormulaDefinition[] {
     ),
     tenant(
       "loanScheduleAnchorDate",
-      "Loan: schedule anchor date (origination or parent next due)",
+      "Loan: schedule anchor — prefer parent nextDueDate (mid-loan / after payment); else origination",
       ifExpr(
-        unary("!", call("isEmpty", formulaRef("loanOriginationDate"))),
-        formulaRef("loanOriginationDate"),
+        unary("!", call("isEmpty", fieldParent("nextDueDate"))),
         fieldParent("nextDueDate"),
+        formulaRef("loanOriginationDate"),
       ),
     ),
     tenant(
@@ -59,19 +59,19 @@ function layer1Formulas(): readonly PortableFormulaDefinition[] {
     ),
     tenant(
       "loanBasePrincipal",
-      "Loan: opening principal resolved from origination anchor",
+      "Loan: opening principal — currentBalance when anchored on nextDueDate; else originalPrincipal",
       ifExpr(
-        unary("!", call("isEmpty", formulaRef("loanOriginationDate"))),
-        coalesce(
-          fieldCurrent("originalPrincipal"),
-          fieldParent("currentBalance"),
-        ),
+        unary("!", call("isEmpty", fieldParent("nextDueDate"))),
         coalesce(
           fieldParent("currentBalance"),
           coalesce(
             fieldCurrent("originalPrincipal"),
             fieldParent("currentBalance"),
           ),
+        ),
+        coalesce(
+          fieldCurrent("originalPrincipal"),
+          fieldParent("currentBalance"),
         ),
       ),
     ),
@@ -349,7 +349,13 @@ function scheduleFormulas(): readonly PortableFormulaDefinition[] {
           call("isEmpty", formulaRef("loanScheduleAnchorDate")),
           lit(0),
           ifExpr(
-            unary("!", call("isEmpty", formulaRef("loanOriginationDate"))),
+            // Full term from origination only when nextDueDate is absent (brand-new loan).
+            // Mid-loan / after-payment replan anchors on nextDueDate and uses remaining rows.
+            binary(
+              "&&",
+              call("isEmpty", fieldParent("nextDueDate")),
+              unary("!", call("isEmpty", formulaRef("loanOriginationDate"))),
+            ),
             call("max", lit(1), formulaRef("loanTermMonths")),
             formulaRef("paymentScheduleAmortizedRowCount"),
           ),
@@ -435,12 +441,15 @@ function buildRatesRecurringScheduleFormulas(): readonly PortableFormulaDefiniti
     ),
     tenant(
       "frequencyDueDate",
-      "Recurring schedule: due date from base date, frequency, and period index",
+      "Recurring schedule: due date from base date, frequency, and period index (YYYY-MM-DD)",
       call(
-        "dateAdd",
-        inputRef("baseDate"),
-        inputRef("periodIndex"),
-        formulaRef("frequencyUnit", { frequency: inputRef("frequency") }),
+        "dateOnly",
+        call(
+          "dateAdd",
+          inputRef("baseDate"),
+          inputRef("periodIndex"),
+          formulaRef("frequencyUnit", { frequency: inputRef("frequency") }),
+        ),
       ),
       [
         { name: "baseDate", required: true },

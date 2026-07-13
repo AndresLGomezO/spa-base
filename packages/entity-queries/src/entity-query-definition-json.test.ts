@@ -184,17 +184,19 @@ describe("entity-query-definition-json", () => {
       );
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(10);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(8);
     const names = parsed.data.entityQueryDefinitions.map((query) => query.name);
     expect(names).toContain("Transactions this month");
     expect(names).toContain("Upcoming payments");
-    expect(names).toContain("Due today");
+    expect(names).toContain("Upcoming payments (dashboard)");
     expect(names).toContain("Due this month");
-    expect(names).toContain("Top outflow category (period)");
-    expect(names).toContain("Category outflows (period to date)");
-    expect(names).toContain("Category transaction trend");
-    expect(names).toContain("Transaction trend");
     expect(names).toContain("Due today (metrics)");
+    expect(names).toContain("Transaction trend");
+    expect(names).toContain("Overdue payments (metrics)");
     expect(names).toContain("Upcoming this week (metrics)");
+    expect(names).not.toContain("Due today");
+    expect(names).not.toContain("Top outflow category (period)");
+    expect(names).not.toContain("Category outflows (period to date)");
+    expect(names).not.toContain("Category transaction trend");
   });
 });

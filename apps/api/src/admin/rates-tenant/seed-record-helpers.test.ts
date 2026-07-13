@@ -5,6 +5,7 @@ import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
 import {
   createRatesRecordSeedContext,
   createSeedHookEntityRuntime,
+  deleteRatesRecordsNotInSet,
   importRatesRecordsBatch,
 } from "./seed-record-helpers.js";
 
@@ -77,6 +78,21 @@ describe("importRatesRecordsBatch", () => {
           business: { financialItemId: "fi_1", dueDate: "2026-01-01" },
         },
       ]),
+    ).rejects.toThrow('Entity "missingEntity" is not registered');
+  });
+});
+
+describe("deleteRatesRecordsNotInSet", () => {
+  it("throws when the entity is not registered on the seed context", async () => {
+    const context = createRatesRecordSeedContext(
+      "rates",
+      { projectId: "demo" },
+      [paymentScheduleRecord],
+      "owner_123",
+    );
+
+    await expect(
+      deleteRatesRecordsNotInSet(context, "missingEntity", new Set(["a"])),
     ).rejects.toThrow('Entity "missingEntity" is not registered');
   });
 });

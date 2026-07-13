@@ -29,6 +29,7 @@
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/formula-definitions": "workspace:*",
+    "@repo/gmail-ingest": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/firestore-indexes": "workspace:*",
     "@repo/modules": "workspace:*",

@@ -180,12 +180,16 @@ function hasFractionalPart(value: number): boolean {
 
 export function formatNumberDisplayValue(
   value: number,
-  options: Pick<FormatDisplayOptions, "locale"> = {},
+  options: Pick<FormatDisplayOptions, "locale"> & {
+    readonly fractionDigits?: number;
+  } = {},
 ): string {
   const locale = options.locale ?? "en";
+  const fractionDigits =
+    options.fractionDigits ?? (hasFractionalPart(value) ? 2 : 0);
   return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: hasFractionalPart(value) ? 2 : 0,
-    maximumFractionDigits: hasFractionalPart(value) ? 2 : 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);
 }
 
@@ -231,13 +235,15 @@ export function formatDisplayValue(
         const percentValue = numeric * 100;
         return `${formatNumberDisplayValue(percentValue, { locale })}%`;
       }
-      const formatted = formatNumberDisplayValue(numeric, { locale });
       if (
         isCurrencyField(fieldType, options.fieldName, options.displayFormat)
       ) {
-        return `$ ${formatted}`;
+        return `$ ${formatNumberDisplayValue(numeric, {
+          locale,
+          fractionDigits: 0,
+        })}`;
       }
-      return formatted;
+      return formatNumberDisplayValue(numeric, { locale });
     }
   }
 

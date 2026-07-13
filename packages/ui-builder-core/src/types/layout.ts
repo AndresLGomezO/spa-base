@@ -1,6 +1,6 @@
 /**
  * @ai-context-sync
- * Layout node visibility (displayFrom/displayTo) — keep in sync with
+ * Layout node visibility (displayFrom/displayTo, visibleWhen) — keep in sync with
  * packages/ai-context/src/atoms/ui/responsive-visibility.ts
  */
 import type { StyleRule } from "../styles/style-types.js";
@@ -8,6 +8,9 @@ import type { ComponentClickAction } from "./click-action.js";
 import type { UiComponentConfig } from "./component.js";
 import type { MotionPreset } from "./motion.js";
 import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
+import type { LayoutCondition } from "./styling.js";
+
+export type LayoutVisibleWhen = readonly LayoutCondition[];
 
 export type LayoutAlign = "start" | "center" | "end" | "stretch";
 
@@ -51,6 +54,8 @@ export interface ColumnNode {
   readonly styles?: readonly StyleRule[];
   readonly displayFrom?: ResponsiveGridBreakpoint;
   readonly displayTo?: ResponsiveGridBreakpoint;
+  /** When set, hide this column (and children) unless all conditions match. */
+  readonly visibleWhen?: LayoutVisibleWhen;
 }
 
 export type RowNode = ComponentRowNode;
@@ -66,6 +71,8 @@ export interface ComponentRowNode {
   readonly motion?: MotionPreset;
   readonly displayFrom?: ResponsiveGridBreakpoint;
   readonly displayTo?: ResponsiveGridBreakpoint;
+  /** When set, hide this row (and children) unless all conditions match. */
+  readonly visibleWhen?: LayoutVisibleWhen;
 }
 
 export function resolveColumnStackDirection(

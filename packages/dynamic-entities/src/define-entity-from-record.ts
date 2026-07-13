@@ -244,6 +244,7 @@ export function defineEntityFromRecord(
     ...(record.tenantWideRead ? { tenantWideRead: true } : {}),
     ...(record.inMemoryListQueries ? { inMemoryListQueries: true } : {}),
     ...(record.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(record.emailMatchingEnabled ? { emailMatchingEnabled: true } : {}),
     ...(record.navCategoryId ? { navCategoryId: record.navCategoryId } : {}),
     ...(record.navOrder !== undefined ? { navOrder: record.navOrder } : {}),
     ...(record.displayField ? { displayField: record.displayField } : {}),

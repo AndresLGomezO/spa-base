@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import type { ResolvedComponentClickTarget } from "@repo/ui-builder-core";
 
@@ -12,6 +12,8 @@ import {
 const RELATION_LINK_WRAPPER_CLASS =
   "contents cursor-pointer [&_[data-card-field-value]]:text-primary [&_[data-card-field-value]]:underline-offset-4 hover:[&_[data-card-field-value]]:underline";
 
+const InsideComponentClickLinkContext = createContext(false);
+
 interface ComponentClickTargetWrapperProps {
   readonly target: ResolvedComponentClickTarget;
   readonly children: ReactNode;
@@ -24,9 +26,15 @@ export function ComponentClickTargetWrapper({
   linkAppearance = false,
 }: ComponentClickTargetWrapperProps) {
   const modalContext = useOptionalEntityFormModal();
+  const insideAncestorLink = useContext(InsideComponentClickLinkContext);
   const linkWrapperClassName = linkAppearance
     ? RELATION_LINK_WRAPPER_CLASS
     : "contents";
+
+  // Nested <a>/<Link> is invalid HTML and breaks hydration; keep the outer link only.
+  if (insideAncestorLink) {
+    return children;
+  }
 
   if (isEntityFormModalClickTarget(target)) {
     return (
@@ -58,25 +66,29 @@ export function ComponentClickTargetWrapper({
 
   if (target.external || target.openInNewTab) {
     return (
-      <a
-        href={target.href}
-        target={target.openInNewTab ? "_blank" : undefined}
-        rel={target.openInNewTab ? "noopener noreferrer" : undefined}
-        className={linkWrapperClassName}
-      >
-        {children}
-      </a>
+      <InsideComponentClickLinkContext.Provider value={true}>
+        <a
+          href={target.href}
+          target={target.openInNewTab ? "_blank" : undefined}
+          rel={target.openInNewTab ? "noopener noreferrer" : undefined}
+          className={linkWrapperClassName}
+        >
+          {children}
+        </a>
+      </InsideComponentClickLinkContext.Provider>
     );
   }
 
   return (
-    <Link
-      to={target.href}
-      state={target.state}
-      className={linkWrapperClassName}
-    >
-      {children}
-    </Link>
+    <InsideComponentClickLinkContext.Provider value={true}>
+      <Link
+        to={target.href}
+        state={target.state}
+        className={linkWrapperClassName}
+      >
+        {children}
+      </Link>
+    </InsideComponentClickLinkContext.Provider>
   );
 }
 

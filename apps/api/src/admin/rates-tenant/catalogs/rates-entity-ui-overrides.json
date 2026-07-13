@@ -1240,6 +1240,378 @@
           }
         },
         {
+          "id": "payments-by-month",
+          "name": "Payments by Month",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "payments-widget-root",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-payments",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-payments-card",
+                      "motion": {
+                        "hoverTransform": "scale-up",
+                        "hoverDurationMs": 200,
+                        "transition": "all"
+                      },
+                      "component": {
+                        "kind": "container",
+                        "stackDirection": "column",
+                        "styles": [
+                          {
+                            "property": "backgroundColor",
+                            "value": "var(--color-card)"
+                          },
+                          {
+                            "property": "width",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "borderRadius",
+                            "value": "var(--radius-lg)"
+                          },
+                          {
+                            "property": "padding",
+                            "value": "20",
+                            "valuesByBreakpoint": {
+                              "base": "15"
+                            }
+                          },
+                          {
+                            "property": "borderWidth",
+                            "value": "1"
+                          },
+                          {
+                            "property": "borderColor",
+                            "value": "var(--color-card-border)"
+                          },
+                          {
+                            "property": "borderStyle",
+                            "value": "solid"
+                          },
+                          {
+                            "property": "boxShadow",
+                            "value": "var(--shadow-card)"
+                          },
+                          {
+                            "property": "overflowY",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "overflowX",
+                            "value": "hidden"
+                          },
+                          {
+                            "property": "height",
+                            "value": "100%"
+                          },
+                          {
+                            "property": "position",
+                            "value": "relative"
+                          },
+                          {
+                            "property": "backdropFilter",
+                            "value": "var(--backdrop-filter-card)"
+                          }
+                        ],
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-payments-card-glow",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "column",
+                              "styles": [
+                                {
+                                  "property": "position",
+                                  "value": "absolute"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "var(--gradient-card-glow-blue)"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ],
+                              "rows": []
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-payments-header",
+                            "component": {
+                              "kind": "container",
+                              "stackDirection": "row",
+                              "styles": [
+                                {
+                                  "property": "alignItems",
+                                  "value": "center"
+                                },
+                                {
+                                  "property": "gap",
+                                  "value": "12",
+                                  "valuesByBreakpoint": {
+                                    "sm": "5"
+                                  }
+                                },
+                                {
+                                  "property": "justifyContent",
+                                  "value": "start"
+                                }
+                              ],
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-payments-icon",
+                                  "component": {
+                                    "kind": "icon",
+                                    "iconName": "CreditCard",
+                                    "styles": [
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-primary-foreground)"
+                                      },
+                                      {
+                                        "property": "padding",
+                                        "value": "var(--spacing-compact)",
+                                        "valuesByBreakpoint": {
+                                          "base": "3"
+                                        }
+                                      },
+                                      {
+                                        "property": "borderRadius",
+                                        "value": "var(--radius-lg)"
+                                      },
+                                      {
+                                        "property": "backgroundColor",
+                                        "value": "var(--color-primary)"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20",
+                                        "valuesByBreakpoint": {
+                                          "base": "11"
+                                        }
+                                      },
+                                      {
+                                        "property": "boxShadow",
+                                        "value": "0 0 12px color-mix(in oklch, var(--color-primary-foreground) 35%, transparent)"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-payments-label",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Payments"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "15",
+                                        "valuesByBreakpoint": {
+                                          "base": "10"
+                                        }
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "var(--color-card-foreground)"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-payments-kpi",
+                            "component": {
+                              "kind": "metric-kpi",
+                              "metricDefinitionId": "Payments by Month",
+                              "label": "",
+                              "groupBindings": {},
+                              "dimensionBindings": {
+                                "date": {
+                                  "type": "dashboardDateFilter"
+                                }
+                              },
+                              "styles": [
+                                {
+                                  "property": "marginTop",
+                                  "value": "10"
+                                },
+                                {
+                                  "property": "fontSize",
+                                  "value": "20",
+                                  "valuesByBreakpoint": {
+                                    "base": "10"
+                                  }
+                                },
+                                {
+                                  "property": "fontWeight",
+                                  "value": "bold"
+                                },
+                                {
+                                  "property": "letterSpacing",
+                                  "value": "-0.025em"
+                                },
+                                {
+                                  "property": "color",
+                                  "value": "var(--color-card-foreground)"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-payments-period",
+                            "component": {
+                              "kind": "text",
+                              "primary": {
+                                "type": "static",
+                                "value": "This month"
+                              },
+                              "styles": [
+                                {
+                                  "property": "fontSize",
+                                  "value": "10",
+                                  "valuesByBreakpoint": {
+                                    "base": "8"
+                                  }
+                                },
+                                {
+                                  "property": "color",
+                                  "value": "var(--color-muted-foreground)"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-payments-growth",
+                            "component": {
+                              "kind": "metric-kpi",
+                              "metricDefinitionId": "Payments MoM %",
+                              "label": "",
+                              "groupBindings": {},
+                              "dimensionBindings": {},
+                              "parameterBindings": {
+                                "currentPeriod": {
+                                  "type": "dashboardDateFilter"
+                                }
+                              },
+                              "showToneColors": true,
+                              "tonePolarity": "inverted",
+                              "styles": [
+                                {
+                                  "property": "fontSize",
+                                  "value": "14",
+                                  "valuesByBreakpoint": {
+                                    "base": "10"
+                                  }
+                                },
+                                {
+                                  "property": "fontWeight",
+                                  "value": "bold"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-payments-chart",
+                            "component": {
+                              "kind": "chart",
+                              "chartDefinitionId": "Payments trend chart",
+                              "parameterBindings": {
+                                "types": {
+                                  "type": "static",
+                                  "value": [
+                                    "INCOME",
+                                    "EXPENSE",
+                                    "PAYMENT",
+                                    "INVESTMENT"
+                                  ]
+                                }
+                              },
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "50%"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "10"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
           "id": "invest-by-month",
           "name": "Invest by Month",
           "layout": {
@@ -1626,7 +1998,7 @@
                   "id": "row-metrics-grid",
                   "component": {
                     "kind": "grid",
-                    "gridTemplateColumns": "minmax(400px, 450px) repeat(3, minmax(170px,200px))",
+                    "gridTemplateColumns": "minmax(400px, 450px) repeat(4, minmax(170px,200px))",
                     "gap": "16",
                     "alignItems": "stretch",
                     "styles": [
@@ -1815,6 +2187,61 @@
                       },
                       {
                         "type": "component",
+                        "id": "track-payments-widget",
+                        "component": {
+                          "kind": "container",
+                          "styles": [
+                            {
+                              "property": "width",
+                              "value": "100%"
+                            },
+                            {
+                              "property": "height",
+                              "value": "100%"
+                            },
+                            {
+                              "property": "minWidth",
+                              "value": "0"
+                            },
+                            {
+                              "property": "overflowX",
+                              "value": "hidden"
+                            },
+                            {
+                              "property": "overflowY",
+                              "value": "hidden"
+                            }
+                          ],
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-payments-widget",
+                              "component": {
+                                "kind": "metric-widget",
+                                "entityName": "account",
+                                "widgetId": "payments-by-month",
+                                "styles": [
+                                  {
+                                    "property": "width",
+                                    "value": "100%"
+                                  },
+                                  {
+                                    "property": "height",
+                                    "value": "100%"
+                                  },
+                                  {
+                                    "property": "flex",
+                                    "value": "1"
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "stackDirection": "column"
+                        }
+                      },
+                      {
+                        "type": "component",
                         "id": "track-invest-widget",
                         "component": {
                           "kind": "container",
@@ -1887,503 +2314,6 @@
         }
       ],
       "metricWidgets": [
-        {
-          "id": "top-expense-category-snapshot",
-          "name": "Top Expense Category",
-          "layout": {
-            "root": {
-              "type": "root",
-              "id": "top-category-widget-root",
-              "columnCount": 1,
-              "columns": [
-                {
-                  "id": "col-top-category",
-                  "rows": [
-                    {
-                      "type": "component",
-                      "id": "row-e592cf39-0520-45c0-a614-83e8c2b8dac9",
-                      "motion": {
-                        "hoverTransform": "scale-up",
-                        "hoverDurationMs": 200,
-                        "transition": "all"
-                      },
-                      "component": {
-                        "kind": "container",
-                        "rows": [
-                          {
-                            "type": "component",
-                            "id": "row-top-category-card-glow",
-                            "component": {
-                              "kind": "container",
-                              "stackDirection": "column",
-                              "styles": [
-                                {
-                                  "property": "position",
-                                  "value": "absolute"
-                                },
-                                {
-                                  "property": "top",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "right",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "bottom",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "left",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "backgroundColor",
-                                  "value": "var(--gradient-card-glow-danger)"
-                                },
-                                {
-                                  "property": "pointerEvents",
-                                  "value": "none"
-                                },
-                                {
-                                  "property": "zIndex",
-                                  "value": "0"
-                                }
-                              ],
-                              "rows": []
-                            }
-                          },
-                          {
-                            "type": "component",
-                            "id": "row-7eeb8a61-2d1f-46b9-994e-2be68299eb77",
-                            "component": {
-                              "kind": "container",
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-16618ae7-f6eb-424e-9507-31206bc824f0",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Top Category"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "14"
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "bold"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-card-foreground)"
-                                      }
-                                    ],
-                                    "kind": "text"
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-d6fcefe6-3539-460d-837e-fdec3f92ba59",
-                                  "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "This month"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "12"
-                                      },
-                                      {
-                                        "property": "paddingTop",
-                                        "value": "4"
-                                      },
-                                      {
-                                        "property": "paddingBottom",
-                                        "value": "4"
-                                      },
-                                      {
-                                        "property": "paddingLeft",
-                                        "value": "12"
-                                      },
-                                      {
-                                        "property": "paddingRight",
-                                        "value": "12"
-                                      },
-                                      {
-                                        "property": "borderRadius",
-                                        "value": "9999"
-                                      },
-                                      {
-                                        "property": "backgroundColor",
-                                        "value": "var(--color-muted)"
-                                      },
-                                      {
-                                        "property": "backdropFilter",
-                                        "value": "blur(8px)"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "var(--color-muted-foreground)"
-                                      }
-                                    ],
-                                    "kind": "text"
-                                  }
-                                }
-                              ],
-                              "stackDirection": "row",
-                              "styles": [
-                                {
-                                  "property": "alignItems",
-                                  "value": "center"
-                                },
-                                {
-                                  "property": "justifyContent",
-                                  "value": "between"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "height",
-                                  "value": "auto"
-                                }
-                              ]
-                            },
-                            "name": "Card Title"
-                          },
-                          {
-                            "type": "component",
-                            "id": "row-top-category-query-viewer",
-                            "component": {
-                              "kind": "query-viewer",
-                              "entityQueryDefinitionId": "Top outflow category (period)",
-                              "parameterBindings": {
-                                "period": {
-                                  "type": "dashboardDateFilter"
-                                }
-                              },
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-524362c5-0ba4-48b3-8322-a636edadd938",
-                                  "component": {
-                                    "kind": "grid",
-                                    "gridTemplateColumns": "auto repeat(2, 1fr)",
-                                    "rows": [
-                                      {
-                                        "type": "component",
-                                        "id": "row-2fc9880f-42f5-496a-b598-7ee91174e5ed",
-                                        "component": {
-                                          "kind": "container",
-                                          "rows": [
-                                            {
-                                              "type": "component",
-                                              "id": "row-a0d76c01-1394-4323-8952-dee0fc183ca9",
-                                              "component": {
-                                                "primary": {
-                                                  "type": "field",
-                                                  "path": "category.image"
-                                                },
-                                                "styles": [
-                                                  {
-                                                    "property": "justifyContent",
-                                                    "value": "center"
-                                                  },
-                                                  {
-                                                    "property": "borderRadius",
-                                                    "value": "999"
-                                                  },
-                                                  {
-                                                    "property": "alignItems",
-                                                    "value": "center"
-                                                  }
-                                                ],
-                                                "kind": "image",
-                                                "imageSize": 100,
-                                                "displayMode": "overlay",
-                                                "objectFit": "contain"
-                                              },
-                                              "styles": [],
-                                              "name": "Category Image"
-                                            }
-                                          ],
-                                          "styles": [
-                                            {
-                                              "property": "width",
-                                              "value": "90",
-                                              "valuesByBreakpoint": {
-                                                "base": "50"
-                                              }
-                                            },
-                                            {
-                                              "property": "height",
-                                              "value": "100%"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "type": "component",
-                                        "id": "row-ab0efb69-5ddf-449e-9929-035b53c92e87",
-                                        "component": {
-                                          "kind": "container",
-                                          "rows": [
-                                            {
-                                              "type": "component",
-                                              "id": "row-03902a32-1f74-4417-a8f2-4c6592e6a02c",
-                                              "component": {
-                                                "primary": {
-                                                  "type": "field",
-                                                  "path": "category.name"
-                                                },
-                                                "styles": [
-                                                  {
-                                                    "property": "fontSize",
-                                                    "value": "16",
-                                                    "valuesByBreakpoint": {
-                                                      "base": "13"
-                                                    }
-                                                  },
-                                                  {
-                                                    "property": "fontWeight",
-                                                    "value": "bold"
-                                                  },
-                                                  {
-                                                    "property": "color",
-                                                    "value": "var(--color-card-foreground)"
-                                                  }
-                                                ],
-                                                "kind": "text"
-                                              }
-                                            },
-                                            {
-                                              "type": "component",
-                                              "id": "row-ff4d5378-329e-4d2d-ba92-8eb32b7d5c3e",
-                                              "component": {
-                                                "primary": {
-                                                  "type": "field",
-                                                  "path": "sum_amount"
-                                                },
-                                                "styles": [
-                                                  {
-                                                    "property": "fontSize",
-                                                    "value": "25",
-                                                    "valuesByBreakpoint": {
-                                                      "base": "17"
-                                                    }
-                                                  }
-                                                ],
-                                                "kind": "numeric",
-                                                "displayFormat": "currency",
-                                                "showCurrency": false,
-                                                "showToneColors": false
-                                              }
-                                            },
-                                            {
-                                              "type": "component",
-                                              "id": "row-27446291-8e33-4342-aad0-676b582a180d",
-                                              "component": {
-                                                "kind": "container",
-                                                "rows": [
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-7d1e28b2-c0ca-4832-9cbd-96cd272f02ff",
-                                                    "component": {
-                                                      "kind": "metric-kpi",
-                                                      "metricDefinitionId": "Category Outflow Partial MoM %",
-                                                      "groupBindings": {},
-                                                      "dimensionBindings": {},
-                                                      "parameterBindings": {
-                                                        "categoryId": {
-                                                          "type": "entityField",
-                                                          "fieldPath": "categoryId"
-                                                        },
-                                                        "currentPeriod": {
-                                                          "type": "dashboardDateFilter"
-                                                        }
-                                                      },
-                                                      "label": "",
-                                                      "showToneColors": true,
-                                                      "tonePolarity": "inverted",
-                                                      "styles": [
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "13",
-                                                          "valuesByBreakpoint": {
-                                                            "base": "10"
-                                                          }
-                                                        },
-                                                        {
-                                                          "property": "fontWeight",
-                                                          "value": "bold"
-                                                        }
-                                                      ]
-                                                    },
-                                                    "styles": []
-                                                  },
-                                                  {
-                                                    "type": "component",
-                                                    "id": "row-6a31a062-8f19-4969-b121-934dba0a9e35",
-                                                    "component": {
-                                                      "primary": {
-                                                        "type": "static",
-                                                        "value": "vs previous month."
-                                                      },
-                                                      "styles": [
-                                                        {
-                                                          "property": "fontSize",
-                                                          "value": "12",
-                                                          "valuesByBreakpoint": {
-                                                            "base": "8"
-                                                          }
-                                                        },
-                                                        {
-                                                          "property": "fontWeight",
-                                                          "value": "thin"
-                                                        }
-                                                      ],
-                                                      "kind": "text"
-                                                    }
-                                                  }
-                                                ],
-                                                "stackDirection": "row",
-                                                "styles": [
-                                                  {
-                                                    "property": "gap",
-                                                    "value": "var(--spacing-tight)"
-                                                  }
-                                                ]
-                                              }
-                                            }
-                                          ],
-                                          "styles": [
-                                            {
-                                              "property": "padding",
-                                              "value": "15"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "type": "component",
-                                        "id": "row-e04ce3e4-2230-4ff1-ab3e-d4a1931b1345",
-                                        "component": {
-                                          "kind": "container",
-                                          "rows": [
-                                            {
-                                              "type": "component",
-                                              "id": "row-12e70221-14ba-4b49-8de8-ecead89e0cb4",
-                                              "component": {
-                                                "kind": "chart",
-                                                "chartDefinitionId": "Top category expense trend chart",
-                                                "parameterBindings": {
-                                                  "categoryId": {
-                                                    "type": "entityField",
-                                                    "fieldPath": "category.id"
-                                                  },
-                                                  "period": {
-                                                    "type": "dashboardDateFilter"
-                                                  }
-                                                },
-                                                "styles": [
-                                                  {
-                                                    "property": "height",
-                                                    "value": "100%"
-                                                  },
-                                                  {
-                                                    "property": "width",
-                                                    "value": "100%"
-                                                  }
-                                                ]
-                                              }
-                                            }
-                                          ],
-                                          "styles": [
-                                            {
-                                              "property": "height",
-                                              "value": "100%"
-                                            },
-                                            {
-                                              "property": "padding",
-                                              "value": "15"
-                                            }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          }
-                        ],
-                        "styles": [
-                          {
-                            "property": "backgroundColor",
-                            "value": "var(--color-card)"
-                          },
-                          {
-                            "property": "height",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "width",
-                            "value": "100%"
-                          },
-                          {
-                            "property": "padding",
-                            "value": "16"
-                          },
-                          {
-                            "property": "borderRadius",
-                            "value": "var(--radius-lg)"
-                          },
-                          {
-                            "property": "borderWidth",
-                            "value": "1"
-                          },
-                          {
-                            "property": "borderColor",
-                            "value": "var(--color-card-border)"
-                          },
-                          {
-                            "property": "borderStyle",
-                            "value": "solid"
-                          },
-                          {
-                            "property": "boxShadow",
-                            "value": "var(--shadow-card)"
-                          },
-                          {
-                            "property": "overflowX",
-                            "value": "hidden"
-                          },
-                          {
-                            "property": "overflowY",
-                            "value": "hidden"
-                          },
-                          {
-                            "property": "position",
-                            "value": "relative"
-                          },
-                          {
-                            "property": "backdropFilter",
-                            "value": "var(--backdrop-filter-card)"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
         {
           "id": "recent-activity-transactions",
           "name": "Recent Activity",
@@ -2651,7 +2581,7 @@
                                                           "component": {
                                                             "primary": {
                                                               "type": "field",
-                                                              "path": "financialItem.name"
+                                                              "path": "description"
                                                             },
                                                             "label": {
                                                               "show": false
@@ -2736,7 +2666,8 @@
                                                               },
                                                               {
                                                                 "matchValue": "PAYMENT",
-                                                                "badgeVariant": "danger"
+                                                                "styles": [],
+                                                                "badgeVariant": "warning"
                                                               },
                                                               {
                                                                 "matchValue": "INVESTMENT",
@@ -2802,7 +2733,8 @@
                                                                     },
                                                                     {
                                                                       "matchValue": "PAYMENT",
-                                                                      "badgeVariant": "danger"
+                                                                      "styles": [],
+                                                                      "badgeVariant": "warning"
                                                                     },
                                                                     {
                                                                       "matchValue": "INVESTMENT",
@@ -2971,9 +2903,10 @@
                                           ]
                                         },
                                         "clickAction": {
-                                          "type": "entityRecord",
+                                          "type": "entityView",
+                                          "view": "recordDetail",
                                           "target": {
-                                            "relationFieldPath": "financialItemId"
+                                            "scope": "current"
                                           }
                                         },
                                         "motion": {

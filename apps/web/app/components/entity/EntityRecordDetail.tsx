@@ -266,9 +266,14 @@ export function EntityRecordDetail({
         </div>
       )}
 
-      <div className="bg-card border-border rounded-lg border p-4">
-        <EntityEmailMatchingPanel entityName={entityName} recordId={recordId} />
-      </div>
+      {definition.emailMatchingEnabled ? (
+        <div className="bg-card border-border rounded-lg border p-4">
+          <EntityEmailMatchingPanel
+            entityName={entityName}
+            recordId={recordId}
+          />
+        </div>
+      ) : null}
 
       {reverseRelations.length > 0 ? (
         <div className="space-y-4">

@@ -24,6 +24,22 @@ describe("computeAggregateMatching", () => {
     expect(computeAggregateMatching("sum", "amount", [])).toBe(0);
   });
 
+  it("treats null/undefined field values as 0 for sum and avg", () => {
+    expect(
+      computeAggregateMatching("sum", "currentBalance", [
+        { id: "a", tenantId: "t", currentBalance: 100 },
+        { id: "b", tenantId: "t", currentBalance: null },
+        { id: "c", tenantId: "t" },
+      ]),
+    ).toBe(100);
+    expect(
+      computeAggregateMatching("avg", "currentBalance", [
+        { id: "a", tenantId: "t", currentBalance: 10 },
+        { id: "b", tenantId: "t", currentBalance: null },
+      ]),
+    ).toBe(5);
+  });
+
   it("computes min and max for ISO date strings", () => {
     const matches = [
       { id: "a", tenantId: "t", dueDate: "2026-03-01T00:00:00.000Z" },

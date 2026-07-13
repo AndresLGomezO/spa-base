@@ -36,6 +36,7 @@ Persisted per tenant in \`entity_definitions\`. Use **camelCase** for \`name\` a
 | tenantWideRead | boolean | no | When true, all tenant users with read permission can list records without ownership filter. |
 | inMemoryListQueries | boolean | no | When true, list filters/sort run in memory (small collections only). |
 | hiddenFromNav | boolean | no | Hide entity from sidebar navigation. |
+| emailMatchingEnabled | boolean | no | Enable Gmail email matching UI and ingest bindings for this entity. |
 | navCategoryId | string | no | Entity category id for nav grouping. |
 | navOrder | number | no | Sort order within nav category. |
 | ui | EntityUIConfig | no | UI overrides (forms, views). Usually configured separately after model creation. |

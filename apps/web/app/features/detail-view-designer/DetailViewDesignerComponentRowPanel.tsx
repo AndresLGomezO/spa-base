@@ -4,6 +4,7 @@ import {
   CollapsibleStyleRulesEditor,
   ComponentConfigEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
   entityCardViewAdapter,
 } from "@repo/ui-builder-react";
 import {
@@ -176,6 +177,13 @@ export function DetailViewDesignerComponentRowPanel({
           labels={labels.displayRange}
           variant="inline"
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
+        />
+        <LayoutVisibleWhenEditor
+          visibleWhen={row.visibleWhen}
+          labels={labels.visibleWhen}
+          onChange={(visibleWhen) =>
+            binding.updateRowMeta(rowRef, { visibleWhen })
+          }
         />
       </FormDesignerPanelPrimaryControls>
 

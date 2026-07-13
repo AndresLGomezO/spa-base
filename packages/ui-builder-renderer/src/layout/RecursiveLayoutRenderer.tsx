@@ -25,6 +25,7 @@ import {
   resolveContainerContentLayerRowStyles,
   resolveContainerShellLayoutStyle,
   resolveDisplayRangeVisibility,
+  resolveVisibleWhen,
   resolveChartComponentRowStyles,
   resolveImageComponentRowStyles,
   resolveResponsiveGridLayout,
@@ -33,6 +34,7 @@ import {
   resolveRowWrapperStyleRules,
   resolveDefaultCompareFieldPath,
   resolveStylesWithMatchedConditionalOverrides,
+  themeTokenInlineStyleFromRules,
   stylesHaveWidthBounds,
   stylesIncludeFlexGrow,
   usesFlexWrapLayout,
@@ -111,6 +113,7 @@ function withEntityConditionalShellStyles(
         ? (path) => context.resolveFieldMeta?.(path) ?? {}
         : undefined,
       resolveActivePathname: context.resolveActivePathname,
+      dashboardDateFilter: context.dashboardDateFilter,
       atBreakpoint,
       defaultCompareFieldPath: resolveDefaultCompareFieldPath(
         component as Parameters<typeof resolveDefaultCompareFieldPath>[0],
@@ -118,9 +121,20 @@ function withEntityConditionalShellStyles(
     },
   );
 
-  return resolveRowWrapperStyleRules(effectiveStyles, {
+  const resolved = resolveRowWrapperStyleRules(effectiveStyles, {
     atBreakpoint,
   });
+  // Inline theme colors so conditional backgrounds beat motion CSS
+  // (e.g. .ui-motion-hover-interactive) the same way field components do.
+  const themeInline = themeTokenInlineStyleFromRules(
+    effectiveStyles,
+    atBreakpoint,
+  );
+
+  return {
+    ...resolved,
+    style: { ...resolved.style, ...themeInline },
+  };
 }
 
 function isListOrDetailSurface(context: LayoutRenderContext): boolean {
@@ -948,6 +962,17 @@ function renderRow(
   parentColumn?: ColumnNode,
   columnGridOptions?: ColumnGridRenderOptions,
 ): ReactNode {
+  if (
+    !resolveVisibleWhen(row.visibleWhen, {
+      resolveField: context.resolveField,
+      resolveFieldMeta: context.resolveFieldMeta,
+      resolveActivePathname: context.resolveActivePathname,
+      dashboardDateFilter: context.dashboardDateFilter,
+    })
+  ) {
+    return null;
+  }
+
   const displayRange = resolveRowDisplayRange(row, atBreakpoint);
   const visibilityClassName = resolveLayoutVisibilityClassName(displayRange);
 
@@ -1472,6 +1497,17 @@ function renderColumn(
     readonly layoutColumnId?: string;
   },
 ): ReactNode {
+  if (
+    !resolveVisibleWhen(column.visibleWhen, {
+      resolveField: context.resolveField,
+      resolveFieldMeta: context.resolveFieldMeta,
+      resolveActivePathname: context.resolveActivePathname,
+      dashboardDateFilter: context.dashboardDateFilter,
+    })
+  ) {
+    return null;
+  }
+
   const displayRange = resolveColumnDisplayRange(column, atBreakpoint);
   const visibilityClassName = resolveLayoutVisibilityClassName(displayRange);
 

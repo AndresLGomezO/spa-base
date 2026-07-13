@@ -118,6 +118,28 @@ describe("EntityRuntimeContext", () => {
     expect(updated.hiddenFromNav).toBeUndefined();
   });
 
+  it("persists emailMatchingEnabled on create and update", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+
+    const created = await entityDefinitionRepository.create("tenant_a", {
+      name: "inboxItem",
+      label: "Inbox Item",
+      emailMatchingEnabled: true,
+      fields: [{ name: "name", type: "string", required: true }],
+    });
+
+    expect(created.emailMatchingEnabled).toBe(true);
+
+    const updated = await entityDefinitionRepository.update(
+      "tenant_a",
+      created.id,
+      { emailMatchingEnabled: false },
+    );
+
+    expect(updated.emailMatchingEnabled).toBeUndefined();
+  });
+
   it("invalidates cached repository after syncDefinition updates fields", async () => {
     const entityDefinitionRepository =
       createInMemoryEntityDefinitionRepository();

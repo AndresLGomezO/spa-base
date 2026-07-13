@@ -15,9 +15,12 @@ export function isFirestoreTransactionContentionError(error: unknown): boolean {
       ? error.message
       : "";
 
+  const normalized = message.toLowerCase();
   return (
-    message.includes("cross-transaction contention") ||
-    message.includes("ABORTED")
+    normalized.includes("cross-transaction contention") ||
+    normalized.includes("too much contention") ||
+    normalized.includes("transaction lock timeout") ||
+    normalized.includes("aborted")
   );
 }
 
@@ -37,8 +40,10 @@ export async function runFirestoreTransactionWithRetry<T>(
   updateFunction: (transaction: Transaction) => Promise<T>,
   options: RunFirestoreTransactionWithRetryOptions = {},
 ): Promise<T> {
-  const maxAttempts = options.maxAttempts ?? 5;
-  const baseDelayMs = options.baseDelayMs ?? 50;
+  // Email backfill and cascading aggregate hooks often hit the same parents.
+  // Give contention more room than Firestore's short internal retry window.
+  const maxAttempts = options.maxAttempts ?? 8;
+  const baseDelayMs = options.baseDelayMs ?? 100;
   let lastError: unknown;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {

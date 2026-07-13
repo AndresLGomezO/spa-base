@@ -1,14 +1,19 @@
 import { z } from "zod";
 
 import {
+  bindingMatchesMessage,
   buildEmailAiPrompt,
   buildEmailHookEnvelope,
   buildGmailSearchQuery,
+  computeGmailWatchRenewAt,
   decryptUserSecret,
   emailAiExtractResultSchema,
+  extractBodyFields,
   findBestMatchingBinding,
   GmailApiClient,
   refreshGmailAccessToken,
+  resolveMatchedSubscriptionName,
+  shouldRenewGmailWatchSoon,
   type EmailAiExtractResult,
   type EmailIngestStepTraceEntry,
   type GmailMessageEnvelope,
@@ -46,6 +51,7 @@ import {
   createDataHookExecutionRecorderForTenant,
   createRecordDataHookExecution,
 } from "../hooks/record-data-hook-execution.js";
+import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
 export const gmailBackfillTaskPayloadSchema = z.object({
   tenantId: z.string().trim().min(1),
@@ -54,6 +60,8 @@ export const gmailBackfillTaskPayloadSchema = z.object({
   afterDate: z.string().trim().optional(),
   beforeDate: z.string().trim().optional(),
   maxMessages: z.number().int().min(1).max(500).optional(),
+  bindingId: z.string().trim().min(1).optional(),
+  reprocess: z.boolean().optional().default(false),
 });
 
 export const gmailHistorySyncTaskPayloadSchema = z.object({
@@ -74,6 +82,8 @@ export const gmailProcessMessageTaskPayloadSchema = z.object({
   userId: z.string().trim().min(1),
   jobId: z.string().trim().min(1),
   gmailMessageId: z.string().trim().min(1),
+  bindingId: z.string().trim().min(1).optional(),
+  reprocess: z.boolean().optional().default(false),
 });
 
 export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
@@ -92,6 +102,14 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
     readonly userId: string;
     readonly jobId: string;
     readonly gmailMessageId: string;
+    readonly bindingId?: string;
+    readonly reprocess?: boolean;
+  }) => Promise<void>;
+  /** Schedule the next watch renew before expiration (Cloud Tasks or local delay). */
+  readonly scheduleWatchRenew?: (payload: {
+    readonly userId: string;
+    readonly tenantId?: string;
+    readonly scheduleTime: Date;
   }) => Promise<void>;
 }
 
@@ -163,6 +181,61 @@ async function resolveAccessToken(
   };
 }
 
+async function renewGmailWatchAndSchedule(
+  deps: GmailIngestProcessorDeps,
+  options: {
+    readonly userId: string;
+    readonly accessToken: string;
+    readonly tenantId?: string | null;
+    readonly force?: boolean;
+  },
+  logger: HookLogger,
+): Promise<void> {
+  if (!deps.gmailPubsubTopic) return;
+
+  const connection = await deps.gmailConnectionRepository.get(options.userId);
+  if (!connection || connection.status !== "connected") return;
+
+  if (
+    !options.force &&
+    !shouldRenewGmailWatchSoon(connection.watchExpiration)
+  ) {
+    return;
+  }
+
+  const gmail = new GmailApiClient(options.accessToken);
+  const watch = await gmail.watch(deps.gmailPubsubTopic);
+  const watchExpiration = new Date(Number(watch.expiration)).toISOString();
+  const tenantId = options.tenantId ?? connection.tenantId ?? undefined;
+
+  await deps.gmailConnectionRepository.upsert(options.userId, {
+    status: "connected",
+    watchExpiration,
+    // Watch renew task updates the cursor; opportunistic renew during sync does not,
+    // so an in-flight history.list from an older startHistoryId cannot be skipped.
+    ...(options.force || !connection.historyId
+      ? { historyId: String(watch.historyId) }
+      : {}),
+    ...(tenantId ? { tenantId } : {}),
+  });
+
+  if (deps.scheduleWatchRenew) {
+    await deps.scheduleWatchRenew({
+      userId: options.userId,
+      ...(tenantId ? { tenantId } : {}),
+      scheduleTime: computeGmailWatchRenewAt(watchExpiration),
+    });
+  }
+
+  logger.info("Gmail watch renewed", {
+    meta: {
+      userId: options.userId,
+      historyId: watch.historyId,
+      watchExpiration,
+    },
+  });
+}
+
 async function runAiExtract(
   deps: GmailIngestProcessorDeps,
   options: {
@@ -214,21 +287,37 @@ export async function processGmailProcessMessage(
     }),
   );
 
-  const existing = await deps.emailIngestProcessedRepository.get(
-    tenantId,
-    userId,
-    gmailMessageId,
-  );
-  if (existing && existing.status === "processed") {
+  if (!payload.reprocess) {
+    const existing = await deps.emailIngestProcessedRepository.get(
+      tenantId,
+      userId,
+      gmailMessageId,
+    );
+    if (existing && existing.status === "processed") {
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("dedup", "skipped", "Message already processed", {
+          gmailMessageId,
+        }),
+      );
+      return;
+    }
+  } else {
     await appendJobStep(
       deps,
       tenantId,
       jobId,
-      step("dedup", "skipped", "Message already processed", {
-        gmailMessageId,
-      }),
+      step(
+        "dedup",
+        "info",
+        "Reprocess requested; ignoring prior dedup marker",
+        {
+          gmailMessageId,
+        },
+      ),
     );
-    return;
   }
 
   const { accessToken } = await resolveAccessToken(deps, userId);
@@ -249,7 +338,26 @@ export async function processGmailProcessMessage(
     tenantId,
     userId,
   );
-  const binding = findBestMatchingBinding(bindings, email);
+  await deps.entityRuntime.ensureTenantEntitiesLoaded(tenantId);
+  const enabledBindings = bindings.filter((candidate) => {
+    const entity = deps.entityRuntime.resolveEntity(
+      candidate.entityName,
+      tenantId,
+    );
+    return entity?.metadata.emailMatchingEnabled === true;
+  });
+
+  let binding = null as (typeof enabledBindings)[number] | null;
+  if (payload.bindingId) {
+    const preferred = enabledBindings.find(
+      (candidate) => candidate.id === payload.bindingId,
+    );
+    if (preferred && bindingMatchesMessage(preferred, email)) {
+      binding = preferred;
+    }
+  } else {
+    binding = findBestMatchingBinding(enabledBindings, email);
+  }
   if (!binding) {
     await deps.emailIngestProcessedRepository.upsert(tenantId, {
       userId,
@@ -265,12 +373,18 @@ export async function processGmailProcessMessage(
       deps,
       tenantId,
       jobId,
-      step("match-bindings", "skipped", "No binding matched"),
+      step(
+        "match-bindings",
+        "skipped",
+        payload.bindingId
+          ? "Preferred binding did not match"
+          : "No binding matched",
+        payload.bindingId ? { bindingId: payload.bindingId } : undefined,
+      ),
     );
     return;
   }
 
-  await deps.entityRuntime.ensureTenantEntitiesLoaded(tenantId);
   await deps.hookRuntime.ensureTenantHooksLoaded(tenantId);
 
   const repository = deps.entityRuntime.getRepository(
@@ -345,6 +459,12 @@ export async function processGmailProcessMessage(
       fieldNames,
       aiInstructions: binding.aiInstructions,
     });
+    if (extracted) {
+      extracted = {
+        ...extracted,
+        fields: { ...extracted.fields, extractSource: "ai" },
+      };
+    }
     relevant = extracted?.relevant ?? false;
     await appendJobStep(
       deps,
@@ -355,6 +475,29 @@ export async function processGmailProcessMessage(
         extracted ? "success" : "error",
         extracted ? `AI relevance=${extracted.relevant}` : "AI extract failed",
         extracted ? { reason: extracted.reason } : undefined,
+      ),
+    );
+  } else if ((binding.bodyFieldExtractors?.length ?? 0) > 0) {
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step("body-extract", "info", "Running body field extractors"),
+    );
+    extracted = extractBodyFields(
+      email.bodyText,
+      binding.bodyFieldExtractors ?? [],
+    );
+    relevant = extracted.relevant;
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step(
+        "body-extract",
+        extracted.relevant ? "success" : "skipped",
+        extracted.reason,
+        { fields: extracted.fields },
       ),
     );
   }
@@ -377,6 +520,59 @@ export async function processGmailProcessMessage(
       step("relevance", "skipped", "Email marked irrelevant"),
     );
     return;
+  }
+
+  if (extracted && binding.entityName === "financialItem") {
+    const existingMatchedName =
+      typeof extracted.fields.matchedSubscriptionName === "string"
+        ? extracted.fields.matchedSubscriptionName.trim()
+        : "";
+    const description =
+      typeof extracted.fields.description === "string"
+        ? extracted.fields.description.trim()
+        : "";
+    if (!existingMatchedName && description.length > 0) {
+      const children = await repository.findByField({
+        tenantId,
+        field: "parentFinancialItemId",
+        value: binding.recordId,
+        limit: 200,
+      });
+      const matchedSubscriptionName = resolveMatchedSubscriptionName({
+        description,
+        children: children.items
+          .map((child) => child as Record<string, unknown>)
+          .filter(
+            (child) =>
+              typeof child.name === "string" && child.name.trim().length > 0,
+          )
+          .map((child) => ({
+            name: String(child.name),
+            status: child.status,
+            billingAliases: child.billingAliases,
+          })),
+      });
+      if (matchedSubscriptionName) {
+        extracted = {
+          ...extracted,
+          fields: {
+            ...extracted.fields,
+            matchedSubscriptionName,
+          },
+        };
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step(
+            "subscription-alias",
+            "success",
+            `Matched subscription via billingAliases: ${matchedSubscriptionName}`,
+            { matchedSubscriptionName },
+          ),
+        );
+      }
+    }
   }
 
   const user = await resolveHookUserContext(
@@ -453,6 +649,14 @@ export async function processGmailProcessMessage(
         ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
         ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+        ...(deps.userNotificationRepository
+          ? {
+              sendUserNotification: createSendUserNotification(
+                deps.userNotificationRepository,
+                tenantId,
+              ),
+            }
+          : {}),
       },
     });
   }
@@ -504,7 +708,23 @@ export async function processGmailBackfill(
     tenantId,
     userId,
   );
-  const query = buildGmailSearchQuery(bindings, {
+  const scopedBindings = payload.bindingId
+    ? bindings.filter((binding) => binding.id === payload.bindingId)
+    : bindings;
+  if (payload.bindingId && scopedBindings.length === 0) {
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step("backfill-query", "skipped", "Binding not found for backfill", {
+        bindingId: payload.bindingId,
+      }),
+    );
+    await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
+    return;
+  }
+
+  const query = buildGmailSearchQuery(scopedBindings, {
     ...(payload.afterDate ? { afterDate: payload.afterDate } : {}),
     ...(payload.beforeDate ? { beforeDate: payload.beforeDate } : {}),
   });
@@ -523,7 +743,10 @@ export async function processGmailBackfill(
     deps,
     tenantId,
     jobId,
-    step("backfill-query", "info", "Built Gmail query", { query }),
+    step("backfill-query", "info", "Built Gmail query", {
+      query,
+      ...(payload.bindingId ? { bindingId: payload.bindingId } : {}),
+    }),
   );
 
   const { accessToken } = await resolveAccessToken(deps, userId);
@@ -544,6 +767,8 @@ export async function processGmailBackfill(
         userId,
         jobId,
         gmailMessageId: messageId,
+        ...(payload.bindingId ? { bindingId: payload.bindingId } : {}),
+        ...(payload.reprocess ? { reprocess: true } : {}),
       });
       enqueued += 1;
       if (enqueued >= maxMessages) break;
@@ -591,6 +816,22 @@ export async function processGmailHistorySync(
 
   const { accessToken } = await resolveAccessToken(deps, userId);
   const gmail = new GmailApiClient(accessToken);
+
+  try {
+    await renewGmailWatchAndSchedule(
+      deps,
+      { userId, accessToken, tenantId },
+      logger,
+    );
+  } catch (error) {
+    logger.error("Gmail watch renew during history sync failed", {
+      meta: {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    });
+  }
+
   const history = await gmail.listHistoryMessageIds(historyId);
   for (const messageId of history.messageIds) {
     await deps.enqueueProcessMessage({
@@ -636,20 +877,25 @@ export async function processGmailWatchRenew(
     return;
   }
   const { accessToken } = await resolveAccessToken(deps, payload.userId);
-  const gmail = new GmailApiClient(accessToken);
-  const watch = await gmail.watch(deps.gmailPubsubTopic);
-  await deps.gmailConnectionRepository.upsert(payload.userId, {
-    status: "connected",
-    historyId: watch.historyId,
-    watchExpiration: new Date(Number(watch.expiration)).toISOString(),
-  });
+  await renewGmailWatchAndSchedule(
+    deps,
+    {
+      userId: payload.userId,
+      accessToken,
+      tenantId: payload.tenantId,
+      force: true,
+    },
+    logger,
+  );
   if (payload.tenantId && payload.jobId) {
+    const connection = await deps.gmailConnectionRepository.get(payload.userId);
     await appendJobStep(
       deps,
       payload.tenantId,
       payload.jobId,
       step("watch-renew", "success", "Gmail watch renewed", {
-        historyId: watch.historyId,
+        historyId: connection?.historyId,
+        watchExpiration: connection?.watchExpiration,
       }),
     );
     await deps.emailIngestJobRepository.complete(
@@ -670,6 +916,7 @@ export function createGmailIngestProcessorDeps(
     readonly gmailPubsubTopic?: string;
     readonly vertexAiConfig: VertexAiConfig;
     readonly enqueueProcessMessage: GmailIngestProcessorDeps["enqueueProcessMessage"];
+    readonly scheduleWatchRenew?: GmailIngestProcessorDeps["scheduleWatchRenew"];
   },
 ): GmailIngestProcessorDeps {
   return {
@@ -691,5 +938,8 @@ export function createGmailIngestProcessorDeps(
       : {}),
     vertexAiConfig: options.vertexAiConfig,
     enqueueProcessMessage: options.enqueueProcessMessage,
+    ...(options.scheduleWatchRenew
+      ? { scheduleWatchRenew: options.scheduleWatchRenew }
+      : {}),
   };
 }

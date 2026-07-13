@@ -2,6 +2,7 @@ import {
   CollapsibleMotionPresetSection,
   CollapsibleStyleRulesEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
   filterStyleRulesForGenericEditor,
   isResponsiveGridStyleProperty,
 } from "@repo/ui-builder-react";
@@ -207,6 +208,13 @@ export function GridRowPanel({
           labels={labels.displayRange}
           variant="inline"
           onChange={(patch) => binding.updateGridRowMeta(rowRef, patch)}
+        />
+        <LayoutVisibleWhenEditor
+          visibleWhen={rowNode.visibleWhen}
+          labels={labels.visibleWhen}
+          onChange={(visibleWhen) =>
+            binding.updateGridRowMeta(rowRef, { visibleWhen })
+          }
         />
       </FormDesignerPanelPrimaryControls>
 

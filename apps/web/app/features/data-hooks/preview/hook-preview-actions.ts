@@ -241,6 +241,38 @@ function buildActionStep(
       });
       break;
     }
+    case "getOrCreateRecord": {
+      const createIfMissing = action.createIfMissing !== false;
+      const recordData = action.data ?? {};
+      summary = context.t(
+        createIfMissing
+          ? "dataHooks.preview.actions.getOrCreateRecord"
+          : "dataHooks.preview.actions.getOrCreateRecordFindOnly",
+        {
+          entity: context.entityLabel(action.entity),
+          alias: action.as,
+        },
+      );
+      details.push(formatWhereSection(action.where, context, action.entity));
+      if (!createIfMissing) {
+        details.push({
+          title: context.t("dataHooks.preview.actions.createIfMissingOff"),
+        });
+      }
+      bullets = Object.entries(recordData).map(([field, node]) =>
+        context.t("dataHooks.preview.actions.fieldAssignment", {
+          field: context.fieldLabel(action.entity, field),
+          value: humanizeExpression(node, context, {
+            ...exprOptions,
+            entityName: action.entity,
+          }).text,
+        }),
+      );
+      for (const [field, node] of Object.entries(recordData)) {
+        advancedExpressions.push({ label: field, expression: node });
+      }
+      break;
+    }
     case "aggregateMatching": {
       icon = "aggregate";
       const op = context.t(`dataHooks.actions.aggregateOps.${action.op}`);
@@ -280,7 +312,7 @@ function buildActionStep(
   }
 
   let nextPipeline = pipeline;
-  if (action.type === "getRecord") {
+  if (action.type === "getRecord" || action.type === "getOrCreateRecord") {
     const loaded = new Map(pipeline.loadedAliases);
     loaded.set(action.as, action.entity);
     nextPipeline = { ...pipeline, loadedAliases: loaded };

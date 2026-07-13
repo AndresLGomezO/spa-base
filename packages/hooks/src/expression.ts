@@ -52,6 +52,7 @@ export const EXPRESSION_FUNCTIONS = [
   "toNumber",
   "toText",
   "dateParse",
+  "dateOnly",
   "isEmpty",
   "if",
   "length",
@@ -262,7 +263,9 @@ export const expressionNodeSchema: z.ZodType<ExpressionNode> = z.lazy(() =>
 export interface ExpressionScope {
   readonly current: Record<string, unknown>;
   readonly previous?: Record<string, unknown>;
-  readonly loaded?: Readonly<Record<string, Record<string, unknown>>>;
+  readonly loaded?: Readonly<
+    Record<string, Record<string, unknown> | null | undefined>
+  >;
   readonly aggregates?: Readonly<Record<string, ExpressionValue>>;
   readonly now: Date;
   readonly userId?: string;
@@ -296,7 +299,7 @@ const UNIT_MS: Readonly<Record<Exclude<DateUnit, "MONTH" | "YEAR">, number>> = {
 };
 
 function readPath(
-  source: Record<string, unknown> | undefined,
+  source: Record<string, unknown> | null | undefined,
   path: string,
 ): ExpressionValue {
   if (!source) {
@@ -373,6 +376,22 @@ function isEmptyValue(value: ExpressionValue): boolean {
   return value == null || value === "";
 }
 
+function isDateLikeString(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length < 8) {
+    return false;
+  }
+  const parsed = new Date(trimmed);
+  return !Number.isNaN(parsed.getTime());
+}
+
+function utcCalendarDayKey(value: Date): string {
+  const year = value.getUTCFullYear();
+  const month = String(value.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(value.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function looseEquals(left: ExpressionValue, right: ExpressionValue): boolean {
   if (Array.isArray(left) || Array.isArray(right)) {
     return false;
@@ -385,6 +404,18 @@ function looseEquals(left: ExpressionValue, right: ExpressionValue): boolean {
       return coerceNumber(left) === coerceNumber(right);
     } catch {
       return false;
+    }
+  }
+  if (typeof left === "string" && typeof right === "string") {
+    if (isDateLikeString(left) && isDateLikeString(right)) {
+      try {
+        return (
+          utcCalendarDayKey(coerceDate(left)) ===
+          utcCalendarDayKey(coerceDate(right))
+        );
+      } catch {
+        return false;
+      }
     }
   }
   return false;
@@ -401,6 +432,19 @@ function compareOrdered(left: ExpressionValue, right: ExpressionValue): number {
   }
   const leftText = String(left ?? "");
   const rightText = String(right ?? "");
+  // Date-like values compare by UTC calendar day so date-only dueDates align with
+  // extracted datetimes (e.g. 2026-07-01 >= 2026-07-01T16:17:00).
+  if (isDateLikeString(leftText) && isDateLikeString(rightText)) {
+    try {
+      const leftDay = utcCalendarDayKey(coerceDate(leftText));
+      const rightDay = utcCalendarDayKey(coerceDate(rightText));
+      if (leftDay < rightDay) return -1;
+      if (leftDay > rightDay) return 1;
+      return 0;
+    } catch {
+      // Fall through to lexicographic compare.
+    }
+  }
   if (leftText < rightText) return -1;
   if (leftText > rightText) return 1;
   return 0;
@@ -514,6 +558,8 @@ function evaluateCall(
       return args[0] == null ? "" : String(args[0]);
     case "dateParse":
       return coerceDate(args[0] ?? null).toISOString();
+    case "dateOnly":
+      return utcCalendarDayKey(coerceDate(args[0] ?? null));
     case "isEmpty":
       return isEmptyValue(args[0] ?? null);
     case "if": {

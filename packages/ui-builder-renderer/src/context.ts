@@ -27,6 +27,7 @@ import type {
   WizardProgressComponentConfig,
   WizardStepHostComponentConfig,
   WizardStepStatusKind,
+  VisibleWhenDashboardDateFilter,
 } from "@repo/ui-builder-core";
 
 import type {
@@ -182,6 +183,13 @@ export interface LayoutRenderContext {
    * `conditionKind: "activePath"`.
    */
   readonly resolveActivePathname?: () => string;
+  /**
+   * Dashboard date filter (month/year/day). Used by row/column `visibleWhen`
+   * rules and by metric/query binding slots.
+   */
+  readonly dashboardDateFilter?: VisibleWhenDashboardDateFilter & {
+    readonly param?: string;
+  };
   readonly wizard?: WizardRenderState;
   readonly wizardProgressRenderer?: (
     config: WizardProgressComponentConfig,

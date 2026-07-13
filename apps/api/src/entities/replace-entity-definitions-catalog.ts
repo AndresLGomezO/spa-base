@@ -61,6 +61,9 @@ function createPatchFromCreateInput(
     ...(imported.hiddenFromNav !== undefined
       ? { hiddenFromNav: imported.hiddenFromNav }
       : {}),
+    ...(imported.emailMatchingEnabled !== undefined
+      ? { emailMatchingEnabled: imported.emailMatchingEnabled }
+      : {}),
     navCategoryId: imported.navCategoryId ?? null,
     navOrder: imported.navOrder ?? null,
     displayField: imported.displayField ?? null,
@@ -88,6 +91,9 @@ function buildRecordFromCreateInput(
       ? { inMemoryListQueries: true }
       : {}),
     ...(input.hiddenFromNav === true ? { hiddenFromNav: true } : {}),
+    ...(input.emailMatchingEnabled === true
+      ? { emailMatchingEnabled: true }
+      : {}),
     ...(input.navCategoryId ? { navCategoryId: input.navCategoryId } : {}),
     ...(input.navOrder !== undefined ? { navOrder: input.navOrder } : {}),
     ...(input.displayField ? { displayField: input.displayField } : {}),

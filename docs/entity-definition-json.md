@@ -204,6 +204,7 @@ Used in the **create wizard** and **edit** form. Wraps a full entity payload.
     "tenantWideRead": false,
     "inMemoryListQueries": false,
     "hiddenFromNav": false,
+    "emailMatchingEnabled": false,
     "navCategoryId": "cat_finance",
     "navOrder": 10,
     "displayField": "principal",
@@ -223,6 +224,7 @@ Used in the **create wizard** and **edit** form. Wraps a full entity payload.
 | `tenantWideRead` | `boolean` | no | All tenant members can read records |
 | `inMemoryListQueries` | `boolean` | no | Small-collection server-side list pipeline |
 | `hiddenFromNav` | `boolean` | no | Hide from sidebar; still available for relations |
+| `emailMatchingEnabled` | `boolean` | no | Show email matching on records and allow Gmail ingest bindings for this entity |
 | `navCategoryId` | `string` | no | Entity category id (must exist in tenant) |
 | `navOrder` | `number` | no | Sort order within category or uncategorized group |
 | `displayField` | `string` | no | Field shown when this entity is referenced. Cannot be an array field |

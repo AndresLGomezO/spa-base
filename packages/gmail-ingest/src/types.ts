@@ -10,6 +10,8 @@ export type GmailConnectionStatus = z.infer<typeof gmailConnectionStatusSchema>;
 
 export const gmailConnectionRecordSchema = z.object({
   userId: z.string().trim().min(1),
+  /** Tenant that connected Gmail (needed for Pub/Sub → history sync jobs). */
+  tenantId: z.string().trim().min(1).nullable().default(null),
   status: gmailConnectionStatusSchema,
   emailAddress: z.string().trim().email().nullable(),
   scopes: z.array(z.string().trim().min(1)),
@@ -38,7 +40,85 @@ export type GmailConnectionPublicStatus = z.infer<
   typeof gmailConnectionPublicStatusSchema
 >;
 
-export const emailMatchBindingSchema = z.object({
+export const emailBodyFieldTransformSchema = z.enum([
+  "trim",
+  "amount",
+  "slashDate",
+  "valueMap",
+  "literal",
+]);
+export type EmailBodyFieldTransform = z.infer<
+  typeof emailBodyFieldTransformSchema
+>;
+
+/** Explicit shape (not `z.infer`) so web typecheck does not explode on ZodEffects. */
+export type EmailBodyFieldExtractor = {
+  readonly field: string;
+  readonly label: string;
+  readonly pattern?: string;
+  readonly captureGroup?: number;
+  readonly transform?: EmailBodyFieldTransform;
+  readonly valueMap?: Readonly<Record<string, string>>;
+  readonly literal?: string;
+};
+
+export const emailBodyFieldExtractorSchema: z.ZodType<EmailBodyFieldExtractor> =
+  z
+    .object({
+      field: z.string().trim().min(1),
+      label: z.string().trim().optional().default(""),
+      /** Full-body regex (`/source/flags` or raw source). When set, used instead of label line match. */
+      pattern: z.string().trim().min(1).optional(),
+      /** Capture group index for `pattern` (default 1). */
+      captureGroup: z.number().int().min(0).optional(),
+      transform: emailBodyFieldTransformSchema.optional(),
+      valueMap: z.record(z.string(), z.string()).optional(),
+      literal: z.string().trim().min(1).optional(),
+    })
+    .superRefine((value, ctx) => {
+      const transform = value.transform ?? "trim";
+      if (transform === "literal") {
+        if (!value.literal) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "literal transform requires literal value",
+            path: ["literal"],
+          });
+        }
+        return;
+      }
+      const hasLabel = Boolean(value.label && value.label.trim().length > 0);
+      const hasPattern = Boolean(
+        value.pattern && value.pattern.trim().length > 0,
+      );
+      if (!hasLabel && !hasPattern) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "label or pattern is required unless transform is literal",
+          path: ["label"],
+        });
+      }
+    }) as z.ZodType<EmailBodyFieldExtractor>;
+
+export type EmailMatchBinding = {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly enabled: boolean;
+  readonly fromAddresses: readonly string[];
+  readonly subjectPatterns: readonly string[];
+  readonly bodyPatterns: readonly string[];
+  readonly gmailQueryExtra?: string | null;
+  readonly useAi: boolean;
+  readonly aiInstructions?: string | null;
+  readonly bodyFieldExtractors: readonly EmailBodyFieldExtractor[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export const emailMatchBindingSchema: z.ZodType<EmailMatchBinding> = z.object({
   id: z.string().trim().min(1),
   tenantId: z.string().trim().min(1),
   userId: z.string().trim().min(1),
@@ -51,38 +131,60 @@ export const emailMatchBindingSchema = z.object({
   gmailQueryExtra: z.string().trim().nullable().optional(),
   useAi: z.boolean().default(false),
   aiInstructions: z.string().trim().nullable().optional(),
+  bodyFieldExtractors: z.array(emailBodyFieldExtractorSchema).default([]),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
-});
-export type EmailMatchBinding = z.infer<typeof emailMatchBindingSchema>;
+}) as z.ZodType<EmailMatchBinding>;
 
-export const createEmailMatchBindingInputSchema = z.object({
-  entityName: z.string().trim().min(1),
-  recordId: z.string().trim().min(1),
-  enabled: z.boolean().optional(),
-  fromAddresses: z.array(z.string().trim().min(1)).optional(),
-  subjectPatterns: z.array(z.string().trim().min(1)).optional(),
-  bodyPatterns: z.array(z.string().trim().min(1)).optional(),
-  gmailQueryExtra: z.string().trim().nullable().optional(),
-  useAi: z.boolean().optional(),
-  aiInstructions: z.string().trim().nullable().optional(),
-});
-export type CreateEmailMatchBindingInput = z.infer<
-  typeof createEmailMatchBindingInputSchema
->;
+export type CreateEmailMatchBindingInput = {
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly enabled?: boolean;
+  readonly fromAddresses?: readonly string[];
+  readonly subjectPatterns?: readonly string[];
+  readonly bodyPatterns?: readonly string[];
+  readonly gmailQueryExtra?: string | null;
+  readonly useAi?: boolean;
+  readonly aiInstructions?: string | null;
+  readonly bodyFieldExtractors?: readonly EmailBodyFieldExtractor[];
+};
 
-export const patchEmailMatchBindingInputSchema = z.object({
-  enabled: z.boolean().optional(),
-  fromAddresses: z.array(z.string().trim().min(1)).optional(),
-  subjectPatterns: z.array(z.string().trim().min(1)).optional(),
-  bodyPatterns: z.array(z.string().trim().min(1)).optional(),
-  gmailQueryExtra: z.string().trim().nullable().optional(),
-  useAi: z.boolean().optional(),
-  aiInstructions: z.string().trim().nullable().optional(),
-});
-export type PatchEmailMatchBindingInput = z.infer<
-  typeof patchEmailMatchBindingInputSchema
->;
+export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindingInput> =
+  z.object({
+    entityName: z.string().trim().min(1),
+    recordId: z.string().trim().min(1),
+    enabled: z.boolean().optional(),
+    fromAddresses: z.array(z.string().trim().min(1)).optional(),
+    subjectPatterns: z.array(z.string().trim().min(1)).optional(),
+    bodyPatterns: z.array(z.string().trim().min(1)).optional(),
+    gmailQueryExtra: z.string().trim().nullable().optional(),
+    useAi: z.boolean().optional(),
+    aiInstructions: z.string().trim().nullable().optional(),
+    bodyFieldExtractors: z.array(emailBodyFieldExtractorSchema).optional(),
+  }) as z.ZodType<CreateEmailMatchBindingInput>;
+
+export type PatchEmailMatchBindingInput = {
+  readonly enabled?: boolean;
+  readonly fromAddresses?: readonly string[];
+  readonly subjectPatterns?: readonly string[];
+  readonly bodyPatterns?: readonly string[];
+  readonly gmailQueryExtra?: string | null;
+  readonly useAi?: boolean;
+  readonly aiInstructions?: string | null;
+  readonly bodyFieldExtractors?: readonly EmailBodyFieldExtractor[];
+};
+
+export const patchEmailMatchBindingInputSchema: z.ZodType<PatchEmailMatchBindingInput> =
+  z.object({
+    enabled: z.boolean().optional(),
+    fromAddresses: z.array(z.string().trim().min(1)).optional(),
+    subjectPatterns: z.array(z.string().trim().min(1)).optional(),
+    bodyPatterns: z.array(z.string().trim().min(1)).optional(),
+    gmailQueryExtra: z.string().trim().nullable().optional(),
+    useAi: z.boolean().optional(),
+    aiInstructions: z.string().trim().nullable().optional(),
+    bodyFieldExtractors: z.array(emailBodyFieldExtractorSchema).optional(),
+  }) as z.ZodType<PatchEmailMatchBindingInput>;
 
 export const emailIngestProcessedStatusSchema = z.enum([
   "processed",

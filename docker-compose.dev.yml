@@ -96,6 +96,7 @@ services:
       - GMAIL_TASKS_LOCAL_DISPATCH=true
       - GMAIL_TASKS_QUEUE_NAME=gmail-jobs
       - GMAIL_OAUTH_REDIRECT_URI=http://127.0.0.1:3000/api/gmail/oauth/callback
+      - WEB_APP_ORIGIN=http://127.0.0.1:5173
     healthcheck:
       test:
         [

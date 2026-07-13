@@ -284,6 +284,7 @@ function writeTunnelState(tunnels: TunnelMeta[]): void {
     `VITE_FIREBASE_AUTH_EMULATOR_HOST=${authUrl}`,
     `VITE_FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=${storageHost}`,
     `API_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,${webUrl}`,
+    `WEB_APP_ORIGIN=${webUrl}`,
     `FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=${storageHost}`,
     "",
   ];

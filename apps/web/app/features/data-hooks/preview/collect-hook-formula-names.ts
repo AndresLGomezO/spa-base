@@ -48,6 +48,13 @@ export function collectFormulaNamesInAction(
         names.push(...collectFormulaNames(node));
       }
       break;
+    case "getOrCreateRecord":
+      if (action.data) {
+        for (const node of Object.values(action.data)) {
+          names.push(...collectFormulaNames(node));
+        }
+      }
+      break;
     case "createRecords":
       names.push(...collectFormulaNames(action.count));
       if (action.startIndex) {

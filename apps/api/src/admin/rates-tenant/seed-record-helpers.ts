@@ -232,3 +232,50 @@ export async function importRatesRecordsBatch(
 
   await repository.createMany(context.tenantId, parsedRecords);
 }
+
+/**
+ * Deletes tenant records whose ids are not in `keepIds` (e.g. orphan UUID
+ * schedules left after Create initial / Roll forward before a deterministic reseed).
+ */
+export async function deleteRatesRecordsNotInSet(
+  context: RatesRecordSeedContext,
+  entityName: string,
+  keepIds: ReadonlySet<string>,
+): Promise<number> {
+  const entity = context.entities.get(entityName);
+  if (!entity) {
+    throw new Error(
+      `Entity "${entityName}" is not registered for rates seed on tenant "${context.tenantId}".`,
+    );
+  }
+
+  const repository = getSeedEntityRepository(context, entity);
+  const orphanIds: string[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const page = await repository.findAll({
+      tenantId: context.tenantId,
+      limit: 200,
+      cursor,
+    });
+
+    for (const item of page.items) {
+      if (!keepIds.has(item.id)) {
+        orphanIds.push(item.id);
+      }
+    }
+
+    cursor = page.nextCursor ?? undefined;
+  } while (cursor);
+
+  let deleted = 0;
+  for (const id of orphanIds) {
+    const didDelete = await repository.delete(id, context.tenantId);
+    if (didDelete) {
+      deleted += 1;
+    }
+  }
+
+  return deleted;
+}

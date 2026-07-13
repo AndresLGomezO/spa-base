@@ -1387,6 +1387,201 @@
           "field": "date"
         }
       ]
+    },
+    {
+      "name": "Category outflows (period to date)",
+      "sourceEntity": "transaction",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        },
+        {
+          "name": "categoryId",
+          "valueType": "scalar"
+        }
+      ],
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "endToDate"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EXPENSE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "categoryId",
+            "operator": "==",
+            "value": {
+              "type": "parameter",
+              "name": "categoryId"
+            }
+          }
+        ]
+      },
+      "sort": [],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Category transaction trend",
+      "sourceEntity": "transaction",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        },
+        {
+          "name": "categoryId",
+          "valueType": "scalar"
+        }
+      ],
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "endToDate"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EXPENSE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "categoryId",
+            "operator": "==",
+            "value": {
+              "type": "parameter",
+              "name": "categoryId"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Top outflow category (period)",
+      "sourceEntity": "transaction",
+      "queryMode": "aggregated",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ],
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EXPENSE"
+            }
+          }
+        ]
+      },
+      "groupBy": ["categoryId"],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "groupSort": [
+        {
+          "field": "sum_amount",
+          "direction": "desc"
+        }
+      ],
+      "groupLimit": 1,
+      "limitMode": "all",
+      "status": "ACTIVE"
     }
   ]
 }

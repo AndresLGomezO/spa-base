@@ -179,10 +179,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(35);
+    expect(hooks.length).toBe(38);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(35);
+    expect(enabled.length).toBe(38);
 
     const ratesEntities = new Set([
       "actor",
@@ -202,6 +202,45 @@ describe("data-hook-definition-json", () => {
     for (const hook of hooks) {
       expect(ratesEntities.has(hook.entity), hook.entity).toBe(true);
     }
+
+    const emailIngestAi = hooks.find(
+      (hook) => hook.name === "Email Ingest - AI",
+    );
+    expect(emailIngestAi?.entity).toBe("financialItem");
+    expect(emailIngestAi?.trigger).toMatchObject({ kind: "email" });
+    expect(emailIngestAi?.chainHooks).toBe(true);
+    expect(
+      emailIngestAi?.actions.some(
+        (action) =>
+          action.type === "getOrCreateRecord" && action.entity === "category",
+      ),
+    ).toBe(true);
+
+    const emailIngestManual = hooks.find(
+      (hook) => hook.name === "Email Ingest - Manual Extract",
+    );
+    expect(emailIngestManual?.entity).toBe("financialItem");
+    expect(emailIngestManual?.trigger).toMatchObject({ kind: "email" });
+    expect(emailIngestManual?.chainHooks).toBe(true);
+    expect(
+      emailIngestManual?.actions.some(
+        (action) =>
+          action.type === "getOrCreateRecord" && action.entity === "category",
+      ),
+    ).toBe(false);
+
+    const emailReversal = hooks.find((hook) => hook.name === "Email Reversal");
+    expect(emailReversal?.entity).toBe("financialItem");
+    expect(emailReversal?.trigger).toMatchObject({ kind: "email" });
+    expect(emailReversal?.chainHooks).toBe(false);
+    expect(
+      emailReversal?.actions.some(
+        (action) => action.type === "getOrCreateRecord",
+      ),
+    ).toBe(true);
+    expect(
+      emailReversal?.actions.some((action) => action.type === "updateMatching"),
+    ).toBe(true);
 
     const markPaid = hooks.find((hook) => hook.name === "Mark schedule PAID");
     expect(markPaid?.entity).toBe("transaction");
@@ -267,9 +306,28 @@ describe("data-hook-definition-json", () => {
         (hook) => hook.name === "Apply utilization to balance and replan",
       ),
     ).toBe(true);
-    expect(
-      hooks.some((hook) => hook.name === "Replan loan after payment"),
-    ).toBe(true);
+    const replanAfterPayment = hooks.find(
+      (hook) => hook.name === "Replan loan after payment",
+    );
+    expect(replanAfterPayment).toBeDefined();
+    const replanUpdate = replanAfterPayment?.actions.find(
+      (action) => action.type === "updateMatching",
+    );
+    expect(replanUpdate?.type).toBe("updateMatching");
+    if (replanUpdate?.type === "updateMatching") {
+      expect(replanUpdate.where).toMatchObject({
+        type: "group",
+        combinator: "and",
+      });
+      expect(JSON.stringify(replanUpdate.where)).toContain("amortizationType");
+      expect(JSON.stringify(replanUpdate.where)).toContain("FRENCH");
+    }
+
+    expect(regenerateLoan?.condition).toMatchObject({
+      type: "condition",
+      field: "amortizationType",
+      operator: "in",
+    });
 
     expect(
       hooks.some((hook) => hook.name === "Derive balance sheet role on create"),

@@ -1,5 +1,6 @@
 export { applyDescription } from "./apply-description.js";
 export { applyHiddenFromNav } from "./apply-hidden-from-nav.js";
+export { applyEmailMatchingEnabled } from "./apply-email-matching-enabled.js";
 export { applyNavCategoryId, applyNavOrder } from "./apply-nav-assignment.js";
 export { applyTenantWideRead } from "./apply-tenant-wide-read.js";
 export { applyInMemoryListQueries } from "./apply-in-memory-list-queries.js";

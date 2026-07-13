@@ -244,6 +244,7 @@ export interface SerializableEntityDefinition {
   readonly fieldAccess?: Readonly<Record<string, FieldAccessLevel>>;
   readonly displayField?: string;
   readonly hiddenFromNav?: boolean;
+  readonly emailMatchingEnabled?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly description?: string;

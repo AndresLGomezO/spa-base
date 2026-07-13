@@ -39,6 +39,23 @@ describe("formatDisplayValue", () => {
     ).toBe("$ 1,200");
   });
 
+  it("formats currency without decimal places", () => {
+    expect(
+      formatDisplayValue(1200.75, {
+        fieldType: "number",
+        displayFormat: "currency",
+        locale: "en-US",
+      }),
+    ).toBe("$ 1,201");
+    expect(
+      formatDisplayValue(1200.4, {
+        fieldType: "number",
+        displayFormat: "currency",
+        locale: "en-US",
+      }),
+    ).toBe("$ 1,200");
+  });
+
   it("formats percentage display values by multiplying stored decimal by 100", () => {
     expect(
       formatDisplayValue(0.1, {

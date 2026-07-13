@@ -1,5 +1,7 @@
 import {
-  recordMatchesEntityQueryDefinition,
+  evaluateEntityQueryFilterTree,
+  expandRelationFiltersInTree,
+  isEmptyFilterTree,
   type EntityCatalogEntry,
 } from "@repo/entity-queries";
 import {
@@ -71,13 +73,24 @@ async function resolveQueryDefinitionByReference(
   );
 }
 
+function recordIsReadableByUser(
+  record: Record<string, unknown>,
+  userId: string,
+): boolean {
+  const accessUserIds = record.accessUserIds;
+  if (Array.isArray(accessUserIds) && accessUserIds.includes(userId)) {
+    return true;
+  }
+  return resolveMetricOwnerId(record) === userId;
+}
+
 function aggregateRecords(
   records: readonly Record<string, unknown>[],
   field: string | undefined,
   operation: "SUM" | "COUNT" | "AVG" = "SUM",
 ): number | null {
   if (records.length === 0) {
-    return null;
+    return operation === "COUNT" || operation === "SUM" ? 0 : null;
   }
 
   if (operation === "COUNT") {
@@ -93,7 +106,7 @@ function aggregateRecords(
     );
 
   if (values.length === 0) {
-    return null;
+    return operation === "SUM" ? 0 : null;
   }
 
   if (operation === "SUM") {
@@ -166,20 +179,41 @@ function createComputedMetricInputResolver(input: {
         input.tenantId,
       );
       const catalog = getCatalog();
-      const matched: Record<string, unknown>[] = [];
 
+      // Expand relation filters once for the whole evaluation. Expanding inside
+      // per-record matching re-lists related entities (e.g. financialItem) for
+      // every paymentSchedule row and makes Due Today KPIs unusable.
+      let expandedFilterTree = null;
+      if (!isEmptyFilterTree(definition.filter)) {
+        const expanded = await expandRelationFiltersInTree({
+          sourceEntity: definition.sourceEntity,
+          catalog,
+          filter: definition.filter,
+          listChildRecords,
+          options: {
+            parameters: definition.parameters ?? [],
+            parameterValues,
+          },
+        });
+        if (expanded.emptyResult) {
+          return aggregateRecords([], aggregationField, aggregationOperation);
+        }
+        expandedFilterTree = expanded.filterTree;
+      }
+
+      const matched: Record<string, unknown>[] = [];
       for (const document of documents) {
-        if (resolveMetricOwnerId(document.record) !== userId) {
+        if (!recordIsReadableByUser(document.record, userId)) {
           continue;
         }
 
-        const included = await recordMatchesEntityQueryDefinition({
-          record: document.record,
-          definition,
-          catalog,
-          listChildRecords,
-          options: { parameterValues },
-        });
+        const included =
+          expandedFilterTree == null
+            ? true
+            : evaluateEntityQueryFilterTree(
+                document.record,
+                expandedFilterTree,
+              );
         if (included) {
           matched.push(document.record);
         }

@@ -5,6 +5,7 @@ import {
   CollapsibleStyleRulesEditor,
   ColumnStackDirectionEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
 } from "@repo/ui-builder-react";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
@@ -88,6 +89,13 @@ export function ContainerComponentRowPanel({
           labels={labels.displayRange}
           variant="inline"
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
+        />
+        <LayoutVisibleWhenEditor
+          visibleWhen={row.visibleWhen}
+          labels={labels.visibleWhen}
+          onChange={(visibleWhen) =>
+            binding.updateRowMeta(rowRef, { visibleWhen })
+          }
         />
       </FormDesignerPanelPrimaryControls>
 

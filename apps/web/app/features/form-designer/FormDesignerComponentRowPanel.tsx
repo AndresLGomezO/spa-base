@@ -4,6 +4,7 @@ import {
   CollapsibleStyleRulesEditor,
   ComponentConfigEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
 } from "@repo/ui-builder-react";
 import {
   componentKindsForSurface,
@@ -213,6 +214,13 @@ export function FormDesignerComponentRowPanel({
           labels={labels.displayRange}
           variant="inline"
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
+        />
+        <LayoutVisibleWhenEditor
+          visibleWhen={row.visibleWhen}
+          labels={labels.visibleWhen}
+          onChange={(visibleWhen) =>
+            binding.updateRowMeta(rowRef, { visibleWhen })
+          }
         />
       </FormDesignerPanelPrimaryControls>
 

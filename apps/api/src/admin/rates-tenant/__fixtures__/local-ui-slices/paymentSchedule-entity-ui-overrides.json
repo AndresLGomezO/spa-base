@@ -688,6 +688,12 @@
                     {
                       "type": "component",
                       "id": "row-due-today-snapshot-mini-shell",
+                      "visibleWhen": [
+                        {
+                          "conditionKind": "dashboardDateFilter",
+                          "matchValue": "currentPeriod"
+                        }
+                      ],
                       "motion": {
                         "hoverTransform": "scale-up",
                         "hoverDurationMs": 200,
@@ -781,6 +787,7 @@
                                     "metricDefinitionId": "Due Today Count",
                                     "groupBindings": {},
                                     "dimensionBindings": {},
+                                    "parameterBindings": {},
                                     "label": "",
                                     "styles": [
                                       {
@@ -873,6 +880,7 @@
                                     "metricDefinitionId": "Due Today Total",
                                     "groupBindings": {},
                                     "dimensionBindings": {},
+                                    "parameterBindings": {},
                                     "label": "",
                                     "styles": [
                                       {
@@ -903,34 +911,132 @@
                                 },
                                 {
                                   "type": "component",
-                                  "id": "row-due-today-snapshot-mini-subtext",
+                                  "id": "row-due-today-snapshot-mini-overdue-subtitle",
                                   "component": {
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Payment due"
-                                    },
+                                    "kind": "container",
+                                    "stackDirection": "row",
                                     "styles": [
                                       {
-                                        "property": "fontSize",
-                                        "value": "12",
-                                        "valuesByBreakpoint": {
-                                          "base": "10"
-                                        }
+                                        "property": "gap",
+                                        "value": "var(--spacing-tight)"
                                       },
                                       {
-                                        "property": "fontWeight",
-                                        "value": "thin"
-                                      },
-                                      {
-                                        "property": "textAlign",
+                                        "property": "justifyContent",
                                         "value": "center"
                                       },
                                       {
-                                        "property": "color",
-                                        "value": "var(--color-card-foreground)"
+                                        "property": "alignItems",
+                                        "value": "center"
+                                      },
+                                      {
+                                        "property": "width",
+                                        "value": "100%"
                                       }
                                     ],
-                                    "kind": "text"
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-due-today-snapshot-mini-overdue-label",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "static",
+                                            "value": "Overdue"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "12",
+                                              "valuesByBreakpoint": {
+                                                "base": "10"
+                                              }
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "thin"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-muted-foreground)"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-due-today-snapshot-mini-overdue-count",
+                                        "component": {
+                                          "kind": "metric-kpi",
+                                          "metricDefinitionId": "Overdue Count",
+                                          "groupBindings": {},
+                                          "dimensionBindings": {},
+                                          "parameterBindings": {
+                                            "period": {
+                                              "type": "relativePeriod",
+                                              "field": "dueDate",
+                                              "anchor": "dashboardDateFilter",
+                                              "offset": 0,
+                                              "unit": "month"
+                                            }
+                                          },
+                                          "label": "",
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "12",
+                                              "valuesByBreakpoint": {
+                                                "base": "10"
+                                              }
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "thin"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-muted-foreground)"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "component",
+                                        "id": "row-due-today-snapshot-mini-overdue-total",
+                                        "component": {
+                                          "kind": "metric-kpi",
+                                          "metricDefinitionId": "Overdue Total",
+                                          "groupBindings": {},
+                                          "dimensionBindings": {},
+                                          "parameterBindings": {
+                                            "period": {
+                                              "type": "relativePeriod",
+                                              "field": "dueDate",
+                                              "anchor": "dashboardDateFilter",
+                                              "offset": 0,
+                                              "unit": "month"
+                                            }
+                                          },
+                                          "label": "",
+                                          "styles": [
+                                            {
+                                              "property": "fontSize",
+                                              "value": "12",
+                                              "valuesByBreakpoint": {
+                                                "base": "10"
+                                              }
+                                            },
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "thin"
+                                            },
+                                            {
+                                              "property": "color",
+                                              "value": "var(--color-muted-foreground)"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
                                   }
                                 }
                               ],
@@ -1125,7 +1231,7 @@
         },
         {
           "id": "upcoming-week-snapshot-mini",
-          "name": "Upcoming This Week Snapshot Mini",
+          "name": "Upcoming Payments Snapshot Mini",
           "layout": {
             "root": {
               "type": "root",
@@ -1138,6 +1244,12 @@
                     {
                       "type": "component",
                       "id": "row-upcoming-week-snapshot-mini-shell",
+                      "visibleWhen": [
+                        {
+                          "conditionKind": "dashboardDateFilter",
+                          "matchValue": "currentPeriod"
+                        }
+                      ],
                       "component": {
                         "kind": "container",
                         "rows": [
@@ -1247,7 +1359,7 @@
                                         "component": {
                                           "primary": {
                                             "type": "static",
-                                            "value": "Upcoming"
+                                            "value": "Upcoming Payments"
                                           },
                                           "styles": [
                                             {

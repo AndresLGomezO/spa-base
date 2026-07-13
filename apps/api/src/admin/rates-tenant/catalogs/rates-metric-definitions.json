@@ -33,7 +33,7 @@
     },
     {
       "name": "Outflows by Month",
-      "description": "Sum of expense and payment transactions bucketed by calendar month on date.",
+      "description": "Sum of expense transactions bucketed by calendar month on date.",
       "sourceModel": "transaction",
       "aggregations": [
         {
@@ -44,8 +44,36 @@
       "filters": [
         {
           "field": "type",
-          "op": "in",
-          "value": ["EXPENSE", "PAYMENT"]
+          "op": "eq",
+          "value": "EXPENSE"
+        }
+      ],
+      "groupBy": [],
+      "dimensions": ["date"],
+      "dateFieldGranularity": {
+        "date": "month"
+      },
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["amount", "type", "date"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Payments by Month",
+      "description": "Sum of payment transactions bucketed by calendar month on date.",
+      "sourceModel": "transaction",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "PAYMENT"
         }
       ],
       "groupBy": [],
@@ -89,7 +117,7 @@
     },
     {
       "name": "Total Balance by Month",
-      "description": "Income minus outflows minus investments for a selected month bucket.",
+      "description": "Income minus expenses minus payments minus investments for a selected month bucket.",
       "computationMode": "computed",
       "sourceModel": "transaction",
       "parameters": [
@@ -116,6 +144,13 @@
               "date": "period"
             }
           },
+          "payments": {
+            "type": "metricRef",
+            "metricDefinitionId": "Payments by Month",
+            "parameterMap": {
+              "date": "period"
+            }
+          },
           "invests": {
             "type": "metricRef",
             "metricDefinitionId": "Invested by Month",
@@ -132,6 +167,14 @@
           {
             "type": "input",
             "name": "outflows"
+          },
+          {
+            "type": "operator",
+            "op": "-"
+          },
+          {
+            "type": "input",
+            "name": "payments"
           },
           {
             "type": "operator",
@@ -220,7 +263,7 @@
     },
     {
       "name": "Outflows MoM %",
-      "description": "Month-over-month percent change for outflows.",
+      "description": "Month-over-month percent change for expenses.",
       "computationMode": "computed",
       "sourceModel": "transaction",
       "parameters": [
@@ -254,6 +297,62 @@
         "baseline": {
           "type": "metricRef",
           "metricDefinitionId": "Outflows by Month",
+          "parameterMap": {
+            "date": "comparisonPeriod"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Payments MoM %",
+      "description": "Month-over-month percent change for payments.",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "currentPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        },
+        {
+          "name": "comparisonPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "deriveFrom": {
+            "parameter": "currentPeriod",
+            "shift": {
+              "unit": "month",
+              "offset": -1
+            }
+          }
+        }
+      ],
+      "computation": {
+        "type": "percentChange",
+        "current": {
+          "type": "metricRef",
+          "metricDefinitionId": "Payments by Month",
+          "parameterMap": {
+            "date": "currentPeriod"
+          }
+        },
+        "baseline": {
+          "type": "metricRef",
+          "metricDefinitionId": "Payments by Month",
           "parameterMap": {
             "date": "comparisonPeriod"
           }
@@ -388,9 +487,28 @@
     },
     {
       "name": "Due Today Total",
-      "description": "Sum of expected amounts for payment schedule rows due today.",
+      "description": "Live sum of expected amounts for unpaid schedules due today (calendar day; excludes income).",
+      "computationMode": "computed",
       "sourceModel": "paymentSchedule",
-      "sourceQueryDefinitionId": "Due today (metrics)",
+      "parameters": [],
+      "computation": {
+        "type": "expression",
+        "inputs": {
+          "value": {
+            "type": "queryRef",
+            "queryDefinitionId": "Due today (metrics)",
+            "parameterMap": {},
+            "aggregationOperation": "SUM",
+            "aggregationField": "expectedAmount"
+          }
+        },
+        "tokens": [
+          {
+            "type": "input",
+            "name": "value"
+          }
+        ]
+      },
       "aggregations": [
         {
           "operation": "SUM",
@@ -402,16 +520,34 @@
       "dimensions": [],
       "dateFieldGranularity": {},
       "valueDisplayFormat": "currency",
-      "version": 1,
+      "version": 7,
       "schemaVersionDependency": 0,
       "fieldsDependency": ["expectedAmount", "dueDate", "status"],
       "status": "ACTIVE"
     },
     {
       "name": "Due Today Count",
-      "description": "Count of payment schedule rows due today.",
+      "description": "Live count of unpaid schedules due today (calendar day; excludes income).",
+      "computationMode": "computed",
       "sourceModel": "paymentSchedule",
-      "sourceQueryDefinitionId": "Due today (metrics)",
+      "parameters": [],
+      "computation": {
+        "type": "expression",
+        "inputs": {
+          "value": {
+            "type": "queryRef",
+            "queryDefinitionId": "Due today (metrics)",
+            "parameterMap": {},
+            "aggregationOperation": "COUNT"
+          }
+        },
+        "tokens": [
+          {
+            "type": "input",
+            "name": "value"
+          }
+        ]
+      },
       "aggregations": [
         {
           "operation": "COUNT"
@@ -422,16 +558,43 @@
       "dimensions": [],
       "dateFieldGranularity": {},
       "valueDisplayFormat": "number",
-      "version": 1,
+      "version": 7,
       "schemaVersionDependency": 0,
       "fieldsDependency": ["dueDate", "status"],
       "status": "ACTIVE"
     },
     {
-      "name": "Upcoming This Week Total",
-      "description": "Sum of expected amounts for upcoming payments due this week.",
+      "name": "Overdue Total",
+      "description": "Live sum of expected amounts for OVERDUE schedules due on or before the end of the selected period.",
+      "computationMode": "computed",
       "sourceModel": "paymentSchedule",
-      "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        }
+      ],
+      "computation": {
+        "type": "expression",
+        "inputs": {
+          "value": {
+            "type": "queryRef",
+            "queryDefinitionId": "Overdue payments (metrics)",
+            "parameterMap": {
+              "period": "period"
+            },
+            "aggregationField": "expectedAmount",
+            "aggregationOperation": "SUM"
+          }
+        },
+        "tokens": [
+          {
+            "type": "input",
+            "name": "value"
+          }
+        ]
+      },
       "aggregations": [
         {
           "operation": "SUM",
@@ -443,16 +606,42 @@
       "dimensions": [],
       "dateFieldGranularity": {},
       "valueDisplayFormat": "currency",
-      "version": 1,
+      "version": 3,
       "schemaVersionDependency": 0,
       "fieldsDependency": ["expectedAmount", "dueDate", "status"],
       "status": "ACTIVE"
     },
     {
-      "name": "Upcoming This Week Count",
-      "description": "Count of upcoming payment schedule rows due this week.",
+      "name": "Overdue Count",
+      "description": "Live count of OVERDUE schedules due on or before the end of the selected period.",
+      "computationMode": "computed",
       "sourceModel": "paymentSchedule",
-      "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        }
+      ],
+      "computation": {
+        "type": "expression",
+        "inputs": {
+          "value": {
+            "type": "queryRef",
+            "queryDefinitionId": "Overdue payments (metrics)",
+            "parameterMap": {
+              "period": "period"
+            },
+            "aggregationOperation": "COUNT"
+          }
+        },
+        "tokens": [
+          {
+            "type": "input",
+            "name": "value"
+          }
+        ]
+      },
       "aggregations": [
         {
           "operation": "COUNT"
@@ -463,7 +652,52 @@
       "dimensions": [],
       "dateFieldGranularity": {},
       "valueDisplayFormat": "number",
-      "version": 1,
+      "version": 3,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["dueDate", "status"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Upcoming This Week Total",
+      "description": "Sum of expected amounts for UPCOMING payment schedule rows due this week (excludes overdue).",
+      "sourceModel": "paymentSchedule",
+      "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": ["dueDate"],
+      "dateFieldGranularity": {
+        "dueDate": "month"
+      },
+      "valueDisplayFormat": "currency",
+      "version": 3,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["expectedAmount", "dueDate", "status"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Upcoming This Week Count",
+      "description": "Count of UPCOMING payment schedule rows due this week (excludes overdue).",
+      "sourceModel": "paymentSchedule",
+      "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": ["dueDate"],
+      "dateFieldGranularity": {
+        "dueDate": "month"
+      },
+      "valueDisplayFormat": "number",
+      "version": 3,
       "schemaVersionDependency": 0,
       "fieldsDependency": ["dueDate", "status"],
       "status": "ACTIVE"
@@ -551,72 +785,6 @@
           "parameterMap": {
             "dueDate": "period"
           }
-        }
-      },
-      "aggregations": [
-        {
-          "operation": "COUNT"
-        }
-      ],
-      "filters": [],
-      "groupBy": [],
-      "dimensions": [],
-      "dateFieldGranularity": {},
-      "valueDisplayFormat": "percent",
-      "version": 1,
-      "schemaVersionDependency": 0,
-      "fieldsDependency": [],
-      "status": "ACTIVE"
-    },
-    {
-      "name": "Category Outflow Partial MoM %",
-      "description": "Partial-month percent change for category outflows vs the same day-range in the prior month.",
-      "computationMode": "computed",
-      "sourceModel": "transaction",
-      "parameters": [
-        {
-          "name": "categoryId",
-          "valueType": "string"
-        },
-        {
-          "name": "currentPeriod",
-          "valueType": "dateBucket",
-          "granularity": "month"
-        },
-        {
-          "name": "comparisonPeriod",
-          "valueType": "dateBucket",
-          "granularity": "month",
-          "deriveFrom": {
-            "parameter": "currentPeriod",
-            "shift": {
-              "unit": "month",
-              "offset": -1
-            }
-          }
-        }
-      ],
-      "computation": {
-        "type": "percentChange",
-        "current": {
-          "type": "queryRef",
-          "queryDefinitionId": "Category outflows (period to date)",
-          "parameterMap": {
-            "period": "currentPeriod",
-            "categoryId": "categoryId"
-          },
-          "aggregationField": "amount",
-          "aggregationOperation": "SUM"
-        },
-        "baseline": {
-          "type": "queryRef",
-          "queryDefinitionId": "Category outflows (period to date)",
-          "parameterMap": {
-            "period": "comparisonPeriod",
-            "categoryId": "categoryId"
-          },
-          "aggregationField": "amount",
-          "aggregationOperation": "SUM"
         }
       },
       "aggregations": [

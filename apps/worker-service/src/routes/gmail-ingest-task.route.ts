@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { dispatchHookTaskAsync } from "./dispatch-hook-task-async.js";
 import { createWorkerHookLogger } from "../hooks/create-worker-hook-logger.js";
+import { createAsyncSemaphore } from "../lib/async-semaphore.js";
 import {
   gmailBackfillTaskPayloadSchema,
   gmailHistorySyncTaskPayloadSchema,
@@ -20,6 +21,14 @@ const ROUTES = {
   WATCH_RENEW: "/tasks/gmail-watch-renew",
   PROCESS_MESSAGE: "/tasks/gmail-process-message",
 } as const;
+
+/**
+ * Backfill/history fan out many process-message tasks that return 202 and run
+ * in parallel. Email hooks then update the same parent records (schedules,
+ * financial items), which triggers Firestore "Transaction lock timeout".
+ * Serialize per worker instance so chained updates do not contend.
+ */
+const processMessageGate = createAsyncSemaphore(1);
 
 export async function gmailIngestTaskRoute(
   app: FastifyInstance,
@@ -48,21 +57,22 @@ export async function gmailIngestTaskRoute(
         tenantId: payload.tenantId,
         hookId: payload.jobId,
         logLabel: "Processing Gmail message",
-        process: async () => {
-          try {
-            await processGmailProcessMessage(deps, payload, logger);
-          } catch (error) {
-            const message =
-              error instanceof Error ? error.message : "process failed";
-            await deps.emailIngestJobRepository.complete(
-              payload.tenantId,
-              payload.jobId,
-              "failed",
-              message,
-            );
-            throw error;
-          }
-        },
+        process: () =>
+          processMessageGate.run(async () => {
+            try {
+              await processGmailProcessMessage(deps, payload, logger);
+            } catch (error) {
+              const message =
+                error instanceof Error ? error.message : "process failed";
+              await deps.emailIngestJobRepository.complete(
+                payload.tenantId,
+                payload.jobId,
+                "failed",
+                message,
+              );
+              throw error;
+            }
+          }),
       });
     },
   );

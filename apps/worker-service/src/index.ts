@@ -11,6 +11,7 @@ import { createFirestoreAdminPlatformRuntimeSettingsRepository } from "@repo/gcp
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
 import { createGmailIngestProcessorDeps } from "./services/gmail-ingest-processor.js";
+import { createScheduleGmailWatchRenew } from "./services/gmail-watch-renew-scheduler.js";
 import { buildWorkerServer } from "./server.js";
 
 const firebaseAdminConfig = {
@@ -65,6 +66,17 @@ async function enqueueGmailProcessMessage(payload: {
   }
 }
 
+const scheduleWatchRenew = createScheduleGmailWatchRenew({
+  projectId: workerEnv.GCP_PROJECT_ID,
+  region: workerEnv.GCP_REGION,
+  queueName: workerEnv.GMAIL_TASKS_QUEUE_NAME,
+  workerBaseUrl: workerEnv.WORKER_SERVICE_URL,
+  ...(workerEnv.TASKS_SA_EMAIL
+    ? { serviceAccountEmail: workerEnv.TASKS_SA_EMAIL }
+    : {}),
+  localDispatch: workerEnv.GMAIL_TASKS_LOCAL_DISPATCH,
+});
+
 const gmailIngest =
   workerEnv.TENANT_ENCRYPTION_MASTER_KEY &&
   workerEnv.GMAIL_OAUTH_CLIENT_ID &&
@@ -81,6 +93,7 @@ const gmailIngest =
             : {}),
           vertexAiConfig,
           enqueueProcessMessage: enqueueGmailProcessMessage,
+          scheduleWatchRenew,
         },
       )
     : undefined;

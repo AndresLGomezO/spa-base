@@ -955,12 +955,21 @@ export async function buildServer(options: BuildServerOptions = {}) {
     Boolean(apiEnv.GMAIL_OAUTH_CLIENT_SECRET?.trim()) &&
     Boolean(apiEnv.TENANT_ENCRYPTION_MASTER_KEY?.trim());
 
+  const webAppOrigins = [
+    apiEnv.WEB_APP_ORIGIN.replace(/\/$/, ""),
+    ...apiEnv.API_CORS_ORIGINS.split(",")
+      .map((origin) => origin.trim().replace(/\/$/, ""))
+      .filter(Boolean),
+  ];
+  const allowedWebOrigins = [...new Set(webAppOrigins)];
+
   await registerGmailIngestRoutes(server, {
     authenticate,
     gmailConnectionRepository,
     emailMatchBindingRepository,
     emailIngestJobRepository,
     gmailTasksClient,
+    entityRuntime,
     oauth: gmailOAuthConfigured
       ? {
           clientId: apiEnv.GMAIL_OAUTH_CLIENT_ID!,
@@ -968,6 +977,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
           redirectUri: apiEnv.GMAIL_OAUTH_REDIRECT_URI,
           stateSecret: apiEnv.GMAIL_OAUTH_STATE_SECRET,
           encryptionMasterKey: apiEnv.TENANT_ENCRYPTION_MASTER_KEY!,
+          webAppOrigin: apiEnv.WEB_APP_ORIGIN.replace(/\/$/, ""),
+          allowedWebOrigins,
           ...(apiEnv.GMAIL_PUBSUB_TOPIC
             ? { pubsubTopicName: apiEnv.GMAIL_PUBSUB_TOPIC }
             : {}),

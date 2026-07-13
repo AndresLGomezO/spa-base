@@ -96,6 +96,10 @@ resource "google_cloud_run_v2_service" "backend" {
         value = local.api_cors_origins
       }
       env {
+        name  = "WEB_APP_ORIGIN"
+        value = local.firebase_hosting_primary_url
+      }
+      env {
         name = "PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS"
         value_source {
           secret_key_ref {

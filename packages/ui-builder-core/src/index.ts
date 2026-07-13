@@ -91,6 +91,22 @@ export {
   type NormalizedDisplayRange,
 } from "./layout/component-display-range.js";
 
+export {
+  formatCurrentDateBucket,
+  evaluateLayoutCondition,
+  evaluateLayoutConditions,
+  type EvaluateLayoutConditionContext,
+  type LayoutConditionDashboardDateFilter,
+  type LayoutConditionDateGranularity,
+} from "./conditions/evaluate-layout-condition.js";
+
+export {
+  resolveVisibleWhen,
+  type LayoutVisibleWhen,
+  type VisibleWhenDashboardDateFilter,
+  type VisibleWhenDateGranularity,
+} from "./layout/resolve-visible-when.js";
+
 export type {
   UiComponentConfig,
   UiComponentKind,
@@ -418,6 +434,8 @@ export type {
   LabelConfig,
   LabelPosition,
   TextColorToken,
+  LayoutConditionKind,
+  LayoutCondition,
   ConditionalStyleConditionKind,
   ConditionalStyleRule,
 } from "./types/styling.js";
@@ -487,6 +505,7 @@ export {
   resolvePageSlotWrapper,
   spacingStyleFromStyleRules,
   layoutInlineStyleFromStyleRules,
+  themeTokenInlineStyleFromRules,
   textInlineStyleFromStyleRules,
   ruleToClassForValue,
   type LayoutInlineStyle,

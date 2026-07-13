@@ -6,6 +6,7 @@ import type { GridTemplateColumnsErrorCode } from "@repo/ui-builder-core";
 import type { SemanticColorOption } from "@repo/ui-builder-react";
 
 import { componentDisplayRangeEditorLabels } from "../ui-builder/component-display-range-editor-labels";
+import { layoutVisibleWhenEditorLabels } from "../ui-builder/layout-visible-when-editor-labels";
 import { motionPresetEditorLabels } from "../ui-builder/ui-builder-motion-labels";
 import { responsiveGridEditorLabels } from "../ui-builder/responsive-grid-editor-labels";
 import { layoutJsonImportLabels } from "../ui-builder/layout-json-import-labels";
@@ -48,6 +49,7 @@ export function formDesignerLayoutEditorLabels(
     },
     responsiveGrid: responsiveGridEditorLabels(t),
     displayRange: componentDisplayRangeEditorLabels(t),
+    visibleWhen: layoutVisibleWhenEditorLabels(t),
     rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
     styleRules: styleRulesEditorLabels(t, customColorOptions),
     motion: motionPresetEditorLabels(t),

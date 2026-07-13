@@ -12,6 +12,10 @@ export type GmailBackfillTaskPayload = {
   readonly afterDate?: string;
   readonly beforeDate?: string;
   readonly maxMessages?: number;
+  /** When set, search and process using only this match binding. */
+  readonly bindingId?: string;
+  /** When true, process-message tasks ignore prior successful dedup markers. */
+  readonly reprocess?: boolean;
 };
 
 export type GmailHistorySyncTaskPayload = {
@@ -32,4 +36,7 @@ export type GmailProcessMessageTaskPayload = {
   readonly userId: string;
   readonly jobId: string;
   readonly gmailMessageId: string;
+  /** Prefer this binding when matching (used by per-binding backfill). */
+  readonly bindingId?: string;
+  readonly reprocess?: boolean;
 };

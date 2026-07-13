@@ -4,137 +4,6 @@
   "exportedAt": "2026-07-01T13:49:33.644Z",
   "entityQueryDefinitions": [
     {
-      "name": "Category outflows (period to date)",
-      "sourceEntity": "transaction",
-      "parameters": [
-        {
-          "name": "period",
-          "valueType": "dateBucket",
-          "granularity": "month",
-          "field": "date"
-        },
-        {
-          "name": "categoryId",
-          "valueType": "scalar"
-        }
-      ],
-      "filter": {
-        "type": "group",
-        "combinator": "and",
-        "children": [
-          {
-            "type": "condition",
-            "field": "date",
-            "operator": ">=",
-            "value": {
-              "type": "parameter",
-              "name": "period",
-              "bound": "start"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "date",
-            "operator": "<=",
-            "value": {
-              "type": "parameter",
-              "name": "period",
-              "bound": "endToDate"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "type",
-            "operator": "in",
-            "value": {
-              "type": "static",
-              "value": ["EXPENSE", "PAYMENT"]
-            }
-          },
-          {
-            "type": "condition",
-            "field": "categoryId",
-            "operator": "==",
-            "value": {
-              "type": "parameter",
-              "name": "categoryId"
-            }
-          }
-        ]
-      },
-      "sort": [],
-      "limitMode": "all",
-      "status": "ACTIVE"
-    },
-    {
-      "name": "Category transaction trend",
-      "sourceEntity": "transaction",
-      "parameters": [
-        {
-          "name": "period",
-          "valueType": "dateBucket",
-          "granularity": "month",
-          "field": "date"
-        },
-        {
-          "name": "categoryId",
-          "valueType": "scalar"
-        }
-      ],
-      "filter": {
-        "type": "group",
-        "combinator": "and",
-        "children": [
-          {
-            "type": "condition",
-            "field": "date",
-            "operator": ">=",
-            "value": {
-              "type": "parameter",
-              "name": "period",
-              "bound": "start"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "date",
-            "operator": "<=",
-            "value": {
-              "type": "parameter",
-              "name": "period",
-              "bound": "endToDate"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "type",
-            "operator": "in",
-            "value": {
-              "type": "static",
-              "value": ["EXPENSE", "PAYMENT"]
-            }
-          },
-          {
-            "type": "condition",
-            "field": "categoryId",
-            "operator": "==",
-            "value": {
-              "type": "parameter",
-              "name": "categoryId"
-            }
-          }
-        ]
-      },
-      "sort": [
-        {
-          "field": "date",
-          "direction": "desc"
-        }
-      ],
-      "limitMode": "all",
-      "status": "ACTIVE"
-    },
-    {
       "name": "Due this month",
       "sourceEntity": "paymentSchedule",
       "filter": {
@@ -144,10 +13,10 @@
           {
             "type": "condition",
             "field": "status",
-            "operator": "==",
+            "operator": "in",
             "value": {
               "type": "static",
-              "value": "UPCOMING"
+              "value": ["UPCOMING", "OVERDUE"]
             }
           },
           {
@@ -191,52 +60,6 @@
       ]
     },
     {
-      "name": "Due today",
-      "sourceEntity": "paymentSchedule",
-      "filter": {
-        "type": "group",
-        "combinator": "and",
-        "children": [
-          {
-            "type": "condition",
-            "field": "status",
-            "operator": "==",
-            "value": {
-              "type": "static",
-              "value": "UPCOMING"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "dueDate",
-            "operator": ">=",
-            "value": {
-              "type": "temporal",
-              "preset": "startOfDay"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "dueDate",
-            "operator": "<=",
-            "value": {
-              "type": "temporal",
-              "preset": "endOfDay"
-            }
-          }
-        ]
-      },
-      "sort": [
-        {
-          "field": "dueDate",
-          "direction": "asc"
-        }
-      ],
-      "limitMode": "topN",
-      "limit": 50,
-      "status": "ACTIVE"
-    },
-    {
       "name": "Due today (metrics)",
       "sourceEntity": "paymentSchedule",
       "filter": {
@@ -246,10 +69,19 @@
           {
             "type": "condition",
             "field": "status",
-            "operator": "==",
+            "operator": "in",
             "value": {
               "type": "static",
-              "value": "UPCOMING"
+              "value": ["UPCOMING", "OVERDUE"]
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
             }
           },
           {
@@ -282,68 +114,58 @@
       "status": "ACTIVE"
     },
     {
-      "name": "Top outflow category (period)",
-      "sourceEntity": "transaction",
-      "queryMode": "aggregated",
-      "parameters": [
-        {
-          "name": "period",
-          "valueType": "dateBucket",
-          "granularity": "month",
-          "field": "date"
-        }
-      ],
+      "name": "Overdue payments (metrics)",
+      "sourceEntity": "paymentSchedule",
       "filter": {
         "type": "group",
         "combinator": "and",
         "children": [
           {
             "type": "condition",
-            "field": "date",
-            "operator": ">=",
+            "field": "status",
+            "operator": "==",
             "value": {
-              "type": "parameter",
-              "name": "period",
-              "bound": "start"
+              "type": "static",
+              "value": "OVERDUE"
             }
           },
           {
             "type": "condition",
-            "field": "date",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
             "operator": "<=",
             "value": {
               "type": "parameter",
               "name": "period",
               "bound": "end"
             }
-          },
-          {
-            "type": "condition",
-            "field": "type",
-            "operator": "in",
-            "value": {
-              "type": "static",
-              "value": ["EXPENSE", "PAYMENT"]
-            }
           }
         ]
       },
-      "groupBy": ["categoryId"],
-      "aggregations": [
+      "sort": [
         {
-          "operation": "SUM",
-          "field": "amount"
+          "field": "dueDate",
+          "direction": "asc"
         }
       ],
-      "groupSort": [
-        {
-          "field": "sum_amount",
-          "direction": "desc"
-        }
-      ],
-      "groupLimit": 1,
       "limitMode": "all",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
     },
     {
       "name": "Transaction trend",
@@ -464,10 +286,19 @@
           {
             "type": "condition",
             "field": "status",
-            "operator": "==",
+            "operator": "in",
             "value": {
               "type": "static",
-              "value": "UPCOMING"
+              "value": ["UPCOMING", "OVERDUE"]
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
             }
           }
         ]
@@ -483,6 +314,60 @@
       "status": "ACTIVE"
     },
     {
+      "name": "Upcoming payments (dashboard)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "in",
+            "value": {
+              "type": "static",
+              "value": ["UPCOMING", "OVERDUE"]
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
+    },
+    {
       "name": "Upcoming this week (metrics)",
       "sourceEntity": "paymentSchedule",
       "filter": {
@@ -496,6 +381,15 @@
             "value": {
               "type": "static",
               "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
             }
           },
           {

@@ -69,10 +69,16 @@ vi.mock("@repo/gcp-firebase", () => ({
     getById: vi.fn(),
     create: vi.fn(),
   })),
-  createFirestoreAdminTenantRoleRepository: vi.fn(() => ({})),
+  createFirestoreAdminTenantRoleRepository: vi.fn(() => ({
+    getByName: vi.fn(async () => null),
+    create: vi.fn(),
+  })),
 }));
 
-import { seedRatesTenantGcp } from "./seed-rates-tenant.js";
+import {
+  seedRatesTenantGcp,
+  seedRatesTenantMock,
+} from "./seed-rates-tenant.js";
 
 const firebaseAdminConfig = { projectId: "entitysystem-development" };
 const entityRuntime = {} as never;
@@ -113,5 +119,42 @@ describe("seedRatesTenantGcp", () => {
         expectedUid: RATES_GCP_DEMO_OWNER_UID,
       },
     );
+  });
+});
+
+describe("seedRatesTenantMock", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    seedRatesCatalogs.mockResolvedValue({
+      definitionRecords: [],
+      entityCounts: { created: 0, updated: 0, deleted: 0 },
+      metricCounts: { created: 0, updated: 0, deleted: 0 },
+      queryCounts: { created: 0, updated: 0, deleted: 0 },
+    });
+    activateAndBackfillRatesMetrics.mockResolvedValue({ failures: [] });
+    seedRatesTestUser.mockResolvedValue("test-user");
+  });
+
+  it("skips fictional demo records when local tenant import seeds real data", async () => {
+    seedLocalTenantImportIfPresent.mockResolvedValue({
+      seeded: true,
+      ownerEmail: "andreslgomezo@gmail.com",
+    });
+
+    await seedRatesTenantMock(firebaseAdminConfig, entityRuntime);
+
+    expect(seedLocalTenantImportIfPresent).toHaveBeenCalled();
+    expect(seedRatesBusinessRecords).not.toHaveBeenCalled();
+  });
+
+  it("seeds fictional demo records only when local tenant import did not seed", async () => {
+    seedLocalTenantImportIfPresent.mockResolvedValue({
+      seeded: false,
+      ownerEmail: null,
+    });
+
+    await seedRatesTenantMock(firebaseAdminConfig, entityRuntime);
+
+    expect(seedRatesBusinessRecords).toHaveBeenCalled();
   });
 });

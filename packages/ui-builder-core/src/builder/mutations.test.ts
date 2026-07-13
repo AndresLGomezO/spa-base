@@ -525,6 +525,61 @@ describe("structure item name mutations", () => {
     expect(row).not.toHaveProperty("name");
   });
 
+  it("persists and clears visibleWhen on component rows", () => {
+    const layout = createEmptyLayout(1);
+    const rowId = createLayoutId("row");
+    const withRow = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...resolveLayoutRootColumns(layout)[0]!,
+            rows: [
+              {
+                type: "component" as const,
+                id: rowId,
+                component: createDefaultComponent("text", "name"),
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const gated = updateComponentRowMetaAt(
+      withRow,
+      { scope: "root", columnIndex: 0 },
+      rowId,
+      {
+        visibleWhen: [
+          {
+            conditionKind: "dashboardDateFilter",
+            matchValue: "currentPeriod",
+          },
+        ],
+      },
+    );
+    expect(resolveLayoutRootColumns(gated)[0]?.rows[0]).toMatchObject({
+      visibleWhen: [
+        {
+          conditionKind: "dashboardDateFilter",
+          matchValue: "currentPeriod",
+        },
+      ],
+    });
+
+    const cleared = updateComponentRowMetaAt(
+      gated,
+      { scope: "root", columnIndex: 0 },
+      rowId,
+      { visibleWhen: undefined },
+    );
+    expect(resolveLayoutRootColumns(cleared)[0]?.rows[0]).not.toHaveProperty(
+      "visibleWhen",
+    );
+  });
+
   it("persists and clears root column names", () => {
     const layout = createEmptyLayout(1);
 

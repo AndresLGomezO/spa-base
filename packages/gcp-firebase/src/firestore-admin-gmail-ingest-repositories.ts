@@ -7,9 +7,11 @@ import {
   emailIngestJobRecordSchema,
   emailIngestProcessedRecordSchema,
   emailMatchBindingSchema,
+  GMAIL_CONNECTIONS_BY_EMAIL_COLLECTION,
   GMAIL_INTEGRATION_DOC_ID,
   GMAIL_INTEGRATIONS_SUBCOLLECTION,
   gmailConnectionRecordSchema,
+  normalizeGmailEmail,
   patchEmailMatchBindingInputSchema,
   type CreateEmailMatchBindingInput,
   type EmailIngestJobKind,
@@ -36,6 +38,7 @@ function nowIso(): string {
 
 export interface GmailConnectionRepository {
   get(userId: string): Promise<GmailConnectionRecord | null>;
+  findByEmail(email: string): Promise<GmailConnectionRecord | null>;
   upsert(
     userId: string,
     patch: Partial<GmailConnectionRecord> &
@@ -111,12 +114,52 @@ export interface EmailIngestJobRepository {
 export function createFirestoreAdminGmailConnectionRepository(
   config: FirebaseAdminConfig,
 ): GmailConnectionRepository {
+  function firestore() {
+    return getFirestoreAdmin(config);
+  }
+
   function docRef(userId: string) {
-    return getFirestoreAdmin(config)
+    return firestore()
       .collection(USERS_COLLECTION)
       .doc(userId)
       .collection(GMAIL_INTEGRATIONS_SUBCOLLECTION)
       .doc(GMAIL_INTEGRATION_DOC_ID);
+  }
+
+  function emailIndexRef(email: string) {
+    return firestore()
+      .collection(GMAIL_CONNECTIONS_BY_EMAIL_COLLECTION)
+      .doc(normalizeGmailEmail(email));
+  }
+
+  async function syncEmailIndex(options: {
+    readonly userId: string;
+    readonly tenantId: string | null;
+    readonly previousEmail: string | null;
+    readonly nextEmail: string | null;
+  }): Promise<void> {
+    const previous =
+      options.previousEmail != null
+        ? normalizeGmailEmail(options.previousEmail)
+        : null;
+    const next =
+      options.nextEmail != null ? normalizeGmailEmail(options.nextEmail) : null;
+
+    if (previous && previous !== next) {
+      const existing = await emailIndexRef(previous).get();
+      if (existing.exists && existing.data()?.userId === options.userId) {
+        await emailIndexRef(previous).delete();
+      }
+    }
+
+    if (next) {
+      await emailIndexRef(next).set({
+        userId: options.userId,
+        tenantId: options.tenantId,
+        emailAddress: next,
+        updatedAt: nowIso(),
+      });
+    }
   }
 
   return {
@@ -128,13 +171,38 @@ export function createFirestoreAdminGmailConnectionRepository(
         ...snapshot.data(),
       });
     },
+    async findByEmail(email) {
+      const normalized = normalizeGmailEmail(email);
+      if (!normalized) return null;
+      const indexSnap = await emailIndexRef(normalized).get();
+      if (!indexSnap.exists) return null;
+      const userId = indexSnap.data()?.userId;
+      if (typeof userId !== "string" || !userId.trim()) return null;
+      const connection = await this.get(userId);
+      if (!connection?.emailAddress) return null;
+      if (normalizeGmailEmail(connection.emailAddress) !== normalized) {
+        return null;
+      }
+      return connection;
+    },
     async upsert(userId, patch) {
       const existing = await this.get(userId);
       const timestamp = nowIso();
+      const rawEmail =
+        patch.emailAddress !== undefined
+          ? patch.emailAddress
+          : (existing?.emailAddress ?? null);
+      const emailAddress =
+        rawEmail != null ? normalizeGmailEmail(rawEmail) : null;
+      const tenantId =
+        patch.tenantId !== undefined
+          ? patch.tenantId
+          : (existing?.tenantId ?? null);
       const next = gmailConnectionRecordSchema.parse({
         userId,
+        tenantId,
         status: patch.status,
-        emailAddress: patch.emailAddress ?? existing?.emailAddress ?? null,
+        emailAddress,
         scopes: patch.scopes ?? existing?.scopes ?? [],
         encryptedRefreshToken:
           patch.encryptedRefreshToken !== undefined
@@ -168,10 +236,25 @@ export function createFirestoreAdminGmailConnectionRepository(
         updatedAt: timestamp,
       });
       await docRef(userId).set(next);
+      await syncEmailIndex({
+        userId,
+        tenantId: next.tenantId,
+        previousEmail: existing?.emailAddress ?? null,
+        nextEmail: next.emailAddress,
+      });
       return next;
     },
     async delete(userId) {
+      const existing = await this.get(userId);
       await docRef(userId).delete();
+      if (existing?.emailAddress) {
+        await syncEmailIndex({
+          userId,
+          tenantId: existing.tenantId,
+          previousEmail: existing.emailAddress,
+          nextEmail: null,
+        });
+      }
     },
   };
 }
@@ -230,6 +313,7 @@ export function createFirestoreAdminEmailMatchBindingRepository(
         gmailQueryExtra: parsed.gmailQueryExtra ?? null,
         useAi: parsed.useAi ?? false,
         aiInstructions: parsed.aiInstructions ?? null,
+        bodyFieldExtractors: parsed.bodyFieldExtractors ?? [],
         createdAt: timestamp,
         updatedAt: timestamp,
       });
@@ -251,6 +335,10 @@ export function createFirestoreAdminEmailMatchBindingRepository(
           parsed.aiInstructions !== undefined
             ? parsed.aiInstructions
             : existing.aiInstructions,
+        bodyFieldExtractors:
+          parsed.bodyFieldExtractors !== undefined
+            ? parsed.bodyFieldExtractors
+            : (existing.bodyFieldExtractors ?? []),
         updatedAt: nowIso(),
       });
       await collection(tenantId).doc(bindingId).set(next);

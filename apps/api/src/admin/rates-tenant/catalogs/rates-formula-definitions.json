@@ -1,7 +1,7 @@
 {
   "kind": "formula-definitions-catalog",
   "version": 1,
-  "exportedAt": "2026-07-08T01:40:31.203Z",
+  "exportedAt": "2026-07-13T15:33:09.271Z",
   "formulaDefinitions": [
     {
       "name": "monthlyRateFromQuote",
@@ -154,7 +154,7 @@
     },
     {
       "name": "scheduleAnchorDate",
-      "description": "Pick originationDate when set, otherwise nextDueDate",
+      "description": "Prefer nextDueDate when set (mid-loan / after payment); otherwise originationDate",
       "inputs": [
         {
           "name": "originationDate",
@@ -180,18 +180,18 @@
               "args": [
                 {
                   "kind": "input",
-                  "name": "originationDate"
+                  "name": "nextDueDate"
                 }
               ]
             }
           },
           {
             "kind": "input",
-            "name": "originationDate"
+            "name": "nextDueDate"
           },
           {
             "kind": "input",
-            "name": "nextDueDate"
+            "name": "originationDate"
           }
         ]
       },
@@ -224,7 +224,7 @@
     },
     {
       "name": "loanScheduleAnchorDate",
-      "description": "Loan: schedule anchor date (origination or parent next due)",
+      "description": "Loan: schedule anchor — prefer parent nextDueDate (mid-loan / after payment); else origination",
       "inputs": [],
       "body": {
         "kind": "call",
@@ -238,23 +238,24 @@
               "fn": "isEmpty",
               "args": [
                 {
-                  "kind": "formula",
-                  "name": "loanOriginationDate",
-                  "inputs": {}
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "nextDueDate"
                 }
               ]
             }
-          },
-          {
-            "kind": "formula",
-            "name": "loanOriginationDate",
-            "inputs": {}
           },
           {
             "kind": "field",
             "source": "loaded",
             "alias": "parent",
             "path": "nextDueDate"
+          },
+          {
+            "kind": "formula",
+            "name": "loanOriginationDate",
+            "inputs": {}
           }
         ]
       },
@@ -287,7 +288,7 @@
     },
     {
       "name": "loanBasePrincipal",
-      "description": "Loan: opening principal resolved from origination anchor",
+      "description": "Loan: opening principal — currentBalance when anchored on nextDueDate; else originalPrincipal",
       "inputs": [],
       "body": {
         "kind": "call",
@@ -301,29 +302,13 @@
               "fn": "isEmpty",
               "args": [
                 {
-                  "kind": "formula",
-                  "name": "loanOriginationDate",
-                  "inputs": {}
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "nextDueDate"
                 }
               ]
             }
-          },
-          {
-            "kind": "call",
-            "fn": "coalesce",
-            "args": [
-              {
-                "kind": "field",
-                "source": "current",
-                "path": "originalPrincipal"
-              },
-              {
-                "kind": "field",
-                "source": "loaded",
-                "alias": "parent",
-                "path": "currentBalance"
-              }
-            ]
           },
           {
             "kind": "call",
@@ -351,6 +336,23 @@
                     "path": "currentBalance"
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "originalPrincipal"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "currentBalance"
               }
             ]
           }
@@ -1257,18 +1259,34 @@
                 "fn": "if",
                 "args": [
                   {
-                    "kind": "unary",
-                    "op": "!",
-                    "operand": {
+                    "kind": "binary",
+                    "op": "&&",
+                    "left": {
                       "kind": "call",
                       "fn": "isEmpty",
                       "args": [
                         {
-                          "kind": "formula",
-                          "name": "loanOriginationDate",
-                          "inputs": {}
+                          "kind": "field",
+                          "source": "loaded",
+                          "alias": "parent",
+                          "path": "nextDueDate"
                         }
                       ]
+                    },
+                    "right": {
+                      "kind": "unary",
+                      "op": "!",
+                      "operand": {
+                        "kind": "call",
+                        "fn": "isEmpty",
+                        "args": [
+                          {
+                            "kind": "formula",
+                            "name": "loanOriginationDate",
+                            "inputs": {}
+                          }
+                        ]
+                      }
                     }
                   },
                   {
@@ -1478,7 +1496,7 @@
     },
     {
       "name": "frequencyDueDate",
-      "description": "Recurring schedule: due date from base date, frequency, and period index",
+      "description": "Recurring schedule: due date from base date, frequency, and period index (YYYY-MM-DD)",
       "inputs": [
         {
           "name": "baseDate",
@@ -1495,25 +1513,31 @@
       ],
       "body": {
         "kind": "call",
-        "fn": "dateAdd",
+        "fn": "dateOnly",
         "args": [
           {
-            "kind": "input",
-            "name": "baseDate"
-          },
-          {
-            "kind": "input",
-            "name": "periodIndex"
-          },
-          {
-            "kind": "formula",
-            "name": "frequencyUnit",
-            "inputs": {
-              "frequency": {
+            "kind": "call",
+            "fn": "dateAdd",
+            "args": [
+              {
                 "kind": "input",
-                "name": "frequency"
+                "name": "baseDate"
+              },
+              {
+                "kind": "input",
+                "name": "periodIndex"
+              },
+              {
+                "kind": "formula",
+                "name": "frequencyUnit",
+                "inputs": {
+                  "frequency": {
+                    "kind": "input",
+                    "name": "frequency"
+                  }
+                }
               }
-            }
+            ]
           }
         ]
       },

@@ -50,6 +50,8 @@ export function formatConditionalRulePreview(
 
   if (rule.conditionKind === "activePath") {
     parts.push(`path = ${normalized.matchValue}`);
+  } else if (rule.conditionKind === "dashboardDateFilter") {
+    parts.push(`dateFilter = ${normalized.matchValue}`);
   } else if (compareFieldLabel && compareFieldLabel.trim().length > 0) {
     parts.push(`${compareFieldLabel} = ${normalized.matchValue}`);
   } else if (rule.compareFieldPath && rule.compareFieldPath.trim().length > 0) {

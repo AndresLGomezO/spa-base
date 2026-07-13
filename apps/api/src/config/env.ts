@@ -96,6 +96,7 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
+  WEB_APP_ORIGIN: z.string().trim().url().default("http://127.0.0.1:5173"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

@@ -11,6 +11,7 @@ export interface EntityFormStateExportInput {
   readonly tenantWideRead: boolean;
   readonly inMemoryListQueries: boolean;
   readonly hiddenFromNav: boolean;
+  readonly emailMatchingEnabled: boolean;
   readonly navCategoryId: string;
   readonly navOrder: string;
   readonly navIcon: string;
@@ -35,6 +36,7 @@ export function exportEntityFormState(
     ...(input.tenantWideRead ? { tenantWideRead: true } : {}),
     ...(input.inMemoryListQueries ? { inMemoryListQueries: true } : {}),
     ...(input.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(input.emailMatchingEnabled ? { emailMatchingEnabled: true } : {}),
     ...(navCategoryId ? { navCategoryId } : {}),
     ...(navOrder ? { navOrder: Number.parseInt(navOrder, 10) } : {}),
     ...(displayField ? { displayField } : {}),
@@ -50,6 +52,7 @@ export interface EntityFormStateImportResult {
   readonly tenantWideRead: boolean;
   readonly inMemoryListQueries: boolean;
   readonly hiddenFromNav: boolean;
+  readonly emailMatchingEnabled: boolean;
   readonly navCategoryId: string;
   readonly navOrder: string;
   readonly navIcon: string;
@@ -67,6 +70,7 @@ export function importEntityFormState(
     tenantWideRead: data.tenantWideRead ?? false,
     inMemoryListQueries: data.inMemoryListQueries ?? false,
     hiddenFromNav: data.hiddenFromNav ?? false,
+    emailMatchingEnabled: data.emailMatchingEnabled ?? false,
     navCategoryId: data.navCategoryId ?? "",
     navOrder:
       data.navOrder !== undefined && data.navOrder !== null

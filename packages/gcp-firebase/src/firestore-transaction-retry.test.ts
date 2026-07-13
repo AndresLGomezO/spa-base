@@ -15,6 +15,16 @@ describe("firestore-transaction-retry", () => {
       }),
     ).toBe(true);
     expect(
+      isFirestoreTransactionContentionError(
+        new Error("10 ABORTED: Transaction lock timeout."),
+      ),
+    ).toBe(true);
+    expect(
+      isFirestoreTransactionContentionError(
+        new Error("Too much contention on these documents. Please try again."),
+      ),
+    ).toBe(true);
+    expect(
       isFirestoreTransactionContentionError(new Error("ABORTED: other")),
     ).toBe(true);
     expect(isFirestoreTransactionContentionError(new Error("not found"))).toBe(

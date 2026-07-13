@@ -8,6 +8,7 @@
     "@repo/dynamic-entities",
     "@repo/entities",
     "@repo/formula-definitions",
+    "@repo/gmail-ingest",
     "@repo/chart-definitions",
     "@repo/entity-queries",
     "@repo/firestore-indexes",

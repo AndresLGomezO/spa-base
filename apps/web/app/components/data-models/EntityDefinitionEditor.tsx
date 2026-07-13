@@ -94,6 +94,7 @@ export function EntityDefinitionEditor({
   const [tenantWideRead, setTenantWideRead] = useState(false);
   const [inMemoryListQueries, setInMemoryListQueries] = useState(false);
   const [hiddenFromNav, setHiddenFromNav] = useState(false);
+  const [emailMatchingEnabled, setEmailMatchingEnabled] = useState(false);
   const [navCategoryId, setNavCategoryId] = useState("");
   const [navOrder, setNavOrder] = useState("");
   const [navIcon, setNavIcon] = useState("");
@@ -187,6 +188,7 @@ export function EntityDefinitionEditor({
         setTenantWideRead(loaded.tenantWideRead ?? false);
         setInMemoryListQueries(loaded.inMemoryListQueries ?? false);
         setHiddenFromNav(loaded.hiddenFromNav ?? false);
+        setEmailMatchingEnabled(loaded.emailMatchingEnabled ?? false);
         setNavCategoryId(loaded.navCategoryId ?? "");
         setNavOrder(
           loaded.navOrder !== undefined ? String(loaded.navOrder) : "",
@@ -294,6 +296,7 @@ export function EntityDefinitionEditor({
         tenantWideRead,
         inMemoryListQueries,
         hiddenFromNav,
+        emailMatchingEnabled,
         navCategoryId: navCategoryId.trim() ? navCategoryId.trim() : null,
         ...(parsedNavOrder !== null && Number.isInteger(parsedNavOrder)
           ? { navOrder: parsedNavOrder }
@@ -365,6 +368,7 @@ export function EntityDefinitionEditor({
       tenantWideRead,
       inMemoryListQueries,
       hiddenFromNav,
+      emailMatchingEnabled,
       navCategoryId,
       navOrder,
       navIcon,
@@ -378,6 +382,7 @@ export function EntityDefinitionEditor({
       tenantWideRead,
       inMemoryListQueries,
       hiddenFromNav,
+      emailMatchingEnabled,
       navCategoryId,
       navOrder,
       navIcon,
@@ -412,6 +417,7 @@ export function EntityDefinitionEditor({
             setTenantWideRead(imported.tenantWideRead);
             setInMemoryListQueries(imported.inMemoryListQueries);
             setHiddenFromNav(imported.hiddenFromNav);
+            setEmailMatchingEnabled(imported.emailMatchingEnabled);
             setNavCategoryId(imported.navCategoryId);
             setNavOrder(imported.navOrder);
             setNavIcon(imported.navIcon);
@@ -502,6 +508,27 @@ export function EntityDefinitionEditor({
           />
           <Text className="text-muted-foreground text-sm">
             {t("dataModels.hiddenFromNavHint")}
+          </Text>
+        </div>
+
+        <div className="border-border space-y-3 rounded-lg border p-4">
+          <div>
+            <Heading level={3} className="text-base">
+              {t("dataModels.emailMatching.title")}
+            </Heading>
+            <Text className="text-muted-foreground mt-1 text-sm">
+              {t("dataModels.emailMatching.sectionHint")}
+            </Text>
+          </div>
+          <Checkbox
+            id="edit-email-matching-enabled"
+            label={t("dataModels.emailMatching.enabled")}
+            checked={emailMatchingEnabled}
+            disabled={!canUpdate}
+            onChange={(event) => setEmailMatchingEnabled(event.target.checked)}
+          />
+          <Text className="text-muted-foreground text-sm">
+            {t("dataModels.emailMatching.enabledHint")}
           </Text>
         </div>
 

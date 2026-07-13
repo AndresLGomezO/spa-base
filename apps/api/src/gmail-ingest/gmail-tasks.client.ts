@@ -41,15 +41,22 @@ export function createGmailTasksClient(config: CloudTasksClientConfig) {
     },
     async enqueueWatchRenew(
       payload: GmailWatchRenewTaskPayload,
+      options?: { readonly scheduleTime?: Date },
     ): Promise<void> {
+      const scheduleKey = options?.scheduleTime
+        ? options.scheduleTime.toISOString()
+        : "now";
       await cloudTasks.enqueueTask({
         path: GMAIL_TASK_ROUTES.WATCH_RENEW,
         payload,
         taskId: buildDeterministicTaskId(
           "gmail-watch",
           payload.userId,
-          payload.userId,
+          `${payload.userId}:${scheduleKey}`,
         ),
+        ...(options?.scheduleTime
+          ? { scheduleTime: options.scheduleTime }
+          : {}),
       });
     },
     async enqueueProcessMessage(
@@ -61,7 +68,7 @@ export function createGmailTasksClient(config: CloudTasksClientConfig) {
         taskId: buildDeterministicTaskId(
           "gmail-msg",
           payload.gmailMessageId,
-          `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}`,
+          `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}:${payload.jobId}${payload.reprocess ? ":reprocess" : ""}`,
         ),
       });
     },

@@ -52,6 +52,9 @@ export function serializeEntityDefinition(
       ? { displayField: entity.metadata.displayField }
       : {}),
     ...(entity.metadata.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(entity.metadata.emailMatchingEnabled
+      ? { emailMatchingEnabled: true }
+      : {}),
     ...(entity.metadata.navCategoryId
       ? { navCategoryId: entity.metadata.navCategoryId }
       : {}),

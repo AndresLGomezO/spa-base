@@ -25,7 +25,10 @@ import {
 } from "./hook-execution-metrics.js";
 import { buildDataHookJobPayload } from "./data-hook-job.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
-import { listMatchingRecordsForWhere } from "./update-matching-utils.js";
+import {
+  findUpdateMatchingLookupLeaf,
+  listMatchingRecordsForWhere,
+} from "./update-matching-utils.js";
 import {
   evaluateExpression,
   expressionValuesEqual,
@@ -529,6 +532,58 @@ async function runAction(
         context.loaded = {};
       }
       context.loaded[action.as] = record;
+      return;
+    }
+
+    case "getOrCreateRecord": {
+      const entities = requireEntities(context);
+      const lookupLeaf = findUpdateMatchingLookupLeaf(action.where);
+      if (!lookupLeaf?.value) {
+        throw new HookExecutionError(
+          "Matching where must include at least one == leaf with a value expression for lookup.",
+        );
+      }
+      const lookupValue = evaluateExpression(lookupLeaf.value, scope);
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (
+        lookupValue == null ||
+        (typeof lookupValue === "string" && lookupValue.trim().length === 0)
+      ) {
+        context.loaded[action.as] = null;
+        return;
+      }
+
+      const matches = await listMatchingRecordsForWhere(
+        action.entity,
+        action.where,
+        context,
+        scope,
+        entities.list,
+      );
+      if (matches[0]) {
+        context.loaded[action.as] = matches[0] as Record<string, unknown>;
+        return;
+      }
+
+      if (action.createIfMissing === false) {
+        context.loaded[action.as] = null;
+        return;
+      }
+
+      if (action.data == null) {
+        throw new HookExecutionError(
+          'getOrCreateRecord requires "data" when createIfMissing is true (default).',
+        );
+      }
+
+      const created = await entities.create(
+        action.entity,
+        evaluateExpressionRecord(action.data, scope),
+        writeOptions,
+      );
+      context.loaded[action.as] = created;
       return;
     }
 

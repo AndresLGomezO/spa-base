@@ -383,15 +383,9 @@ describe("recurring schedule hooks", () => {
     expect(createMany).toHaveBeenCalledTimes(1);
     const rows = createMany.mock.calls[0]?.[1] ?? [];
     expect(rows).toHaveLength(3);
-    expect((rows[0] as Record<string, unknown>).dueDate).toBe(
-      "2026-07-01T00:00:00.000Z",
-    );
-    expect((rows[1] as Record<string, unknown>).dueDate).toBe(
-      "2026-08-01T00:00:00.000Z",
-    );
-    expect((rows[2] as Record<string, unknown>).dueDate).toBe(
-      "2026-09-01T00:00:00.000Z",
-    );
+    expect((rows[0] as Record<string, unknown>).dueDate).toBe("2026-07-01");
+    expect((rows[1] as Record<string, unknown>).dueDate).toBe("2026-08-01");
+    expect((rows[2] as Record<string, unknown>).dueDate).toBe("2026-09-01");
   });
 
   it("rolls forward schedule due date after a row is paid", async () => {
@@ -448,6 +442,132 @@ describe("recurring schedule hooks", () => {
     const row = create.mock.calls[0]?.[1] as
       | Record<string, unknown>
       | undefined;
-    expect(row?.dueDate).toBe("2026-07-15T00:00:00.000Z");
+    expect(row?.dueDate).toBe("2026-07-15");
+  });
+
+  it("skips roll forward when next dueDate schedule already exists", async () => {
+    const hook = loadCatalogHook("Roll forward next schedule");
+    const create = vi.fn<HookEntityServices["create"]>(async () => ({
+      id: "ps_next",
+    }));
+    const parentItem = {
+      id: "fi_parent_1",
+      frequency: "BIWEEKLY",
+      amount: 500_000,
+    };
+    const paidSchedule = {
+      id: "ps_paid_1",
+      financialItemId: parentItem.id,
+      status: "PAID",
+      dueDate: "2026-07-01",
+    };
+    const existingNext = {
+      id: "ps_existing_next",
+      tenantId: "tenant_test",
+      financialItemId: parentItem.id,
+      status: "UPCOMING",
+      dueDate: "2026-07-15",
+    };
+
+    const get = vi.fn<HookEntityServices["get"]>(async (entity, id) => {
+      if (entity === "financialItem" && id === parentItem.id) {
+        return parentItem;
+      }
+      throw new Error(`Unexpected get: ${entity}/${id}`);
+    });
+    const list = vi.fn<HookEntityServices["list"]>(async () => [existingNext]);
+
+    const context: HookContext = {
+      tenantId: "tenant_test",
+      entityName: "paymentSchedule",
+      event: "paymentSchedule.afterUpdate",
+      current: paidSchedule,
+      previous: { ...paidSchedule, status: "UPCOMING" },
+      user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
+      services: {
+        logger: { info: vi.fn(), error: vi.fn() },
+        entities: {
+          create,
+          createMany: vi.fn(async () => []),
+          update: vi.fn(),
+          delete: vi.fn(),
+          list,
+          get,
+        },
+      },
+    };
+
+    await runDataHook(
+      toDataHookDefinition(hook, "schedule_roll_forward_skip_existing"),
+      context,
+    );
+
+    expect(list).toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("skips roll forward when existing next dueDate is ISO and formula yields date-only", async () => {
+    const hook = loadCatalogHook("Roll forward next schedule");
+    const create = vi.fn<HookEntityServices["create"]>(async () => ({
+      id: "ps_next",
+    }));
+    const parentItem = {
+      id: "fi_parent_1",
+      frequency: "BIWEEKLY",
+      amount: 500_000,
+    };
+    const paidSchedule = {
+      id: "ps_paid_1",
+      financialItemId: parentItem.id,
+      status: "PAID",
+      dueDate: "2026-07-01",
+    };
+    const existingNextIso = {
+      id: "ps_existing_next_iso",
+      tenantId: "tenant_test",
+      financialItemId: parentItem.id,
+      status: "UPCOMING",
+      dueDate: "2026-07-15T00:00:00.000Z",
+    };
+
+    const get = vi.fn<HookEntityServices["get"]>(async (entity, id) => {
+      if (entity === "financialItem" && id === parentItem.id) {
+        return parentItem;
+      }
+      throw new Error(`Unexpected get: ${entity}/${id}`);
+    });
+    const list = vi.fn<HookEntityServices["list"]>(async () => [
+      existingNextIso,
+    ]);
+
+    const context: HookContext = {
+      tenantId: "tenant_test",
+      entityName: "paymentSchedule",
+      event: "paymentSchedule.afterUpdate",
+      current: paidSchedule,
+      previous: { ...paidSchedule, status: "UPCOMING" },
+      user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
+      services: {
+        logger: { info: vi.fn(), error: vi.fn() },
+        entities: {
+          create,
+          createMany: vi.fn(async () => []),
+          update: vi.fn(),
+          delete: vi.fn(),
+          list,
+          get,
+        },
+      },
+    };
+
+    await runDataHook(
+      toDataHookDefinition(hook, "schedule_roll_forward_skip_iso_existing"),
+      context,
+    );
+
+    expect(list).toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 });

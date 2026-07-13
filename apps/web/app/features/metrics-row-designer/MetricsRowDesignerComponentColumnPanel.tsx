@@ -4,6 +4,7 @@ import {
   CollapsibleStyleRulesEditor,
   ColumnStackDirectionEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
   ResponsiveGridEditor,
   filterStyleRulesForGenericEditor,
   isResponsiveGridStyleProperty,
@@ -99,6 +100,14 @@ export function MetricsRowDesignerComponentColumnPanel({
     />
   );
 
+  const visibleWhenEditor = (
+    <LayoutVisibleWhenEditor
+      visibleWhen={column.visibleWhen}
+      labels={labels.visibleWhen}
+      onChange={(visibleWhen) => applyColumnPatch({ visibleWhen })}
+    />
+  );
+
   const isGridTrackColumn = isGridTrackColumnRef(columnRef, parentGridRow);
 
   const rowLayoutGridStyles = (binding.layout.root.styles ?? []).filter(
@@ -188,12 +197,14 @@ export function MetricsRowDesignerComponentColumnPanel({
           </div>
           {stackEditor}
           {visibilityEditor}
+          {visibleWhenEditor}
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
           {columnNameField}
           {stackEditor}
           {visibilityEditor}
+          {visibleWhenEditor}
         </FormDesignerPanelPrimaryControls>
       )}
 

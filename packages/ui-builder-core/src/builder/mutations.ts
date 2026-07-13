@@ -598,12 +598,14 @@ export function updateRootColumnDisplayRange(
 export function updateRootColumnMetaAt(
   layout: UiLayoutDocument,
   columnIndex: number,
-  patch: Partial<Pick<ColumnNode, "name">>,
+  patch: Partial<Pick<ColumnNode, "name" | "visibleWhen">>,
 ): UiLayoutDocument {
   return withEditableRoot(layout, (root) => ({
     ...root,
     columns: root.columns.map((column, index) =>
-      index === columnIndex ? applyColumnMetaPatch(column, patch) : column,
+      index === columnIndex
+        ? applyVisibleWhenPatch(applyColumnMetaPatch(column, patch), patch)
+        : column,
     ),
   }));
 }
@@ -968,7 +970,10 @@ export function updateGridRowMetaAt(
   locator: RowLocator,
   gridRowId: string,
   patch: Partial<
-    Pick<ComponentRowNode, "styles" | "displayFrom" | "displayTo" | "name">
+    Pick<
+      ComponentRowNode,
+      "styles" | "displayFrom" | "displayTo" | "name" | "visibleWhen"
+    >
   > & {
     readonly gap?: string;
     readonly alignItems?: LayoutAlign;
@@ -986,8 +991,11 @@ export function updateGridRowMetaAt(
 
       const gridComponent = row.component;
       const { gap, alignItems, ...rowPatch } = patch;
-      let nextRow = stripDisplayRangeIfFull(
-        applyStructureNamePatch({ ...row, ...rowPatch }, rowPatch),
+      let nextRow = applyVisibleWhenPatch(
+        stripDisplayRangeIfFull(
+          applyStructureNamePatch({ ...row, ...rowPatch }, rowPatch),
+        ),
+        rowPatch,
       );
 
       if (gap !== undefined) {
@@ -1119,6 +1127,20 @@ function applyColumnMetaPatch<T extends ColumnNode>(
   return applyStructureNamePatch<T>(column, patch);
 }
 
+function applyVisibleWhenPatch<
+  T extends { readonly visibleWhen?: ComponentRowNode["visibleWhen"] },
+>(node: T, patch: Partial<Pick<ComponentRowNode, "visibleWhen">>): T {
+  if (!("visibleWhen" in patch)) {
+    return node;
+  }
+  if (patch.visibleWhen === undefined) {
+    return Object.fromEntries(
+      Object.entries(node).filter(([key]) => key !== "visibleWhen"),
+    ) as T;
+  }
+  return { ...node, visibleWhen: patch.visibleWhen };
+}
+
 export function updateComponentRowMetaAt(
   layout: UiLayoutDocument,
   locator: RowLocator,
@@ -1126,7 +1148,13 @@ export function updateComponentRowMetaAt(
   patch: Partial<
     Pick<
       ComponentRowNode,
-      "styles" | "motion" | "displayFrom" | "displayTo" | "name" | "clickAction"
+      | "styles"
+      | "motion"
+      | "displayFrom"
+      | "displayTo"
+      | "name"
+      | "clickAction"
+      | "visibleWhen"
     >
   >,
 ): UiLayoutDocument {
@@ -1143,7 +1171,10 @@ export function updateComponentRowMetaAt(
         ) as ComponentRowNode;
       }
 
-      return stripDisplayRangeIfFull(applyStructureNamePatch(nextRow, patch));
+      return applyVisibleWhenPatch(
+        stripDisplayRangeIfFull(applyStructureNamePatch(nextRow, patch)),
+        patch,
+      );
     }),
   );
 }

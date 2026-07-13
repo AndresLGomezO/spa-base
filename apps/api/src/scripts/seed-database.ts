@@ -23,6 +23,11 @@ function isInsideDocker(): boolean {
   return existsSync("/.dockerenv");
 }
 
+/**
+ * To seed the database on the emulator, run: pnpm seed:database
+ * To seed the database on GCP, run: pnpm seed:database -- --gcp --project entitysystem-development
+* /
+ 
 /** Map Compose service names to localhost when seeding from the host machine. */
 function normalizeEmulatorHost(
   host: string | undefined,

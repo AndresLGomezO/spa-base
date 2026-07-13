@@ -259,4 +259,15 @@ describe("mergeMotionPresetStyle", () => {
     expect(merged.backgroundColor).toBe("red");
     expect(motionStyleVar(merged, "--motion-rest-bg")).toBeUndefined();
   });
+
+  it("parks rest background for glow-border so conditional shells keep tint", () => {
+    const motion = resolveMotionPreset({ hoverSurface: "glow-border" });
+    expect(motion.className).toContain("ui-motion-hover-interactive");
+    const tint =
+      "color-mix(in oklab, var(--color-destructive) 10%, transparent)";
+    const merged = mergeMotionPresetStyle({ backgroundColor: tint }, motion);
+
+    expect(merged.backgroundColor).toBeUndefined();
+    expect(motionStyleVar(merged, "--motion-rest-bg")).toBe(tint);
+  });
 });

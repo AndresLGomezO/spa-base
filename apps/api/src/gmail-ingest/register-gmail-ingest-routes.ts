@@ -5,10 +5,12 @@ import { z } from "zod";
 
 import {
   buildGmailAuthorizeUrl,
+  computeGmailWatchRenewAt,
   createEmailMatchBindingInputSchema,
   encryptUserSecret,
   exchangeGmailAuthCode,
   GMAIL_OAUTH_SCOPES,
+  normalizeGmailEmail,
   patchEmailMatchBindingInputSchema,
   toPublicGmailStatus,
 } from "@repo/gmail-ingest";
@@ -21,6 +23,7 @@ import type {
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
+import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import type { GmailTasksClient } from "./gmail-tasks.client.js";
 
 interface GmailOAuthEnv {
@@ -29,6 +32,8 @@ interface GmailOAuthEnv {
   readonly redirectUri: string;
   readonly stateSecret: string;
   readonly encryptionMasterKey: string;
+  readonly webAppOrigin: string;
+  readonly allowedWebOrigins: readonly string[];
   readonly pubsubTopicName?: string;
 }
 
@@ -38,8 +43,11 @@ interface RegisterGmailIngestRoutesOptions {
   readonly emailMatchBindingRepository: EmailMatchBindingRepository;
   readonly emailIngestJobRepository: EmailIngestJobRepository;
   readonly gmailTasksClient: GmailTasksClient;
+  readonly entityRuntime: EntityRuntimeContext;
   readonly oauth: GmailOAuthEnv | null;
 }
+
+const GMAIL_SETTINGS_PATH = "/account/settings/integrations/email";
 
 function signOAuthState(
   secret: string,
@@ -47,6 +55,7 @@ function signOAuthState(
     readonly uid: string;
     readonly tenantId: string;
     readonly nonce: string;
+    readonly returnOrigin: string;
   },
 ): string {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -57,7 +66,11 @@ function signOAuthState(
 function verifyOAuthState(
   secret: string,
   state: string,
-): { readonly uid: string; readonly tenantId: string } | null {
+): {
+  readonly uid: string;
+  readonly tenantId: string;
+  readonly returnOrigin: string;
+} | null {
   const [body, sig] = state.split(".");
   if (!body || !sig) return null;
   const expected = createHmac("sha256", secret)
@@ -69,18 +82,47 @@ function verifyOAuthState(
   try {
     const parsed = JSON.parse(
       Buffer.from(body, "base64url").toString("utf8"),
-    ) as { uid?: string; tenantId?: string };
+    ) as {
+      uid?: string;
+      tenantId?: string;
+      returnOrigin?: string;
+    };
     if (!parsed.uid || !parsed.tenantId) return null;
-    return { uid: parsed.uid, tenantId: parsed.tenantId };
+    return {
+      uid: parsed.uid,
+      tenantId: parsed.tenantId,
+      returnOrigin: parsed.returnOrigin ?? "",
+    };
   } catch {
     return null;
   }
+}
+
+function resolveReturnOrigin(
+  requested: string | undefined,
+  allowed: readonly string[],
+  fallback: string,
+): string {
+  const normalized = requested?.replace(/\/$/, "") ?? "";
+  if (normalized && allowed.includes(normalized)) {
+    return normalized;
+  }
+  return fallback.replace(/\/$/, "");
+}
+
+function gmailSettingsRedirectUrl(
+  origin: string,
+  result: "connected" | "reauth_required" | "error",
+): string {
+  return `${origin.replace(/\/$/, "")}${GMAIL_SETTINGS_PATH}?gmail=${result}`;
 }
 
 const backfillBodySchema = z.object({
   afterDate: z.string().trim().optional(),
   beforeDate: z.string().trim().optional(),
   maxMessages: z.coerce.number().int().min(1).max(500).optional(),
+  bindingId: z.string().trim().min(1).optional(),
+  reprocess: z.boolean().optional().default(false),
 });
 
 const bindingIdParamsSchema = z.object({
@@ -125,10 +167,22 @@ export async function registerGmailIngestRoutes(
       const tenantId = requireJwtTenant(request, reply);
       if (!uid || !tenantId) return;
 
+      const body = z
+        .object({
+          returnOrigin: z.string().trim().url().optional(),
+        })
+        .safeParse(request.body ?? {});
+      const returnOrigin = resolveReturnOrigin(
+        body.success ? body.data.returnOrigin : undefined,
+        options.oauth.allowedWebOrigins,
+        options.oauth.webAppOrigin,
+      );
+
       const state = signOAuthState(options.oauth.stateSecret, {
         uid,
         tenantId,
         nonce: `${Date.now()}`,
+        returnOrigin,
       });
       const authorizeUrl = buildGmailAuthorizeUrl(
         {
@@ -164,6 +218,12 @@ export async function registerGmailIngestRoutes(
       return reply.status(400).send("Invalid OAuth state.");
     }
 
+    const returnOrigin = resolveReturnOrigin(
+      verified.returnOrigin || undefined,
+      options.oauth.allowedWebOrigins,
+      options.oauth.webAppOrigin,
+    );
+
     try {
       const tokens = await exchangeGmailAuthCode(
         {
@@ -181,9 +241,7 @@ export async function registerGmailIngestRoutes(
         });
         return reply
           .status(302)
-          .redirect(
-            "/account/settings/integrations/email?gmail=reauth_required",
-          );
+          .redirect(gmailSettingsRedirectUrl(returnOrigin, "reauth_required"));
       }
 
       const expiresAt = new Date(
@@ -203,22 +261,69 @@ export async function registerGmailIngestRoutes(
       const { GmailApiClient } = await import("@repo/gmail-ingest");
       const client = new GmailApiClient(tokens.access_token);
       const profile = await client.getProfile();
+      const emailAddress = normalizeGmailEmail(profile.emailAddress);
+
+      let historyId = profile.historyId ? String(profile.historyId) : null;
+      let watchExpiration: string | null = null;
+
+      if (options.oauth.pubsubTopicName) {
+        try {
+          const watch = await client.watch(options.oauth.pubsubTopicName);
+          historyId = String(watch.historyId);
+          watchExpiration = new Date(Number(watch.expiration)).toISOString();
+        } catch (watchError) {
+          const watchMessage =
+            watchError instanceof Error
+              ? watchError.message
+              : "Failed to start Gmail watch";
+          await options.gmailConnectionRepository.upsert(verified.uid, {
+            status: "connected",
+            tenantId: verified.tenantId,
+            emailAddress,
+            scopes: tokens.scope
+              ? tokens.scope.split(/\s+/).filter(Boolean)
+              : [...GMAIL_OAUTH_SCOPES],
+            encryptedRefreshToken,
+            encryptedAccessToken,
+            accessTokenExpiresAt: expiresAt,
+            historyId,
+            watchExpiration: null,
+            lastError: `Connected, but Gmail push watch failed: ${watchMessage.slice(0, 400)}`,
+          });
+          return reply
+            .status(302)
+            .redirect(gmailSettingsRedirectUrl(returnOrigin, "connected"));
+        }
+      }
 
       await options.gmailConnectionRepository.upsert(verified.uid, {
         status: "connected",
-        emailAddress: profile.emailAddress,
+        tenantId: verified.tenantId,
+        emailAddress,
         scopes: tokens.scope
           ? tokens.scope.split(/\s+/).filter(Boolean)
           : [...GMAIL_OAUTH_SCOPES],
         encryptedRefreshToken,
         encryptedAccessToken,
         accessTokenExpiresAt: expiresAt,
+        historyId,
+        watchExpiration,
         lastError: null,
       });
 
+      if (options.oauth.pubsubTopicName && watchExpiration) {
+        await options.gmailTasksClient.enqueueWatchRenew(
+          {
+            userId: verified.uid,
+            tenantId: verified.tenantId,
+          },
+          { scheduleTime: computeGmailWatchRenewAt(watchExpiration) },
+        );
+      }
+
       return reply
         .status(302)
-        .redirect("/account/settings/integrations/email?gmail=connected");
+        .redirect(gmailSettingsRedirectUrl(returnOrigin, "connected"));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "OAuth callback failed";
@@ -228,7 +333,7 @@ export async function registerGmailIngestRoutes(
       });
       return reply
         .status(302)
-        .redirect("/account/settings/integrations/email?gmail=error");
+        .redirect(gmailSettingsRedirectUrl(returnOrigin, "error"));
     }
   });
 
@@ -268,6 +373,14 @@ export async function registerGmailIngestRoutes(
         );
       }
 
+      // Backfill also refreshes tenantId + email lookup index for older connections.
+      if (!connection.tenantId || connection.tenantId !== tenantId) {
+        await options.gmailConnectionRepository.upsert(uid, {
+          status: "connected",
+          tenantId,
+        });
+      }
+
       const parsed = backfillBodySchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return replyWithError(
@@ -278,11 +391,28 @@ export async function registerGmailIngestRoutes(
         );
       }
 
+      if (parsed.data.bindingId) {
+        const binding = await options.emailMatchBindingRepository.get(
+          tenantId,
+          parsed.data.bindingId,
+        );
+        if (!binding || binding.userId !== uid) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Email match binding not found.",
+          );
+        }
+      }
+
       const job = await options.emailIngestJobRepository.create({
         tenantId,
         userId: uid,
         kind: "backfill",
-        title: "Gmail backfill",
+        title: parsed.data.bindingId
+          ? `Gmail backfill (${parsed.data.bindingId})`
+          : "Gmail backfill",
       });
 
       await options.gmailTasksClient.enqueueBackfill({
@@ -296,6 +426,59 @@ export async function registerGmailIngestRoutes(
         ...(parsed.data.maxMessages
           ? { maxMessages: parsed.data.maxMessages }
           : {}),
+        ...(parsed.data.bindingId ? { bindingId: parsed.data.bindingId } : {}),
+        ...(parsed.data.reprocess ? { reprocess: true } : {}),
+      });
+
+      return reply.send(successEnvelope({ jobId: job.id }));
+    },
+  );
+
+  app.post(
+    "/api/gmail/sync",
+    { preHandler: [options.authenticate] },
+    async (request, reply) => {
+      const uid = request.ctx?.uid;
+      const tenantId = requireJwtTenant(request, reply);
+      if (!uid || !tenantId) return;
+
+      const connection = await options.gmailConnectionRepository.get(uid);
+      if (!connection || connection.status !== "connected") {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Connect Gmail before syncing.",
+        );
+      }
+
+      if (!connection.historyId) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "No Gmail history cursor yet. Run a backfill once, or reconnect Gmail.",
+        );
+      }
+
+      // Keep tenantId + email lookup index fresh for Pub/Sub (and older connects).
+      await options.gmailConnectionRepository.upsert(uid, {
+        status: "connected",
+        tenantId,
+      });
+
+      const job = await options.emailIngestJobRepository.create({
+        tenantId,
+        userId: uid,
+        kind: "historySync",
+        title: "Gmail sync now",
+      });
+
+      await options.gmailTasksClient.enqueueHistorySync({
+        tenantId,
+        userId: uid,
+        jobId: job.id,
+        historyId: connection.historyId,
       });
 
       return reply.send(successEnvelope({ jobId: job.id }));
@@ -358,6 +541,19 @@ export async function registerGmailIngestRoutes(
           400,
           ApiErrorCode.VALIDATION_ERROR,
           "Invalid binding.",
+        );
+      }
+      await options.entityRuntime.loadTenantDefinitions(tenantId);
+      const entity = options.entityRuntime.resolveEntity(
+        parsed.data.entityName,
+        tenantId,
+      );
+      if (!entity || entity.metadata.emailMatchingEnabled !== true) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Email matching is not enabled for this entity.",
         );
       }
       const created = await options.emailMatchBindingRepository.create(
@@ -474,13 +670,38 @@ export async function registerGmailIngestRoutes(
     try {
       const decoded = JSON.parse(
         Buffer.from(body.data.message.data, "base64").toString("utf8"),
-      ) as { emailAddress?: string; historyId?: string };
+      ) as { emailAddress?: string; historyId?: string | number };
 
-      // Pub/Sub notifications are mailbox-wide; clients enqueue history sync
-      // after identifying the user by connected email address.
-      if (!decoded.emailAddress || !decoded.historyId) {
+      // Pub/Sub notifications are mailbox-wide; resolve the user by connected email.
+      if (!decoded.emailAddress || decoded.historyId == null) {
         return reply.status(204).send();
       }
+
+      const connection = await options.gmailConnectionRepository.findByEmail(
+        decoded.emailAddress,
+      );
+      if (
+        !connection ||
+        connection.status !== "connected" ||
+        !connection.tenantId
+      ) {
+        return reply.status(204).send();
+      }
+
+      const job = await options.emailIngestJobRepository.create({
+        tenantId: connection.tenantId,
+        userId: connection.userId,
+        kind: "historySync",
+        title: "Gmail push history sync",
+      });
+
+      // Start from the stored cursor (not the notification historyId).
+      await options.gmailTasksClient.enqueueHistorySync({
+        tenantId: connection.tenantId,
+        userId: connection.userId,
+        jobId: job.id,
+        ...(connection.historyId ? { historyId: connection.historyId } : {}),
+      });
 
       return reply.status(204).send();
     } catch {

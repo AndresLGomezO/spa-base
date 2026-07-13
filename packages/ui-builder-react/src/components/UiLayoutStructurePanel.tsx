@@ -81,6 +81,7 @@ import {
   type ResponsiveGridEditorLabels,
 } from "./ResponsiveGridEditor.js";
 import type { ComponentDisplayRangeEditorLabels } from "./ComponentDisplayRangeEditor.js";
+import type { LayoutVisibleWhenEditorLabels } from "./LayoutVisibleWhenEditor.js";
 import {
   filterStyleRulesForGenericEditor,
   isResponsiveGridStyleProperty,
@@ -98,6 +99,7 @@ export interface UiLayoutStructurePanelLabels extends LayoutColumnControlsLabels
   readonly rowLayoutStyles?: string;
   readonly responsiveGrid: ResponsiveGridEditorLabels;
   readonly displayRange: ComponentDisplayRangeEditorLabels;
+  readonly visibleWhen?: LayoutVisibleWhenEditorLabels;
   readonly rowEffects?: string;
   readonly componentEditor: ComponentConfigEditorLabels;
   readonly addRow: string;
@@ -227,6 +229,7 @@ export function UiLayoutStructurePanel({
     rowLayoutStyles: labels.rowLayoutStyles,
     responsiveGrid: labels.responsiveGrid,
     displayRange: labels.displayRange,
+    visibleWhen: labels.visibleWhen,
     rowEffects: labels.rowEffects,
     componentEditor: labels.componentEditor,
     layoutJsonImport: labels.layoutJsonImport,

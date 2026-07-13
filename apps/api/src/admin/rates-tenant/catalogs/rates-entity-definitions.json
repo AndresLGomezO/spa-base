@@ -821,6 +821,7 @@
       "navCategoryId": "cat_commitments",
       "navOrder": 1,
       "hiddenFromNav": true,
+      "emailMatchingEnabled": true,
       "ui": {
         "nav": {
           "label": "Financial Items",
@@ -848,6 +849,7 @@
               "endDate",
               "description",
               "tags",
+              "billingAliases",
               "categoryId",
               "actorId",
               "accountId",
@@ -1006,6 +1008,14 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "tags"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-billing-aliases-create-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "billingAliases"
                               }
                             },
                             {
@@ -1220,6 +1230,14 @@
                             },
                             {
                               "type": "component",
+                              "id": "row-billing-aliases-edit-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "billingAliases"
+                              }
+                            },
+                            {
+                              "type": "component",
                               "id": "row-4e9a25d0-1507-44ca-b40a-7f065afe44fe",
                               "component": {
                                 "kind": "form-field",
@@ -1389,35 +1407,43 @@
             "searchable": true,
             "order": 16
           },
+          "billingAliases": {
+            "label": "Billing aliases",
+            "component": "input",
+            "filterable": true,
+            "sortable": false,
+            "searchable": true,
+            "order": 17
+          },
           "categoryId": {
             "label": "Category",
             "component": "relation",
             "filterable": true,
-            "order": 17
+            "order": 18
           },
           "actorId": {
             "label": "Counterparty",
             "component": "relation",
             "filterable": true,
-            "order": 18
+            "order": 19
           },
           "accountId": {
             "label": "Transfer source account",
             "component": "relation",
             "filterable": true,
-            "order": 19
+            "order": 20
           },
           "scheduleHorizonMonths": {
             "label": "Schedule horizon (months)",
             "component": "number",
             "displayFormat": "plain",
             "sortable": true,
-            "order": 20
+            "order": 21
           },
           "image": {
             "label": "Image",
             "component": "image",
-            "order": 21
+            "order": 22
           }
         },
         "listViewType": "expandableTable"
@@ -1655,6 +1681,17 @@
           }
         },
         {
+          "name": "billingAliases",
+          "type": "string",
+          "isArray": true,
+          "ui": {
+            "label": "Billing aliases",
+            "order": 17,
+            "filterable": true,
+            "searchable": true
+          }
+        },
+        {
           "name": "categoryId",
           "type": "relation",
           "relation": {
@@ -1664,7 +1701,7 @@
           },
           "ui": {
             "label": "Category",
-            "order": 17,
+            "order": 18,
             "filterable": true
           }
         },
@@ -1678,7 +1715,7 @@
           },
           "ui": {
             "label": "Counterparty",
-            "order": 18,
+            "order": 19,
             "filterable": true
           }
         },
@@ -1692,7 +1729,7 @@
           },
           "ui": {
             "label": "Transfer source account",
-            "order": 19,
+            "order": 20,
             "filterable": true
           }
         },
@@ -1702,7 +1739,7 @@
           "numberKind": "integer",
           "ui": {
             "label": "Schedule horizon (months)",
-            "order": 20,
+            "order": 21,
             "displayFormat": "plain",
             "component": "number",
             "sortable": true
@@ -1714,7 +1751,7 @@
           "ui": {
             "label": "Image",
             "component": "image",
-            "order": 21
+            "order": 22
           }
         }
       ],
@@ -3466,6 +3503,7 @@
               "amount",
               "date",
               "description",
+              "reversed",
               "accountId",
               "toAccountId",
               "financialItemId",
@@ -3521,6 +3559,14 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "description"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-txn-create-reversed",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "reversed"
                               }
                             },
                             {
@@ -3631,6 +3677,14 @@
                             },
                             {
                               "type": "component",
+                              "id": "row-txn-edit-reversed",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "reversed"
+                              }
+                            },
+                            {
+                              "type": "component",
                               "id": "row-40b3b30b-71b3-4116-a911-1757a50b3146",
                               "component": {
                                 "kind": "form-field",
@@ -3715,35 +3769,41 @@
             "searchable": true,
             "order": 3
           },
+          "reversed": {
+            "label": "Reversed",
+            "component": "toggle",
+            "filterable": true,
+            "order": 4
+          },
           "accountId": {
             "label": "Account",
             "component": "relation",
             "filterable": true,
-            "order": 4
+            "order": 5
           },
           "toAccountId": {
             "label": "To account",
             "component": "relation",
             "filterable": true,
-            "order": 5
+            "order": 6
           },
           "financialItemId": {
             "label": "Financial item",
             "component": "relation",
             "filterable": true,
-            "order": 6
+            "order": 7
           },
           "paymentScheduleId": {
             "label": "Payment schedule",
             "component": "relation",
             "filterable": true,
-            "order": 7
+            "order": 8
           },
           "categoryId": {
             "label": "Category",
             "component": "relation",
             "filterable": true,
-            "order": 8
+            "order": 9
           }
         },
         "listViewType": "expandableTable"
@@ -3803,17 +3863,27 @@
           }
         },
         {
+          "name": "reversed",
+          "type": "boolean",
+          "required": false,
+          "ui": {
+            "label": "Reversed",
+            "order": 4,
+            "component": "toggle",
+            "filterable": true
+          }
+        },
+        {
           "name": "accountId",
           "type": "relation",
-          "required": true,
           "relation": {
             "target": "account",
             "type": "many-to-one",
-            "onDelete": "restrict"
+            "onDelete": "nullify"
           },
           "ui": {
             "label": "Account",
-            "order": 4,
+            "order": 5,
             "filterable": true
           }
         },
@@ -3827,7 +3897,7 @@
           },
           "ui": {
             "label": "To account",
-            "order": 5,
+            "order": 6,
             "filterable": true
           }
         },
@@ -3841,7 +3911,7 @@
           },
           "ui": {
             "label": "Financial item",
-            "order": 6,
+            "order": 7,
             "filterable": true
           }
         },
@@ -3855,7 +3925,7 @@
           },
           "ui": {
             "label": "Payment schedule",
-            "order": 7,
+            "order": 8,
             "filterable": true
           }
         },
@@ -3869,7 +3939,7 @@
           },
           "ui": {
             "label": "Category",
-            "order": 8,
+            "order": 9,
             "filterable": true
           }
         }

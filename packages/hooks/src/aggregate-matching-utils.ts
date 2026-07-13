@@ -20,6 +20,12 @@ function requireNumericValues(
 ): readonly number[] {
   const numbers: number[] = [];
   for (const value of values) {
+    // Treat missing balances as 0 so card/installment rollups do not fail
+    // when some child rows have not initialized currentBalance yet.
+    if (value === null || value === undefined) {
+      numbers.push(0);
+      continue;
+    }
     if (typeof value !== "number" || Number.isNaN(value)) {
       throw new HookExecutionError(
         `aggregateMatching ${op} requires numeric "${field}" values; got ${String(value)}.`,

@@ -25,6 +25,8 @@ interface EnqueueOptions {
   readonly path: string;
   readonly payload: object;
   readonly taskId?: string;
+  /** When set, Cloud Tasks runs the task at/after this time (local: delayed fetch). */
+  readonly scheduleTime?: Date;
 }
 
 export function createCloudTasksClient(config: CloudTasksClientConfig) {
@@ -42,25 +44,48 @@ async function enqueueLocal(
   config: CloudTasksClientConfig,
   options: EnqueueOptions,
 ): Promise<string> {
-  const url = `${config.workerBaseUrl}${options.path}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Local-Task-Dispatcher": "true",
-    },
-    body: JSON.stringify(options.payload),
-    // Worker accepts the task quickly (202) and processes async, like Cloud Tasks.
-    signal: AbortSignal.timeout(10_000),
-  });
+  const run = async () => {
+    const url = `${config.workerBaseUrl}${options.path}`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Local-Task-Dispatcher": "true",
+      },
+      body: JSON.stringify(options.payload),
+      // Worker accepts the task quickly (202) and processes async, like Cloud Tasks.
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      `Local worker request failed: ${response.status} ${response.statusText} ${body.slice(0, 500)}`,
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(
+        `Local worker request failed: ${response.status} ${response.statusText} ${body.slice(0, 500)}`,
+      );
+    }
+  };
+
+  if (options.scheduleTime) {
+    const delayMs = Math.max(0, options.scheduleTime.getTime() - Date.now());
+    const taskId = `local-scheduled-${Date.now()}`;
+    setTimeout(
+      () => {
+        void run().catch((error: unknown) => {
+          console.error(
+            JSON.stringify({
+              message: "Local scheduled Cloud Task dispatch failed",
+              path: options.path,
+              error: error instanceof Error ? error.message : String(error),
+            }),
+          );
+        });
+      },
+      Math.min(delayMs, 2_147_483_647),
     );
+    return taskId;
   }
 
+  await run();
   return `local-${Date.now()}`;
 }
 
@@ -97,10 +122,17 @@ async function enqueueCloudTask(
   const task: {
     httpRequest: typeof httpRequest;
     name?: string;
+    scheduleTime?: { seconds: number };
   } = { httpRequest };
 
   if (options.taskId) {
     task.name = `${parent}/tasks/${options.taskId}`;
+  }
+
+  if (options.scheduleTime) {
+    task.scheduleTime = {
+      seconds: Math.floor(options.scheduleTime.getTime() / 1000),
+    };
   }
 
   try {

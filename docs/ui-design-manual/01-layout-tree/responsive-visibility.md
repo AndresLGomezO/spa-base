@@ -47,6 +47,47 @@ Visibility is set on the **row or column wrapper**, not on individual component 
 
 ---
 
+## Visibility rules (`visibleWhen`)
+
+Rows and columns can gate rendering with the **same condition model** as conditional styles (`conditionKind` + `matchValue` + optional field compare). Unlike `displayFrom` / `displayTo`, a failing rule **does not mount** the node or its children (metric and query slots inside do not fetch).
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `visibleWhen` | `LayoutCondition[]` (optional) | When set, the node only renders if **every** condition matches (AND) |
+
+### Condition kinds
+
+| `conditionKind` | `matchValue` | Notes |
+|-----------------|--------------|-------|
+| `field` (default) | Exact string, or days-remaining threshold (`<=7`) | Uses `compareFieldPath` (or the bound field on components) |
+| `activePath` | Route path prefix | Current pathname (no query/hash) |
+| `dashboardDateFilter` | `currentPeriod` or an exact bucket (`2026-07`) | Dashboard period filter; missing filter context → visible |
+
+### Current period only
+
+```json
+{
+  "type": "component",
+  "id": "row-due-today-shell",
+  "visibleWhen": [
+    {
+      "conditionKind": "dashboardDateFilter",
+      "matchValue": "currentPeriod"
+    }
+  ],
+  "component": {
+    "kind": "container",
+    "rows": []
+  }
+}
+```
+
+- Omitted or empty `visibleWhen` → always visible.
+- Combine with responsive range: the user sees the block only when **both** `displayFrom` / `displayTo` and `visibleWhen` allow it.
+- The structure tree in the designer always shows the full hierarchy (same as `displayFrom`).
+
+---
+
 ## Design guidelines
 
 1. **Mobile-first** — design for `base` first; add wider-only content with `displayFrom: "md"` or higher.
@@ -234,6 +275,7 @@ Grouped table columns support per-column breakpoints:
 | Same content, fewer columns on mobile | Single `grid` with responsive `gridTemplateColumns` or stack tracks vertically on narrow viewports |
 | Different content per breakpoint | `displayFrom` / `displayTo` on separate rows |
 | Hide non-essential metadata on phones | `displayFrom: "sm"` on secondary rows |
+| Show only for the current dashboard period | `visibleWhen: [{ conditionKind: "dashboardDateFilter", matchValue: "currentPeriod" }]` on the shell row |
 
 ---
 

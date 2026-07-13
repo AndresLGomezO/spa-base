@@ -69,6 +69,7 @@ export function EntityDefinitionWizard({
   const [tenantWideRead, setTenantWideRead] = useState(false);
   const [inMemoryListQueries, setInMemoryListQueries] = useState(false);
   const [hiddenFromNav, setHiddenFromNav] = useState(false);
+  const [emailMatchingEnabled, setEmailMatchingEnabled] = useState(false);
   const [navCategoryId, setNavCategoryId] = useState("");
   const [navOrder, setNavOrder] = useState("");
   const [navIcon, setNavIcon] = useState("");
@@ -89,6 +90,7 @@ export function EntityDefinitionWizard({
       tenantWideRead,
       inMemoryListQueries,
       hiddenFromNav,
+      emailMatchingEnabled,
       navCategoryId,
       navOrder,
       navIcon,
@@ -102,6 +104,7 @@ export function EntityDefinitionWizard({
       tenantWideRead,
       inMemoryListQueries,
       hiddenFromNav,
+      emailMatchingEnabled,
       navCategoryId,
       navOrder,
       navIcon,
@@ -284,6 +287,7 @@ export function EntityDefinitionWizard({
         ...(tenantWideRead ? { tenantWideRead: true } : {}),
         ...(inMemoryListQueries ? { inMemoryListQueries: true } : {}),
         ...(hiddenFromNav ? { hiddenFromNav: true } : {}),
+        ...(emailMatchingEnabled ? { emailMatchingEnabled: true } : {}),
         ...(navCategoryId.trim()
           ? { navCategoryId: navCategoryId.trim() }
           : {}),
@@ -334,6 +338,7 @@ export function EntityDefinitionWizard({
             setTenantWideRead(imported.tenantWideRead);
             setInMemoryListQueries(imported.inMemoryListQueries);
             setHiddenFromNav(imported.hiddenFromNav);
+            setEmailMatchingEnabled(imported.emailMatchingEnabled);
             setNavCategoryId(imported.navCategoryId);
             setNavOrder(imported.navOrder);
             setNavIcon(imported.navIcon);
@@ -421,6 +426,27 @@ export function EntityDefinitionWizard({
             />
             <Text className="text-muted-foreground text-sm">
               {t("dataModels.hiddenFromNavHint")}
+            </Text>
+          </div>
+          <div className="border-border space-y-3 rounded-lg border p-4">
+            <div>
+              <Heading level={3} className="text-base">
+                {t("dataModels.emailMatching.title")}
+              </Heading>
+              <Text className="text-muted-foreground mt-1 text-sm">
+                {t("dataModels.emailMatching.sectionHint")}
+              </Text>
+            </div>
+            <Checkbox
+              id="model-email-matching-enabled"
+              label={t("dataModels.emailMatching.enabled")}
+              checked={emailMatchingEnabled}
+              onChange={(event) =>
+                setEmailMatchingEnabled(event.target.checked)
+              }
+            />
+            <Text className="text-muted-foreground text-sm">
+              {t("dataModels.emailMatching.enabledHint")}
             </Text>
           </div>
           {!useModalFooter ? (

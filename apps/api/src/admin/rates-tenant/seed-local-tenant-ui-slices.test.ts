@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { parseEntityQueryDefinitionsCatalogJson } from "@repo/entity-queries";
-import type { EntityQueryFilterCondition } from "@repo/entity-queries";
 
 import {
   hasLocalTenantUiSlices,
@@ -55,30 +54,38 @@ describe("seed-local-tenant-ui-slices", () => {
       expect.arrayContaining([
         "Upcoming payments (dashboard)",
         "Due today (metrics)",
+        "Overdue payments (metrics)",
         "Upcoming this week (metrics)",
-        "Top outflow category (period)",
       ]),
     );
-
-    const topOutflow = parsed.data.entityQueryDefinitions.find(
-      (query) => query.name === "Top outflow category (period)",
-    );
-    expect(topOutflow?.queryMode).toBe("aggregated");
-    expect(topOutflow?.groupBy).toEqual(["categoryId"]);
-    expect(topOutflow?.groupLimit).toBe(1);
-    expect(topOutflow?.parameters ?? []).toEqual([]);
     expect(
-      topOutflow?.filter.type === "group"
-        ? topOutflow.filter.children
-            .filter(
-              (child): child is EntityQueryFilterCondition =>
-                child.type === "condition" && child.field === "date",
-            )
-            .map((child) => child.value)
+      parsed.data.entityQueryDefinitions.map((query) => query.name),
+    ).not.toEqual(
+      expect.arrayContaining(["Due today", "Top outflow category (period)"]),
+    );
+
+    const dueTodayMetrics = parsed.data.entityQueryDefinitions.find(
+      (query) => query.name === "Due today (metrics)",
+    );
+    expect(
+      dueTodayMetrics?.filter.type === "group"
+        ? dueTodayMetrics.filter.children.filter(
+            (child) => child.type === "condition" && child.field === "dueDate",
+          )
         : [],
     ).toEqual([
-      { type: "temporal", preset: "startOfMonth" },
-      { type: "temporal", preset: "endOfMonth" },
+      {
+        type: "condition",
+        field: "dueDate",
+        operator: ">=",
+        value: { type: "temporal", preset: "startOfDay" },
+      },
+      {
+        type: "condition",
+        field: "dueDate",
+        operator: "<=",
+        value: { type: "temporal", preset: "endOfDay" },
+      },
     ]);
 
     const upcomingPayments = parsed.data.entityQueryDefinitions.find(
@@ -97,17 +104,82 @@ describe("seed-local-tenant-ui-slices", () => {
       {
         type: "condition",
         field: "dueDate",
-        operator: ">=",
-        value: { type: "temporal", preset: "startOfMonth" },
+        operator: "<=",
+        value: { type: "parameter", name: "period", bound: "end" },
       },
+    ]);
+    expect(upcomingPayments?.parameters ?? []).toEqual([
+      {
+        name: "period",
+        valueType: "dateBucket",
+        granularity: "month",
+        field: "dueDate",
+      },
+    ]);
+    const incomeExclusions =
+      upcomingPayments?.filter.type === "group"
+        ? upcomingPayments.filter.children.filter(
+            (child) =>
+              child.type === "condition" &&
+              child.field === "financialItemId.flowKind",
+          )
+        : [];
+    expect(incomeExclusions).toEqual([
+      {
+        type: "condition",
+        field: "financialItemId.flowKind",
+        operator: "!=",
+        value: { type: "static", value: "INCOME" },
+      },
+    ]);
+
+    const overdueMetrics = parsed.data.entityQueryDefinitions.find(
+      (query) => query.name === "Overdue payments (metrics)",
+    );
+    expect(
+      overdueMetrics?.filter.type === "group"
+        ? overdueMetrics.filter.children.filter(
+            (child) =>
+              child.type === "condition" &&
+              child.field === "financialItemId.flowKind",
+          )
+        : [],
+    ).toEqual([
+      {
+        type: "condition",
+        field: "financialItemId.flowKind",
+        operator: "!=",
+        value: { type: "static", value: "INCOME" },
+      },
+    ]);
+    const overdueDateConditions =
+      overdueMetrics?.filter.type === "group"
+        ? overdueMetrics.filter.children.filter(
+            (child) => child.type === "condition" && child.field === "dueDate",
+          )
+        : [];
+    expect(overdueDateConditions).toEqual([
       {
         type: "condition",
         field: "dueDate",
         operator: "<=",
-        value: { type: "temporal", preset: "endOfMonth" },
+        value: { type: "parameter", name: "period", bound: "end" },
       },
     ]);
-    expect(upcomingPayments?.parameters ?? []).toEqual([]);
+
+    const weekMetrics = parsed.data.entityQueryDefinitions.find(
+      (query) => query.name === "Upcoming this week (metrics)",
+    );
+    expect(
+      weekMetrics?.filter.type === "group"
+        ? weekMetrics.filter.children.some(
+            (child) =>
+              child.type === "condition" &&
+              child.field === "financialItemId.flowKind" &&
+              child.operator === "!=",
+          )
+        : false,
+    ).toBe(true);
   });
 
   it("parses local paymentSchedule widget override slice", () => {
@@ -213,6 +285,31 @@ describe("seed-local-tenant-ui-slices", () => {
       );
       expect(shell?.rows?.some((row) => row.id === expectedGlowId)).toBe(true);
     }
+
+    const dueTodayWidget = override?.metricWidgets?.find(
+      (widget) => widget.id === "due-today-snapshot-mini",
+    );
+    // Overdue KPIs stay period-aware; Due Today Total/Count use calendar-day query (no period).
+    const dueTodayPeriodBindings = collectMetricKpiPeriodBindings(
+      dueTodayWidget?.layout,
+    );
+    expect(dueTodayPeriodBindings).toHaveLength(2);
+    expect(dueTodayPeriodBindings).toEqual([
+      {
+        type: "relativePeriod",
+        field: "dueDate",
+        anchor: "dashboardDateFilter",
+        offset: 0,
+        unit: "month",
+      },
+      {
+        type: "relativePeriod",
+        field: "dueDate",
+        anchor: "dashboardDateFilter",
+        offset: 0,
+        unit: "month",
+      },
+    ]);
 
     for (const [widgetId, glowId, gridId] of [
       [
@@ -374,7 +471,7 @@ describe("seed-local-tenant-ui-slices", () => {
     };
     expect(spendingColumn?.kind).toBe("container");
     expect(spendingColumn?.stackDirection).toBe("column");
-    expect(spendingColumn?.rows).toHaveLength(2);
+    expect(spendingColumn?.rows).toHaveLength(1);
     expect(spendingColumn?.styles).toEqual(
       expect.arrayContaining([
         { property: "gap", value: "var(--spacing-compact)" },
@@ -392,20 +489,6 @@ describe("seed-local-tenant-ui-slices", () => {
         "upcoming-week-snapshot-mini",
         "budget-status-snapshot-mini",
       ],
-    );
-
-    const topCategoryWidget = spendingColumn?.rows?.[1]?.component;
-    expect(topCategoryWidget?.widgetId).toBe("top-expense-category-snapshot");
-    expect(topCategoryWidget?.entityName).toBe("transaction");
-    expect(topCategoryWidget?.styles).toEqual(
-      expect.arrayContaining([
-        {
-          property: "maxWidth",
-          value: "100%",
-          valuesByBreakpoint: { base: "50%" },
-        },
-        { property: "height", value: "auto" },
-      ]),
     );
 
     const recentActivityRoot = (
@@ -466,6 +549,40 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(typeof seedLocalTenantUiSlicesIfPresent).toBe("function");
   });
 });
+
+function collectMetricKpiPeriodBindings(
+  layout: unknown,
+): Array<Record<string, unknown>> {
+  const bindings: Array<Record<string, unknown>> = [];
+
+  function walk(node: unknown): void {
+    if (!node || typeof node !== "object") {
+      return;
+    }
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        walk(item);
+      }
+      return;
+    }
+    const record = node as Record<string, unknown>;
+    const component = record.component as Record<string, unknown> | undefined;
+    if (component?.kind === "metric-kpi") {
+      const parameterBindings = component.parameterBindings as
+        | { period?: Record<string, unknown> }
+        | undefined;
+      if (parameterBindings?.period) {
+        bindings.push(parameterBindings.period);
+      }
+    }
+    for (const value of Object.values(record)) {
+      walk(value);
+    }
+  }
+
+  walk(layout);
+  return bindings;
+}
 
 function findStyleValueInWidget(
   layout: unknown,

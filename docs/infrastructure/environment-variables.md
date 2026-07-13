@@ -43,6 +43,7 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Full topic id for Gmail `users.watch` |
 | `GMAIL_TASKS_QUEUE_NAME` | `gmail-jobs` | Terraform queue name | Cloud Tasks queue for Gmail ingest jobs |
 | `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST Gmail jobs directly to worker instead of Cloud Tasks |
+| `WEB_APP_ORIGIN` | `http://127.0.0.1:5173` | Firebase Hosting primary URL | Post-OAuth browser redirect base (Email settings) |
 
 Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps/api/.env.example`](../../apps/api/.env.example).
 
@@ -70,6 +71,7 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `GMAIL_OAUTH_CLIENT_ID` | same as API | **Secret Manager** `GMAIL_OAUTH_CLIENT_ID` (latest) | Refresh Gmail OAuth tokens during ingest |
 | `GMAIL_OAUTH_CLIENT_SECRET` | same as API | **Secret Manager** `GMAIL_OAUTH_CLIENT_SECRET` (latest) | Refresh Gmail OAuth tokens during ingest |
 | `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Renew Gmail watch subscriptions |
+| `GMAIL_TASKS_QUEUE_NAME` | `gmail-jobs` | Terraform queue name | Queue used when self-scheduling watch renewals |
 | `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (local default) | `false` | Local re-dispatch of follow-up Gmail tasks |
 | `WORKER_SERVICE_URL` | `http://127.0.0.1:3001` / compose hostname | Cloud Run worker URL | Base URL when local-dispatching Gmail tasks |
 

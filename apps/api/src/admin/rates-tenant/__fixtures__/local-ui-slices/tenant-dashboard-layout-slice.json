@@ -134,28 +134,6 @@
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "type": "component",
-                              "id": "row-1638b76d-7b74-490e-9bb9-aeb95d1ac91c",
-                              "component": {
-                                "kind": "metric-widget",
-                                "entityName": "transaction",
-                                "widgetId": "top-expense-category-snapshot",
-                                "styles": [
-                                  {
-                                    "property": "maxWidth",
-                                    "value": "100%",
-                                    "valuesByBreakpoint": {
-                                      "base": "50%"
-                                    }
-                                  },
-                                  {
-                                    "property": "height",
-                                    "value": "auto"
-                                  }
-                                ]
-                              }
                             }
                           ],
                           "stackDirection": "column",

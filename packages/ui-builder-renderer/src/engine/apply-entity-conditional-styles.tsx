@@ -58,6 +58,7 @@ function buildResolveEntityConditionalOptions(
       ),
     atBreakpoint,
     resolveActivePathname: context.resolveActivePathname,
+    dashboardDateFilter: context.dashboardDateFilter,
   };
 }
 

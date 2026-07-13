@@ -2,7 +2,7 @@
   "kind": "entity-query-definitions-catalog",
   "version": 1,
   "exportedAt": "2026-07-06T20:00:00.000Z",
-  "description": "Local Rates tenant — dashboard queries for upcoming payments, mini-widget metrics, and top expense category.",
+  "description": "Local Rates tenant — dashboard queries for upcoming payments and mini-widget metrics.",
   "entityQueryDefinitions": [
     {
       "name": "Upcoming payments (dashboard)",
@@ -14,19 +14,19 @@
           {
             "type": "condition",
             "field": "status",
-            "operator": "==",
+            "operator": "in",
             "value": {
               "type": "static",
-              "value": "UPCOMING"
+              "value": ["UPCOMING", "OVERDUE"]
             }
           },
           {
             "type": "condition",
-            "field": "dueDate",
-            "operator": ">=",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "static",
+              "value": "INCOME"
             }
           },
           {
@@ -34,8 +34,9 @@
             "field": "dueDate",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           }
         ]
@@ -47,7 +48,15 @@
         }
       ],
       "limitMode": "all",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
     },
     {
       "name": "Due today (metrics)",
@@ -59,10 +68,19 @@
           {
             "type": "condition",
             "field": "status",
-            "operator": "==",
+            "operator": "in",
             "value": {
               "type": "static",
-              "value": "UPCOMING"
+              "value": ["UPCOMING", "OVERDUE"]
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
             }
           },
           {
@@ -95,6 +113,60 @@
       "status": "ACTIVE"
     },
     {
+      "name": "Overdue payments (metrics)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "OVERDUE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
+    },
+    {
       "name": "Upcoming this week (metrics)",
       "sourceEntity": "paymentSchedule",
       "filter": {
@@ -108,6 +180,15 @@
             "value": {
               "type": "static",
               "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId.flowKind",
+            "operator": "!=",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
             }
           },
           {
@@ -136,61 +217,6 @@
           "direction": "asc"
         }
       ],
-      "limitMode": "all",
-      "status": "ACTIVE"
-    },
-    {
-      "name": "Top outflow category (period)",
-      "sourceEntity": "transaction",
-      "queryMode": "aggregated",
-      "filter": {
-        "type": "group",
-        "combinator": "and",
-        "children": [
-          {
-            "type": "condition",
-            "field": "date",
-            "operator": ">=",
-            "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "date",
-            "operator": "<=",
-            "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
-            }
-          },
-          {
-            "type": "condition",
-            "field": "type",
-            "operator": "in",
-            "value": {
-              "type": "static",
-              "value": ["EXPENSE", "PAYMENT"]
-            }
-          }
-        ]
-      },
-      "sort": [],
-      "groupBy": ["categoryId"],
-      "aggregations": [
-        {
-          "operation": "SUM",
-          "field": "amount"
-        }
-      ],
-      "groupSort": [
-        {
-          "field": "sum_amount",
-          "direction": "desc"
-        }
-      ],
-      "groupLimit": 1,
       "limitMode": "all",
       "status": "ACTIVE"
     }

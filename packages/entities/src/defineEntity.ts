@@ -66,6 +66,7 @@ export function defineEntity<
     ...(config.tenantWideRead ? { tenantWideRead: true } : {}),
     ...(config.inMemoryListQueries ? { inMemoryListQueries: true } : {}),
     ...(config.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(config.emailMatchingEnabled ? { emailMatchingEnabled: true } : {}),
     ...(config.navCategoryId ? { navCategoryId: config.navCategoryId } : {}),
     ...(config.navOrder !== undefined ? { navOrder: config.navOrder } : {}),
     ...(config.displayField ? { displayField: config.displayField } : {}),

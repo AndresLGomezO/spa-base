@@ -26,6 +26,30 @@ Order: \`base\` → \`sm\` → \`md\` → \`lg\` → \`xl\`.
 
 A node is visible when \`index(displayFrom) ≤ currentBreakpoint ≤ index(displayTo)\`. Omitted both = visible on **all** screens.
 
+## Visibility rules (\`visibleWhen\`)
+
+Optional on component rows and columns. Uses the **same condition fields** as \`conditionalStyles\` (\`conditionKind\`, \`matchValue\`, \`compareFieldPath?\`). When set, the node (and subtree) only **mounts** if **every** condition matches (AND) — children do not fetch. Differs from \`displayFrom\`/\`displayTo\`, which keep nodes mounted and hide with CSS.
+
+| Field | Shape |
+|-------|-------|
+| \`visibleWhen\` | \`LayoutCondition[]\` — same condition keys as conditional style rules (no styles/badge) |
+
+Condition kinds: \`field\` (default), \`activePath\`, \`dashboardDateFilter\` (\`matchValue: "currentPeriod"\` or exact bucket). Missing dashboard date filter context → treat as **visible**. A node is shown only when **both** the responsive range and \`visibleWhen\` allow it.
+
+\`\`\`json
+{
+  "type": "component",
+  "id": "row_current_period_only",
+  "visibleWhen": [
+    {
+      "conditionKind": "dashboardDateFilter",
+      "matchValue": "currentPeriod"
+    }
+  ],
+  "component": { "kind": "container", "rows": [] }
+}
+\`\`\`
+
 ## Where to attach
 
 | Node | Applies to |

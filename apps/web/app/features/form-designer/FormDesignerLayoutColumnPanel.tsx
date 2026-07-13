@@ -4,6 +4,7 @@ import {
   CollapsibleStyleRulesEditor,
   ColumnStackDirectionEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
   filterStyleRulesForGenericEditor,
   isResponsiveGridStyleProperty,
 } from "@repo/ui-builder-react";
@@ -90,6 +91,16 @@ export function FormDesignerLayoutColumnPanel({
     />
   );
 
+  const visibleWhenEditor = (
+    <LayoutVisibleWhenEditor
+      visibleWhen={column.visibleWhen}
+      labels={labels.visibleWhen}
+      onChange={(visibleWhen) =>
+        setLayout(updateRootColumnMetaAt(layout, columnIndex, { visibleWhen }))
+      }
+    />
+  );
+
   const columnNameField = (
     <StructureColumnNameField
       id={`layout-column-name-${column.id}`}
@@ -150,12 +161,14 @@ export function FormDesignerLayoutColumnPanel({
           </div>
           {stackEditor}
           {visibilityEditor}
+          {visibleWhenEditor}
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
           {columnNameField}
           {stackEditor}
           {visibilityEditor}
+          {visibleWhenEditor}
         </FormDesignerPanelPrimaryControls>
       )}
 

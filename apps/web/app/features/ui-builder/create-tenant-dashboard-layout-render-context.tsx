@@ -67,6 +67,7 @@ export function createTenantDashboardLayoutRenderContext(
     mode: "listItem",
     data: {},
     locale,
+    dashboardDateFilter,
     resolveField: () => undefined,
     isImagePresent: (_fieldPath, rawValue) => {
       if (typeof rawValue !== "string" || rawValue.trim().length === 0) {

@@ -225,10 +225,10 @@ export type DataHookUpdateMatchingWhereInput =
 
 const expressionRecordSchema = z.record(z.string(), expressionNodeSchema);
 
-/** Max `getRecord` actions per hook definition. */
+/** Max `getRecord` / `getOrCreateRecord` actions per hook definition. */
 export const MAX_LOADED_RECORDS = 8;
 
-/** Alias pattern for `getRecord.as` and loaded field references. */
+/** Alias pattern for loaded field references (`getRecord` / `getOrCreateRecord`). */
 export const DATA_HOOK_LOADED_ALIAS_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]{0,31}$/;
 
 export const DATA_HOOK_AGGREGATE_OPERATORS = [
@@ -290,6 +290,32 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     id: expressionNodeSchema,
     as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
   }),
+  z
+    .object({
+      type: z.literal("getOrCreateRecord"),
+      entity: z.string().trim().min(1),
+      where: dataHookUpdateMatchingWhereSchema,
+      /**
+       * When true (default), create from `data` if no match. When false, load
+       * `null` instead of creating (`data` may be omitted).
+       */
+      createIfMissing: z.boolean().optional(),
+      data: expressionRecordSchema.optional(),
+      as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+    })
+    .superRefine((action, ctx) => {
+      if (action.createIfMissing === false) {
+        return;
+      }
+      if (action.data == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'getOrCreateRecord requires "data" when createIfMissing is true (default).',
+          path: ["data"],
+        });
+      }
+    }),
   z.object({
     type: z.literal("aggregateMatching"),
     entity: z.string().trim().min(1),
@@ -396,6 +422,7 @@ export function actionTargetEntities(
     case "deleteMatching":
     case "deleteRecord":
     case "getRecord":
+    case "getOrCreateRecord":
     case "aggregateMatching":
       return [action.entity];
     case "setField":

@@ -493,6 +493,7 @@ export interface EntityDefinitionRecord {
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
+  readonly emailMatchingEnabled?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
@@ -511,6 +512,7 @@ interface CreateEntityDefinitionInput {
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
+  readonly emailMatchingEnabled?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
@@ -553,6 +555,7 @@ interface PatchEntityDefinitionInput {
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
+  readonly emailMatchingEnabled?: boolean;
   readonly navCategoryId?: string | null;
   readonly navOrder?: number | null;
   readonly displayField?: string | null;
@@ -1831,6 +1834,20 @@ interface EmailMatchBindingRecord {
   readonly gmailQueryExtra?: string | null;
   readonly useAi: boolean;
   readonly aiInstructions?: string | null;
+  readonly bodyFieldExtractors?: readonly {
+    readonly field: string;
+    readonly label?: string;
+    readonly pattern?: string;
+    readonly captureGroup?: number;
+    readonly transform?:
+      | "trim"
+      | "amount"
+      | "slashDate"
+      | "valueMap"
+      | "literal";
+    readonly valueMap?: Readonly<Record<string, string>>;
+    readonly literal?: string;
+  }[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -1844,7 +1861,7 @@ export async function startGmailConnect(): Promise<{
 }> {
   return apiRequest<{ readonly authorizeUrl: string }>("/api/gmail/connect", {
     method: "POST",
-    body: {},
+    body: { returnOrigin: window.location.origin },
   });
 }
 
@@ -1861,10 +1878,19 @@ export async function startGmailBackfill(input?: {
   readonly afterDate?: string;
   readonly beforeDate?: string;
   readonly maxMessages?: number;
+  readonly bindingId?: string;
+  readonly reprocess?: boolean;
 }): Promise<{ readonly jobId: string }> {
   return apiRequest<{ readonly jobId: string }>("/api/gmail/backfill", {
     method: "POST",
     body: input ?? {},
+  });
+}
+
+export async function startGmailSync(): Promise<{ readonly jobId: string }> {
+  return apiRequest<{ readonly jobId: string }>("/api/gmail/sync", {
+    method: "POST",
+    body: {},
   });
 }
 
@@ -1891,6 +1917,7 @@ export async function createEmailMatchBinding(input: {
   readonly gmailQueryExtra?: string | null;
   readonly useAi?: boolean;
   readonly aiInstructions?: string | null;
+  readonly bodyFieldExtractors?: EmailMatchBindingRecord["bodyFieldExtractors"];
 }): Promise<EmailMatchBindingRecord> {
   return apiRequest<EmailMatchBindingRecord>("/api/gmail/bindings", {
     method: "POST",
@@ -1908,6 +1935,7 @@ export async function patchEmailMatchBinding(
     gmailQueryExtra: string | null;
     useAi: boolean;
     aiInstructions: string | null;
+    bodyFieldExtractors: EmailMatchBindingRecord["bodyFieldExtractors"];
   }>,
 ): Promise<EmailMatchBindingRecord> {
   return apiRequest<EmailMatchBindingRecord>(

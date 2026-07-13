@@ -31,13 +31,13 @@ UiLayoutDocument
 |------|-------------|------------|
 | Screen root | \`screen-root\` | \`id\`, \`gridTemplateColumns\`, \`gap?\`, \`rows[]\`, \`styles?\` |
 | Column root | \`root\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\` |
-| Component row | \`component\` | \`id\`, \`component\`, \`styles?\`, \`motion?\`, \`displayFrom?\`, \`displayTo?\` |
+| Component row | \`component\` | \`id\`, \`component\`, \`styles?\`, \`motion?\`, \`displayFrom?\`, \`displayTo?\`, \`visibleWhen?\` |
 | Container | \`container\` | \`rows[]\`, \`stackDirection?\`, \`styles?\` |
 | Grid | \`grid\` | \`gridTemplateColumns\`, \`gap?\`, \`alignItems?\`, \`rows[]\`, \`styles?\` |
 
 Optional document fields: \`showActions\`, \`cardsPerRow\` (1–4), \`motion\`.
 
-See \`ui.responsive-visibility\` for breakpoint visibility rules.
+See \`ui.responsive-visibility\` for breakpoint and dashboard date-filter visibility rules.
 
 ## List card pattern (recommended)
 

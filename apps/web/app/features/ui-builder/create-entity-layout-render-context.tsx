@@ -96,6 +96,7 @@ export function createEntityLayoutRenderContext(options: {
     data: item,
     locale,
     relationLinkAppearance,
+    dashboardDateFilter,
     resolveField,
     resolveFieldMeta: (path) =>
       resolveLayoutSlotDisplayMeta(path, definition, getDefinition),

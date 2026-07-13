@@ -235,7 +235,7 @@ describe("recurring schedule formulas", () => {
       },
       { loopIndex: 2 },
     );
-    expect(quarterlyDueDate).toBe("2026-07-15T00:00:00.000Z");
+    expect(quarterlyDueDate).toBe("2026-07-15");
   });
 
   it("advances due date by one frequency step", () => {
@@ -243,7 +243,7 @@ describe("recurring schedule formulas", () => {
       baseDate: { kind: "literal", value: "2026-03-01" },
       frequency: frequencyInput("BIWEEKLY"),
     });
-    expect(advanced).toBe("2026-03-15T00:00:00.000Z");
+    expect(advanced).toBe("2026-03-15");
   });
 
   it("defaults schedule horizon to 12 months", () => {

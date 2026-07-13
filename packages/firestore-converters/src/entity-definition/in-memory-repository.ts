@@ -1,6 +1,7 @@
 import {
   applyDisplayFieldToRecord,
   applyDescription,
+  applyEmailMatchingEnabled,
   applyHiddenFromNav,
   applyInMemoryListQueries,
   applyNavCategoryId,
@@ -64,6 +65,9 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
           ? { inMemoryListQueries: true }
           : {}),
         ...(input.hiddenFromNav === true ? { hiddenFromNav: true } : {}),
+        ...(input.emailMatchingEnabled === true
+          ? { emailMatchingEnabled: true }
+          : {}),
         ...(input.navCategoryId ? { navCategoryId: input.navCategoryId } : {}),
         ...(input.navOrder !== undefined ? { navOrder: input.navOrder } : {}),
         ...displayFieldForCreate(input),
@@ -83,27 +87,30 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
       const now = new Date().toISOString();
       const base = applyNavOrder(
         applyNavCategoryId(
-          applyHiddenFromNav(
-            applyInMemoryListQueries(
-              applyTenantWideRead(
-                applyDescription(
-                  applyDisplayFieldToRecord(
-                    {
-                      ...current,
-                      ...(input.label ? { label: input.label } : {}),
-                      ...(input.fields ? { fields: input.fields } : {}),
-                      version: current.version + 1,
-                      updatedAt: now,
-                    },
-                    input,
+          applyEmailMatchingEnabled(
+            applyHiddenFromNav(
+              applyInMemoryListQueries(
+                applyTenantWideRead(
+                  applyDescription(
+                    applyDisplayFieldToRecord(
+                      {
+                        ...current,
+                        ...(input.label ? { label: input.label } : {}),
+                        ...(input.fields ? { fields: input.fields } : {}),
+                        version: current.version + 1,
+                        updatedAt: now,
+                      },
+                      input,
+                    ),
+                    input.description,
                   ),
-                  input.description,
+                  input.tenantWideRead,
                 ),
-                input.tenantWideRead,
+                input.inMemoryListQueries,
               ),
-              input.inMemoryListQueries,
+              input.hiddenFromNav,
             ),
-            input.hiddenFromNav,
+            input.emailMatchingEnabled,
           ),
           input.navCategoryId,
         ),

@@ -437,6 +437,29 @@
                             },
                             {
                               "type": "component",
+                              "id": "row-payments-by-month",
+                              "component": {
+                                "kind": "metric-widget",
+                                "entityName": "account",
+                                "widgetId": "payments-by-month",
+                                "styles": [
+                                  {
+                                    "property": "height",
+                                    "value": "100%"
+                                  },
+                                  {
+                                    "property": "minWidth",
+                                    "value": "100"
+                                  },
+                                  {
+                                    "property": "maxWidth",
+                                    "value": "250"
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "component",
                               "id": "row-fc8644ed-5f67-45d8-8b66-9ebcf1b75e33",
                               "component": {
                                 "kind": "metric-widget",

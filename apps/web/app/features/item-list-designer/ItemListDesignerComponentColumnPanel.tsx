@@ -4,6 +4,7 @@ import {
   CollapsibleStyleRulesEditor,
   ColumnStackDirectionEditor,
   ComponentDisplayRangeEditor,
+  LayoutVisibleWhenEditor,
   ResponsiveGridEditor,
   filterStyleRulesForGenericEditor,
   isResponsiveGridStyleProperty,
@@ -97,6 +98,14 @@ export function ItemListDesignerComponentColumnPanel({
       labels={labels.displayRange}
       variant="inline"
       onChange={(patch) => applyColumnPatch(patch)}
+    />
+  );
+
+  const visibleWhenEditor = (
+    <LayoutVisibleWhenEditor
+      visibleWhen={column.visibleWhen}
+      labels={labels.visibleWhen}
+      onChange={(visibleWhen) => applyColumnPatch({ visibleWhen })}
     />
   );
 
@@ -202,12 +211,14 @@ export function ItemListDesignerComponentColumnPanel({
           </div>
           {stackEditor}
           {visibilityEditor}
+          {visibleWhenEditor}
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
           {columnNameField}
           {stackEditor}
           {visibilityEditor}
+          {visibleWhenEditor}
         </FormDesignerPanelPrimaryControls>
       )}
 

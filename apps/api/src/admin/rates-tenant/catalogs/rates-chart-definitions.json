@@ -86,8 +86,8 @@
           "rowFilters": [
             {
               "whenField": "type",
-              "whenOperator": "in",
-              "whenValue": ["EXPENSE", "PAYMENT"]
+              "whenOperator": "==",
+              "whenValue": "EXPENSE"
             }
           ]
         }
@@ -124,13 +124,13 @@
       }
     },
     {
-      "name": "Top category expense trend chart",
+      "name": "Payments trend chart",
       "chartType": "area",
       "status": "ACTIVE",
       "displayMode": "overlay",
       "dataSource": {
         "type": "entityQuery",
-        "entityQueryDefinitionId": "Category transaction trend",
+        "entityQueryDefinitionId": "Transaction trend",
         "xFieldPath": "date",
         "yFieldPath": "amount",
         "timeSeries": {
@@ -142,16 +142,23 @@
             "offsetStart": 0,
             "offsetEnd": 0
           },
-          "aggregate": "sum"
+          "aggregate": "sum",
+          "rowFilters": [
+            {
+              "whenField": "type",
+              "whenOperator": "==",
+              "whenValue": "PAYMENT"
+            }
+          ]
         }
       },
       "series": [
         {
           "id": "default",
-          "label": "Category expenses",
-          "color": "var(--color-chart-glow-2)",
+          "label": "Payments",
+          "color": "var(--color-chart-glow-3)",
           "showAreaFill": true,
-          "areaFillColor": "var(--color-chart-glow-2)",
+          "areaFillColor": "var(--color-chart-glow-3)",
           "areaFillOpacity": 0.18,
           "strokeWidth": 2
         }

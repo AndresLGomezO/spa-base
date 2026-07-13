@@ -2,7 +2,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
-import { Button, IconButton, Input, Text } from "@repo/ui";
+import { Button, Checkbox, IconButton, Input, Text } from "@repo/ui";
 import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import type {
   DataHookAction,
@@ -125,6 +125,7 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "deleteMatching",
   "deleteRecord",
   "getRecord",
+  "getOrCreateRecord",
   "aggregateMatching",
   "sendNotification",
   "callWebhook",
@@ -149,7 +150,10 @@ function collectLoadedBindingsBefore(
   const bindings: LoadedBinding[] = [];
   for (let index = 0; index < beforeIndex; index += 1) {
     const action = actions[index];
-    if (action?.type === "getRecord" && action.as.trim()) {
+    if (
+      (action?.type === "getRecord" || action?.type === "getOrCreateRecord") &&
+      action.as.trim()
+    ) {
       bindings.push({ alias: action.as, entity: action.entity });
     }
   }
@@ -584,6 +588,71 @@ function ActionEditor({
         </div>
       );
 
+    case "getOrCreateRecord":
+      return (
+        <div className="space-y-3">
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
+          <CollapsibleSection
+            title={t("dataHooks.actions.matchWhere")}
+            defaultOpen
+          >
+            <DataHookConditionEditor
+              value={action.where}
+              fieldNames={getFieldNames(action.entity)}
+              valueFieldNames={triggerFieldNames}
+              suppressRootHeader
+              onChange={(where) => onChange({ ...action, where })}
+            />
+          </CollapsibleSection>
+          <Checkbox
+            checked={action.createIfMissing !== false}
+            label={t("dataHooks.actions.createIfMissing")}
+            onChange={(event) => {
+              const createIfMissing = event.target.checked;
+              onChange({
+                ...action,
+                createIfMissing: createIfMissing ? undefined : false,
+                data: createIfMissing ? (action.data ?? {}) : action.data,
+              });
+            }}
+          />
+          {action.createIfMissing !== false ? (
+            <FieldMapEditor
+              label={t("dataHooks.actions.recordData")}
+              value={action.data ?? {}}
+              fieldNames={getFieldNames(action.entity)}
+              loadedBindings={loadedBindings}
+              aggregateBindings={aggregateBindings}
+              onChange={(data) => onChange({ ...action, data })}
+            />
+          ) : null}
+          <Text className="text-muted-foreground text-xs">
+            {t(
+              action.createIfMissing === false
+                ? "dataHooks.actions.getOrCreateRecordFindOnlyHint"
+                : "dataHooks.actions.getOrCreateRecordHint",
+            )}
+          </Text>
+          <CollapsibleSection
+            title={t("dataHooks.actions.alias")}
+            defaultOpen={Boolean(action.as)}
+          >
+            <Input
+              value={action.as}
+              placeholder={t("dataHooks.actions.aliasPlaceholder")}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </CollapsibleSection>
+        </div>
+      );
+
     case "aggregateMatching":
       return (
         <div className="space-y-3">
@@ -714,6 +783,14 @@ export function emptyActionOfType(
       return { type, entity: "", id: literal() };
     case "getRecord":
       return { type, entity: "", id: literal(), as: "parent" };
+    case "getOrCreateRecord":
+      return {
+        type,
+        entity: "",
+        where: createDefaultConditionRoot(),
+        data: {},
+        as: "record",
+      };
     case "aggregateMatching":
       return {
         type,

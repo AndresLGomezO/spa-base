@@ -7,7 +7,7 @@
     {
       "name": "Due today",
       "viewId": "due-today",
-      "entityQueryDefinitionName": "Due today",
+      "entityQueryDefinitionName": "Due today (metrics)",
       "navCategoryId": "cat_movements",
       "navOrder": 3,
       "nav": {

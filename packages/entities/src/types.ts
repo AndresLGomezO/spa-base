@@ -208,6 +208,7 @@ export interface EntityMetadata<
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
+  readonly emailMatchingEnabled?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
@@ -246,6 +247,7 @@ export type EntityConfig<
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
+  readonly emailMatchingEnabled?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;

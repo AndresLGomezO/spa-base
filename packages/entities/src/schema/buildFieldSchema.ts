@@ -25,7 +25,8 @@ function applyOptional(
   if (config.required === true && !hasDefault) {
     return schema;
   }
-  return schema.optional();
+  // Firestore and hooks commonly send null for unset optional fields.
+  return schema.nullish();
 }
 
 function wrapAsArray(
@@ -112,7 +113,7 @@ function isForeignKeyRelationField(
 const relationFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
     if (!isForeignKeyRelationField(config)) {
-      return z.never().optional();
+      return z.never().nullish();
     }
 
     const base = z.string().trim().min(1);
@@ -120,21 +121,21 @@ const relationFieldBuilder: FieldSchemaBuilder = {
   },
   buildFullFieldSchema(config) {
     if (!isForeignKeyRelationField(config)) {
-      return z.never().optional();
+      return z.never().nullish();
     }
 
     const base = z.string().trim().min(1);
     if (config.required === true) {
       return base;
     }
-    return base.optional();
+    return base.nullish();
   },
 };
 
 const enumFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
     if (config.type !== "enum") {
-      return z.never().optional();
+      return z.never().nullish();
     }
     const base = wrapAsArray(
       z.enum(config.enumValues as [string, ...string[]]),
@@ -144,7 +145,7 @@ const enumFieldBuilder: FieldSchemaBuilder = {
   },
   buildFullFieldSchema(config) {
     if (config.type !== "enum") {
-      return z.never().optional();
+      return z.never().nullish();
     }
     const base = wrapAsArray(
       z.enum(config.enumValues as [string, ...string[]]),
@@ -164,7 +165,7 @@ function fileFieldBuilder(schema: z.ZodTypeAny): FieldSchemaBuilder {
       if (config.required === true) {
         return base;
       }
-      return base.optional();
+      return base.nullish();
     },
   };
 }
@@ -201,5 +202,5 @@ export function buildFieldSchema(
   if (config.required === true || hasDefault) {
     return schema;
   }
-  return schema.optional();
+  return schema.nullish();
 }

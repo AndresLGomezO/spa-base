@@ -198,6 +198,17 @@ describe("evaluateExpression", () => {
       evaluateExpression(
         {
           kind: "call",
+          fn: "dateOnly",
+          args: [{ kind: "literal", value: "2026-07-15T00:00:00.000Z" }],
+        },
+        scope(),
+      ),
+    ).toBe("2026-07-15");
+
+    expect(
+      evaluateExpression(
+        {
+          kind: "call",
           fn: "startsWith",
           args: [
             { kind: "literal", value: "prefix-value" },
@@ -622,5 +633,49 @@ describe("expressionNodeSchema array literal", () => {
     expect(evaluateExpression(node, sharedScope)).toBe(0);
     expect(evaluateExpression(node, { ...sharedScope, loopIndex: 1 })).toBe(1);
     expect(resolveCount).toBe(2);
+  });
+
+  it("compares date-only and ISO timestamps as the same UTC calendar day", () => {
+    const node: ExpressionNode = {
+      kind: "binary",
+      op: "==",
+      left: { kind: "literal", value: "2026-07-12" },
+      right: { kind: "literal", value: "2026-07-12T15:45:00.000Z" },
+    };
+    expect(evaluateExpression(node, scope())).toBe(true);
+
+    const differentDay: ExpressionNode = {
+      kind: "binary",
+      op: "==",
+      left: { kind: "literal", value: "2026-07-12" },
+      right: { kind: "literal", value: "2026-07-13T00:00:00.000Z" },
+    };
+    expect(evaluateExpression(differentDay, scope())).toBe(false);
+  });
+
+  it("orders date-only against ISO timestamps by UTC calendar day", () => {
+    const sameDayGte: ExpressionNode = {
+      kind: "binary",
+      op: ">=",
+      left: { kind: "literal", value: "2026-07-01" },
+      right: { kind: "literal", value: "2026-07-01T16:17:00" },
+    };
+    const sameDayLte: ExpressionNode = {
+      kind: "binary",
+      op: "<=",
+      left: { kind: "literal", value: "2026-07-01" },
+      right: { kind: "literal", value: "2026-07-01T16:17:00" },
+    };
+    const nextDayGte: ExpressionNode = {
+      kind: "binary",
+      op: ">=",
+      left: { kind: "literal", value: "2026-07-01" },
+      right: { kind: "literal", value: "2026-07-02T00:00:00" },
+    };
+    // Same calendar day must satisfy both directions so schedule onOrAfter
+    // includes the due date when the txn timestamp is later that day.
+    expect(evaluateExpression(sameDayGte, scope())).toBe(true);
+    expect(evaluateExpression(sameDayLte, scope())).toBe(true);
+    expect(evaluateExpression(nextDayGte, scope())).toBe(false);
   });
 });

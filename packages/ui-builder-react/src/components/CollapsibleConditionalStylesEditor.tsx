@@ -50,6 +50,9 @@ export interface CollapsibleConditionalStylesEditorLabels {
   readonly conditionKind?: string;
   readonly conditionKindField?: string;
   readonly conditionKindActivePath?: string;
+  readonly conditionKindDashboardDateFilter?: string;
+  readonly dashboardDateFilterHint?: string;
+  readonly matchCurrentPeriod?: string;
   readonly activePathHint?: string;
   readonly preview: string;
   readonly addRule: string;
@@ -166,11 +169,15 @@ function isActivePathRule(rule: ConditionalStyleRule): boolean {
   return rule.conditionKind === "activePath";
 }
 
+function isDashboardDateFilterRule(rule: ConditionalStyleRule): boolean {
+  return rule.conditionKind === "dashboardDateFilter";
+}
+
 function normalizeRuleCompareField(
   rule: ConditionalStyleRule,
   defaultCompareFieldPath?: string,
 ): ConditionalStyleRule {
-  if (isActivePathRule(rule)) {
+  if (isActivePathRule(rule) || isDashboardDateFilterRule(rule)) {
     const {
       compareFieldPath: _path,
       compareFieldDateFormat: _format,
@@ -243,7 +250,9 @@ function normalizeConditionalStyleRule(
   defaultCompareFieldDateFormat?: FieldDateDisplayFormat,
 ): ConditionalStyleRule {
   let next =
-    fieldOptions.length === 0 && rule.conditionKind !== "activePath"
+    fieldOptions.length === 0 &&
+    rule.conditionKind !== "activePath" &&
+    rule.conditionKind !== "dashboardDateFilter"
       ? { ...rule, conditionKind: "activePath" as const }
       : rule;
 
@@ -254,6 +263,14 @@ function normalizeConditionalStyleRule(
       ...next,
       conditionKind: "activePath",
       matchValue: next.matchValue.trim(),
+    };
+  }
+
+  if (isDashboardDateFilterRule(next)) {
+    return {
+      ...next,
+      conditionKind: "dashboardDateFilter",
+      matchValue: next.matchValue.trim() || "currentPeriod",
     };
   }
 
@@ -398,6 +415,7 @@ function ConditionalRuleForm({
   );
   const showDateFormat =
     !isActivePathRule(draft) &&
+    !isDashboardDateFilterRule(draft) &&
     isDateCompareFieldPath(effectiveCompareFieldPath, fieldOptions);
   const defaultDateFormat = resolveDefaultDateFormatForPath(
     effectiveCompareFieldPath,
@@ -412,20 +430,23 @@ function ConditionalRuleForm({
       defaultCompareFieldPath,
       defaultCompareFieldDateFormat,
     ) ?? "datetime";
-  const ruleHint = isActivePathRule(draft)
-    ? (labels.activePathHint ?? hint)
-    : resolveRuleHint(
-        draft,
-        fieldOptions,
-        defaultCompareFieldPath,
-        defaultCompareFieldDateFormat,
-        hint,
-        daysRemainingHint,
-      );
+  const ruleHint = isDashboardDateFilterRule(draft)
+    ? (labels.dashboardDateFilterHint ?? hint)
+    : isActivePathRule(draft)
+      ? (labels.activePathHint ?? hint)
+      : resolveRuleHint(
+          draft,
+          fieldOptions,
+          defaultCompareFieldPath,
+          defaultCompareFieldDateFormat,
+          hint,
+          daysRemainingHint,
+        );
   const allowConditionKindSelect = mode !== "wizard-status";
   const allowFieldCondition = fieldOptions.length > 0;
   const showCompareField =
     !isActivePathRule(draft) &&
+    !isDashboardDateFilterRule(draft) &&
     mode !== "wizard-status" &&
     fieldOptions.length > 0;
   const compareFieldEnumValues = resolveCompareFieldEnumValues(
@@ -434,8 +455,16 @@ function ConditionalRuleForm({
   );
   const showEnumMatchValue =
     !isActivePathRule(draft) &&
+    !isDashboardDateFilterRule(draft) &&
     mode !== "wizard-status" &&
     compareFieldEnumValues.length > 0;
+  const selectedConditionKind = isDashboardDateFilterRule(draft)
+    ? "dashboardDateFilter"
+    : isActivePathRule(draft)
+      ? "activePath"
+      : allowFieldCondition
+        ? "field"
+        : "dashboardDateFilter";
 
   return (
     <div className="flex flex-col gap-5">
@@ -445,11 +474,7 @@ function ConditionalRuleForm({
             {labels.conditionKind ?? "Condition"}
           </span>
           <Select
-            value={
-              isActivePathRule(draft) || !allowFieldCondition
-                ? "activePath"
-                : "field"
-            }
+            value={selectedConditionKind}
             onChange={(event) => {
               const nextKind = event.target.value;
               if (nextKind === "activePath") {
@@ -466,6 +491,21 @@ function ConditionalRuleForm({
                 });
                 return;
               }
+              if (nextKind === "dashboardDateFilter") {
+                const {
+                  compareFieldPath: _path,
+                  compareFieldDateFormat: _format,
+                  ...rest
+                } = draft;
+                void _path;
+                void _format;
+                onChange({
+                  ...rest,
+                  conditionKind: "dashboardDateFilter",
+                  matchValue: draft.matchValue.trim() || "currentPeriod",
+                });
+                return;
+              }
               const { conditionKind: _kind, ...rest } = draft;
               void _kind;
               onChange(rest);
@@ -478,6 +518,10 @@ function ConditionalRuleForm({
             ) : null}
             <option value="activePath">
               {labels.conditionKindActivePath ?? "Active path"}
+            </option>
+            <option value="dashboardDateFilter">
+              {labels.conditionKindDashboardDateFilter ??
+                "Dashboard date filter"}
             </option>
           </Select>
         </label>
@@ -578,6 +622,17 @@ function ConditionalRuleForm({
                 {status}
               </option>
             ))}
+          </Select>
+        ) : isDashboardDateFilterRule(draft) ? (
+          <Select
+            value={draft.matchValue || "currentPeriod"}
+            onChange={(event) =>
+              onChange({ ...draft, matchValue: event.target.value })
+            }
+          >
+            <option value="currentPeriod">
+              {labels.matchCurrentPeriod ?? "Current period"}
+            </option>
           </Select>
         ) : showEnumMatchValue ? (
           <Select
@@ -761,6 +816,9 @@ export function CollapsibleConditionalStylesEditor({
   const formatRuleMatchSummary = (rule: ConditionalStyleRule): string => {
     if (isActivePathRule(rule)) {
       return `path = ${rule.matchValue || "—"}`;
+    }
+    if (isDashboardDateFilterRule(rule)) {
+      return `dateFilter = ${rule.matchValue || "—"}`;
     }
     const comparePath = resolveEffectiveCompareFieldPath(
       rule,

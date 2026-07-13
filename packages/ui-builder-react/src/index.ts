@@ -63,6 +63,17 @@ export {
   type ComponentDisplayRangeEditorProps,
 } from "./components/ComponentDisplayRangeEditor.js";
 export {
+  LayoutVisibleWhenEditor,
+  DASHBOARD_DATE_FILTER_CURRENT_PERIOD,
+  type LayoutVisibleWhenEditorLabels,
+  type LayoutVisibleWhenEditorProps,
+} from "./components/LayoutVisibleWhenEditor.js";
+export {
+  LayoutConditionsEditor,
+  type LayoutConditionsEditorLabels,
+  type LayoutConditionsEditorProps,
+} from "./components/LayoutConditionsEditor.js";
+export {
   ResponsiveGridEditor,
   type ResponsiveGridEditorLabels,
   type ResponsiveGridEditorProps,

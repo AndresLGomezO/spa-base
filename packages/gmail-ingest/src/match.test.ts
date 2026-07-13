@@ -98,6 +98,7 @@ describe("findBestMatchingBinding", () => {
           createdAt: "a",
           updatedAt: "a",
           useAi: false,
+          bodyFieldExtractors: [],
         },
         {
           id: "specific",
@@ -112,6 +113,7 @@ describe("findBestMatchingBinding", () => {
           createdAt: "a",
           updatedAt: "a",
           useAi: false,
+          bodyFieldExtractors: [],
         },
       ],
       {

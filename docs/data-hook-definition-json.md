@@ -148,7 +148,7 @@ When `chainHooks: true`, entity writes and deletes from this hook's actions (`cr
 | Max `createRecords` (queued) | 5,000 (`MAX_CREATE_RECORDS_QUEUED`) | `after` + `execution: "queued"` only |
 | Max matching records | 500 | `updateMatching` / `deleteMatching` / scheduled `eachRecord` fan-out |
 | Max scheduled records per tick | 500 | `eachRecord` scope per hook per tick |
-| Max loaded records | 8 | `getRecord` actions per hook |
+| Max loaded records | 8 | `getRecord` / `getOrCreateRecord` actions per hook |
 | Max aggregate actions | 8 | `aggregateMatching` actions per hook |
 | Max hook depth | 5 | Chained dispatch |
 | Max call arguments | 16 | Expression `call` nodes |
@@ -565,7 +565,79 @@ Requires `${entity}.read` permission. Missing records fail the hook. Later actio
 { "kind": "field", "source": "loaded", "alias": "parent", "path": "frequency" }
 ```
 
-Maximum **8** `getRecord` actions per hook definition.
+Maximum **8** `getRecord` / `getOrCreateRecord` actions per hook definition (combined).
+
+### `getOrCreateRecord`
+
+Find the first record matching a compound `where` tree (same shape as `updateMatching`). If none match, create one from `data` and load the created record (unless `createIfMissing` is `false`). Allowed in **before** and **after** phases. Create uses the same `chainHooks` write options as `createRecord`.
+
+```json
+{
+  "type": "getOrCreateRecord",
+  "entity": "category",
+  "where": {
+    "type": "condition",
+    "field": "name",
+    "operator": "==",
+    "value": { "kind": "field", "source": "current", "path": "__extracted.fields.categoryName" }
+  },
+  "data": {
+    "name": { "kind": "field", "source": "current", "path": "__extracted.fields.categoryName" },
+    "kind": { "kind": "literal", "value": "EXPENSE" }
+  },
+  "as": "category"
+}
+```
+
+Find-only (no create on miss):
+
+```json
+{
+  "type": "getOrCreateRecord",
+  "entity": "financialItem",
+  "createIfMissing": false,
+  "where": {
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      {
+        "type": "condition",
+        "field": "name",
+        "operator": "==",
+        "value": { "kind": "field", "source": "current", "path": "__extracted.fields.matchedSubscriptionName" }
+      },
+      {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "==",
+        "value": { "kind": "field", "source": "current", "path": "id" }
+      }
+    ]
+  },
+  "as": "subscription"
+}
+```
+
+- `entity` (required): target entity name
+- `where` (required): condition tree with at least one `==` lookup leaf
+- `createIfMissing` (optional, default `true`): when `false`, set `loaded.{as}` to `null` if no match instead of creating
+- `data` (required when `createIfMissing` is true/omitted): field expressions used **only when creating**; optional when `createIfMissing` is `false`
+- `as` (required): alias name; unique among all loaded / aggregate aliases in the hook
+
+If the lookup `==` value evaluates to `null` or an empty string, the action sets `loaded.{as}` to `null` and does **not** create a record. Later actions can fall back with `coalesce`:
+
+```json
+{
+  "kind": "call",
+  "fn": "coalesce",
+  "args": [
+    { "kind": "field", "source": "loaded", "alias": "category", "path": "id" },
+    { "kind": "field", "source": "current", "path": "categoryId" }
+  ]
+}
+```
+
+Requires `${entity}.read` (and `${entity}.create` when creating — skipped when `createIfMissing` is `false`). Later actions reference loaded fields the same way as `getRecord`.
 
 ### `aggregateMatching`
 
@@ -603,7 +675,7 @@ Compute a scalar over records matching a compound `where` tree (same shape as `u
 - `where` (required): condition tree with at least one `==` lookup leaf (max 500 matched rows)
 - `op` (required): `count` | `sum` | `min` | `max` | `avg`
 - `field` (required when `op` is not `count`): field name on matched records to reduce
-- `as` (required): alias for the result; unique among all `getRecord` / `aggregateMatching` actions in the hook
+- `as` (required): alias for the result; unique among all `getRecord` / `getOrCreateRecord` / `aggregateMatching` actions in the hook
 
 Requires `${entity}.read` permission. Later actions reference the result with:
 
@@ -627,6 +699,7 @@ There is **no** `list` action in the data hooks engine. Expressions cannot perfo
 | Need | Supported pattern |
 |------|-------------------|
 | Fetch one related row | `getRecord` → reference with `{ "kind": "field", "source": "loaded", "alias": "…" }` |
+| Find by field or create | `getOrCreateRecord` → same `loaded` references; empty lookup loads `null` |
 | Count / sum / min / max / avg over matches | `aggregateMatching` → `{ "kind": "field", "source": "aggregate", "alias": "…" }` |
 | Update or delete many rows | `updateMatching` / `deleteMatching` with compound `where` (AND/OR tree) |
 | List rows inside an expression | **Not supported** — use aggregates or side-effect actions |
@@ -1102,7 +1175,72 @@ Condition tree + `setField` — complete loan when amount meets commitment.
     }
   ],
   "enabled": true,
-  "order": 2
+  "order": 0
+}
+```
+
+### 11.3b Get or create related record
+
+`after` + `getOrCreateRecord` — resolve a category by name (create if missing), then use its id.
+
+```json
+{
+  "name": "Ensure category then create transaction",
+  "entity": "financialItem",
+  "phase": "after",
+  "trigger": { "kind": "email" },
+  "condition": null,
+  "actions": [
+    {
+      "type": "getOrCreateRecord",
+      "entity": "category",
+      "where": {
+        "type": "condition",
+        "field": "name",
+        "operator": "==",
+        "value": {
+          "kind": "field",
+          "source": "current",
+          "path": "__extracted.fields.categoryName"
+        }
+      },
+      "data": {
+        "name": {
+          "kind": "field",
+          "source": "current",
+          "path": "__extracted.fields.categoryName"
+        },
+        "kind": { "kind": "literal", "value": "EXPENSE" }
+      },
+      "as": "category"
+    },
+    {
+      "type": "createRecord",
+      "entity": "transaction",
+      "data": {
+        "categoryId": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "field",
+              "source": "loaded",
+              "alias": "category",
+              "path": "id"
+            },
+            { "kind": "field", "source": "current", "path": "categoryId" }
+          ]
+        },
+        "amount": {
+          "kind": "field",
+          "source": "current",
+          "path": "__extracted.fields.amount"
+        }
+      }
+    }
+  ],
+  "enabled": true,
+  "order": 0
 }
 ```
 
@@ -1349,8 +1487,8 @@ Do **not** assume these features exist:
 - [ ] All **field names** match the entity schema (camelCase).
 - [ ] **Expressions** use valid AST (`kind` discriminator on every node).
 - [ ] **Condition** nodes use `type: "group"` or `type: "condition"` (or legacy bare leaf).
-- [ ] **`aggregateMatching`** aliases are unique (including vs `getRecord`); `count` omits `field`; other ops require `field`.
-- [ ] **`getRecord`** aliases are unique; loaded field references use only aliases from prior actions in the same hook.
+- [ ] **`aggregateMatching`** aliases are unique (including vs `getRecord` / `getOrCreateRecord`); `count` omits `field`; other ops require `field`.
+- [ ] **`getRecord` / `getOrCreateRecord`** aliases are unique; loaded field references use only aliases from prior actions in the same hook.
 - [ ] **`deleteMatching` / `deleteRecord`** are used only on **after** phase hooks.
 - [ ] **`updateMatching.where`** is a condition tree or legacy typeless leaf, and includes at least one `==` leaf with a value expression for lookup.
 - [ ] **`chainHooks`** is enabled only when downstream hooks on target entities are intended.

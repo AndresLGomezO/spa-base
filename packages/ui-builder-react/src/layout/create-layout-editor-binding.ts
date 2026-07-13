@@ -44,6 +44,7 @@ export interface LayoutEditorBinding {
         | "displayTo"
         | "name"
         | "clickAction"
+        | "visibleWhen"
       >
     >,
   ) => void;
@@ -58,7 +59,10 @@ export interface LayoutEditorBinding {
   readonly updateGridRowMeta: (
     rowRef: ComponentRowRef,
     patch: Partial<
-      Pick<ComponentRowNode, "styles" | "displayFrom" | "displayTo" | "name">
+      Pick<
+        ComponentRowNode,
+        "styles" | "displayFrom" | "displayTo" | "name" | "visibleWhen"
+      >
     > & {
       readonly gap?: string;
       readonly alignItems?: import("@repo/ui-builder-core").LayoutAlign;
@@ -73,6 +77,7 @@ export interface LayoutEditorBinding {
       readonly styles?: readonly StyleRule[];
       readonly displayFrom?: ColumnNode["displayFrom"];
       readonly displayTo?: ColumnNode["displayTo"];
+      readonly visibleWhen?: ColumnNode["visibleWhen"];
       readonly name?: ColumnNode["name"];
     },
   ) => void;
@@ -169,8 +174,11 @@ export function createLayoutEditorBinding(
       if ("displayFrom" in patch || "displayTo" in patch) {
         next = updateRootColumnDisplayRange(next, columnIndex, patch);
       }
-      if ("name" in patch) {
-        next = updateRootColumnMetaAt(next, columnIndex, { name: patch.name });
+      if ("name" in patch || "visibleWhen" in patch) {
+        next = updateRootColumnMetaAt(next, columnIndex, {
+          ...("name" in patch ? { name: patch.name } : {}),
+          ...("visibleWhen" in patch ? { visibleWhen: patch.visibleWhen } : {}),
+        });
       }
       applyLayout(next);
     },

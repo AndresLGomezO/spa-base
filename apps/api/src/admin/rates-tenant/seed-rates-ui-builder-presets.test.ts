@@ -20,7 +20,7 @@ describe("rates UI builder presets catalog", () => {
       readFileSync(catalogPath, "utf8"),
     );
 
-    expect(catalog.presets).toHaveLength(4);
+    expect(catalog.presets).toHaveLength(5);
     expect(catalog.presets[0]).toMatchObject({
       id: "rates-compact-metric-card",
       templateJson: expect.any(String),

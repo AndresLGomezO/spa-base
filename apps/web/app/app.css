@@ -45,7 +45,10 @@
 }
 
 .ui-motion-hover-interactive {
-  background-color: var(--motion-rest-bg, transparent);
+  /* Only paints when --motion-rest-bg is set (hover surface presets).
+   * Do not fall back to transparent — that overrides Tailwind/theme
+   * background utilities on containers (e.g. conditionalStyles). */
+  background-color: var(--motion-rest-bg);
   transition:
     background-color var(--motion-hover-duration, 150ms) ease,
     transform var(--motion-hover-duration, 150ms) ease,

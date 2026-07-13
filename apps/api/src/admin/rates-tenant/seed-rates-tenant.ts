@@ -112,7 +112,24 @@ async function seedRatesTenant(
     );
   }
 
-  if (demoOwnerId && demoOwnerStrategy === "localTestUser") {
+  let localImportSeeded = false;
+  if (enableLocalImport) {
+    const localImportResult = await seedLocalTenantImportIfPresent(
+      tenantId,
+      firebaseAdminConfig,
+      catalogResult.definitionRecords,
+      undefined,
+      options.localImportOptions,
+    );
+    localImportSeeded = localImportResult.seeded;
+  }
+
+  // Prefer real `.local/tenant-import` transactions over fictional demo records.
+  if (
+    demoOwnerId &&
+    demoOwnerStrategy === "localTestUser" &&
+    !localImportSeeded
+  ) {
     console.log(
       `[seed] Seeding fictional demo business records for ${RATES_TEST_USER_EMAIL}...`,
     );
@@ -122,15 +139,9 @@ async function seedRatesTenant(
       catalogResult.definitionRecords,
       demoOwnerId,
     );
-  }
-
-  if (enableLocalImport) {
-    await seedLocalTenantImportIfPresent(
-      tenantId,
-      firebaseAdminConfig,
-      catalogResult.definitionRecords,
-      undefined,
-      options.localImportOptions,
+  } else if (localImportSeeded && demoOwnerStrategy === "localTestUser") {
+    console.log(
+      `[seed] Skipping fictional demo business records; local tenant import already seeded real transactions.`,
     );
   }
 
