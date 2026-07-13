@@ -11,7 +11,7 @@ import { createFirestoreAdminPlatformRuntimeSettingsRepository } from "@repo/gcp
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
 import { createGmailIngestProcessorDeps } from "./services/gmail-ingest-processor.js";
-import { createScheduleGmailWatchRenew } from "./services/gmail-watch-renew-scheduler.js";
+import { createWorkerGmailTaskEnqueuer } from "./services/worker-gmail-task-enqueuer.js";
 import { buildWorkerServer } from "./server.js";
 
 const firebaseAdminConfig = {
@@ -40,33 +40,7 @@ const runtimeSettingsCache = createRuntimeSettingsCache(
 );
 const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig);
 
-async function enqueueGmailProcessMessage(payload: {
-  readonly tenantId: string;
-  readonly userId: string;
-  readonly jobId: string;
-  readonly gmailMessageId: string;
-}): Promise<void> {
-  const response = await fetch(
-    `${workerEnv.WORKER_SERVICE_URL}/tasks/gmail-process-message`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Local-Task-Dispatcher": "true",
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10_000),
-    },
-  );
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      `Failed to enqueue Gmail process-message: ${response.status} ${body.slice(0, 300)}`,
-    );
-  }
-}
-
-const scheduleWatchRenew = createScheduleGmailWatchRenew({
+const gmailTaskEnqueuer = createWorkerGmailTaskEnqueuer({
   projectId: workerEnv.GCP_PROJECT_ID,
   region: workerEnv.GCP_REGION,
   queueName: workerEnv.GMAIL_TASKS_QUEUE_NAME,
@@ -92,8 +66,8 @@ const gmailIngest =
             ? { gmailPubsubTopic: workerEnv.GMAIL_PUBSUB_TOPIC }
             : {}),
           vertexAiConfig,
-          enqueueProcessMessage: enqueueGmailProcessMessage,
-          scheduleWatchRenew,
+          enqueueProcessMessage: gmailTaskEnqueuer.enqueueProcessMessage,
+          scheduleWatchRenew: gmailTaskEnqueuer.scheduleWatchRenew,
         },
       )
     : undefined;

@@ -64,6 +64,15 @@ resource "google_service_account_iam_member" "backend_act_as_tasks_sa" {
   member             = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
+# Worker fan-out (Gmail process-message / watch renew) also attaches tasks_sa OIDC.
+resource "google_service_account_iam_member" "worker_act_as_tasks_sa" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  service_account_id = google_service_account.tasks_sa[0].name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
+}
+
 resource "google_project_iam_member" "worker_service_firestore" {
   count = local.enable_ai_worker ? 1 : 0
 
