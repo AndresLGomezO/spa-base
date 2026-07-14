@@ -1,11 +1,15 @@
-import type { PlatformRuntimeSettings } from "./platform-runtime-settings.js";
 import {
   getObservabilityEnvDefaults,
   resolveEffectiveObservabilityFlags,
   resolveAiStepTraceEnabled,
+  resolveGmailIngestDeliveryMode,
   resolveRequestPerfTraceEnabled,
   resolveSeedHookObservabilityEnabled,
 } from "./resolve-observability-flags.js";
+import type {
+  GmailIngestDeliveryMode,
+  PlatformRuntimeSettings,
+} from "./platform-runtime-settings.js";
 
 export interface RuntimeSettingsReader {
   get(): Promise<PlatformRuntimeSettings | null>;
@@ -51,6 +55,11 @@ export function createRuntimeSettingsCache(
     return resolveSeedHookObservabilityEnabled(settings);
   }
 
+  async function getGmailIngestDeliveryMode(): Promise<GmailIngestDeliveryMode> {
+    const settings = await getSettings();
+    return resolveGmailIngestDeliveryMode(settings);
+  }
+
   async function buildResponse() {
     const settings = await getSettings();
     return {
@@ -66,6 +75,7 @@ export function createRuntimeSettingsCache(
     isAiStepTraceEnabled,
     isRequestPerfTraceEnabled,
     isSeedHookObservabilityEnabled,
+    getGmailIngestDeliveryMode,
     buildResponse,
   };
 }

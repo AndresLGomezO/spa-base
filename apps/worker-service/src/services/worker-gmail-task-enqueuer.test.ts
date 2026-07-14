@@ -95,7 +95,7 @@ describe("createWorkerGmailTaskEnqueuer", () => {
     );
   });
 
-  it("uses Cloud Tasks for history sync when localDispatch is false", async () => {
+  it("uses Cloud Tasks for window sync when localDispatch is false", async () => {
     createTask.mockResolvedValue([{}]);
     const { createWorkerGmailTaskEnqueuer } =
       await import("./worker-gmail-task-enqueuer.js");
@@ -108,17 +108,16 @@ describe("createWorkerGmailTaskEnqueuer", () => {
       localDispatch: false,
     });
 
-    await enqueuer.enqueueHistorySync({
+    await enqueuer.enqueueWindowSync({
       tenantId: "rates",
       userId: "u1",
       jobId: "j1",
-      historyId: "h1",
     });
 
     expect(createTask).toHaveBeenCalledTimes(1);
     const arg = createTask.mock.calls[0][0];
     expect(arg.task.httpRequest.url).toBe(
-      "https://worker.example/tasks/gmail-history-sync",
+      "https://worker.example/tasks/gmail-window-sync",
     );
   });
 });

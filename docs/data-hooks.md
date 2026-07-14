@@ -23,8 +23,8 @@ Read that document to implement any supported automation hook.
 | **Trigger** | CRUD (`create` / `update` / `delete`) or **schedule** (cron + timezone); optional `updateFields` on update |
 | **Phase** | `before` (mutate in place, blocks on error) or `after` (side effects, CRUD succeeds) |
 | **Condition** | Optional AND/OR boolean tree on trigger record fields |
-| **Actions** | `setField`, `createRecord`, `createRecords`, `updateMatching`, `deleteMatching`, `deleteRecord`, `getRecord`, `aggregateMatching`, `sendNotification`, `callWebhook` |
-| **Expressions** | JSON AST with 27 functions plus a **`switch`** lookup node — no I/O during eval; related data via prior `getRecord` + `loaded`, aggregates via `aggregateMatching` + `aggregate` field source |
+| **Actions** | `setField`, `createRecord`, `createRecords`, `updateMatching`, `deleteMatching`, `deleteRecord`, `getRecord`, `getOrCreateRecord`, `matchRelatedRecord`, `aggregateMatching`, `sendNotification`, `callWebhook` |
+| **Expressions** | JSON AST with 27 functions plus a **`switch`** lookup node — no I/O during eval; related data via prior load actions + `loaded`, aggregates via `aggregateMatching` + `aggregate` field source |
 | **Chaining** | Opt-in via `chainHooks: true`; depth and cycle guards |
 | **Import** | Single-definition or catalog JSON envelopes |
 

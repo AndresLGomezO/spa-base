@@ -215,6 +215,14 @@ describe("data-hook-definition-json", () => {
           action.type === "getOrCreateRecord" && action.entity === "category",
       ),
     ).toBe(true);
+    expect(
+      emailIngestAi?.actions.some(
+        (action) =>
+          action.type === "matchRelatedRecord" &&
+          action.entity === "financialItem" &&
+          action.as === "subscription",
+      ),
+    ).toBe(true);
 
     const emailIngestManual = hooks.find(
       (hook) => hook.name === "Email Ingest - Manual Extract",
@@ -228,6 +236,12 @@ describe("data-hook-definition-json", () => {
           action.type === "getOrCreateRecord" && action.entity === "category",
       ),
     ).toBe(false);
+    expect(
+      emailIngestManual?.actions.some(
+        (action) =>
+          action.type === "matchRelatedRecord" && action.as === "subscription",
+      ),
+    ).toBe(true);
 
     const emailReversal = hooks.find((hook) => hook.name === "Email Reversal");
     expect(emailReversal?.entity).toBe("financialItem");

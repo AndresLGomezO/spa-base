@@ -76,10 +76,12 @@ export {
   createFirestoreAdminGmailConnectionRepository,
   createFirestoreAdminEmailMatchBindingRepository,
   createFirestoreAdminEmailIngestProcessedRepository,
+  createFirestoreAdminEmailIngestFingerprintRepository,
   createFirestoreAdminEmailIngestJobRepository,
   type GmailConnectionRepository,
   type EmailMatchBindingRepository,
   type EmailIngestProcessedRepository,
+  type EmailIngestFingerprintRepository,
   type EmailIngestJobRepository,
 } from "./firestore-admin-gmail-ingest-repositories.js";
 export { createFirestoreAdminUserNotificationRepository } from "./firestore-admin-user-notification-repository.js";

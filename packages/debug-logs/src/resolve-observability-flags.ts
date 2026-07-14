@@ -1,8 +1,10 @@
 import type {
   EffectiveObservabilityFlags,
+  GmailIngestDeliveryMode,
   ObservabilityEnvDefaults,
   PlatformRuntimeSettings,
 } from "./platform-runtime-settings.js";
+import { gmailIngestDeliveryModeSchema } from "./platform-runtime-settings.js";
 
 function parseBooleanEnvFlag(value: string | undefined): boolean | undefined {
   const normalized = value?.trim().toLowerCase();
@@ -45,6 +47,15 @@ export function resolveEnvSeedHookObservabilityEnabled(
   return env.NODE_ENV !== "production";
 }
 
+export function resolveEnvGmailIngestDeliveryMode(
+  env: NodeJS.ProcessEnv = process.env,
+): GmailIngestDeliveryMode {
+  const parsed = gmailIngestDeliveryModeSchema.safeParse(
+    (env.GMAIL_INGEST_DELIVERY_MODE ?? "poll").trim().toLowerCase(),
+  );
+  return parsed.success ? parsed.data : "poll";
+}
+
 export function getObservabilityEnvDefaults(
   env: NodeJS.ProcessEnv = process.env,
 ): ObservabilityEnvDefaults {
@@ -52,6 +63,7 @@ export function getObservabilityEnvDefaults(
     aiStepTraceEnabled: resolveEnvAiStepTraceEnabled(env),
     requestPerfTraceEnabled: resolveEnvRequestPerfTraceEnabled(env),
     seedHookObservabilityEnabled: resolveEnvSeedHookObservabilityEnabled(env),
+    gmailIngestDeliveryMode: resolveEnvGmailIngestDeliveryMode(env),
   };
 }
 
@@ -94,6 +106,19 @@ export function resolveSeedHookObservabilityEnabled(
   return resolveEnvSeedHookObservabilityEnabled(env);
 }
 
+export function resolveGmailIngestDeliveryMode(
+  settings: PlatformRuntimeSettings | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): GmailIngestDeliveryMode {
+  if (
+    settings?.gmailIngestDeliveryMode !== null &&
+    settings?.gmailIngestDeliveryMode !== undefined
+  ) {
+    return settings.gmailIngestDeliveryMode;
+  }
+  return resolveEnvGmailIngestDeliveryMode(env);
+}
+
 export function resolveEffectiveObservabilityFlags(
   settings: PlatformRuntimeSettings | null | undefined,
   env: NodeJS.ProcessEnv = process.env,
@@ -105,5 +130,6 @@ export function resolveEffectiveObservabilityFlags(
       settings,
       env,
     ),
+    gmailIngestDeliveryMode: resolveGmailIngestDeliveryMode(settings, env),
   };
 }

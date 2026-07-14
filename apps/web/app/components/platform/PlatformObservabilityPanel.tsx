@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Heading, Switch, Text, toast } from "@repo/ui";
+import { Alert, Heading, Select, Switch, Text, toast } from "@repo/ui";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -113,6 +113,16 @@ export function PlatformObservabilityPanel() {
     updateMutation.mutate({ [key]: checked });
   };
 
+  const deliveryMode = effective.gmailIngestDeliveryMode;
+  const deliveryModeLabel =
+    deliveryMode === "push"
+      ? t("platform.observability.gmailIngest.modePush")
+      : t("platform.observability.gmailIngest.modePoll");
+  const envDeliveryModeLabel =
+    envDefaults.gmailIngestDeliveryMode === "push"
+      ? t("platform.observability.gmailIngest.modePush")
+      : t("platform.observability.gmailIngest.modePoll");
+
   return (
     <div className="space-y-4">
       <ObservabilityToggleRow
@@ -174,6 +184,41 @@ export function PlatformObservabilityPanel() {
           patchToggle("seedHookObservabilityEnabled", checked)
         }
       />
+
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-md border p-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          <Heading level={3}>
+            {t("platform.observability.gmailIngest.title")}
+          </Heading>
+          <Text className="text-muted-foreground text-sm">
+            {t("platform.observability.gmailIngest.description")}
+          </Text>
+          <Text className="text-muted-foreground text-xs">
+            {t("platform.observability.effective")}: {deliveryModeLabel} ·{" "}
+            {t("platform.observability.envDefaultLabel")}:{" "}
+            {envDeliveryModeLabel}
+          </Text>
+        </div>
+        <Select
+          className="w-44"
+          value={deliveryMode}
+          disabled={pending}
+          aria-label={t("platform.observability.gmailIngest.title")}
+          onChange={(event) => {
+            const value = event.target.value;
+            if (value === "poll" || value === "push") {
+              updateMutation.mutate({ gmailIngestDeliveryMode: value });
+            }
+          }}
+        >
+          <option value="poll">
+            {t("platform.observability.gmailIngest.modePoll")}
+          </option>
+          <option value="push">
+            {t("platform.observability.gmailIngest.modePush")}
+          </option>
+        </Select>
+      </div>
 
       <Text className="text-muted-foreground text-sm">
         {t("platform.observability.viewLogsPrefix")}{" "}

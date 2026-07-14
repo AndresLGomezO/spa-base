@@ -1,4 +1,5 @@
 import {
+  EMAIL_INGEST_FINGERPRINTS_COLLECTION,
   EMAIL_INGEST_JOBS_COLLECTION,
   EMAIL_INGEST_PROCESSED_COLLECTION,
   EMAIL_MATCH_BINDINGS_COLLECTION,
@@ -8,6 +9,7 @@ import {
   GMAIL_OAUTH_SCOPES,
 } from "./collections.js";
 export {
+  EMAIL_INGEST_FINGERPRINTS_COLLECTION,
   EMAIL_INGEST_JOBS_COLLECTION,
   EMAIL_INGEST_PROCESSED_COLLECTION,
   EMAIL_MATCH_BINDINGS_COLLECTION,
@@ -42,8 +44,15 @@ export {
   compileExtractorPattern,
 } from "./body-field-extract.js";
 
-export { resolveMatchedSubscriptionName } from "./resolve-matched-subscription-name.js";
-export type { SubscriptionAliasCandidate } from "./resolve-matched-subscription-name.js";
+export {
+  buildEmailContentFingerprint,
+  buildFingerprintDocId,
+  buildIngestBatchHash,
+  formatGmailQueryDate,
+  GMAIL_WATERMARK_OVERLAP_MS,
+  resolveWindowAfterDate,
+  resolveWindowBeforeDate,
+} from "./content-fingerprint.js";
 
 export { decryptUserSecret, encryptUserSecret } from "./token-crypto.js";
 
@@ -68,6 +77,7 @@ export {
   emailAiExtractResultSchema,
   emailBodyFieldExtractorSchema,
   emailBodyFieldTransformSchema,
+  emailIngestFingerprintRecordSchema,
   emailIngestJobKindSchema,
   emailIngestJobRecordSchema,
   emailIngestJobStatusSchema,
@@ -85,6 +95,7 @@ export {
   type EmailAiExtractResult,
   type EmailBodyFieldExtractor,
   type EmailBodyFieldTransform,
+  type EmailIngestFingerprintRecord,
   type EmailIngestJobKind,
   type EmailIngestJobRecord,
   type EmailIngestJobStatus,

@@ -108,9 +108,11 @@ export function gmailApiMessageToEnvelope(
       : null;
 
   const bodyText = extractBodyText(message.payload);
+  const rfcMessageId = headerValue(headers, "Message-ID") || null;
   return {
     messageId: message.id,
     threadId: message.threadId ?? null,
+    rfcMessageId,
     from: headerValue(headers, "From") || "unknown",
     subject: headerValue(headers, "Subject"),
     snippet: message.snippet ?? "",

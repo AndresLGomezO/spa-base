@@ -1871,7 +1871,7 @@
     },
     "observability": {
       "title": "Observability",
-      "description": "Toggle deployment-wide debug tracing without redeploying. Changes take effect within a few seconds.",
+      "description": "Toggle deployment-wide debug tracing and Gmail ingest delivery without redeploying. Changes take effect within a few seconds.",
       "enabled": "on",
       "disabled": "off",
       "effective": "Effective",
@@ -1891,6 +1891,12 @@
       "seedHookObservability": {
         "title": "Seed hook observability",
         "description": "Persist hook executions, hook logs, and notifications while replaying hooks during database seed."
+      },
+      "gmailIngest": {
+        "title": "Gmail ingest delivery",
+        "description": "Choose how new mail is discovered. Poll runs a 5-minute history sync; Push uses Gmail Pub/Sub watches. The inactive path no-ops so you do not double-ingest or pay for both.",
+        "modePoll": "Poll (every 5 min)",
+        "modePush": "Push (Pub/Sub)"
       }
     },
     "email": {
@@ -1905,19 +1911,10 @@
       "disconnect": "Disconnect",
       "disconnected": "Gmail disconnected.",
       "syncNow": "Sync now",
-      "syncNowHint": "Fetches new mail since the last sync. Prefer this locally when Gmail push is unavailable; use Backfill to re-scan with match rules.",
+      "syncNowHint": "Runs a windowed catch-up: first sync imports all mail matching your rules; later syncs only fetch new mail since the last mark.",
       "syncStarted": "Sync started (job {{jobId}}).",
-      "backfillBinding": "Backfill",
-      "backfillBindingTitle": "Backfill match binding",
-      "backfillBindingDescription": "Search recent Gmail messages for {{binding}} and enqueue matching mail.",
-      "backfillAll": "Backfill all bindings",
-      "backfillAllTitle": "Backfill all match bindings",
-      "backfillAllDescription": "Search recent Gmail messages for every enabled match binding and enqueue matching mail.",
-      "backfillConfirm": "Start backfill",
-      "backfillConfirmHint": "Review the options below, then confirm to start the background job.",
-      "backfillStarted": "Backfill started (job {{jobId}}).",
-      "reprocess": "Reprocess already ingested messages",
-      "reprocessHint": "Ignores dedup markers for this run only. Use while testing; leave off in normal use so each message is ingested once.",
+      "lastCatchUp": "Last catch-up watermark: {{at}}",
+      "noCatchUpYet": "No catch-up yet — Sync now will import matching mail history.",
       "bindings": "Match bindings",
       "bindingsHint": "Bindings are also editable on each entity record detail page.",
       "noBindings": "No bindings yet.",
@@ -3549,6 +3546,7 @@
       "deleteRecord": "Delete record",
       "getRecord": "Load record",
       "getOrCreateRecord": "Get or create record",
+      "matchRelatedRecord": "Match related record",
       "aggregateMatching": "Aggregate matching records",
       "sendNotification": "Send notification",
       "callWebhook": "Call webhook"
@@ -3582,6 +3580,9 @@
       "aliasPlaceholder": "e.g. parent",
       "getOrCreateRecordHint": "Loads the first matching record into the alias. If none match and the lookup value is non-empty, creates one from Record data. Empty lookup skips create and loads null.",
       "getOrCreateRecordFindOnlyHint": "Loads the first matching record into the alias. If none match, loads null — never creates a record.",
+      "matchRelatedRecordHint": "Lists matching candidates, then picks the best match by scoring the haystack against a string or string[] alias field (exact match preferred, otherwise longest substring). Find-only — never creates. Empty haystack loads null.",
+      "haystack": "Haystack (text to match)",
+      "aliasField": "Alias field on candidates",
       "createIfMissing": "Create if no match",
       "aggregateOp": "Aggregate operation",
       "aggregateField": "Field to aggregate",
@@ -3789,6 +3790,7 @@
       "advanced": {
         "value": "Value expression",
         "count": "Row count expression",
+        "haystack": "Haystack expression",
         "message": "Notification message"
       },
       "actions": {
@@ -3801,6 +3803,8 @@
         "getRecord": "Load {{entity}} as \"{{alias}}\"",
         "getOrCreateRecord": "Get or create {{entity}} as \"{{alias}}\"",
         "getOrCreateRecordFindOnly": "Find {{entity}} as \"{{alias}}\" (no create)",
+        "matchRelatedRecord": "Match {{entity}} via {{aliasField}} as \"{{alias}}\"",
+        "matchRelatedRecordHaystack": "Haystack: {{value}}",
         "createIfMissingOff": "Create if missing: off — loads null when no match",
         "aggregateMatching": "{{op}} {{entity}} records → {{alias}}",
         "sendNotification": "Send a notification to the user",

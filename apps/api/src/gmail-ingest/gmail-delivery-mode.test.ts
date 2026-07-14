@@ -17,17 +17,16 @@ vi.mock("@repo/gmail-ingest", async (importOriginal) => {
   };
 });
 
-import { GmailApiClient } from "@repo/gmail-ingest";
 import { registerGmailIngestRoutes } from "./register-gmail-ingest-routes.js";
 
 describe("gmail pubsub delivery mode", () => {
   it("returns 204 without lookup when mode is poll", async () => {
     const findByEmail = vi.fn();
-    const enqueueHistorySync = vi.fn();
+    const enqueueWindowSync = vi.fn();
     const app = Fastify();
     await registerGmailIngestRoutes(app, {
       authenticate: async () => undefined,
-      deliveryMode: "poll",
+      getDeliveryMode: async () => "poll",
       gmailConnectionRepository: {
         get: vi.fn(),
         findByEmail,
@@ -40,7 +39,7 @@ describe("gmail pubsub delivery mode", () => {
         create: vi.fn(),
       } as never,
       gmailTasksClient: {
-        enqueueHistorySync,
+        enqueueWindowSync,
       } as never,
       entityRuntime: {} as never,
       oauth: null,
@@ -58,26 +57,7 @@ describe("gmail pubsub delivery mode", () => {
 
     expect(response.statusCode).toBe(204);
     expect(findByEmail).not.toHaveBeenCalled();
-    expect(enqueueHistorySync).not.toHaveBeenCalled();
+    expect(enqueueWindowSync).not.toHaveBeenCalled();
     await app.close();
-  });
-});
-
-describe("gmail oauth watch gated by mode", () => {
-  it("does not call watch when delivery mode is poll", async () => {
-    const watch = vi.fn();
-    vi.mocked(GmailApiClient).mockImplementation(function () {
-      return {
-        getProfile: vi.fn().mockResolvedValue({
-          emailAddress: "user@example.com",
-          historyId: "123",
-        }),
-        watch,
-      } as never;
-    });
-
-    // OAuth callback needs signed state — covered by watch gate unit below via
-    // direct condition. Ensure GmailApiClient mock watch is not required in poll.
-    expect(watch).not.toHaveBeenCalled();
   });
 });

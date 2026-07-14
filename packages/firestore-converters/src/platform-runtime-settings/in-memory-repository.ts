@@ -34,6 +34,10 @@ export function createInMemoryPlatformRuntimeSettingsRepository(): PlatformRunti
           parsed.seedHookObservabilityEnabled ??
           store.current?.seedHookObservabilityEnabled ??
           null,
+        gmailIngestDeliveryMode:
+          parsed.gmailIngestDeliveryMode !== undefined
+            ? parsed.gmailIngestDeliveryMode
+            : (store.current?.gmailIngestDeliveryMode ?? null),
         updatedAt: nowIso,
         updatedBy,
       });

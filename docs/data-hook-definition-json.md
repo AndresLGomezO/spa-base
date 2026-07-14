@@ -148,7 +148,7 @@ When `chainHooks: true`, entity writes and deletes from this hook's actions (`cr
 | Max `createRecords` (queued) | 5,000 (`MAX_CREATE_RECORDS_QUEUED`) | `after` + `execution: "queued"` only |
 | Max matching records | 500 | `updateMatching` / `deleteMatching` / scheduled `eachRecord` fan-out |
 | Max scheduled records per tick | 500 | `eachRecord` scope per hook per tick |
-| Max loaded records | 8 | `getRecord` / `getOrCreateRecord` actions per hook |
+| Max loaded records | 8 | `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` actions per hook |
 | Max aggregate actions | 8 | `aggregateMatching` actions per hook |
 | Max hook depth | 5 | Chained dispatch |
 | Max call arguments | 16 | Expression `call` nodes |
@@ -565,7 +565,7 @@ Requires `${entity}.read` permission. Missing records fail the hook. Later actio
 { "kind": "field", "source": "loaded", "alias": "parent", "path": "frequency" }
 ```
 
-Maximum **8** `getRecord` / `getOrCreateRecord` actions per hook definition (combined).
+Maximum **8** `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` actions per hook definition (combined).
 
 ### `getOrCreateRecord`
 
@@ -639,6 +639,54 @@ If the lookup `==` value evaluates to `null` or an empty string, the action sets
 
 Requires `${entity}.read` (and `${entity}.create` when creating — skipped when `createIfMissing` is `false`). Later actions reference loaded fields the same way as `getRecord`.
 
+### `matchRelatedRecord`
+
+Find-only: list candidates with a compound `where` tree (same shape and lookup semantics as `getOrCreateRecord` / `updateMatching`), then pick the best match by scoring a **haystack** expression against each candidate’s **alias field**. Prefer case-insensitive exact alias equality; otherwise prefer the longest alias that is a substring of the haystack (stable candidate order on ties). Allowed in **before** and **after** phases. Never creates a record.
+
+```json
+{
+  "type": "matchRelatedRecord",
+  "entity": "financialItem",
+  "where": {
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "==",
+        "value": { "kind": "field", "source": "current", "path": "id" }
+      },
+      {
+        "type": "condition",
+        "field": "status",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "ACTIVE" }
+      }
+    ]
+  },
+  "haystack": {
+    "kind": "call",
+    "fn": "coalesce",
+    "args": [
+      { "kind": "field", "source": "current", "path": "__extracted.fields.description" },
+      { "kind": "field", "source": "current", "path": "__email.subject" },
+      { "kind": "literal", "value": "" }
+    ]
+  },
+  "aliasField": "billingAliases",
+  "as": "subscription"
+}
+```
+
+- `entity` (required): target entity name
+- `where` (required): condition tree with at least one `==` lookup leaf
+- `haystack` (required): expression evaluated to text; trimmed and upper-cased for matching. Empty / missing → `loaded.{as}` is `null` (no list)
+- `aliasField` (required): field on candidates holding a `string` or `string[]` of aliases
+- `as` (required): alias name; unique among all loaded / aggregate aliases in the hook
+
+Requires `${entity}.read`. Counts toward the max loaded-record limit with `getRecord` / `getOrCreateRecord`.
+
 ### `aggregateMatching`
 
 Compute a scalar over records matching a compound `where` tree (same shape as `updateMatching`). Read-only; allowed in **before** and **after** phases. Does not trigger chained hooks.
@@ -675,7 +723,7 @@ Compute a scalar over records matching a compound `where` tree (same shape as `u
 - `where` (required): condition tree with at least one `==` lookup leaf (max 500 matched rows)
 - `op` (required): `count` | `sum` | `min` | `max` | `avg`
 - `field` (required when `op` is not `count`): field name on matched records to reduce
-- `as` (required): alias for the result; unique among all `getRecord` / `getOrCreateRecord` / `aggregateMatching` actions in the hook
+- `as` (required): alias for the result; unique among all `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` / `aggregateMatching` actions in the hook
 
 Requires `${entity}.read` permission. Later actions reference the result with:
 
@@ -700,6 +748,7 @@ There is **no** `list` action in the data hooks engine. Expressions cannot perfo
 |------|-------------------|
 | Fetch one related row | `getRecord` → reference with `{ "kind": "field", "source": "loaded", "alias": "…" }` |
 | Find by field or create | `getOrCreateRecord` → same `loaded` references; empty lookup loads `null` |
+| Match related by alias text | `matchRelatedRecord` → score haystack vs alias field on candidates; loads `null` if no match |
 | Count / sum / min / max / avg over matches | `aggregateMatching` → `{ "kind": "field", "source": "aggregate", "alias": "…" }` |
 | Update or delete many rows | `updateMatching` / `deleteMatching` with compound `where` (AND/OR tree) |
 | List rows inside an expression | **Not supported** — use aggregates or side-effect actions |
@@ -1487,8 +1536,8 @@ Do **not** assume these features exist:
 - [ ] All **field names** match the entity schema (camelCase).
 - [ ] **Expressions** use valid AST (`kind` discriminator on every node).
 - [ ] **Condition** nodes use `type: "group"` or `type: "condition"` (or legacy bare leaf).
-- [ ] **`aggregateMatching`** aliases are unique (including vs `getRecord` / `getOrCreateRecord`); `count` omits `field`; other ops require `field`.
-- [ ] **`getRecord` / `getOrCreateRecord`** aliases are unique; loaded field references use only aliases from prior actions in the same hook.
+- [ ] **`aggregateMatching`** aliases are unique (including vs `getRecord` / `getOrCreateRecord` / `matchRelatedRecord`); `count` omits `field`; other ops require `field`.
+- [ ] **`getRecord` / `getOrCreateRecord` / `matchRelatedRecord`** aliases are unique; loaded field references use only aliases from prior actions in the same hook.
 - [ ] **`deleteMatching` / `deleteRecord`** are used only on **after** phase hooks.
 - [ ] **`updateMatching.where`** is a condition tree or legacy typeless leaf, and includes at least one `==` leaf with a value expression for lookup.
 - [ ] **`chainHooks`** is enabled only when downstream hooks on target entities are intended.

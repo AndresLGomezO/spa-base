@@ -27,7 +27,7 @@
     },
     {
       "name": "Derive balance sheet role on create",
-      "description": "Map itemType to balanceSheetRole via switch (debt → LIABILITY, investment → ASSET, default NONE).",
+      "description": "Map itemType to balanceSheetRole via switch (debt \u2192 LIABILITY, investment \u2192 ASSET, default NONE).",
       "entity": "financialItem",
       "phase": "before",
       "trigger": {
@@ -56,7 +56,7 @@
     },
     {
       "name": "Exclude card installment loans from liability rollup",
-      "description": "Linked child LOAN items roll up to host card — balanceSheetRole NONE.",
+      "description": "Linked child LOAN items roll up to host card \u2014 balanceSheetRole NONE.",
       "entity": "financialItem",
       "phase": "before",
       "trigger": {
@@ -329,7 +329,7 @@
     },
     {
       "name": "Update item balance on payment",
-      "description": "Decrease financialItem balance on PAYMENT — revolvingBalance when host card has installment children, else currentBalance.",
+      "description": "Decrease financialItem balance on PAYMENT \u2014 revolvingBalance when host card has installment children, else currentBalance.",
       "entity": "transaction",
       "phase": "after",
       "trigger": {
@@ -1273,7 +1273,7 @@
     },
     {
       "name": "Extend schedule horizon",
-      "description": "Monthly queued extension — top up paymentSchedule rows toward scheduleHorizonMonths.",
+      "description": "Monthly queued extension \u2014 top up paymentSchedule rows toward scheduleHorizonMonths.",
       "entity": "financialItem",
       "phase": "after",
       "execution": "queued",
@@ -1818,7 +1818,7 @@
                 "args": [
                   {
                     "kind": "literal",
-                    "value": "Skipped loan payment plan — no schedule anchor (originationDate or nextDueDate). loanDetails="
+                    "value": "Skipped loan payment plan \u2014 no schedule anchor (originationDate or nextDueDate). loanDetails="
                   },
                   {
                     "kind": "field",
@@ -2022,7 +2022,7 @@
     },
     {
       "name": "Regenerate loan payment plan",
-      "description": "Replace UPCOMING schedule rows for amortizing loans only (FRENCH/GERMAN/AMERICAN/BULLET). Skipped for CREDIT_CARD / NONE revolving terms — those use Mark PAID + Roll forward / Extend horizon.",
+      "description": "Replace UPCOMING schedule rows for amortizing loans only (FRENCH/GERMAN/AMERICAN/BULLET). Skipped for CREDIT_CARD / NONE revolving terms \u2014 those use Mark PAID + Roll forward / Extend horizon.",
       "entity": "loanDetails",
       "phase": "after",
       "trigger": {
@@ -2155,7 +2155,7 @@
                 "args": [
                   {
                     "kind": "literal",
-                    "value": "Skipped loan payment plan — no schedule anchor (originationDate or nextDueDate). loanDetails="
+                    "value": "Skipped loan payment plan \u2014 no schedule anchor (originationDate or nextDueDate). loanDetails="
                   },
                   {
                     "kind": "field",
@@ -2359,7 +2359,7 @@
     },
     {
       "name": "Mark overdue schedules",
-      "description": "Daily sweep — UPCOMING rows with dueDate before today become OVERDUE.",
+      "description": "Daily sweep \u2014 UPCOMING rows with dueDate before today become OVERDUE.",
       "entity": "paymentSchedule",
       "phase": "after",
       "trigger": {
@@ -2652,7 +2652,7 @@
     },
     {
       "name": "Replan loan after payment",
-      "description": "Bump loanDetails.planRevision after payment so amortizing loans replan from live balance + advanced nextDueDate. Skips CREDIT_CARD / NONE terms (no loanDetails row with FRENCH/GERMAN/AMERICAN/BULLET) — cards keep Mark PAID + Roll forward instead of wiping UPCOMING. Order after Advance next due date.",
+      "description": "Bump loanDetails.planRevision after payment so amortizing loans replan from live balance + advanced nextDueDate. Skips CREDIT_CARD / NONE terms (no loanDetails row with FRENCH/GERMAN/AMERICAN/BULLET) \u2014 cards keep Mark PAID + Roll forward instead of wiping UPCOMING. Order after Advance next due date.",
       "entity": "transaction",
       "phase": "after",
       "trigger": {
@@ -3076,7 +3076,7 @@
     },
     {
       "name": "Email Ingest - AI",
-      "description": "Create a transaction from AI-extracted email fields, get-or-creating category from AI parent/leaf names. When matchedSubscriptionName resolves to a child subscription of the matched card, book a PAYMENT on that child and attach the open payment schedule closest to the email/txn date (skip card-level txn). When there is no child match but extracted type is PAYMENT or INCOME, attach the closest open schedule on the matched financial item. Otherwise create an EXPENSE (or extracted type) on the matched financial item.",
+      "description": "Create a transaction from AI-extracted email fields, get-or-creating category from AI parent/leaf names. Match an ACTIVE child subscription of the matched card by scoring description/subject against billingAliases (matchRelatedRecord). When a child matches, book a PAYMENT on that child and attach the open payment schedule closest to the email/txn date (skip card-level txn). When there is no child match but extracted type is PAYMENT or INCOME, attach the closest open schedule on the matched financial item. Otherwise create an EXPENSE (or extracted type) on the matched financial item.",
       "entity": "financialItem",
       "phase": "after",
       "trigger": {
@@ -3202,23 +3202,12 @@
           "as": "category"
         },
         {
-          "type": "getOrCreateRecord",
+          "type": "matchRelatedRecord",
           "entity": "financialItem",
-          "createIfMissing": false,
           "where": {
             "type": "group",
             "combinator": "and",
             "children": [
-              {
-                "type": "condition",
-                "field": "name",
-                "operator": "==",
-                "value": {
-                  "kind": "field",
-                  "source": "current",
-                  "path": "__extracted.fields.matchedSubscriptionName"
-                }
-              },
               {
                 "type": "condition",
                 "field": "parentFinancialItemId",
@@ -3240,6 +3229,27 @@
               }
             ]
           },
+          "haystack": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "__extracted.fields.description"
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "__email.subject"
+              },
+              {
+                "kind": "literal",
+                "value": ""
+              }
+            ]
+          },
+          "aliasField": "billingAliases",
           "as": "subscription"
         },
         {
@@ -3789,8 +3799,18 @@
           "as": "subscriptionSchedule"
         },
         {
-          "type": "createRecord",
+          "type": "getOrCreateRecord",
           "entity": "transaction",
+          "where": {
+            "type": "condition",
+            "field": "sourceGmailMessageId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "__email.messageId"
+            }
+          },
           "data": {
             "financialItemId": {
               "kind": "call",
@@ -3949,8 +3969,14 @@
             "reversed": {
               "kind": "literal",
               "value": false
+            },
+            "sourceGmailMessageId": {
+              "kind": "field",
+              "source": "current",
+              "path": "__email.messageId"
             }
-          }
+          },
+          "as": "emailIngestTransaction"
         },
         {
           "type": "sendNotification",
@@ -4004,7 +4030,7 @@
               },
               {
                 "kind": "literal",
-                "value": " — "
+                "value": " \u2014 "
               },
               {
                 "kind": "call",
@@ -4105,7 +4131,7 @@
     },
     {
       "name": "Email Ingest - Manual Extract",
-      "description": "Create a transaction from body-extracted email fields without assigning a category. Worker resolves matchedSubscriptionName by matching __extracted.fields.description against child financialItem.billingAliases (under the matched card); then books a PAYMENT on that child with the open payment schedule closest to the email/txn date when found. When there is no child match but extracted type is PAYMENT or INCOME (e.g. PSE on the matched FI), attach the closest open schedule on the matched financial item. Otherwise create an EXPENSE (or extracted type) on the matched financial item without a schedule.",
+      "description": "Create a transaction from body-extracted email fields without assigning a category. Match an ACTIVE child subscription of the matched card by scoring description/subject against billingAliases (matchRelatedRecord). When a child matches, book a PAYMENT with the open payment schedule closest to the email/txn date. When there is no child match but extracted type is PAYMENT or INCOME (e.g. PSE on the matched FI), attach the closest open schedule on the matched financial item. Otherwise create an EXPENSE (or extracted type) on the matched financial item without a schedule.",
       "entity": "financialItem",
       "phase": "after",
       "trigger": {
@@ -4151,23 +4177,12 @@
       },
       "actions": [
         {
-          "type": "getOrCreateRecord",
+          "type": "matchRelatedRecord",
           "entity": "financialItem",
-          "createIfMissing": false,
           "where": {
             "type": "group",
             "combinator": "and",
             "children": [
-              {
-                "type": "condition",
-                "field": "name",
-                "operator": "==",
-                "value": {
-                  "kind": "field",
-                  "source": "current",
-                  "path": "__extracted.fields.matchedSubscriptionName"
-                }
-              },
               {
                 "type": "condition",
                 "field": "parentFinancialItemId",
@@ -4189,6 +4204,27 @@
               }
             ]
           },
+          "haystack": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "__extracted.fields.description"
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "__email.subject"
+              },
+              {
+                "kind": "literal",
+                "value": ""
+              }
+            ]
+          },
+          "aliasField": "billingAliases",
           "as": "subscription"
         },
         {
@@ -4738,8 +4774,18 @@
           "as": "subscriptionSchedule"
         },
         {
-          "type": "createRecord",
+          "type": "getOrCreateRecord",
           "entity": "transaction",
+          "where": {
+            "type": "condition",
+            "field": "sourceGmailMessageId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "__email.messageId"
+            }
+          },
           "data": {
             "financialItemId": {
               "kind": "call",
@@ -4879,8 +4925,14 @@
             "reversed": {
               "kind": "literal",
               "value": false
+            },
+            "sourceGmailMessageId": {
+              "kind": "field",
+              "source": "current",
+              "path": "__email.messageId"
             }
-          }
+          },
+          "as": "emailIngestTransaction"
         },
         {
           "type": "sendNotification",
@@ -4934,7 +4986,7 @@
               },
               {
                 "kind": "literal",
-                "value": " — "
+                "value": " \u2014 "
               },
               {
                 "kind": "call",
@@ -5266,7 +5318,7 @@
               },
               {
                 "kind": "literal",
-                "value": " — "
+                "value": " \u2014 "
               },
               {
                 "kind": "call",

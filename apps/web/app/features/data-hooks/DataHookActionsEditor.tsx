@@ -126,6 +126,7 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "deleteRecord",
   "getRecord",
   "getOrCreateRecord",
+  "matchRelatedRecord",
   "aggregateMatching",
   "sendNotification",
   "callWebhook",
@@ -151,7 +152,9 @@ function collectLoadedBindingsBefore(
   for (let index = 0; index < beforeIndex; index += 1) {
     const action = actions[index];
     if (
-      (action?.type === "getRecord" || action?.type === "getOrCreateRecord") &&
+      (action?.type === "getRecord" ||
+        action?.type === "getOrCreateRecord" ||
+        action?.type === "matchRelatedRecord") &&
       action.as.trim()
     ) {
       bindings.push({ alias: action.as, entity: action.entity });
@@ -653,6 +656,73 @@ function ActionEditor({
         </div>
       );
 
+    case "matchRelatedRecord":
+      return (
+        <div className="space-y-3">
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
+          <CollapsibleSection
+            title={t("dataHooks.actions.matchWhere")}
+            defaultOpen
+          >
+            <DataHookConditionEditor
+              value={action.where}
+              fieldNames={getFieldNames(action.entity)}
+              valueFieldNames={triggerFieldNames}
+              suppressRootHeader
+              onChange={(where) => onChange({ ...action, where })}
+            />
+          </CollapsibleSection>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.haystack")}
+            defaultOpen
+            value={action.haystack}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(haystack) => onChange({ ...action, haystack })}
+          />
+          <CollapsibleSection
+            title={t("dataHooks.actions.aliasField")}
+            defaultOpen
+          >
+            <Select
+              className={`${controlClassName} w-full`}
+              value={action.aliasField}
+              onChange={(event) =>
+                onChange({ ...action, aliasField: event.target.value })
+              }
+            >
+              <option value="">{t("dataHooks.actions.selectField")}</option>
+              {getFieldNames(action.entity).map((field) => (
+                <option key={field} value={field}>
+                  {field}
+                </option>
+              ))}
+            </Select>
+          </CollapsibleSection>
+          <Text className="text-muted-foreground text-xs">
+            {t("dataHooks.actions.matchRelatedRecordHint")}
+          </Text>
+          <CollapsibleSection
+            title={t("dataHooks.actions.alias")}
+            defaultOpen={Boolean(action.as)}
+          >
+            <Input
+              value={action.as}
+              placeholder={t("dataHooks.actions.aliasPlaceholder")}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </CollapsibleSection>
+        </div>
+      );
+
     case "aggregateMatching":
       return (
         <div className="space-y-3">
@@ -790,6 +860,15 @@ export function emptyActionOfType(
         where: createDefaultConditionRoot(),
         data: {},
         as: "record",
+      };
+    case "matchRelatedRecord":
+      return {
+        type,
+        entity: "",
+        where: createDefaultConditionRoot(),
+        haystack: literal(),
+        aliasField: "",
+        as: "related",
       };
     case "aggregateMatching":
       return {

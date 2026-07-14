@@ -225,10 +225,10 @@ export type DataHookUpdateMatchingWhereInput =
 
 const expressionRecordSchema = z.record(z.string(), expressionNodeSchema);
 
-/** Max `getRecord` / `getOrCreateRecord` actions per hook definition. */
+/** Max `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` actions per hook definition. */
 export const MAX_LOADED_RECORDS = 8;
 
-/** Alias pattern for loaded field references (`getRecord` / `getOrCreateRecord`). */
+/** Alias pattern for loaded field references (`getRecord` / `getOrCreateRecord` / `matchRelatedRecord`). */
 export const DATA_HOOK_LOADED_ALIAS_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]{0,31}$/;
 
 export const DATA_HOOK_AGGREGATE_OPERATORS = [
@@ -316,6 +316,16 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
         });
       }
     }),
+  z.object({
+    type: z.literal("matchRelatedRecord"),
+    entity: z.string().trim().min(1),
+    where: dataHookUpdateMatchingWhereSchema,
+    /** Text/subject/description expression scored against each candidate's alias field. */
+    haystack: expressionNodeSchema,
+    /** Field on related records: string or string[] of aliases. */
+    aliasField: z.string().trim().min(1),
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
   z.object({
     type: z.literal("aggregateMatching"),
     entity: z.string().trim().min(1),
@@ -423,6 +433,7 @@ export function actionTargetEntities(
     case "deleteRecord":
     case "getRecord":
     case "getOrCreateRecord":
+    case "matchRelatedRecord":
     case "aggregateMatching":
       return [action.entity];
     case "setField":

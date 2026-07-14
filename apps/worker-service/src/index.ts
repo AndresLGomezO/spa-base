@@ -62,13 +62,14 @@ const gmailIngest =
           encryptionMasterKey: workerEnv.TENANT_ENCRYPTION_MASTER_KEY,
           gmailOAuthClientId: workerEnv.GMAIL_OAUTH_CLIENT_ID,
           gmailOAuthClientSecret: workerEnv.GMAIL_OAUTH_CLIENT_SECRET,
-          deliveryMode: workerEnv.GMAIL_INGEST_DELIVERY_MODE,
+          getDeliveryMode: () =>
+            runtimeSettingsCache.getGmailIngestDeliveryMode(),
           ...(workerEnv.GMAIL_PUBSUB_TOPIC
             ? { gmailPubsubTopic: workerEnv.GMAIL_PUBSUB_TOPIC }
             : {}),
           vertexAiConfig,
           enqueueProcessMessage: gmailTaskEnqueuer.enqueueProcessMessage,
-          enqueueHistorySync: gmailTaskEnqueuer.enqueueHistorySync,
+          enqueueWindowSync: gmailTaskEnqueuer.enqueueWindowSync,
           scheduleWatchRenew: gmailTaskEnqueuer.scheduleWatchRenew,
         },
       )

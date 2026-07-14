@@ -226,4 +226,27 @@ describe("platform runtime settings integration", () => {
 
     expect(requestPerfLogRepository.store.size).toBe(beforeEnabledRequest + 1);
   });
+
+  it("persists gmail ingest delivery mode runtime override", async () => {
+    const { server } = await buildTestServer();
+
+    const patchResponse = await server.inject({
+      method: "PATCH",
+      url: "/admin/platform/runtime-settings",
+      headers: authHeaders,
+      payload: {
+        gmailIngestDeliveryMode: "push",
+      },
+    });
+
+    expect(patchResponse.statusCode).toBe(200);
+    const body = patchResponse.json() as {
+      settings: { gmailIngestDeliveryMode: "poll" | "push" | null };
+      effective: { gmailIngestDeliveryMode: "poll" | "push" };
+      envDefaults: { gmailIngestDeliveryMode: "poll" | "push" };
+    };
+    expect(body.settings.gmailIngestDeliveryMode).toBe("push");
+    expect(body.effective.gmailIngestDeliveryMode).toBe("push");
+    expect(body.envDefaults.gmailIngestDeliveryMode).toBe("poll");
+  });
 });

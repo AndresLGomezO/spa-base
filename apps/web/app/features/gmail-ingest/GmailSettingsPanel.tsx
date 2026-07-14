@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Heading, Text, toast } from "@repo/ui";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 
@@ -8,25 +7,16 @@ import {
   disconnectGmail,
   getGmailStatus,
   listEmailMatchBindings,
-  startGmailBackfill,
   startGmailConnect,
   startGmailSync,
   deleteEmailMatchBinding,
 } from "../../lib/api-client";
-import { GmailBackfillConfirmDialog } from "./GmailBackfillConfirmDialog";
-
-type BackfillDialogState =
-  | { readonly kind: "all" }
-  | { readonly kind: "binding"; readonly bindingId: string };
 
 export function GmailSettingsPanel() {
   const { t } = useTranslation("common");
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const gmailResult = searchParams.get("gmail");
-
-  const [backfillDialog, setBackfillDialog] =
-    useState<BackfillDialogState | null>(null);
 
   const statusQuery = useQuery({
     queryKey: ["gmail-status"],
@@ -64,23 +54,6 @@ export function GmailSettingsPanel() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const backfillMutation = useMutation({
-    mutationFn: (input: {
-      readonly bindingId?: string;
-      readonly reprocess: boolean;
-    }) =>
-      startGmailBackfill({
-        maxMessages: 100,
-        reprocess: input.reprocess,
-        ...(input.bindingId ? { bindingId: input.bindingId } : {}),
-      }),
-    onSuccess: (data) => {
-      setBackfillDialog(null);
-      toast.success(t("platform.email.backfillStarted", { jobId: data.jobId }));
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
   const deleteBindingMutation = useMutation({
     mutationFn: deleteEmailMatchBinding,
     onSuccess: async () => {
@@ -92,21 +65,6 @@ export function GmailSettingsPanel() {
 
   const status = statusQuery.data;
   const bindings = bindingsQuery.data?.items ?? [];
-  const selectedBinding =
-    backfillDialog?.kind === "binding"
-      ? bindings.find((binding) => binding.id === backfillDialog.bindingId)
-      : undefined;
-  const dialogMode =
-    backfillDialog?.kind === "all"
-      ? ({ kind: "all" } as const)
-      : backfillDialog?.kind === "binding"
-        ? ({
-            kind: "binding",
-            bindingLabel: selectedBinding
-              ? `${selectedBinding.entityName} / ${selectedBinding.fromAddresses.join(", ") || selectedBinding.recordId}`
-              : backfillDialog.bindingId,
-          } as const)
-        : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -145,6 +103,17 @@ export function GmailSettingsPanel() {
                   })
                 : t("platform.email.notConnected")}
             </Text>
+            {status?.ingestWatermarkAt ? (
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.email.lastCatchUp", {
+                  at: status.ingestWatermarkAt,
+                })}
+              </Text>
+            ) : status?.connected ? (
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.email.noCatchUpYet")}
+              </Text>
+            ) : null}
             {status?.lastError ? (
               <Text className="text-destructive text-sm">
                 {status.lastError}
@@ -162,20 +131,9 @@ export function GmailSettingsPanel() {
                 <>
                   <Button
                     onClick={() => syncMutation.mutate()}
-                    disabled={
-                      syncMutation.isPending || backfillMutation.isPending
-                    }
+                    disabled={syncMutation.isPending}
                   >
                     {t("platform.email.syncNow")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setBackfillDialog({ kind: "all" })}
-                    disabled={
-                      backfillMutation.isPending || syncMutation.isPending
-                    }
-                  >
-                    {t("platform.email.backfillAll")}
                   </Button>
                   <Button
                     variant="outline"
@@ -224,23 +182,6 @@ export function GmailSettingsPanel() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={
-                      !status?.connected ||
-                      !binding.enabled ||
-                      backfillMutation.isPending
-                    }
-                    onClick={() =>
-                      setBackfillDialog({
-                        kind: "binding",
-                        bindingId: binding.id,
-                      })
-                    }
-                  >
-                    {t("platform.email.backfillBinding")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
                     onClick={() => deleteBindingMutation.mutate(binding.id)}
                   >
                     {t("platform.email.deleteBinding")}
@@ -251,22 +192,6 @@ export function GmailSettingsPanel() {
           </ul>
         )}
       </section>
-
-      <GmailBackfillConfirmDialog
-        open={backfillDialog != null}
-        mode={dialogMode}
-        isPending={backfillMutation.isPending}
-        onClose={() => setBackfillDialog(null)}
-        onConfirm={(reprocess) => {
-          if (!backfillDialog) return;
-          backfillMutation.mutate({
-            reprocess,
-            ...(backfillDialog.kind === "binding"
-              ? { bindingId: backfillDialog.bindingId }
-              : {}),
-          });
-        }}
-      />
     </div>
   );
 }

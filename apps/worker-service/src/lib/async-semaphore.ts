@@ -1,7 +1,7 @@
 /**
  * Limits how many async tasks run at once. Extra callers wait in FIFO order.
  * Used to serialize Gmail process-message work so email hooks do not contend
- * on the same parent entity documents during backfill fan-out.
+ * on the same parent entity documents during window-sync fan-out.
  */
 export function createAsyncSemaphore(limit: number) {
   if (!Number.isInteger(limit) || limit < 1) {

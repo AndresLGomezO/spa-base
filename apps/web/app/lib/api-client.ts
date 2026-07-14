@@ -1817,6 +1817,7 @@ interface GmailConnectionStatus {
   readonly emailAddress: string | null;
   readonly scopes: readonly string[];
   readonly lastSyncAt: string | null;
+  readonly ingestWatermarkAt: string | null;
   readonly watchExpiration: string | null;
   readonly lastError: string | null;
 }
@@ -1872,19 +1873,6 @@ export async function disconnectGmail(): Promise<{
     "/api/gmail/disconnect",
     { method: "POST", body: {} },
   );
-}
-
-export async function startGmailBackfill(input?: {
-  readonly afterDate?: string;
-  readonly beforeDate?: string;
-  readonly maxMessages?: number;
-  readonly bindingId?: string;
-  readonly reprocess?: boolean;
-}): Promise<{ readonly jobId: string }> {
-  return apiRequest<{ readonly jobId: string }>("/api/gmail/backfill", {
-    method: "POST",
-    body: input ?? {},
-  });
 }
 
 export async function startGmailSync(): Promise<{ readonly jobId: string }> {

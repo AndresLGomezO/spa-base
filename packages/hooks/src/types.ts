@@ -172,9 +172,9 @@ export interface HookContext {
    */
   readonly visitedHookIds?: ReadonlySet<string>;
   /**
-   * Records loaded by `getRecord` / `getOrCreateRecord` during this hook run,
-   * keyed by alias. `null` means the action resolved without a record (e.g.
-   * empty lookup for get-or-create).
+   * Records loaded by `getRecord` / `getOrCreateRecord` / `matchRelatedRecord`
+   * during this hook run, keyed by alias. `null` means the action resolved
+   * without a record (e.g. empty lookup for get-or-create, or no alias match).
    */
   loaded?: Record<string, Record<string, unknown> | null>;
   /**

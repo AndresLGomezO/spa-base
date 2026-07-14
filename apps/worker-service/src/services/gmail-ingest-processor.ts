@@ -3,8 +3,10 @@ import { z } from "zod";
 import {
   bindingMatchesMessage,
   buildEmailAiPrompt,
+  buildEmailContentFingerprint,
   buildEmailHookEnvelope,
   buildGmailSearchQuery,
+  buildIngestBatchHash,
   computeGmailWatchRenewAt,
   decryptUserSecret,
   emailAiExtractResultSchema,
@@ -12,7 +14,8 @@ import {
   findBestMatchingBinding,
   GmailApiClient,
   refreshGmailAccessToken,
-  resolveMatchedSubscriptionName,
+  resolveWindowAfterDate,
+  resolveWindowBeforeDate,
   shouldRenewGmailWatchSoon,
   type EmailAiExtractResult,
   type EmailIngestStepTraceEntry,
@@ -20,10 +23,12 @@ import {
   type GmailMessageEnvelope,
 } from "@repo/gmail-ingest";
 import {
+  createFirestoreAdminEmailIngestFingerprintRepository,
   createFirestoreAdminEmailIngestJobRepository,
   createFirestoreAdminEmailIngestProcessedRepository,
   createFirestoreAdminEmailMatchBindingRepository,
   createFirestoreAdminGmailConnectionRepository,
+  type EmailIngestFingerprintRepository,
   type EmailIngestJobRepository,
   type EmailIngestProcessedRepository,
   type EmailMatchBindingRepository,
@@ -54,22 +59,10 @@ import {
 } from "../hooks/record-data-hook-execution.js";
 import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
-export const gmailBackfillTaskPayloadSchema = z.object({
+export const gmailWindowSyncTaskPayloadSchema = z.object({
   tenantId: z.string().trim().min(1),
   userId: z.string().trim().min(1),
   jobId: z.string().trim().min(1),
-  afterDate: z.string().trim().optional(),
-  beforeDate: z.string().trim().optional(),
-  maxMessages: z.number().int().min(1).max(500).optional(),
-  bindingId: z.string().trim().min(1).optional(),
-  reprocess: z.boolean().optional().default(false),
-});
-
-export const gmailHistorySyncTaskPayloadSchema = z.object({
-  tenantId: z.string().trim().min(1),
-  userId: z.string().trim().min(1),
-  jobId: z.string().trim().min(1),
-  historyId: z.string().trim().optional(),
 });
 
 export const gmailWatchRenewTaskPayloadSchema = z.object({
@@ -84,7 +77,6 @@ export const gmailProcessMessageTaskPayloadSchema = z.object({
   jobId: z.string().trim().min(1),
   gmailMessageId: z.string().trim().min(1),
   bindingId: z.string().trim().min(1).optional(),
-  reprocess: z.boolean().optional().default(false),
 });
 
 export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
@@ -92,12 +84,13 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
   readonly gmailConnectionRepository: GmailConnectionRepository;
   readonly emailMatchBindingRepository: EmailMatchBindingRepository;
   readonly emailIngestProcessedRepository: EmailIngestProcessedRepository;
+  readonly emailIngestFingerprintRepository: EmailIngestFingerprintRepository;
   readonly emailIngestJobRepository: EmailIngestJobRepository;
   readonly encryptionMasterKey: string;
   readonly gmailOAuthClientId: string;
   readonly gmailOAuthClientSecret: string;
   readonly gmailPubsubTopic?: string;
-  readonly deliveryMode: GmailIngestDeliveryMode;
+  readonly getDeliveryMode: () => Promise<GmailIngestDeliveryMode>;
   readonly vertexAiConfig: VertexAiConfig;
   readonly enqueueProcessMessage: (payload: {
     readonly tenantId: string;
@@ -105,13 +98,11 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
     readonly jobId: string;
     readonly gmailMessageId: string;
     readonly bindingId?: string;
-    readonly reprocess?: boolean;
   }) => Promise<void>;
-  readonly enqueueHistorySync?: (payload: {
+  readonly enqueueWindowSync?: (payload: {
     readonly tenantId: string;
     readonly userId: string;
     readonly jobId: string;
-    readonly historyId?: string;
   }) => Promise<void>;
   /** Schedule the next watch renew before expiration (Cloud Tasks or local delay). */
   readonly scheduleWatchRenew?: (payload: {
@@ -199,7 +190,9 @@ async function renewGmailWatchAndSchedule(
   },
   logger: HookLogger,
 ): Promise<void> {
-  if (deps.deliveryMode !== "push" || !deps.gmailPubsubTopic) return;
+  if ((await deps.getDeliveryMode()) !== "push" || !deps.gmailPubsubTopic) {
+    return;
+  }
 
   const connection = await deps.gmailConnectionRepository.get(options.userId);
   if (!connection || connection.status !== "connected") return;
@@ -295,42 +288,58 @@ export async function processGmailProcessMessage(
     }),
   );
 
-  if (!payload.reprocess) {
-    const existing = await deps.emailIngestProcessedRepository.get(
-      tenantId,
-      userId,
-      gmailMessageId,
-    );
-    if (existing && existing.status === "processed") {
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step("dedup", "skipped", "Message already processed", {
-          gmailMessageId,
-        }),
-      );
-      return;
-    }
-  } else {
+  const existing = await deps.emailIngestProcessedRepository.get(
+    tenantId,
+    userId,
+    gmailMessageId,
+  );
+  if (existing && existing.status === "processed") {
     await appendJobStep(
       deps,
       tenantId,
       jobId,
-      step(
-        "dedup",
-        "info",
-        "Reprocess requested; ignoring prior dedup marker",
-        {
-          gmailMessageId,
-        },
-      ),
+      step("dedup", "skipped", "Message already processed", {
+        gmailMessageId,
+      }),
     );
+    return;
   }
 
   const { accessToken } = await resolveAccessToken(deps, userId);
   const gmail = new GmailApiClient(accessToken);
   const email = await gmail.getMessage(gmailMessageId);
+  const contentFingerprint = buildEmailContentFingerprint(email);
+
+  const priorFingerprint = await deps.emailIngestFingerprintRepository.get(
+    tenantId,
+    userId,
+    contentFingerprint,
+  );
+  if (priorFingerprint && priorFingerprint.gmailMessageId !== gmailMessageId) {
+    await deps.emailIngestProcessedRepository.upsert(tenantId, {
+      userId,
+      gmailMessageId,
+      threadId: email.threadId,
+      contentFingerprint,
+      bindingId: null,
+      entityName: null,
+      recordId: null,
+      status: "processed",
+      hookSummary: `Skipped: fingerprint already processed as ${priorFingerprint.gmailMessageId}`,
+      processedAt: new Date().toISOString(),
+    });
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step("dedup", "skipped", "Content fingerprint already processed", {
+        gmailMessageId,
+        contentFingerprint,
+        priorGmailMessageId: priorFingerprint.gmailMessageId,
+      }),
+    );
+    return;
+  }
 
   await appendJobStep(
     deps,
@@ -371,6 +380,7 @@ export async function processGmailProcessMessage(
       userId,
       gmailMessageId,
       threadId: email.threadId,
+      contentFingerprint,
       bindingId: null,
       entityName: null,
       recordId: null,
@@ -404,6 +414,7 @@ export async function processGmailProcessMessage(
       userId,
       gmailMessageId,
       threadId: email.threadId,
+      contentFingerprint,
       bindingId: binding.id,
       entityName: binding.entityName,
       recordId: binding.recordId,
@@ -427,6 +438,7 @@ export async function processGmailProcessMessage(
       userId,
       gmailMessageId,
       threadId: email.threadId,
+      contentFingerprint,
       bindingId: binding.id,
       entityName: binding.entityName,
       recordId: binding.recordId,
@@ -515,6 +527,7 @@ export async function processGmailProcessMessage(
       userId,
       gmailMessageId,
       threadId: email.threadId,
+      contentFingerprint,
       bindingId: binding.id,
       entityName: binding.entityName,
       recordId: binding.recordId,
@@ -528,59 +541,6 @@ export async function processGmailProcessMessage(
       step("relevance", "skipped", "Email marked irrelevant"),
     );
     return;
-  }
-
-  if (extracted && binding.entityName === "financialItem") {
-    const existingMatchedName =
-      typeof extracted.fields.matchedSubscriptionName === "string"
-        ? extracted.fields.matchedSubscriptionName.trim()
-        : "";
-    const description =
-      typeof extracted.fields.description === "string"
-        ? extracted.fields.description.trim()
-        : "";
-    if (!existingMatchedName && description.length > 0) {
-      const children = await repository.findByField({
-        tenantId,
-        field: "parentFinancialItemId",
-        value: binding.recordId,
-        limit: 200,
-      });
-      const matchedSubscriptionName = resolveMatchedSubscriptionName({
-        description,
-        children: children.items
-          .map((child) => child as Record<string, unknown>)
-          .filter(
-            (child) =>
-              typeof child.name === "string" && child.name.trim().length > 0,
-          )
-          .map((child) => ({
-            name: String(child.name),
-            status: child.status,
-            billingAliases: child.billingAliases,
-          })),
-      });
-      if (matchedSubscriptionName) {
-        extracted = {
-          ...extracted,
-          fields: {
-            ...extracted.fields,
-            matchedSubscriptionName,
-          },
-        };
-        await appendJobStep(
-          deps,
-          tenantId,
-          jobId,
-          step(
-            "subscription-alias",
-            "success",
-            `Matched subscription via billingAliases: ${matchedSubscriptionName}`,
-            { matchedSubscriptionName },
-          ),
-        );
-      }
-    }
   }
 
   const user = await resolveHookUserContext(
@@ -673,11 +633,18 @@ export async function processGmailProcessMessage(
     userId,
     gmailMessageId,
     threadId: email.threadId,
+    contentFingerprint,
     bindingId: binding.id,
     entityName: binding.entityName,
     recordId: binding.recordId,
     status: "processed",
     hookSummary: `Ran ${definitions.length} email hook(s)`,
+    processedAt: new Date().toISOString(),
+  });
+  await deps.emailIngestFingerprintRepository.upsert(tenantId, {
+    userId,
+    contentFingerprint,
+    gmailMessageId,
     processedAt: new Date().toISOString(),
   });
 
@@ -699,128 +666,24 @@ export async function processGmailProcessMessage(
   });
 }
 
-export async function processGmailBackfill(
+export async function processGmailWindowSync(
   deps: GmailIngestProcessorDeps,
-  payload: z.infer<typeof gmailBackfillTaskPayloadSchema>,
+  payload: z.infer<typeof gmailWindowSyncTaskPayloadSchema>,
   logger: HookLogger,
 ): Promise<void> {
   const { tenantId, userId, jobId } = payload;
-  await appendJobStep(
-    deps,
-    tenantId,
-    jobId,
-    step("backfill-start", "info", "Starting Gmail backfill"),
-  );
-
-  const bindings = await deps.emailMatchBindingRepository.listForUser(
-    tenantId,
-    userId,
-  );
-  const scopedBindings = payload.bindingId
-    ? bindings.filter((binding) => binding.id === payload.bindingId)
-    : bindings;
-  if (payload.bindingId && scopedBindings.length === 0) {
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("backfill-query", "skipped", "Binding not found for backfill", {
-        bindingId: payload.bindingId,
-      }),
-    );
-    await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
-    return;
-  }
-
-  const query = buildGmailSearchQuery(scopedBindings, {
-    ...(payload.afterDate ? { afterDate: payload.afterDate } : {}),
-    ...(payload.beforeDate ? { beforeDate: payload.beforeDate } : {}),
-  });
-  if (!query) {
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("backfill-query", "skipped", "No enabled bindings to search"),
-    );
-    await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
-    return;
-  }
+  const windowEnd = new Date();
+  const connection = await deps.gmailConnectionRepository.get(userId);
 
   await appendJobStep(
     deps,
     tenantId,
     jobId,
-    step("backfill-query", "info", "Built Gmail query", {
-      query,
-      ...(payload.bindingId ? { bindingId: payload.bindingId } : {}),
+    step("window-sync-start", "info", "Starting Gmail window sync", {
+      ingestWatermarkAt: connection?.ingestWatermarkAt ?? null,
+      windowEnd: windowEnd.toISOString(),
     }),
   );
-
-  const { accessToken } = await resolveAccessToken(deps, userId);
-  const gmail = new GmailApiClient(accessToken);
-  const maxMessages = payload.maxMessages ?? 100;
-  let pageToken: string | undefined;
-  let enqueued = 0;
-
-  while (enqueued < maxMessages) {
-    const page = await gmail.listMessageIds({
-      query,
-      maxResults: Math.min(50, maxMessages - enqueued),
-      ...(pageToken ? { pageToken } : {}),
-    });
-    for (const messageId of page.messageIds) {
-      await deps.enqueueProcessMessage({
-        tenantId,
-        userId,
-        jobId,
-        gmailMessageId: messageId,
-        ...(payload.bindingId ? { bindingId: payload.bindingId } : {}),
-        ...(payload.reprocess ? { reprocess: true } : {}),
-      });
-      enqueued += 1;
-      if (enqueued >= maxMessages) break;
-    }
-    if (!page.nextPageToken || page.messageIds.length === 0) break;
-    pageToken = page.nextPageToken;
-  }
-
-  await deps.gmailConnectionRepository.upsert(userId, {
-    status: "connected",
-    lastSyncAt: new Date().toISOString(),
-  });
-
-  await appendJobStep(
-    deps,
-    tenantId,
-    jobId,
-    step("backfill-done", "success", `Enqueued ${enqueued} message(s)`),
-  );
-  await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
-  logger.info("Gmail backfill enqueued messages", {
-    tenantId,
-    meta: { enqueued, jobId },
-  });
-}
-
-export async function processGmailHistorySync(
-  deps: GmailIngestProcessorDeps,
-  payload: z.infer<typeof gmailHistorySyncTaskPayloadSchema>,
-  logger: HookLogger,
-): Promise<void> {
-  const { tenantId, userId, jobId } = payload;
-  const connection = await deps.gmailConnectionRepository.get(userId);
-  const historyId = payload.historyId ?? connection?.historyId;
-  if (!historyId) {
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("history", "skipped", "No historyId available"),
-    );
-    await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
-    return;
-  }
 
   const { accessToken } = await resolveAccessToken(deps, userId);
   const gmail = new GmailApiClient(accessToken);
@@ -832,7 +695,7 @@ export async function processGmailHistorySync(
       logger,
     );
   } catch (error) {
-    logger.error("Gmail watch renew during history sync failed", {
+    logger.error("Gmail watch renew during window sync failed", {
       meta: {
         userId,
         error: error instanceof Error ? error.message : String(error),
@@ -840,36 +703,137 @@ export async function processGmailHistorySync(
     });
   }
 
-  const history = await gmail.listHistoryMessageIds(historyId);
-  for (const messageId of history.messageIds) {
+  const bindings = await deps.emailMatchBindingRepository.listForUser(
+    tenantId,
+    userId,
+  );
+  const enabledBindings = bindings.filter((binding) => binding.enabled);
+  const afterDate = resolveWindowAfterDate(
+    connection?.ingestWatermarkAt,
+    windowEnd,
+  );
+  const beforeDate = resolveWindowBeforeDate(windowEnd);
+
+  const windowQuery = buildGmailSearchQuery(enabledBindings, {
+    ...(afterDate ? { afterDate } : {}),
+    beforeDate,
+  });
+
+  const messageIds = new Set<string>();
+  const bindingIdsByMessage = new Map<string, string>();
+
+  async function listAllMessageIds(query: string): Promise<readonly string[]> {
+    const ids: string[] = [];
+    let pageToken: string | undefined;
+    for (;;) {
+      const page = await gmail.listMessageIds({
+        query,
+        maxResults: 100,
+        ...(pageToken ? { pageToken } : {}),
+      });
+      ids.push(...page.messageIds);
+      if (!page.nextPageToken || page.messageIds.length === 0) break;
+      pageToken = page.nextPageToken;
+    }
+    return ids;
+  }
+
+  if (windowQuery) {
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step("window-query", "info", "Built window Gmail query", {
+        query: windowQuery,
+        bootstrap: !connection?.ingestWatermarkAt,
+      }),
+    );
+    for (const messageId of await listAllMessageIds(windowQuery)) {
+      messageIds.add(messageId);
+    }
+  } else {
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step("window-query", "skipped", "No enabled bindings for window query"),
+    );
+  }
+
+  const catchupBindings = enabledBindings.filter(
+    (binding) => binding.catchupNeeded === true,
+  );
+  for (const binding of catchupBindings) {
+    const catchupQuery = buildGmailSearchQuery([binding], { beforeDate });
+    if (!catchupQuery) continue;
+    await appendJobStep(
+      deps,
+      tenantId,
+      jobId,
+      step("catchup-query", "info", "Binding catch-up query", {
+        bindingId: binding.id,
+        query: catchupQuery,
+      }),
+    );
+    for (const messageId of await listAllMessageIds(catchupQuery)) {
+      messageIds.add(messageId);
+      if (!bindingIdsByMessage.has(messageId)) {
+        bindingIdsByMessage.set(messageId, binding.id);
+      }
+    }
+    await deps.emailMatchBindingRepository.patch(tenantId, binding.id, userId, {
+      catchupNeeded: false,
+    });
+  }
+
+  let enqueued = 0;
+  for (const messageId of messageIds) {
+    const bindingId = bindingIdsByMessage.get(messageId);
     await deps.enqueueProcessMessage({
       tenantId,
       userId,
       jobId,
       gmailMessageId: messageId,
+      ...(bindingId ? { bindingId } : {}),
     });
+    enqueued += 1;
   }
-  if (history.latestHistoryId) {
-    await deps.gmailConnectionRepository.upsert(userId, {
-      status: "connected",
-      historyId: history.latestHistoryId,
-      lastSyncAt: new Date().toISOString(),
-    });
+
+  const sortedIds = [...messageIds].sort();
+  const ingestBatchHash = buildIngestBatchHash(sortedIds);
+  const ingestWatermarkAt = windowEnd.toISOString();
+
+  let profileHistoryId: string | undefined;
+  try {
+    const profile = await gmail.getProfile();
+    if (profile.historyId) profileHistoryId = String(profile.historyId);
+  } catch {
+    // Watch continuity only; window sync does not require historyId.
   }
+
+  await deps.gmailConnectionRepository.upsert(userId, {
+    status: "connected",
+    ingestWatermarkAt,
+    ingestBatchHash,
+    lastSyncAt: ingestWatermarkAt,
+    ...(profileHistoryId ? { historyId: profileHistoryId } : {}),
+  });
+
   await appendJobStep(
     deps,
     tenantId,
     jobId,
     step(
-      "history",
+      "window-sync-done",
       "success",
-      `Enqueued ${history.messageIds.length} history message(s)`,
+      `Enqueued ${enqueued} message(s); watermark advanced`,
+      { enqueued, ingestWatermarkAt, ingestBatchHash },
     ),
   );
   await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
-  logger.info("Gmail history sync completed", {
+  logger.info("Gmail window sync completed", {
     tenantId,
-    meta: { count: history.messageIds.length },
+    meta: { enqueued, jobId, ingestWatermarkAt },
   });
 }
 
@@ -878,9 +842,12 @@ export async function processGmailWatchRenew(
   payload: z.infer<typeof gmailWatchRenewTaskPayloadSchema>,
   logger: HookLogger,
 ): Promise<void> {
-  if (deps.deliveryMode !== "push" || !deps.gmailPubsubTopic) {
+  if ((await deps.getDeliveryMode()) !== "push" || !deps.gmailPubsubTopic) {
     logger.info("Gmail watch renew skipped: push mode inactive or no topic", {
-      meta: { userId: payload.userId, deliveryMode: deps.deliveryMode },
+      meta: {
+        userId: payload.userId,
+        deliveryMode: await deps.getDeliveryMode(),
+      },
     });
     return;
   }
@@ -918,14 +885,15 @@ export async function processGmailPoll(
   deps: GmailIngestProcessorDeps,
   logger: HookLogger,
 ): Promise<{ readonly enqueued: number; readonly skipped: number }> {
-  if (deps.deliveryMode !== "poll") {
+  const deliveryMode = await deps.getDeliveryMode();
+  if (deliveryMode !== "poll") {
     logger.info("Gmail poll skipped: delivery mode is not poll", {
-      meta: { deliveryMode: deps.deliveryMode },
+      meta: { deliveryMode },
     });
     return { enqueued: 0, skipped: 0 };
   }
-  if (!deps.enqueueHistorySync) {
-    throw new Error("enqueueHistorySync is required for Gmail poll");
+  if (!deps.enqueueWindowSync) {
+    throw new Error("enqueueWindowSync is required for Gmail poll");
   }
 
   const connections = await deps.gmailConnectionRepository.listConnected();
@@ -933,21 +901,20 @@ export async function processGmailPoll(
   let skipped = 0;
 
   for (const connection of connections) {
-    if (!connection.tenantId || !connection.historyId) {
+    if (!connection.tenantId) {
       skipped += 1;
       continue;
     }
     const job = await deps.emailIngestJobRepository.create({
       tenantId: connection.tenantId,
       userId: connection.userId,
-      kind: "historySync",
-      title: "Gmail poll history sync",
+      kind: "windowSync",
+      title: "Gmail poll window sync",
     });
-    await deps.enqueueHistorySync({
+    await deps.enqueueWindowSync({
       tenantId: connection.tenantId,
       userId: connection.userId,
       jobId: job.id,
-      historyId: connection.historyId,
     });
     enqueued += 1;
   }
@@ -966,10 +933,10 @@ export function createGmailIngestProcessorDeps(
     readonly gmailOAuthClientId: string;
     readonly gmailOAuthClientSecret: string;
     readonly gmailPubsubTopic?: string;
-    readonly deliveryMode: GmailIngestDeliveryMode;
+    readonly getDeliveryMode: () => Promise<GmailIngestDeliveryMode>;
     readonly vertexAiConfig: VertexAiConfig;
     readonly enqueueProcessMessage: GmailIngestProcessorDeps["enqueueProcessMessage"];
-    readonly enqueueHistorySync?: GmailIngestProcessorDeps["enqueueHistorySync"];
+    readonly enqueueWindowSync?: GmailIngestProcessorDeps["enqueueWindowSync"];
     readonly scheduleWatchRenew?: GmailIngestProcessorDeps["scheduleWatchRenew"];
   },
 ): GmailIngestProcessorDeps {
@@ -982,19 +949,21 @@ export function createGmailIngestProcessorDeps(
       createFirestoreAdminEmailMatchBindingRepository(firebaseAdminConfig),
     emailIngestProcessedRepository:
       createFirestoreAdminEmailIngestProcessedRepository(firebaseAdminConfig),
+    emailIngestFingerprintRepository:
+      createFirestoreAdminEmailIngestFingerprintRepository(firebaseAdminConfig),
     emailIngestJobRepository:
       createFirestoreAdminEmailIngestJobRepository(firebaseAdminConfig),
     encryptionMasterKey: options.encryptionMasterKey,
     gmailOAuthClientId: options.gmailOAuthClientId,
     gmailOAuthClientSecret: options.gmailOAuthClientSecret,
-    deliveryMode: options.deliveryMode,
+    getDeliveryMode: options.getDeliveryMode,
     ...(options.gmailPubsubTopic
       ? { gmailPubsubTopic: options.gmailPubsubTopic }
       : {}),
     vertexAiConfig: options.vertexAiConfig,
     enqueueProcessMessage: options.enqueueProcessMessage,
-    ...(options.enqueueHistorySync
-      ? { enqueueHistorySync: options.enqueueHistorySync }
+    ...(options.enqueueWindowSync
+      ? { enqueueWindowSync: options.enqueueWindowSync }
       : {}),
     ...(options.scheduleWatchRenew
       ? { scheduleWatchRenew: options.scheduleWatchRenew }

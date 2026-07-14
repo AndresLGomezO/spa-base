@@ -53,6 +53,10 @@ export function createFirestoreAdminPlatformRuntimeSettingsRepository(
           parsed.seedHookObservabilityEnabled ??
           existing?.seedHookObservabilityEnabled ??
           null,
+        gmailIngestDeliveryMode:
+          parsed.gmailIngestDeliveryMode !== undefined
+            ? parsed.gmailIngestDeliveryMode
+            : (existing?.gmailIngestDeliveryMode ?? null),
         updatedAt: nowIso,
         updatedBy,
       });

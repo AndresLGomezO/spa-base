@@ -26,13 +26,10 @@ import { useTranslation } from "react-i18next";
 import {
   createEmailMatchBinding,
   deleteEmailMatchBinding,
-  getGmailStatus,
   listEmailMatchBindings,
   patchEmailMatchBinding,
-  startGmailBackfill,
 } from "../../lib/api-client";
 import { JsonImportErrors } from "../data-models/json/JsonImportErrors";
-import { GmailBackfillConfirmDialog } from "../../features/gmail-ingest/GmailBackfillConfirmDialog";
 
 function splitLines(value: string): string[] {
   return value
@@ -311,9 +308,6 @@ export function EntityEmailMatchingPanel(props: {
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BindingFormState>(emptyForm);
-  const [bindingBackfillId, setBindingBackfillId] = useState<string | null>(
-    null,
-  );
 
   const [listViewOpen, setListViewOpen] = useState(false);
   const [listImportOpen, setListImportOpen] = useState(false);
@@ -334,16 +328,10 @@ export function EntityEmailMatchingPanel(props: {
       }),
   });
 
-  const gmailStatusQuery = useQuery({
-    queryKey: ["gmail-status"],
-    queryFn: getGmailStatus,
-  });
-
   const bindings = useMemo(
     () => bindingsQuery.data?.items ?? [],
     [bindingsQuery.data?.items],
   );
-  const gmailConnected = gmailStatusQuery.data?.connected === true;
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({
@@ -488,23 +476,6 @@ export function EntityEmailMatchingPanel(props: {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const backfillMutation = useMutation({
-    mutationFn: (input: {
-      readonly bindingId: string;
-      readonly reprocess: boolean;
-    }) =>
-      startGmailBackfill({
-        maxMessages: 100,
-        bindingId: input.bindingId,
-        reprocess: input.reprocess,
-      }),
-    onSuccess: (data) => {
-      setBindingBackfillId(null);
-      toast.success(t("platform.email.backfillStarted", { jobId: data.jobId }));
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
   const listViewJsonText = useMemo(() => {
     const portableBindings = bindings.map((binding) =>
       toPortableFromRecord(binding),
@@ -599,13 +570,6 @@ export function EntityEmailMatchingPanel(props: {
   }, [itemImportOpen]);
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const selectedBackfillBinding = bindings.find(
-    (binding) => binding.id === bindingBackfillId,
-  );
-  const selectedBackfillLabel = selectedBackfillBinding
-    ? selectedBackfillBinding.fromAddresses.join(", ") ||
-      selectedBackfillBinding.id
-    : "";
 
   return (
     <section className="space-y-3 border-t pt-4">
@@ -672,18 +636,6 @@ export function EntityEmailMatchingPanel(props: {
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={
-                    !gmailConnected ||
-                    !binding.enabled ||
-                    backfillMutation.isPending
-                  }
-                  onClick={() => setBindingBackfillId(binding.id)}
-                >
-                  {t("platform.email.backfillBinding")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
                   onClick={() => openEdit(binding.id)}
                 >
                   {t("platform.email.editBinding")}
@@ -714,27 +666,6 @@ export function EntityEmailMatchingPanel(props: {
           ))}
         </ul>
       )}
-
-      <GmailBackfillConfirmDialog
-        open={bindingBackfillId != null}
-        mode={
-          bindingBackfillId != null
-            ? {
-                kind: "binding",
-                bindingLabel: selectedBackfillLabel,
-              }
-            : null
-        }
-        isPending={backfillMutation.isPending}
-        onClose={() => setBindingBackfillId(null)}
-        onConfirm={(reprocess) => {
-          if (!bindingBackfillId) return;
-          backfillMutation.mutate({
-            bindingId: bindingBackfillId,
-            reprocess,
-          });
-        }}
-      />
 
       <Modal
         open={formOpen}

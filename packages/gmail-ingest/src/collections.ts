@@ -8,6 +8,8 @@ export const EMAIL_MATCH_BINDINGS_COLLECTION =
   "__email_match_bindings" as const;
 export const EMAIL_INGEST_PROCESSED_COLLECTION =
   "__email_ingest_processed" as const;
+export const EMAIL_INGEST_FINGERPRINTS_COLLECTION =
+  "__email_ingest_fingerprints" as const;
 export const EMAIL_INGEST_JOBS_COLLECTION = "__email_ingest_jobs" as const;
 
 export const GMAIL_OAUTH_SCOPES = [

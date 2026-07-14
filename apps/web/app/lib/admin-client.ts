@@ -191,6 +191,7 @@ export interface PlatformRuntimeSettingsResponse {
     readonly aiStepTraceEnabled: boolean | null;
     readonly requestPerfTraceEnabled: boolean | null;
     readonly seedHookObservabilityEnabled: boolean | null;
+    readonly gmailIngestDeliveryMode: "poll" | "push" | null;
     readonly updatedAt: string;
     readonly updatedBy: string;
   } | null;
@@ -198,11 +199,13 @@ export interface PlatformRuntimeSettingsResponse {
     readonly aiStepTraceEnabled: boolean;
     readonly requestPerfTraceEnabled: boolean;
     readonly seedHookObservabilityEnabled: boolean;
+    readonly gmailIngestDeliveryMode: "poll" | "push";
   };
   readonly envDefaults: {
     readonly aiStepTraceEnabled: boolean;
     readonly requestPerfTraceEnabled: boolean;
     readonly seedHookObservabilityEnabled: boolean;
+    readonly gmailIngestDeliveryMode: "poll" | "push";
   };
 }
 
@@ -221,6 +224,7 @@ export async function updatePlatformRuntimeSettings(input: {
   readonly aiStepTraceEnabled?: boolean | null;
   readonly requestPerfTraceEnabled?: boolean | null;
   readonly seedHookObservabilityEnabled?: boolean | null;
+  readonly gmailIngestDeliveryMode?: "poll" | "push" | null;
 }): Promise<PlatformRuntimeSettingsResponse> {
   const payload = await adminFetch<
     PlatformRuntimeSettingsResponse & { ok?: boolean }

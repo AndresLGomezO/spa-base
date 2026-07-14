@@ -17,7 +17,12 @@ export type GmailProcessMessageEnqueuePayload = {
   readonly jobId: string;
   readonly gmailMessageId: string;
   readonly bindingId?: string;
-  readonly reprocess?: boolean;
+};
+
+export type GmailWindowSyncEnqueuePayload = {
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly jobId: string;
 };
 
 let tasksClient: CloudTasksClientType | null = null;
@@ -125,17 +130,10 @@ async function enqueueCloudTask(
   }
 }
 
-export type GmailHistorySyncEnqueuePayload = {
-  readonly tenantId: string;
-  readonly userId: string;
-  readonly jobId: string;
-  readonly historyId?: string;
-};
-
 /**
  * Enqueue Gmail follow-up tasks from the worker.
  * Production must use Cloud Tasks + OIDC — Cloud Run rejects unauthenticated
- * self-fetches with a 404, which previously broke backfill fan-out.
+ * self-fetches with a 404.
  */
 export function createWorkerGmailTaskEnqueuer(config: WorkerGmailTasksConfig) {
   return {
@@ -153,15 +151,15 @@ export function createWorkerGmailTaskEnqueuer(config: WorkerGmailTasksConfig) {
         taskId: buildDeterministicTaskId(
           "gmail-msg",
           payload.gmailMessageId,
-          `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}:${payload.jobId}${payload.reprocess ? ":reprocess" : ""}`,
+          `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}:${payload.jobId}`,
         ),
       });
     },
 
-    async enqueueHistorySync(
-      payload: GmailHistorySyncEnqueuePayload,
+    async enqueueWindowSync(
+      payload: GmailWindowSyncEnqueuePayload,
     ): Promise<void> {
-      const path = "/tasks/gmail-history-sync";
+      const path = "/tasks/gmail-window-sync";
       if (config.localDispatch) {
         await enqueueLocal(config, path, payload);
         return;
@@ -170,7 +168,7 @@ export function createWorkerGmailTaskEnqueuer(config: WorkerGmailTasksConfig) {
         path,
         payload,
         taskId: buildDeterministicTaskId(
-          "gmail-history",
+          "gmail-window",
           payload.jobId,
           `${payload.tenantId}:${payload.userId}:${payload.jobId}`,
         ),

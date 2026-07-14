@@ -35,7 +35,6 @@ interface GmailOAuthEnv {
   readonly webAppOrigin: string;
   readonly allowedWebOrigins: readonly string[];
   readonly pubsubTopicName?: string;
-  readonly deliveryMode: "poll" | "push";
 }
 
 interface RegisterGmailIngestRoutesOptions {
@@ -46,7 +45,8 @@ interface RegisterGmailIngestRoutesOptions {
   readonly gmailTasksClient: GmailTasksClient;
   readonly entityRuntime: EntityRuntimeContext;
   readonly oauth: GmailOAuthEnv | null;
-  readonly deliveryMode: "poll" | "push";
+  /** Effective mode (env default + platform override). Resolved per request. */
+  readonly getDeliveryMode: () => Promise<"poll" | "push">;
 }
 
 const GMAIL_SETTINGS_PATH = "/account/settings/integrations/email";
@@ -118,14 +118,6 @@ function gmailSettingsRedirectUrl(
 ): string {
   return `${origin.replace(/\/$/, "")}${GMAIL_SETTINGS_PATH}?gmail=${result}`;
 }
-
-const backfillBodySchema = z.object({
-  afterDate: z.string().trim().optional(),
-  beforeDate: z.string().trim().optional(),
-  maxMessages: z.coerce.number().int().min(1).max(500).optional(),
-  bindingId: z.string().trim().min(1).optional(),
-  reprocess: z.boolean().optional().default(false),
-});
 
 const bindingIdParamsSchema = z.object({
   bindingId: z.string().trim().min(1),
@@ -268,9 +260,9 @@ export async function registerGmailIngestRoutes(
       let historyId = profile.historyId ? String(profile.historyId) : null;
       let watchExpiration: string | null = null;
 
+      const deliveryMode = await options.getDeliveryMode();
       const startPushWatch =
-        options.oauth.deliveryMode === "push" &&
-        Boolean(options.oauth.pubsubTopicName);
+        deliveryMode === "push" && Boolean(options.oauth.pubsubTopicName);
 
       if (startPushWatch && options.oauth.pubsubTopicName) {
         try {
@@ -362,85 +354,6 @@ export async function registerGmailIngestRoutes(
   );
 
   app.post(
-    "/api/gmail/backfill",
-    { preHandler: [options.authenticate] },
-    async (request, reply) => {
-      const uid = request.ctx?.uid;
-      const tenantId = requireJwtTenant(request, reply);
-      if (!uid || !tenantId) return;
-
-      const connection = await options.gmailConnectionRepository.get(uid);
-      if (!connection || connection.status !== "connected") {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Connect Gmail before starting a backfill.",
-        );
-      }
-
-      // Backfill also refreshes tenantId + email lookup index for older connections.
-      if (!connection.tenantId || connection.tenantId !== tenantId) {
-        await options.gmailConnectionRepository.upsert(uid, {
-          status: "connected",
-          tenantId,
-        });
-      }
-
-      const parsed = backfillBodySchema.safeParse(request.body ?? {});
-      if (!parsed.success) {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Invalid backfill request.",
-        );
-      }
-
-      if (parsed.data.bindingId) {
-        const binding = await options.emailMatchBindingRepository.get(
-          tenantId,
-          parsed.data.bindingId,
-        );
-        if (!binding || binding.userId !== uid) {
-          return replyWithError(
-            reply,
-            404,
-            ApiErrorCode.NOT_FOUND,
-            "Email match binding not found.",
-          );
-        }
-      }
-
-      const job = await options.emailIngestJobRepository.create({
-        tenantId,
-        userId: uid,
-        kind: "backfill",
-        title: parsed.data.bindingId
-          ? `Gmail backfill (${parsed.data.bindingId})`
-          : "Gmail backfill",
-      });
-
-      await options.gmailTasksClient.enqueueBackfill({
-        tenantId,
-        userId: uid,
-        jobId: job.id,
-        ...(parsed.data.afterDate ? { afterDate: parsed.data.afterDate } : {}),
-        ...(parsed.data.beforeDate
-          ? { beforeDate: parsed.data.beforeDate }
-          : {}),
-        ...(parsed.data.maxMessages
-          ? { maxMessages: parsed.data.maxMessages }
-          : {}),
-        ...(parsed.data.bindingId ? { bindingId: parsed.data.bindingId } : {}),
-        ...(parsed.data.reprocess ? { reprocess: true } : {}),
-      });
-
-      return reply.send(successEnvelope({ jobId: job.id }));
-    },
-  );
-
-  app.post(
     "/api/gmail/sync",
     { preHandler: [options.authenticate] },
     async (request, reply) => {
@@ -458,15 +371,6 @@ export async function registerGmailIngestRoutes(
         );
       }
 
-      if (!connection.historyId) {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "No Gmail history cursor yet. Run a backfill once, or reconnect Gmail.",
-        );
-      }
-
       // Keep tenantId + email lookup index fresh for Pub/Sub (and older connects).
       await options.gmailConnectionRepository.upsert(uid, {
         status: "connected",
@@ -476,15 +380,14 @@ export async function registerGmailIngestRoutes(
       const job = await options.emailIngestJobRepository.create({
         tenantId,
         userId: uid,
-        kind: "historySync",
+        kind: "windowSync",
         title: "Gmail sync now",
       });
 
-      await options.gmailTasksClient.enqueueHistorySync({
+      await options.gmailTasksClient.enqueueWindowSync({
         tenantId,
         userId: uid,
         jobId: job.id,
-        historyId: connection.historyId,
       });
 
       return reply.send(successEnvelope({ jobId: job.id }));
@@ -658,7 +561,7 @@ export async function registerGmailIngestRoutes(
   );
 
   app.post("/api/gmail/pubsub", async (request, reply) => {
-    if (options.deliveryMode !== "push") {
+    if ((await options.getDeliveryMode()) !== "push") {
       return reply.status(204).send();
     }
 
@@ -701,16 +604,14 @@ export async function registerGmailIngestRoutes(
       const job = await options.emailIngestJobRepository.create({
         tenantId: connection.tenantId,
         userId: connection.userId,
-        kind: "historySync",
-        title: "Gmail push history sync",
+        kind: "windowSync",
+        title: "Gmail push window sync",
       });
 
-      // Start from the stored cursor (not the notification historyId).
-      await options.gmailTasksClient.enqueueHistorySync({
+      await options.gmailTasksClient.enqueueWindowSync({
         tenantId: connection.tenantId,
         userId: connection.userId,
         jobId: job.id,
-        ...(connection.historyId ? { historyId: connection.historyId } : {}),
       });
 
       return reply.status(204).send();

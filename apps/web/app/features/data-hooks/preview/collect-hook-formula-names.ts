@@ -55,6 +55,9 @@ export function collectFormulaNamesInAction(
         }
       }
       break;
+    case "matchRelatedRecord":
+      names.push(...collectFormulaNames(action.haystack));
+      break;
     case "createRecords":
       names.push(...collectFormulaNames(action.count));
       if (action.startIndex) {

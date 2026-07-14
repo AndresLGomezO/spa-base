@@ -74,6 +74,10 @@ export {
 } from "./data-hook-definition.js";
 export { computeAggregateMatching } from "./aggregate-matching-utils.js";
 export {
+  aliasesFromFieldValue,
+  pickBestAliasMatch,
+} from "./match-related-record-utils.js";
+export {
   MAX_SCHEDULED_RECORDS_PER_RUN,
   SCHEDULED_HOOK_SENTINEL_ID,
   buildScheduledHookContext,

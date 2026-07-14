@@ -2,12 +2,14 @@ import {
   updatePlatformRuntimeSettingsInputSchema,
   type RuntimeSettingsCache,
 } from "@repo/debug-logs";
+import type { GmailConnectionRepository } from "@repo/gcp-firebase";
 import type { PlatformRuntimeSettingsRepository } from "@repo/firestore-converters";
 import type { FastifyPluginAsync } from "fastify";
 
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { createRequireSuperAdmin } from "../admin/require-superadmin.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import type { GmailTasksClient } from "../gmail-ingest/gmail-tasks.client.js";
 
 export const platformRuntimeSettingsRoutes: FastifyPluginAsync<{
   readonly platformRuntimeSettingsRepository: PlatformRuntimeSettingsRepository;
@@ -16,6 +18,9 @@ export const platformRuntimeSettingsRoutes: FastifyPluginAsync<{
   readonly firebaseAdminConfig: Parameters<
     typeof createAuthenticatePreHandler
   >[0];
+  readonly gmailConnectionRepository?: GmailConnectionRepository;
+  readonly gmailTasksClient?: GmailTasksClient;
+  readonly gmailPubsubTopic?: string;
 }> = async (fastify, opts) => {
   const authenticate = createAuthenticatePreHandler(opts.firebaseAdminConfig, {
     requireTenant: false,
@@ -53,14 +58,53 @@ export const platformRuntimeSettingsRoutes: FastifyPluginAsync<{
         });
       }
 
+      const previousMode =
+        await opts.runtimeSettingsCache.getGmailIngestDeliveryMode();
+
       await opts.platformRuntimeSettingsRepository.update({
         ...parsedBody.data,
         updatedBy: uid,
       });
       opts.runtimeSettingsCache.invalidate();
 
+      const nextMode =
+        await opts.runtimeSettingsCache.getGmailIngestDeliveryMode();
+
+      if (
+        parsedBody.data.gmailIngestDeliveryMode !== undefined &&
+        previousMode !== nextMode &&
+        nextMode === "push"
+      ) {
+        await activatePushWatches({
+          gmailConnectionRepository: opts.gmailConnectionRepository,
+          gmailTasksClient: opts.gmailTasksClient,
+          gmailPubsubTopic: opts.gmailPubsubTopic,
+        });
+      }
+
       const payload = await opts.runtimeSettingsCache.buildResponse();
       return reply.send({ ok: true, ...payload });
     },
   );
 };
+
+async function activatePushWatches(options: {
+  readonly gmailConnectionRepository?: GmailConnectionRepository;
+  readonly gmailTasksClient?: GmailTasksClient;
+  readonly gmailPubsubTopic?: string;
+}): Promise<void> {
+  if (
+    !options.gmailPubsubTopic ||
+    !options.gmailConnectionRepository ||
+    !options.gmailTasksClient
+  ) {
+    return;
+  }
+  const connections = await options.gmailConnectionRepository.listConnected();
+  for (const connection of connections) {
+    await options.gmailTasksClient.enqueueWatchRenew({
+      userId: connection.userId,
+      ...(connection.tenantId ? { tenantId: connection.tenantId } : {}),
+    });
+  }
+}

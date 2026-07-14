@@ -3804,6 +3804,11 @@
             "component": "relation",
             "filterable": true,
             "order": 9
+          },
+          "sourceGmailMessageId": {
+            "label": "Source Gmail message",
+            "component": "text",
+            "order": 10
           }
         },
         "listViewType": "expandableTable"
@@ -3941,6 +3946,16 @@
             "label": "Category",
             "order": 9,
             "filterable": true
+          }
+        },
+        {
+          "name": "sourceGmailMessageId",
+          "type": "string",
+          "required": false,
+          "ui": {
+            "label": "Source Gmail message",
+            "order": 10,
+            "hidden": true
           }
         }
       ],

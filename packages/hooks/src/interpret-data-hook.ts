@@ -11,6 +11,7 @@ import {
   assertCreateRecordsRuntimeCount,
   coerceNonNegativeInteger,
 } from "./create-records-utils.js";
+import { pickBestAliasMatch } from "./match-related-record-utils.js";
 import type {
   CreateDataHookExecutionInput,
   DataHookExecutionRecorder,
@@ -584,6 +585,35 @@ async function runAction(
         writeOptions,
       );
       context.loaded[action.as] = created;
+      return;
+    }
+
+    case "matchRelatedRecord": {
+      const entities = requireEntities(context);
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      const haystack = evaluateExpression(action.haystack, scope);
+      if (
+        haystack == null ||
+        (typeof haystack === "string" && haystack.trim().length === 0)
+      ) {
+        context.loaded[action.as] = null;
+        return;
+      }
+
+      const matches = await listMatchingRecordsForWhere(
+        action.entity,
+        action.where,
+        context,
+        scope,
+        entities.list,
+      );
+      context.loaded[action.as] = pickBestAliasMatch({
+        haystack,
+        aliasField: action.aliasField,
+        candidates: matches,
+      });
       return;
     }
 

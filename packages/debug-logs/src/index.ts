@@ -48,25 +48,29 @@ export {
   type HookLogMessageWriter,
 } from "./create-persisting-hook-logger.js";
 export {
-  PLATFORM_RUNTIME_SETTINGS_COLLECTION,
-  PLATFORM_RUNTIME_SETTINGS_DOC_ID,
-  platformRuntimeSettingsSchema,
-  updatePlatformRuntimeSettingsInputSchema,
-  type EffectiveObservabilityFlags,
-  type ObservabilityEnvDefaults,
-  type PlatformRuntimeSettings,
-  type UpdatePlatformRuntimeSettingsInput,
-} from "./platform-runtime-settings.js";
-export {
   getObservabilityEnvDefaults,
   resolveAiStepTraceEnabled,
   resolveEffectiveObservabilityFlags,
   resolveEnvAiStepTraceEnabled,
+  resolveEnvGmailIngestDeliveryMode,
   resolveEnvRequestPerfTraceEnabled,
   resolveEnvSeedHookObservabilityEnabled,
+  resolveGmailIngestDeliveryMode,
   resolveRequestPerfTraceEnabled,
   resolveSeedHookObservabilityEnabled,
 } from "./resolve-observability-flags.js";
+export {
+  PLATFORM_RUNTIME_SETTINGS_COLLECTION,
+  PLATFORM_RUNTIME_SETTINGS_DOC_ID,
+  gmailIngestDeliveryModeSchema,
+  platformRuntimeSettingsSchema,
+  updatePlatformRuntimeSettingsInputSchema,
+  type EffectiveObservabilityFlags,
+  type GmailIngestDeliveryMode,
+  type ObservabilityEnvDefaults,
+  type PlatformRuntimeSettings,
+  type UpdatePlatformRuntimeSettingsInput,
+} from "./platform-runtime-settings.js";
 export {
   createRuntimeSettingsCache,
   type RuntimeSettingsCache,

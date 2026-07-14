@@ -13,6 +13,7 @@ const baseSettings: PlatformRuntimeSettings = {
   aiStepTraceEnabled: null,
   requestPerfTraceEnabled: null,
   seedHookObservabilityEnabled: null,
+  gmailIngestDeliveryMode: null,
   updatedAt: "2026-01-01T00:00:00.000Z",
   updatedBy: "admin",
 };
@@ -41,6 +42,7 @@ describe("resolveObservabilityFlags", () => {
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
       seedHookObservabilityEnabled: true,
+      gmailIngestDeliveryMode: "poll",
     });
   });
 
@@ -79,6 +81,7 @@ describe("resolveObservabilityFlags", () => {
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
       seedHookObservabilityEnabled: false,
+      gmailIngestDeliveryMode: "poll",
     });
   });
 
@@ -96,6 +99,7 @@ describe("resolveObservabilityFlags", () => {
       aiStepTraceEnabled: false,
       requestPerfTraceEnabled: false,
       seedHookObservabilityEnabled: true,
+      gmailIngestDeliveryMode: "poll",
     });
   });
 
@@ -115,5 +119,22 @@ describe("resolveObservabilityFlags", () => {
         { NODE_ENV: "development" },
       ),
     ).toBe(false);
+  });
+
+  it("resolves gmail ingest delivery mode from env and runtime overrides", () => {
+    expect(
+      resolveEffectiveObservabilityFlags(null, {
+        GMAIL_INGEST_DELIVERY_MODE: "push",
+      }).gmailIngestDeliveryMode,
+    ).toBe("push");
+    expect(
+      resolveEffectiveObservabilityFlags(
+        {
+          ...baseSettings,
+          gmailIngestDeliveryMode: "poll",
+        },
+        { GMAIL_INGEST_DELIVERY_MODE: "push" },
+      ).gmailIngestDeliveryMode,
+    ).toBe("poll");
   });
 });

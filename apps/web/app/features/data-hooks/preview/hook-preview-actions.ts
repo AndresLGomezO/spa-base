@@ -273,6 +273,24 @@ function buildActionStep(
       }
       break;
     }
+    case "matchRelatedRecord": {
+      summary = context.t("dataHooks.preview.actions.matchRelatedRecord", {
+        entity: context.entityLabel(action.entity),
+        alias: action.as,
+        aliasField: context.fieldLabel(action.entity, action.aliasField),
+      });
+      details.push(formatWhereSection(action.where, context, action.entity));
+      bullets = [
+        context.t("dataHooks.preview.actions.matchRelatedRecordHaystack", {
+          value: humanizeExpression(action.haystack, context, exprOptions).text,
+        }),
+      ];
+      advancedExpressions.push({
+        label: context.t("dataHooks.preview.advanced.haystack"),
+        expression: action.haystack,
+      });
+      break;
+    }
     case "aggregateMatching": {
       icon = "aggregate";
       const op = context.t(`dataHooks.actions.aggregateOps.${action.op}`);
@@ -312,7 +330,11 @@ function buildActionStep(
   }
 
   let nextPipeline = pipeline;
-  if (action.type === "getRecord" || action.type === "getOrCreateRecord") {
+  if (
+    action.type === "getRecord" ||
+    action.type === "getOrCreateRecord" ||
+    action.type === "matchRelatedRecord"
+  ) {
     const loaded = new Map(pipeline.loadedAliases);
     loaded.set(action.as, action.entity);
     nextPipeline = { ...pipeline, loadedAliases: loaded };

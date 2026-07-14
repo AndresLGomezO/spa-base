@@ -5,35 +5,23 @@ import {
 } from "../ai/cloud-tasks.client.js";
 import {
   GMAIL_TASK_ROUTES,
-  type GmailBackfillTaskPayload,
-  type GmailHistorySyncTaskPayload,
   type GmailProcessMessageTaskPayload,
   type GmailWatchRenewTaskPayload,
+  type GmailWindowSyncTaskPayload,
 } from "./gmail-task-routes.js";
 
 export function createGmailTasksClient(config: CloudTasksClientConfig) {
   const cloudTasks = createCloudTasksClient(config);
 
   return {
-    async enqueueBackfill(payload: GmailBackfillTaskPayload): Promise<void> {
-      await cloudTasks.enqueueTask({
-        path: GMAIL_TASK_ROUTES.BACKFILL,
-        payload,
-        taskId: buildDeterministicTaskId(
-          "gmail-backfill",
-          payload.jobId,
-          `${payload.tenantId}:${payload.userId}:${payload.jobId}`,
-        ),
-      });
-    },
-    async enqueueHistorySync(
-      payload: GmailHistorySyncTaskPayload,
+    async enqueueWindowSync(
+      payload: GmailWindowSyncTaskPayload,
     ): Promise<void> {
       await cloudTasks.enqueueTask({
-        path: GMAIL_TASK_ROUTES.HISTORY_SYNC,
+        path: GMAIL_TASK_ROUTES.WINDOW_SYNC,
         payload,
         taskId: buildDeterministicTaskId(
-          "gmail-history",
+          "gmail-window",
           payload.jobId,
           `${payload.tenantId}:${payload.userId}:${payload.jobId}`,
         ),
@@ -68,7 +56,7 @@ export function createGmailTasksClient(config: CloudTasksClientConfig) {
         taskId: buildDeterministicTaskId(
           "gmail-msg",
           payload.gmailMessageId,
-          `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}:${payload.jobId}${payload.reprocess ? ":reprocess" : ""}`,
+          `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}:${payload.jobId}`,
         ),
       });
     },

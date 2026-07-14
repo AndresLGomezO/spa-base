@@ -1871,7 +1871,7 @@
     },
     "observability": {
       "title": "Observabilidad",
-      "description": "Activa o desactiva trazas de depuración para todo el despliegue sin volver a desplegar. Los cambios surten efecto en unos segundos.",
+      "description": "Activa o desactiva trazas de depuración y el modo de entrega de Gmail para todo el despliegue sin volver a desplegar. Los cambios surten efecto en unos segundos.",
       "enabled": "activado",
       "disabled": "desactivado",
       "effective": "Efectivo",
@@ -1891,6 +1891,12 @@
       "seedHookObservability": {
         "title": "Observabilidad de hooks en seed",
         "description": "Persiste ejecuciones de hooks, logs de hooks y notificaciones al reproducir hooks durante el seed de la base de datos."
+      },
+      "gmailIngest": {
+        "title": "Entrega de ingestión de Gmail",
+        "description": "Elige cómo se descubren correos nuevos. Poll sincroniza el historial cada 5 minutos; Push usa watches de Pub/Sub. La ruta inactiva no hace nada para evitar doble ingestión y costos duplicados.",
+        "modePoll": "Poll (cada 5 min)",
+        "modePush": "Push (Pub/Sub)"
       }
     },
     "email": {
@@ -1905,19 +1911,10 @@
       "disconnect": "Desconectar",
       "disconnected": "Gmail desconectado.",
       "syncNow": "Sincronizar ahora",
-      "syncNowHint": "Trae correo nuevo desde la última sincronización. Úsalo en local cuando no hay push de Gmail; usa Importar para volver a buscar con las reglas de coincidencia.",
+      "syncNowHint": "Ejecuta una captura por ventana: la primera sincronización importa el historial que coincida con tus reglas; las siguientes solo traen correo nuevo desde la última marca.",
       "syncStarted": "Sincronización iniciada (trabajo {{jobId}}).",
-      "backfillBinding": "Importar",
-      "backfillBindingTitle": "Importar regla de coincidencia",
-      "backfillBindingDescription": "Busca mensajes recientes de Gmail para {{binding}} y encola el correo coincidente.",
-      "backfillAll": "Importar todas las reglas",
-      "backfillAllTitle": "Importar todas las reglas de coincidencia",
-      "backfillAllDescription": "Busca mensajes recientes de Gmail para todas las reglas activas y encola el correo coincidente.",
-      "backfillConfirm": "Iniciar importación",
-      "backfillConfirmHint": "Revisa las opciones y confirma para iniciar el trabajo en segundo plano.",
-      "backfillStarted": "Importación iniciada (trabajo {{jobId}}).",
-      "reprocess": "Volver a procesar mensajes ya importados",
-      "reprocessHint": "Ignora la deduplicación solo en esta ejecución. Úsalo al probar; déjalo apagado en uso normal para importar cada mensaje una sola vez.",
+      "lastCatchUp": "Última marca de captura: {{at}}",
+      "noCatchUpYet": "Aún no hay captura — Sincronizar ahora importará el historial coincidente.",
       "bindings": "Reglas de coincidencia",
       "bindingsHint": "También puedes editar las reglas en la página de detalle de cada registro.",
       "noBindings": "Aún no hay reglas.",
@@ -3549,6 +3546,7 @@
       "deleteRecord": "Eliminar registro",
       "getRecord": "Cargar registro",
       "getOrCreateRecord": "Obtener o crear registro",
+      "matchRelatedRecord": "Emparejar registro relacionado",
       "aggregateMatching": "Agregar registros coincidentes",
       "sendNotification": "Enviar notificación",
       "callWebhook": "Llamar webhook"
@@ -3582,6 +3580,9 @@
       "aliasPlaceholder": "p. ej. parent",
       "getOrCreateRecordHint": "Carga el primer registro coincidente en el alias. Si no hay coincidencias y el valor de búsqueda no está vacío, crea uno con los datos del registro. Una búsqueda vacía omite la creación y carga null.",
       "getOrCreateRecordFindOnlyHint": "Carga el primer registro coincidente en el alias. Si no hay coincidencias, carga null — nunca crea un registro.",
+      "matchRelatedRecordHint": "Lista candidatos coincidentes y elige el mejor emparejando el texto (haystack) contra un campo de alias string o string[] (preferencia por coincidencia exacta; si no, el alias más largo contenido). Solo busca — nunca crea. Un haystack vacío carga null.",
+      "haystack": "Texto a emparejar (haystack)",
+      "aliasField": "Campo de alias en candidatos",
       "createIfMissing": "Crear si no hay coincidencia",
       "aggregateOp": "Operación de agregación",
       "aggregateField": "Campo a agregar",
@@ -3789,6 +3790,7 @@
       "advanced": {
         "value": "Expresión de valor",
         "count": "Expresión de cantidad de filas",
+        "haystack": "Expresión del haystack",
         "message": "Mensaje de notificación"
       },
       "actions": {
@@ -3801,6 +3803,8 @@
         "getRecord": "Cargar {{entity}} como \"{{alias}}\"",
         "getOrCreateRecord": "Obtener o crear {{entity}} como \"{{alias}}\"",
         "getOrCreateRecordFindOnly": "Buscar {{entity}} como \"{{alias}}\" (sin crear)",
+        "matchRelatedRecord": "Emparejar {{entity}} vía {{aliasField}} como \"{{alias}}\"",
+        "matchRelatedRecordHaystack": "Haystack: {{value}}",
         "createIfMissingOff": "Crear si falta: desactivado — carga null cuando no hay coincidencia",
         "aggregateMatching": "{{op}} registros de {{entity}} → {{alias}}",
         "sendNotification": "Enviar una notificación al usuario",

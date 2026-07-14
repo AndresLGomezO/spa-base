@@ -1,9 +1,12 @@
 import {
+  buildFingerprintDocId,
   buildProcessedDocId,
   createEmailMatchBindingInputSchema,
+  EMAIL_INGEST_FINGERPRINTS_COLLECTION,
   EMAIL_INGEST_JOBS_COLLECTION,
   EMAIL_INGEST_PROCESSED_COLLECTION,
   EMAIL_MATCH_BINDINGS_COLLECTION,
+  emailIngestFingerprintRecordSchema,
   emailIngestJobRecordSchema,
   emailIngestProcessedRecordSchema,
   emailMatchBindingSchema,
@@ -14,6 +17,7 @@ import {
   normalizeGmailEmail,
   patchEmailMatchBindingInputSchema,
   type CreateEmailMatchBindingInput,
+  type EmailIngestFingerprintRecord,
   type EmailIngestJobKind,
   type EmailIngestJobRecord,
   type EmailIngestProcessedRecord,
@@ -40,7 +44,7 @@ export interface GmailConnectionRepository {
   get(userId: string): Promise<GmailConnectionRecord | null>;
   findByEmail(email: string): Promise<GmailConnectionRecord | null>;
   /**
-   * Connected mailboxes that can be history-synced (have tenantId + historyId).
+   * Connected mailboxes that can be window-synced (have tenantId).
    * Used by the poll orchestrator.
    */
   listConnected(): Promise<readonly GmailConnectionRecord[]>;
@@ -89,6 +93,20 @@ export interface EmailIngestProcessedRepository {
       readonly id?: string;
     },
   ): Promise<EmailIngestProcessedRecord>;
+}
+
+export interface EmailIngestFingerprintRepository {
+  get(
+    tenantId: string,
+    userId: string,
+    contentFingerprint: string,
+  ): Promise<EmailIngestFingerprintRecord | null>;
+  upsert(
+    tenantId: string,
+    record: Omit<EmailIngestFingerprintRecord, "id" | "tenantId"> & {
+      readonly id?: string;
+    },
+  ): Promise<EmailIngestFingerprintRecord>;
 }
 
 export interface EmailIngestJobRepository {
@@ -207,8 +225,7 @@ export function createFirestoreAdminGmailConnectionRepository(
         if (
           !connection ||
           connection.status !== "connected" ||
-          !connection.tenantId ||
-          !connection.historyId
+          !connection.tenantId
         ) {
           continue;
         }
@@ -256,6 +273,14 @@ export function createFirestoreAdminGmailConnectionRepository(
           patch.watchExpiration !== undefined
             ? patch.watchExpiration
             : (existing?.watchExpiration ?? null),
+        ingestWatermarkAt:
+          patch.ingestWatermarkAt !== undefined
+            ? patch.ingestWatermarkAt
+            : (existing?.ingestWatermarkAt ?? null),
+        ingestBatchHash:
+          patch.ingestBatchHash !== undefined
+            ? patch.ingestBatchHash
+            : (existing?.ingestBatchHash ?? null),
         lastSyncAt:
           patch.lastSyncAt !== undefined
             ? patch.lastSyncAt
@@ -339,6 +364,7 @@ export function createFirestoreAdminEmailMatchBindingRepository(
         entityName: parsed.entityName,
         recordId: parsed.recordId,
         enabled: parsed.enabled ?? true,
+        catchupNeeded: true,
         fromAddresses: parsed.fromAddresses ?? [],
         subjectPatterns: parsed.subjectPatterns ?? [],
         bodyPatterns: parsed.bodyPatterns ?? [],
@@ -356,9 +382,16 @@ export function createFirestoreAdminEmailMatchBindingRepository(
       const existing = await this.get(tenantId, bindingId);
       if (!existing || existing.userId !== userId) return null;
       const parsed = patchEmailMatchBindingInputSchema.parse(input);
+      const enabling = parsed.enabled === true && existing.enabled === false;
       const next = emailMatchBindingSchema.parse({
         ...existing,
         ...parsed,
+        catchupNeeded:
+          parsed.catchupNeeded !== undefined
+            ? parsed.catchupNeeded
+            : enabling
+              ? true
+              : existing.catchupNeeded,
         gmailQueryExtra:
           parsed.gmailQueryExtra !== undefined
             ? parsed.gmailQueryExtra
@@ -410,6 +443,42 @@ export function createFirestoreAdminEmailIngestProcessedRepository(
       const id =
         record.id ?? buildProcessedDocId(record.userId, record.gmailMessageId);
       const next = emailIngestProcessedRecordSchema.parse({
+        ...record,
+        id,
+        tenantId,
+      });
+      await collection(tenantId).doc(id).set(next);
+      return next;
+    },
+  };
+}
+
+export function createFirestoreAdminEmailIngestFingerprintRepository(
+  config: FirebaseAdminConfig,
+): EmailIngestFingerprintRepository {
+  function collection(tenantId: string) {
+    return tenantEntityCollectionRef(
+      getFirestoreAdmin(config),
+      tenantId,
+      EMAIL_INGEST_FINGERPRINTS_COLLECTION,
+    );
+  }
+
+  return {
+    async get(tenantId, userId, contentFingerprint) {
+      const id = buildFingerprintDocId(userId, contentFingerprint);
+      const snapshot = await collection(tenantId).doc(id).get();
+      if (!snapshot.exists) return null;
+      return emailIngestFingerprintRecordSchema.parse({
+        id: snapshot.id,
+        ...snapshot.data(),
+      });
+    },
+    async upsert(tenantId, record) {
+      const id =
+        record.id ??
+        buildFingerprintDocId(record.userId, record.contentFingerprint);
+      const next = emailIngestFingerprintRecordSchema.parse({
         ...record,
         id,
         tenantId,

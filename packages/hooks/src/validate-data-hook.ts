@@ -104,7 +104,7 @@ function validateLoadedAliases(
   for (const alias of aliases) {
     if (!available.has(alias)) {
       throw new HookExecutionError(
-        `Expression references unknown loaded alias "${alias}". Add a prior getRecord or getOrCreateRecord action with as="${alias}".`,
+        `Expression references unknown loaded alias "${alias}". Add a prior getRecord, getOrCreateRecord, or matchRelatedRecord action with as="${alias}".`,
       );
     }
   }
@@ -239,6 +239,14 @@ function validateActionExpressions(
         }
       }
       return;
+    case "matchRelatedRecord":
+      validateExpressionReferences(
+        action.haystack,
+        availableLoaded,
+        availableAggregates,
+        availableFormulas,
+      );
+      return;
     case "sendNotification":
       validateExpressionReferences(
         action.message,
@@ -292,7 +300,7 @@ function validateActionExpressions(
 function registerBindingAlias(alias: string, boundAliases: Set<string>): void {
   if (boundAliases.has(alias)) {
     throw new HookExecutionError(
-      `Duplicate binding alias "${alias}". Each getRecord, getOrCreateRecord, or aggregateMatching as value must be unique.`,
+      `Duplicate binding alias "${alias}". Each getRecord, getOrCreateRecord, matchRelatedRecord, or aggregateMatching as value must be unique.`,
     );
   }
   boundAliases.add(alias);
@@ -324,7 +332,8 @@ export function validateDataHookActions(
       action.type === "updateMatching" ||
       action.type === "deleteMatching" ||
       action.type === "aggregateMatching" ||
-      action.type === "getOrCreateRecord"
+      action.type === "getOrCreateRecord" ||
+      action.type === "matchRelatedRecord"
     ) {
       validateUpdateMatchingWhere(
         action.where,
@@ -349,11 +358,15 @@ export function validateDataHookActions(
       availableFormulas,
     );
 
-    if (action.type === "getRecord" || action.type === "getOrCreateRecord") {
+    if (
+      action.type === "getRecord" ||
+      action.type === "getOrCreateRecord" ||
+      action.type === "matchRelatedRecord"
+    ) {
       loadedRecordCount += 1;
       if (loadedRecordCount > MAX_LOADED_RECORDS) {
         throw new HookExecutionError(
-          `Hook exceeds the maximum of ${MAX_LOADED_RECORDS} getRecord / getOrCreateRecord actions.`,
+          `Hook exceeds the maximum of ${MAX_LOADED_RECORDS} getRecord / getOrCreateRecord / matchRelatedRecord actions.`,
         );
       }
       registerBindingAlias(action.as, boundAliases);

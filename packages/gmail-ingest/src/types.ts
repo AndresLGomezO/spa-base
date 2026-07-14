@@ -10,7 +10,7 @@ export type GmailConnectionStatus = z.infer<typeof gmailConnectionStatusSchema>;
 
 export const gmailConnectionRecordSchema = z.object({
   userId: z.string().trim().min(1),
-  /** Tenant that connected Gmail (needed for Pub/Sub → history sync jobs). */
+  /** Tenant that connected Gmail (needed for Pub/Sub → window sync jobs). */
   tenantId: z.string().trim().min(1).nullable().default(null),
   status: gmailConnectionStatusSchema,
   emailAddress: z.string().trim().email().nullable(),
@@ -18,8 +18,13 @@ export const gmailConnectionRecordSchema = z.object({
   encryptedRefreshToken: z.string().trim().min(1).nullable(),
   encryptedAccessToken: z.string().trim().min(1).nullable(),
   accessTokenExpiresAt: z.string().trim().nullable(),
+  /** Push watch cursor only (OAuth / renew). Window sync does not consume history.list. */
   historyId: z.string().trim().nullable(),
   watchExpiration: z.string().trim().nullable(),
+  /** Lower bound for the next window sync; null = bootstrap (full match history). */
+  ingestWatermarkAt: z.string().trim().nullable().default(null),
+  /** sha256 of sorted message ids from the last window listing. */
+  ingestBatchHash: z.string().trim().nullable().default(null),
   lastSyncAt: z.string().trim().nullable(),
   lastError: z.string().trim().nullable(),
   createdAt: z.string().trim().min(1),
@@ -33,6 +38,7 @@ export const gmailConnectionPublicStatusSchema = z.object({
   emailAddress: z.string().trim().email().nullable(),
   scopes: z.array(z.string().trim().min(1)),
   lastSyncAt: z.string().trim().nullable(),
+  ingestWatermarkAt: z.string().trim().nullable(),
   watchExpiration: z.string().trim().nullable(),
   lastError: z.string().trim().nullable(),
 });
@@ -107,6 +113,11 @@ export type EmailMatchBinding = {
   readonly entityName: string;
   readonly recordId: string;
   readonly enabled: boolean;
+  /**
+   * When true, the next window sync also lists this binding without an after:
+   * lower bound (one-shot historical catch-up for new/enabled rules).
+   */
+  readonly catchupNeeded?: boolean;
   readonly fromAddresses: readonly string[];
   readonly subjectPatterns: readonly string[];
   readonly bodyPatterns: readonly string[];
@@ -125,6 +136,7 @@ export const emailMatchBindingSchema: z.ZodType<EmailMatchBinding> = z.object({
   entityName: z.string().trim().min(1),
   recordId: z.string().trim().min(1),
   enabled: z.boolean(),
+  catchupNeeded: z.boolean().default(true),
   fromAddresses: z.array(z.string().trim().min(1)).default([]),
   subjectPatterns: z.array(z.string().trim().min(1)).default([]),
   bodyPatterns: z.array(z.string().trim().min(1)).default([]),
@@ -165,6 +177,7 @@ export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindi
 
 export type PatchEmailMatchBindingInput = {
   readonly enabled?: boolean;
+  readonly catchupNeeded?: boolean;
   readonly fromAddresses?: readonly string[];
   readonly subjectPatterns?: readonly string[];
   readonly bodyPatterns?: readonly string[];
@@ -177,6 +190,7 @@ export type PatchEmailMatchBindingInput = {
 export const patchEmailMatchBindingInputSchema: z.ZodType<PatchEmailMatchBindingInput> =
   z.object({
     enabled: z.boolean().optional(),
+    catchupNeeded: z.boolean().optional(),
     fromAddresses: z.array(z.string().trim().min(1)).optional(),
     subjectPatterns: z.array(z.string().trim().min(1)).optional(),
     bodyPatterns: z.array(z.string().trim().min(1)).optional(),
@@ -202,6 +216,7 @@ export const emailIngestProcessedRecordSchema = z.object({
   userId: z.string().trim().min(1),
   gmailMessageId: z.string().trim().min(1),
   threadId: z.string().trim().nullable(),
+  contentFingerprint: z.string().trim().nullable().default(null),
   bindingId: z.string().trim().nullable(),
   entityName: z.string().trim().nullable(),
   recordId: z.string().trim().nullable(),
@@ -214,6 +229,18 @@ export type EmailIngestProcessedRecord = z.infer<
   typeof emailIngestProcessedRecordSchema
 >;
 
+export const emailIngestFingerprintRecordSchema = z.object({
+  id: z.string().trim().min(1),
+  tenantId: z.string().trim().min(1),
+  userId: z.string().trim().min(1),
+  contentFingerprint: z.string().trim().min(1),
+  gmailMessageId: z.string().trim().min(1),
+  processedAt: z.string().trim().min(1),
+});
+export type EmailIngestFingerprintRecord = z.infer<
+  typeof emailIngestFingerprintRecordSchema
+>;
+
 export const emailIngestJobStatusSchema = z.enum([
   "pending",
   "running",
@@ -223,8 +250,7 @@ export const emailIngestJobStatusSchema = z.enum([
 export type EmailIngestJobStatus = z.infer<typeof emailIngestJobStatusSchema>;
 
 export const emailIngestJobKindSchema = z.enum([
-  "backfill",
-  "historySync",
+  "windowSync",
   "watchRenew",
   "processMessage",
 ]);
@@ -259,6 +285,8 @@ export type EmailIngestJobRecord = z.infer<typeof emailIngestJobRecordSchema>;
 export const gmailMessageEnvelopeSchema = z.object({
   messageId: z.string().trim().min(1),
   threadId: z.string().trim().nullable(),
+  /** RFC 5322 Message-ID header when present. */
+  rfcMessageId: z.string().trim().nullable().optional(),
   from: z.string().trim().min(1),
   subject: z.string().trim(),
   snippet: z.string().trim(),
@@ -285,6 +313,7 @@ export function toPublicGmailStatus(
       emailAddress: null,
       scopes: [],
       lastSyncAt: null,
+      ingestWatermarkAt: null,
       watchExpiration: null,
       lastError: record?.lastError ?? null,
     };
@@ -296,6 +325,7 @@ export function toPublicGmailStatus(
     emailAddress: record.emailAddress,
     scopes: record.scopes,
     lastSyncAt: record.lastSyncAt,
+    ingestWatermarkAt: record.ingestWatermarkAt ?? null,
     watchExpiration: record.watchExpiration,
     lastError: record.lastError,
   };

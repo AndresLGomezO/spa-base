@@ -1114,6 +1114,213 @@ describe("runDataHook", () => {
     );
   });
 
+  it("matchRelatedRecord scores aliases against haystack and loads the winner", async () => {
+    const list = vi.fn(async () => [
+      {
+        id: "child_netflix",
+        tenantId: "tenant_a",
+        name: "Netflix",
+        billingAliases: ["NETFLIX"],
+        parentFinancialItemId: "card_1",
+        status: "ACTIVE",
+      },
+      {
+        id: "child_google",
+        tenantId: "tenant_a",
+        name: "Google One",
+        billingAliases: ["GOOGLE *GOOGLE ONE"],
+        parentFinancialItemId: "card_1",
+        status: "ACTIVE",
+      },
+    ]);
+    const create = vi.fn(async () => ({ id: "txn_1" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { kind: "email" },
+        actions: [
+          {
+            type: "matchRelatedRecord",
+            entity: "financialItem",
+            as: "subscription",
+            aliasField: "billingAliases",
+            haystack: {
+              kind: "call",
+              fn: "coalesce",
+              args: [
+                {
+                  kind: "field",
+                  source: "current",
+                  path: "__extracted.fields.description",
+                },
+                {
+                  kind: "field",
+                  source: "current",
+                  path: "__email.subject",
+                },
+                { kind: "literal", value: "" },
+              ],
+            },
+            where: {
+              type: "group",
+              combinator: "and",
+              children: [
+                {
+                  type: "condition",
+                  field: "parentFinancialItemId",
+                  operator: "==",
+                  value: {
+                    kind: "field",
+                    source: "current",
+                    path: "id",
+                  },
+                },
+                {
+                  type: "condition",
+                  field: "status",
+                  operator: "==",
+                  value: { kind: "literal", value: "ACTIVE" },
+                },
+              ],
+            },
+          },
+          {
+            type: "createRecord",
+            entity: "transaction",
+            data: {
+              financialItemId: {
+                kind: "call",
+                fn: "coalesce",
+                args: [
+                  {
+                    kind: "field",
+                    source: "loaded",
+                    alias: "subscription",
+                    path: "id",
+                  },
+                  {
+                    kind: "field",
+                    source: "current",
+                    path: "id",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "financialItem.afterEmail",
+        current: {
+          id: "card_1",
+          __extracted: {
+            fields: {
+              description: "PURCHASE GOOGLE *GOOGLE ONE STORE",
+            },
+          },
+        },
+        services: {
+          entities: {
+            create,
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(list).toHaveBeenCalled();
+    expect(create).toHaveBeenCalledWith(
+      "transaction",
+      { financialItemId: "child_google" },
+      undefined,
+    );
+  });
+
+  it("matchRelatedRecord loads null for empty haystack without listing", async () => {
+    const list = vi.fn(async () => []);
+    const create = vi.fn(async () => ({ id: "txn_1" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { kind: "email" },
+        actions: [
+          {
+            type: "matchRelatedRecord",
+            entity: "financialItem",
+            as: "subscription",
+            aliasField: "billingAliases",
+            haystack: {
+              kind: "literal",
+              value: "   ",
+            },
+            where: {
+              type: "condition",
+              field: "parentFinancialItemId",
+              operator: "==",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "id",
+              },
+            },
+          },
+          {
+            type: "createRecord",
+            entity: "transaction",
+            data: {
+              financialItemId: {
+                kind: "call",
+                fn: "coalesce",
+                args: [
+                  {
+                    kind: "field",
+                    source: "loaded",
+                    alias: "subscription",
+                    path: "id",
+                  },
+                  {
+                    kind: "field",
+                    source: "current",
+                    path: "id",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "financialItem.afterEmail",
+        current: { id: "card_1" },
+        services: {
+          entities: {
+            create,
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(list).not.toHaveBeenCalled();
+    expect(create).toHaveBeenCalledWith(
+      "transaction",
+      { financialItemId: "card_1" },
+      undefined,
+    );
+  });
+
   it("getOrCreateRecord with createIfMissing false loads null without creating", async () => {
     const list = vi.fn(async () => []);
     const create = vi.fn(async () => ({ id: "should_not_create" }));

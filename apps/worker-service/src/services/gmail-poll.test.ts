@@ -16,7 +16,7 @@ function baseDeps(
   overrides: Partial<GmailIngestProcessorDeps>,
 ): GmailIngestProcessorDeps {
   return {
-    deliveryMode: "poll",
+    getDeliveryMode: async () => "poll",
     gmailConnectionRepository: {
       get: vi.fn(),
       findByEmail: vi.fn(),
@@ -31,7 +31,7 @@ function baseDeps(
       listRecent: vi.fn(),
       get: vi.fn(),
     },
-    enqueueHistorySync: vi.fn().mockResolvedValue(undefined),
+    enqueueWindowSync: vi.fn().mockResolvedValue(undefined),
     enqueueProcessMessage: vi.fn(),
     ...overrides,
   } as unknown as GmailIngestProcessorDeps;
@@ -39,14 +39,14 @@ function baseDeps(
 
 describe("processGmailPoll", () => {
   it("no-ops when delivery mode is push", async () => {
-    const enqueueHistorySync = vi.fn();
+    const enqueueWindowSync = vi.fn();
     const listConnected = vi.fn();
     const logger = createLogger();
 
     const result = await processGmailPoll(
       baseDeps({
-        deliveryMode: "push",
-        enqueueHistorySync,
+        getDeliveryMode: async () => "push",
+        enqueueWindowSync,
         gmailConnectionRepository: {
           get: vi.fn(),
           findByEmail: vi.fn(),
@@ -60,11 +60,11 @@ describe("processGmailPoll", () => {
 
     expect(result).toEqual({ enqueued: 0, skipped: 0 });
     expect(listConnected).not.toHaveBeenCalled();
-    expect(enqueueHistorySync).not.toHaveBeenCalled();
+    expect(enqueueWindowSync).not.toHaveBeenCalled();
   });
 
-  it("enqueues history sync for each connected mailbox in poll mode", async () => {
-    const enqueueHistorySync = vi.fn().mockResolvedValue(undefined);
+  it("enqueues window sync for each connected mailbox in poll mode", async () => {
+    const enqueueWindowSync = vi.fn().mockResolvedValue(undefined);
     const create = vi
       .fn()
       .mockResolvedValueOnce({ id: "job-1" })
@@ -73,8 +73,8 @@ describe("processGmailPoll", () => {
 
     const result = await processGmailPoll(
       baseDeps({
-        deliveryMode: "poll",
-        enqueueHistorySync,
+        getDeliveryMode: async () => "poll",
+        enqueueWindowSync,
         emailIngestJobRepository: {
           create,
           appendStep: vi.fn(),
@@ -89,13 +89,11 @@ describe("processGmailPoll", () => {
             {
               userId: "u1",
               tenantId: "rates",
-              historyId: "h1",
               status: "connected",
             },
             {
               userId: "u2",
               tenantId: "rates",
-              historyId: "h2",
               status: "connected",
             },
           ]),
@@ -108,17 +106,18 @@ describe("processGmailPoll", () => {
 
     expect(result).toEqual({ enqueued: 2, skipped: 0 });
     expect(create).toHaveBeenCalledTimes(2);
-    expect(enqueueHistorySync).toHaveBeenCalledWith({
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "windowSync" }),
+    );
+    expect(enqueueWindowSync).toHaveBeenCalledWith({
       tenantId: "rates",
       userId: "u1",
       jobId: "job-1",
-      historyId: "h1",
     });
-    expect(enqueueHistorySync).toHaveBeenCalledWith({
+    expect(enqueueWindowSync).toHaveBeenCalledWith({
       tenantId: "rates",
       userId: "u2",
       jobId: "job-2",
-      historyId: "h2",
     });
   });
 });

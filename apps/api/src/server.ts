@@ -816,13 +816,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
     ),
   });
 
-  await server.register(platformRuntimeSettingsRoutes, {
-    firebaseAdminConfig,
-    permissionDeps,
-    platformRuntimeSettingsRepository,
-    runtimeSettingsCache,
-  });
-
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
 
   await registerTenantUserRoutes(server, {
@@ -932,6 +925,18 @@ export async function buildServer(options: BuildServerOptions = {}) {
     localDispatch: apiEnv.GMAIL_TASKS_LOCAL_DISPATCH,
   });
 
+  await server.register(platformRuntimeSettingsRoutes, {
+    firebaseAdminConfig,
+    permissionDeps,
+    platformRuntimeSettingsRepository,
+    runtimeSettingsCache,
+    gmailConnectionRepository,
+    gmailTasksClient,
+    ...(apiEnv.GMAIL_PUBSUB_TOPIC
+      ? { gmailPubsubTopic: apiEnv.GMAIL_PUBSUB_TOPIC }
+      : {}),
+  });
+
   await registerDebugRoutes(server, {
     authenticate,
     permissionDeps,
@@ -970,7 +975,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     emailIngestJobRepository,
     gmailTasksClient,
     entityRuntime,
-    deliveryMode: apiEnv.GMAIL_INGEST_DELIVERY_MODE,
+    getDeliveryMode: () => runtimeSettingsCache.getGmailIngestDeliveryMode(),
     oauth: gmailOAuthConfigured
       ? {
           clientId: apiEnv.GMAIL_OAUTH_CLIENT_ID!,
@@ -980,14 +985,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
           encryptionMasterKey: apiEnv.TENANT_ENCRYPTION_MASTER_KEY!,
           webAppOrigin: apiEnv.WEB_APP_ORIGIN.replace(/\/$/, ""),
           allowedWebOrigins,
-          deliveryMode: apiEnv.GMAIL_INGEST_DELIVERY_MODE,
           ...(apiEnv.GMAIL_PUBSUB_TOPIC
             ? { pubsubTopicName: apiEnv.GMAIL_PUBSUB_TOPIC }
             : {}),
         }
       : null,
   });
-
   await registerUiBuilderAiSuggestionRoutes(server, {
     authenticate,
     permissionDeps,
