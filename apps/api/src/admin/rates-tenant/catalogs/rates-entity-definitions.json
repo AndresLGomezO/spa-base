@@ -3807,7 +3807,7 @@
           },
           "sourceGmailMessageId": {
             "label": "Source Gmail message",
-            "component": "text",
+            "component": "input",
             "order": 10
           }
         },
