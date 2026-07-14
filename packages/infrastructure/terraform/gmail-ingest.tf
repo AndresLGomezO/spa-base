@@ -156,3 +156,58 @@ resource "google_project_iam_member" "worker_service_secrets" {
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
 }
+
+# ---------------------------------------------------------------------------
+# Gmail poll (Cloud Scheduler → worker /tasks/gmail-poll every 5 minutes)
+# Always created; worker no-ops when GMAIL_INGEST_DELIVERY_MODE=push.
+# ---------------------------------------------------------------------------
+
+resource "google_project_service" "cloudscheduler_api" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  project            = local.gcp_project_id
+  service            = "cloudscheduler.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_service_account_iam_member" "scheduler_act_as_tasks_sa" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  service_account_id = google_service_account.tasks_sa[0].name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-cloudscheduler.iam.gserviceaccount.com"
+
+  depends_on = [google_project_service.cloudscheduler_api]
+}
+
+resource "google_cloud_scheduler_job" "gmail_poll" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  name             = "${local.app_name}-gmail-poll-${local.prefix}"
+  description      = "Poll connected Gmail mailboxes for history sync (every 5 minutes)"
+  schedule         = "*/5 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "320s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.worker_service_url_full}/tasks/gmail-poll"
+    headers = {
+      "Content-Type" = "application/json"
+    }
+    body = base64encode("{}")
+
+    oidc_token {
+      service_account_email = google_service_account.tasks_sa[0].email
+      audience              = local.worker_service_url_full
+    }
+  }
+
+  depends_on = [
+    google_project_service.cloudscheduler_api,
+    google_cloud_run_v2_service.worker_service[0],
+    google_service_account_iam_member.scheduler_act_as_tasks_sa[0],
+    google_cloud_run_v2_service_iam_member.tasks_sa_worker_invoker[0],
+  ]
+}
+

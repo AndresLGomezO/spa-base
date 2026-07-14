@@ -39,6 +39,11 @@ function nowIso(): string {
 export interface GmailConnectionRepository {
   get(userId: string): Promise<GmailConnectionRecord | null>;
   findByEmail(email: string): Promise<GmailConnectionRecord | null>;
+  /**
+   * Connected mailboxes that can be history-synced (have tenantId + historyId).
+   * Used by the poll orchestrator.
+   */
+  listConnected(): Promise<readonly GmailConnectionRecord[]>;
   upsert(
     userId: string,
     patch: Partial<GmailConnectionRecord> &
@@ -184,6 +189,33 @@ export function createFirestoreAdminGmailConnectionRepository(
         return null;
       }
       return connection;
+    },
+    async listConnected() {
+      const snapshot = await firestore()
+        .collection(GMAIL_CONNECTIONS_BY_EMAIL_COLLECTION)
+        .get();
+      const results: GmailConnectionRecord[] = [];
+      const seenUserIds = new Set<string>();
+
+      for (const doc of snapshot.docs) {
+        const userId = doc.data()?.userId;
+        if (typeof userId !== "string" || !userId.trim()) continue;
+        if (seenUserIds.has(userId)) continue;
+        seenUserIds.add(userId);
+
+        const connection = await this.get(userId);
+        if (
+          !connection ||
+          connection.status !== "connected" ||
+          !connection.tenantId ||
+          !connection.historyId
+        ) {
+          continue;
+        }
+        results.push(connection);
+      }
+
+      return results;
     },
     async upsert(userId, patch) {
       const existing = await this.get(userId);

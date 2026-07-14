@@ -91,6 +91,8 @@ const ApiEnvSchema = z.object({
     .min(16)
     .default("dev-gmail-oauth-state-secret"),
   GMAIL_PUBSUB_TOPIC: z.string().trim().optional(),
+  /** poll = Cloud Scheduler history sync; push = Gmail Pub/Sub watch. Mutually exclusive. */
+  GMAIL_INGEST_DELIVERY_MODE: z.enum(["poll", "push"]).default("poll"),
   GMAIL_TASKS_QUEUE_NAME: z.string().trim().default("gmail-jobs"),
   GMAIL_TASKS_LOCAL_DISPATCH: z
     .enum(["true", "false"])

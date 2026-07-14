@@ -40,7 +40,8 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `GMAIL_OAUTH_CLIENT_SECRET` | OAuth Web client secret in `.env` | **Secret Manager** `GMAIL_OAUTH_CLIENT_SECRET` (latest) | Google OAuth client secret |
 | `GMAIL_OAUTH_REDIRECT_URI` | `http://127.0.0.1:3000/api/gmail/oauth/callback` | `https://{api}/api/gmail/oauth/callback` | Authorized redirect URI (must match Console OAuth client) |
 | `GMAIL_OAUTH_STATE_SECRET` | local secret (≥16 chars) | **Secret Manager** `GMAIL_OAUTH_STATE_SECRET` (latest) | HMAC secret for OAuth state |
-| `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Full topic id for Gmail `users.watch` |
+| `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Full topic id for Gmail `users.watch` (used when mode=`push`) |
+| `GMAIL_INGEST_DELIVERY_MODE` | `poll` (default) | `poll` (Terraform) | `poll` = Scheduler history sync every 5m; `push` = Gmail Pub/Sub watch. Flip env to switch; only one path is active |
 | `GMAIL_TASKS_QUEUE_NAME` | `gmail-jobs` | Terraform queue name | Cloud Tasks queue for Gmail ingest jobs |
 | `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST Gmail jobs directly to worker instead of Cloud Tasks |
 | `WEB_APP_ORIGIN` | `http://127.0.0.1:5173` | Firebase Hosting primary URL | Post-OAuth browser redirect base (Email settings) |
@@ -70,12 +71,28 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `TENANT_ENCRYPTION_MASTER_KEY` | same base64 key as API `.env.dev` | **Secret Manager** `TENANT_ENCRYPTION_MASTER_KEY` (latest) | Decrypts Gmail refresh tokens (and other encrypted fields) |
 | `GMAIL_OAUTH_CLIENT_ID` | same as API | **Secret Manager** `GMAIL_OAUTH_CLIENT_ID` (latest) | Refresh Gmail OAuth tokens during ingest |
 | `GMAIL_OAUTH_CLIENT_SECRET` | same as API | **Secret Manager** `GMAIL_OAUTH_CLIENT_SECRET` (latest) | Refresh Gmail OAuth tokens during ingest |
-| `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Renew Gmail watch subscriptions |
+| `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Renew Gmail watch subscriptions when mode=`push` |
+| `GMAIL_INGEST_DELIVERY_MODE` | `poll` (default) | `poll` (Terraform) | Same as API: `poll` enables `/tasks/gmail-poll`; `push` enables watch renew |
 | `GMAIL_TASKS_QUEUE_NAME` | `gmail-jobs` | Terraform queue name | Queue used when self-scheduling watch renewals |
 | `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (local default) | `false` | When `true`, fan out process-message via HTTP; when `false`, use Cloud Tasks + OIDC (required on Cloud Run — unauthenticated self-calls get 404) |
 | `WORKER_SERVICE_URL` | `http://127.0.0.1:3001` / compose hostname | Cloud Run worker URL | Target URL for Gmail Cloud Tasks / local dispatch |
 
 Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).
+
+### Gmail ingest delivery
+
+- **`GMAIL_INGEST_DELIVERY_MODE=poll`** (default): Cloud Scheduler hits `POST /tasks/gmail-poll` every 5 minutes; worker fans out history sync for each connected mailbox. Pub/Sub watch is not started; `/api/gmail/pubsub` no-ops.
+- **`GMAIL_INGEST_DELIVERY_MODE=push`**: OAuth starts `users.watch`; Pub/Sub drives history sync; poll task no-ops.
+- Flip mode by setting the same value on API + worker Cloud Run env. Topic infra can stay provisioned; unused in poll mode.
+- Manual **Sync now** / **Backfill** work in both modes.
+
+Local poll (no Scheduler):
+
+```bash
+curl -X POST http://127.0.0.1:3001/tasks/gmail-poll \
+  -H 'Content-Type: application/json' \
+  -H 'X-Local-Task-Dispatcher: true' -d '{}'
+```
 
 ### AI dev mode (Docker)
 

@@ -35,6 +35,7 @@ interface GmailOAuthEnv {
   readonly webAppOrigin: string;
   readonly allowedWebOrigins: readonly string[];
   readonly pubsubTopicName?: string;
+  readonly deliveryMode: "poll" | "push";
 }
 
 interface RegisterGmailIngestRoutesOptions {
@@ -45,6 +46,7 @@ interface RegisterGmailIngestRoutesOptions {
   readonly gmailTasksClient: GmailTasksClient;
   readonly entityRuntime: EntityRuntimeContext;
   readonly oauth: GmailOAuthEnv | null;
+  readonly deliveryMode: "poll" | "push";
 }
 
 const GMAIL_SETTINGS_PATH = "/account/settings/integrations/email";
@@ -266,7 +268,11 @@ export async function registerGmailIngestRoutes(
       let historyId = profile.historyId ? String(profile.historyId) : null;
       let watchExpiration: string | null = null;
 
-      if (options.oauth.pubsubTopicName) {
+      const startPushWatch =
+        options.oauth.deliveryMode === "push" &&
+        Boolean(options.oauth.pubsubTopicName);
+
+      if (startPushWatch && options.oauth.pubsubTopicName) {
         try {
           const watch = await client.watch(options.oauth.pubsubTopicName);
           historyId = String(watch.historyId);
@@ -311,7 +317,7 @@ export async function registerGmailIngestRoutes(
         lastError: null,
       });
 
-      if (options.oauth.pubsubTopicName && watchExpiration) {
+      if (startPushWatch && watchExpiration) {
         await options.gmailTasksClient.enqueueWatchRenew(
           {
             userId: verified.uid,
@@ -652,6 +658,10 @@ export async function registerGmailIngestRoutes(
   );
 
   app.post("/api/gmail/pubsub", async (request, reply) => {
+    if (options.deliveryMode !== "push") {
+      return reply.status(204).send();
+    }
+
     const body = z
       .object({
         message: z

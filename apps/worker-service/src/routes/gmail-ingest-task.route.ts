@@ -10,6 +10,7 @@ import {
   gmailWatchRenewTaskPayloadSchema,
   processGmailBackfill,
   processGmailHistorySync,
+  processGmailPoll,
   processGmailProcessMessage,
   processGmailWatchRenew,
   type GmailIngestProcessorDeps,
@@ -20,6 +21,7 @@ const ROUTES = {
   HISTORY_SYNC: "/tasks/gmail-history-sync",
   WATCH_RENEW: "/tasks/gmail-watch-renew",
   PROCESS_MESSAGE: "/tasks/gmail-process-message",
+  POLL: "/tasks/gmail-poll",
 } as const;
 
 /**
@@ -179,6 +181,25 @@ export async function gmailIngestTaskRoute(
         hookId: payload.jobId ?? payload.userId,
         logLabel: "Gmail watch renew",
         process: () => processGmailWatchRenew(deps, payload, logger),
+      });
+    },
+  );
+
+  app.post(
+    ROUTES.POLL,
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const logger = createWorkerHookLogger(
+        request.log,
+        "platform",
+        deps.hookLogMessageRepository,
+      );
+      return dispatchHookTaskAsync({
+        request,
+        reply,
+        tenantId: "platform",
+        hookId: "gmail-poll",
+        logLabel: "Gmail poll",
+        process: () => processGmailPoll(deps, logger),
       });
     },
   );

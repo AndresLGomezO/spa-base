@@ -94,4 +94,31 @@ describe("createWorkerGmailTaskEnqueuer", () => {
       }),
     );
   });
+
+  it("uses Cloud Tasks for history sync when localDispatch is false", async () => {
+    createTask.mockResolvedValue([{}]);
+    const { createWorkerGmailTaskEnqueuer } =
+      await import("./worker-gmail-task-enqueuer.js");
+    const enqueuer = createWorkerGmailTaskEnqueuer({
+      projectId: "demo",
+      region: "us-central1",
+      queueName: "gmail-jobs",
+      workerBaseUrl: "https://worker.example",
+      serviceAccountEmail: "tasks@example.com",
+      localDispatch: false,
+    });
+
+    await enqueuer.enqueueHistorySync({
+      tenantId: "rates",
+      userId: "u1",
+      jobId: "j1",
+      historyId: "h1",
+    });
+
+    expect(createTask).toHaveBeenCalledTimes(1);
+    const arg = createTask.mock.calls[0][0];
+    expect(arg.task.httpRequest.url).toBe(
+      "https://worker.example/tasks/gmail-history-sync",
+    );
+  });
 });

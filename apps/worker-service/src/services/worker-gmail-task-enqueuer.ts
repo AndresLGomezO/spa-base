@@ -125,6 +125,13 @@ async function enqueueCloudTask(
   }
 }
 
+export type GmailHistorySyncEnqueuePayload = {
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly jobId: string;
+  readonly historyId?: string;
+};
+
 /**
  * Enqueue Gmail follow-up tasks from the worker.
  * Production must use Cloud Tasks + OIDC — Cloud Run rejects unauthenticated
@@ -147,6 +154,25 @@ export function createWorkerGmailTaskEnqueuer(config: WorkerGmailTasksConfig) {
           "gmail-msg",
           payload.gmailMessageId,
           `${payload.tenantId}:${payload.userId}:${payload.gmailMessageId}:${payload.jobId}${payload.reprocess ? ":reprocess" : ""}`,
+        ),
+      });
+    },
+
+    async enqueueHistorySync(
+      payload: GmailHistorySyncEnqueuePayload,
+    ): Promise<void> {
+      const path = "/tasks/gmail-history-sync";
+      if (config.localDispatch) {
+        await enqueueLocal(config, path, payload);
+        return;
+      }
+      await enqueueCloudTask(config, {
+        path,
+        payload,
+        taskId: buildDeterministicTaskId(
+          "gmail-history",
+          payload.jobId,
+          `${payload.tenantId}:${payload.userId}:${payload.jobId}`,
         ),
       });
     },

@@ -16,6 +16,7 @@ import {
   shouldRenewGmailWatchSoon,
   type EmailAiExtractResult,
   type EmailIngestStepTraceEntry,
+  type GmailIngestDeliveryMode,
   type GmailMessageEnvelope,
 } from "@repo/gmail-ingest";
 import {
@@ -96,6 +97,7 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
   readonly gmailOAuthClientId: string;
   readonly gmailOAuthClientSecret: string;
   readonly gmailPubsubTopic?: string;
+  readonly deliveryMode: GmailIngestDeliveryMode;
   readonly vertexAiConfig: VertexAiConfig;
   readonly enqueueProcessMessage: (payload: {
     readonly tenantId: string;
@@ -104,6 +106,12 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
     readonly gmailMessageId: string;
     readonly bindingId?: string;
     readonly reprocess?: boolean;
+  }) => Promise<void>;
+  readonly enqueueHistorySync?: (payload: {
+    readonly tenantId: string;
+    readonly userId: string;
+    readonly jobId: string;
+    readonly historyId?: string;
   }) => Promise<void>;
   /** Schedule the next watch renew before expiration (Cloud Tasks or local delay). */
   readonly scheduleWatchRenew?: (payload: {
@@ -191,7 +199,7 @@ async function renewGmailWatchAndSchedule(
   },
   logger: HookLogger,
 ): Promise<void> {
-  if (!deps.gmailPubsubTopic) return;
+  if (deps.deliveryMode !== "push" || !deps.gmailPubsubTopic) return;
 
   const connection = await deps.gmailConnectionRepository.get(options.userId);
   if (!connection || connection.status !== "connected") return;
@@ -870,9 +878,9 @@ export async function processGmailWatchRenew(
   payload: z.infer<typeof gmailWatchRenewTaskPayloadSchema>,
   logger: HookLogger,
 ): Promise<void> {
-  if (!deps.gmailPubsubTopic) {
-    logger.info("Gmail watch renew skipped: no pubsub topic configured", {
-      meta: { userId: payload.userId },
+  if (deps.deliveryMode !== "push" || !deps.gmailPubsubTopic) {
+    logger.info("Gmail watch renew skipped: push mode inactive or no topic", {
+      meta: { userId: payload.userId, deliveryMode: deps.deliveryMode },
     });
     return;
   }
@@ -906,6 +914,50 @@ export async function processGmailWatchRenew(
   }
 }
 
+export async function processGmailPoll(
+  deps: GmailIngestProcessorDeps,
+  logger: HookLogger,
+): Promise<{ readonly enqueued: number; readonly skipped: number }> {
+  if (deps.deliveryMode !== "poll") {
+    logger.info("Gmail poll skipped: delivery mode is not poll", {
+      meta: { deliveryMode: deps.deliveryMode },
+    });
+    return { enqueued: 0, skipped: 0 };
+  }
+  if (!deps.enqueueHistorySync) {
+    throw new Error("enqueueHistorySync is required for Gmail poll");
+  }
+
+  const connections = await deps.gmailConnectionRepository.listConnected();
+  let enqueued = 0;
+  let skipped = 0;
+
+  for (const connection of connections) {
+    if (!connection.tenantId || !connection.historyId) {
+      skipped += 1;
+      continue;
+    }
+    const job = await deps.emailIngestJobRepository.create({
+      tenantId: connection.tenantId,
+      userId: connection.userId,
+      kind: "historySync",
+      title: "Gmail poll history sync",
+    });
+    await deps.enqueueHistorySync({
+      tenantId: connection.tenantId,
+      userId: connection.userId,
+      jobId: job.id,
+      historyId: connection.historyId,
+    });
+    enqueued += 1;
+  }
+
+  logger.info("Gmail poll completed", {
+    meta: { enqueued, skipped, connections: connections.length },
+  });
+  return { enqueued, skipped };
+}
+
 export function createGmailIngestProcessorDeps(
   firebaseAdminConfig: FirebaseAdminConfig,
   base: DataHookProcessorDeps,
@@ -914,8 +966,10 @@ export function createGmailIngestProcessorDeps(
     readonly gmailOAuthClientId: string;
     readonly gmailOAuthClientSecret: string;
     readonly gmailPubsubTopic?: string;
+    readonly deliveryMode: GmailIngestDeliveryMode;
     readonly vertexAiConfig: VertexAiConfig;
     readonly enqueueProcessMessage: GmailIngestProcessorDeps["enqueueProcessMessage"];
+    readonly enqueueHistorySync?: GmailIngestProcessorDeps["enqueueHistorySync"];
     readonly scheduleWatchRenew?: GmailIngestProcessorDeps["scheduleWatchRenew"];
   },
 ): GmailIngestProcessorDeps {
@@ -933,11 +987,15 @@ export function createGmailIngestProcessorDeps(
     encryptionMasterKey: options.encryptionMasterKey,
     gmailOAuthClientId: options.gmailOAuthClientId,
     gmailOAuthClientSecret: options.gmailOAuthClientSecret,
+    deliveryMode: options.deliveryMode,
     ...(options.gmailPubsubTopic
       ? { gmailPubsubTopic: options.gmailPubsubTopic }
       : {}),
     vertexAiConfig: options.vertexAiConfig,
     enqueueProcessMessage: options.enqueueProcessMessage,
+    ...(options.enqueueHistorySync
+      ? { enqueueHistorySync: options.enqueueHistorySync }
+      : {}),
     ...(options.scheduleWatchRenew
       ? { scheduleWatchRenew: options.scheduleWatchRenew }
       : {}),

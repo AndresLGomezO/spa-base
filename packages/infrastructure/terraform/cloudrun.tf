@@ -241,6 +241,14 @@ resource "google_cloud_run_v2_service" "backend" {
       dynamic "env" {
         for_each = local.enable_ai_worker ? [1] : []
         content {
+          name  = "GMAIL_INGEST_DELIVERY_MODE"
+          value = "poll"
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
           name  = "GMAIL_TASKS_QUEUE_NAME"
           value = google_cloud_tasks_queue.gmail_jobs[0].name
         }

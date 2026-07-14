@@ -8,7 +8,7 @@ interface DispatchHookTaskAsyncOptions {
   readonly tenantId: string;
   readonly hookId: string;
   readonly logLabel: string;
-  readonly process: () => Promise<void>;
+  readonly process: () => Promise<unknown>;
 }
 
 export function dispatchHookTaskAsync(

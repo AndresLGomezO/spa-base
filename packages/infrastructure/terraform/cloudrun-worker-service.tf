@@ -121,6 +121,10 @@ resource "google_cloud_run_v2_service" "worker_service" {
         value = google_pubsub_topic.gmail_push[0].id
       }
       env {
+        name  = "GMAIL_INGEST_DELIVERY_MODE"
+        value = "poll"
+      }
+      env {
         name  = "GMAIL_TASKS_QUEUE_NAME"
         value = google_cloud_tasks_queue.gmail_jobs[0].name
       }

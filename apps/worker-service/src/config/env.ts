@@ -36,6 +36,8 @@ const workerEnvSchema = z.object({
   GMAIL_OAUTH_CLIENT_ID: z.string().trim().optional(),
   GMAIL_OAUTH_CLIENT_SECRET: z.string().trim().optional(),
   GMAIL_PUBSUB_TOPIC: z.string().trim().optional(),
+  /** poll = Cloud Scheduler history sync; push = Gmail Pub/Sub watch. Mutually exclusive. */
+  GMAIL_INGEST_DELIVERY_MODE: z.enum(["poll", "push"]).default("poll"),
   WORKER_SERVICE_URL: z.string().trim().default("http://127.0.0.1:3001"),
   GMAIL_TASKS_QUEUE_NAME: z.string().trim().default("gmail-jobs"),
   GMAIL_TASKS_LOCAL_DISPATCH: z

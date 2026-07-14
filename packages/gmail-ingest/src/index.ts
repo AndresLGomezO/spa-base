@@ -57,6 +57,12 @@ export {
 } from "./watch-renew.js";
 
 export {
+  gmailIngestDeliveryModeSchema,
+  parseGmailIngestDeliveryMode,
+  type GmailIngestDeliveryMode,
+} from "./delivery-mode.js";
+
+export {
   buildProcessedDocId,
   createEmailMatchBindingInputSchema,
   emailAiExtractResultSchema,

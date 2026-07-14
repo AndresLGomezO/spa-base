@@ -970,6 +970,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     emailIngestJobRepository,
     gmailTasksClient,
     entityRuntime,
+    deliveryMode: apiEnv.GMAIL_INGEST_DELIVERY_MODE,
     oauth: gmailOAuthConfigured
       ? {
           clientId: apiEnv.GMAIL_OAUTH_CLIENT_ID!,
@@ -979,6 +980,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
           encryptionMasterKey: apiEnv.TENANT_ENCRYPTION_MASTER_KEY!,
           webAppOrigin: apiEnv.WEB_APP_ORIGIN.replace(/\/$/, ""),
           allowedWebOrigins,
+          deliveryMode: apiEnv.GMAIL_INGEST_DELIVERY_MODE,
           ...(apiEnv.GMAIL_PUBSUB_TOPIC
             ? { pubsubTopicName: apiEnv.GMAIL_PUBSUB_TOPIC }
             : {}),
