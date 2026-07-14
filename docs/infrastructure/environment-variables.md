@@ -90,7 +90,7 @@ Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env
 - Manual **Sync now** runs the same window sync. There is no separate backfill UI.
 - Dedup: processed markers by Gmail message id + content fingerprint; rates `transaction.sourceGmailMessageId` uses getOrCreate so hooks never double-create money rows.
 
-Local poll (no Scheduler):
+Local poll: when `IS_LOCAL=true` and Gmail ingest is configured, the worker starts a **5-minute** interval that POSTs `/tasks/gmail-poll` (same as Cloud Scheduler). Manual trigger still works:
 
 ```bash
 curl -X POST http://127.0.0.1:3001/tasks/gmail-poll \

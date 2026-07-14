@@ -138,10 +138,15 @@ async function seedLocalEmailMatchBindingsIfPresent(
       useAi: portable.useAi ?? false,
       aiInstructions: portable.aiInstructions ?? null,
       bodyFieldExtractors: portable.bodyFieldExtractors ?? [],
+      attachmentImport: portable.attachmentImport ?? null,
     };
 
     if (match) {
-      await repository.patch(tenantId, match.id, ownerId, patchInput);
+      await repository.patch(tenantId, match.id, ownerId, {
+        ...patchInput,
+        // Re-seed must re-list full history for updated rules (skipped_no_match retries).
+        catchupNeeded: true,
+      });
     } else {
       await repository.create(tenantId, ownerId, {
         entityName: portable.entityName,

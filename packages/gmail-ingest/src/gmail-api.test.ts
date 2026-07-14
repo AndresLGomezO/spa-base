@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { gmailApiMessageToEnvelope } from "./gmail-api.js";
+import {
+  gmailApiMessageToEnvelope,
+  listPdfAttachmentsFromPayload,
+} from "./gmail-api.js";
 
 describe("gmailApiMessageToEnvelope", () => {
   it("falls back to HTML body when plain text is missing", () => {
@@ -26,5 +29,73 @@ describe("gmailApiMessageToEnvelope", () => {
     expect(envelope.bodyText).toContain("Valor Transacción: 124,582");
     expect(envelope.bodyText).toContain("Aprobado(a)");
     expect(envelope.bodyText).toContain("FARMATODO");
+    expect(envelope.attachments).toEqual([]);
+  });
+
+  it("lists PDF attachment metadata from parts", () => {
+    const envelope = gmailApiMessageToEnvelope({
+      id: "msg_pdf",
+      payload: {
+        headers: [
+          { name: "From", value: "bancodavivienda@davivienda.com" },
+          {
+            name: "Subject",
+            value: "Extracto tarjeta de Crédito Banco Davivienda 20260628",
+          },
+        ],
+        mimeType: "multipart/mixed",
+        parts: [
+          {
+            mimeType: "text/plain",
+            body: {
+              data: Buffer.from("Pago mínimo\n$1", "utf8").toString(
+                "base64url",
+              ),
+            },
+          },
+          {
+            mimeType: "application/pdf",
+            filename: "extracto.pdf",
+            body: { attachmentId: "att_1", size: 2048 },
+          },
+        ],
+      },
+    });
+
+    expect(envelope.attachments).toEqual([
+      {
+        attachmentId: "att_1",
+        filename: "extracto.pdf",
+        mimeType: "application/pdf",
+        size: 2048,
+      },
+    ]);
+  });
+});
+
+describe("listPdfAttachmentsFromPayload", () => {
+  it("finds nested PDFs", () => {
+    const attachments = listPdfAttachmentsFromPayload({
+      mimeType: "multipart/mixed",
+      parts: [
+        {
+          mimeType: "multipart/alternative",
+          parts: [{ mimeType: "text/plain", body: { data: "x" } }],
+        },
+        {
+          mimeType: "application/octet-stream",
+          filename: "statement.PDF",
+          body: { attachmentId: "nested", size: 10 },
+        },
+      ],
+    });
+    expect(attachments).toEqual([
+      {
+        attachmentId: "nested",
+        filename: "statement.PDF",
+        mimeType: "application/octet-stream",
+        size: 10,
+      },
+    ]);
   });
 });

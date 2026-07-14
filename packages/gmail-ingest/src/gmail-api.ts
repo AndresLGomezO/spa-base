@@ -1,13 +1,20 @@
-import type { GmailMessageEnvelope } from "./types.js";
+import type { GmailMessageAttachment, GmailMessageEnvelope } from "./types.js";
 
 interface GmailHeader {
   readonly name?: string;
   readonly value?: string;
 }
 
+interface GmailMessagePartBody {
+  readonly data?: string;
+  readonly attachmentId?: string;
+  readonly size?: number;
+}
+
 interface GmailMessagePart {
   readonly mimeType?: string;
-  readonly body?: { readonly data?: string };
+  readonly filename?: string;
+  readonly body?: GmailMessagePartBody;
   readonly parts?: readonly GmailMessagePart[];
 }
 
@@ -18,7 +25,8 @@ interface GmailApiMessage {
   readonly payload?: {
     readonly headers?: readonly GmailHeader[];
     readonly mimeType?: string;
-    readonly body?: { readonly data?: string };
+    readonly filename?: string;
+    readonly body?: GmailMessagePartBody;
     readonly parts?: readonly GmailMessagePart[];
   };
   readonly internalDate?: string;
@@ -34,11 +42,21 @@ function headerValue(
   return found?.value?.trim() ?? "";
 }
 
-function decodeBase64Url(data: string | undefined): string | null {
+function decodeBase64UrlText(data: string | undefined): string | null {
   if (!data) return null;
   try {
     const normalized = data.replace(/-/g, "+").replace(/_/g, "/");
     return Buffer.from(normalized, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+export function decodeBase64UrlBuffer(data: string | undefined): Buffer | null {
+  if (!data) return null;
+  try {
+    const normalized = data.replace(/-/g, "+").replace(/_/g, "/");
+    return Buffer.from(normalized, "base64");
   } catch {
     return null;
   }
@@ -72,7 +90,7 @@ function extractPartText(
 ): string | null {
   if (!part) return null;
   if (part.mimeType === mimeType) {
-    const decoded = decodeBase64Url(part.body?.data);
+    const decoded = decodeBase64UrlText(part.body?.data);
     if (!decoded) return null;
     return mimeType === "text/html" ? htmlToPlainText(decoded) : decoded;
   }
@@ -91,6 +109,42 @@ function extractBodyText(part: GmailMessagePart | undefined): string | null {
   const html = extractPartText(part, "text/html");
   if (html?.trim()) return html;
   return null;
+}
+
+function isPdfAttachment(part: GmailMessagePart): boolean {
+  const mime = (part.mimeType ?? "").toLowerCase();
+  const filename = (part.filename ?? "").toLowerCase();
+  return mime.includes("pdf") || filename.endsWith(".pdf");
+}
+
+/** Collect PDF attachment metadata from a full Gmail message payload. */
+export function listPdfAttachmentsFromPayload(
+  part: GmailMessagePart | undefined,
+): GmailMessageAttachment[] {
+  const found: GmailMessageAttachment[] = [];
+
+  function walk(node: GmailMessagePart | undefined): void {
+    if (!node) return;
+    const attachmentId = node.body?.attachmentId?.trim();
+    if (attachmentId && isPdfAttachment(node)) {
+      found.push({
+        attachmentId,
+        filename:
+          (node.filename ?? "attachment.pdf").trim() || "attachment.pdf",
+        mimeType:
+          (node.mimeType ?? "application/pdf").trim() || "application/pdf",
+        size: typeof node.body?.size === "number" ? node.body.size : 0,
+      });
+    }
+    if (node.parts) {
+      for (const child of node.parts) {
+        walk(child);
+      }
+    }
+  }
+
+  walk(part);
+  return found;
 }
 
 export function gmailApiMessageToEnvelope(
@@ -118,6 +172,7 @@ export function gmailApiMessageToEnvelope(
     snippet: message.snippet ?? "",
     date,
     bodyText: bodyText ? bodyText.slice(0, 8_000) : null,
+    attachments: listPdfAttachmentsFromPayload(message.payload),
   };
 }
 
@@ -183,6 +238,22 @@ export class GmailApiClient {
       `/users/me/messages/${encodeURIComponent(messageId)}?format=full`,
     );
     return gmailApiMessageToEnvelope(message);
+  }
+
+  async getAttachment(
+    messageId: string,
+    attachmentId: string,
+  ): Promise<Buffer> {
+    const result = await this.request<{ data?: string; size?: number }>(
+      `/users/me/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    );
+    const buffer = decodeBase64UrlBuffer(result.data);
+    if (!buffer) {
+      throw new Error(
+        `Gmail attachment ${attachmentId} for message ${messageId} returned empty data.`,
+      );
+    }
+    return buffer;
   }
 
   async listHistoryMessageIds(historyId: string): Promise<{

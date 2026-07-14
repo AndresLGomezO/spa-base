@@ -54,6 +54,12 @@ export interface DebuggerSourceStats {
   readonly avgQueryMs: number | null;
   readonly inProgressCount: number;
   readonly uniqueActors: number | null;
+  readonly emailIngestFetched: number | null;
+  readonly emailIngestQueued: number | null;
+  readonly emailIngestProcessing: number | null;
+  readonly emailIngestFinished: number | null;
+  readonly emailIngestProcessed: number | null;
+  readonly emailIngestFailedMessages: number | null;
   readonly barCharts: readonly DebuggerBarChartStats[];
   readonly timelineBuckets: readonly DebuggerTimelineBucket[];
   readonly attentionItems: readonly DebugEvent[];
@@ -258,12 +264,15 @@ export function pickAttentionEvents(
         )
         .slice(0, limit);
     case "ai":
+    case "emailIngest":
       return sorted
         .filter(
           (event) =>
             event.status === "failed" ||
             event.status === "running" ||
-            event.status === "pending",
+            event.status === "pending" ||
+            (typeof event.summary?.failed === "number" &&
+              event.summary.failed > 0),
         )
         .slice(0, limit);
     case "requestPerf":
@@ -297,6 +306,20 @@ function countUniqueActors(events: readonly DebugEvent[]): number | null {
   }
 
   return actors.size > 0 ? actors.size : null;
+}
+
+function sumNumericSummary(
+  events: readonly DebugEvent[],
+  field: string,
+): number {
+  let total = 0;
+  for (const event of events) {
+    const raw = event.summary?.[field];
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      total += raw;
+    }
+  }
+  return total;
 }
 
 function formatTimelineLabel(ms: number, rangeMs: number): string {
@@ -560,6 +583,25 @@ export function computeDebuggerSourceStats(
       ? aggregateHookExecutionWrites(events)
       : null;
 
+  const emailIngest =
+    activeSource === "emailIngest"
+      ? {
+          emailIngestFetched: sumNumericSummary(events, "fetched"),
+          emailIngestQueued: sumNumericSummary(events, "queued"),
+          emailIngestProcessing: sumNumericSummary(events, "processing"),
+          emailIngestFinished: sumNumericSummary(events, "finished"),
+          emailIngestProcessed: sumNumericSummary(events, "processed"),
+          emailIngestFailedMessages: sumNumericSummary(events, "failed"),
+        }
+      : {
+          emailIngestFetched: null,
+          emailIngestQueued: null,
+          emailIngestProcessing: null,
+          emailIngestFinished: null,
+          emailIngestProcessed: null,
+          emailIngestFailedMessages: null,
+        };
+
   return {
     total: events.length,
     statusCounts,
@@ -587,6 +629,7 @@ export function computeDebuggerSourceStats(
         : null,
     inProgressCount,
     uniqueActors: activeSource === "audit" ? countUniqueActors(events) : null,
+    ...emailIngest,
     barCharts: buildBarCharts(events, activeSource),
     timelineBuckets: computeTimelineBuckets(events),
     attentionItems: pickAttentionEvents(events, activeSource, 5),

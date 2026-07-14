@@ -4,7 +4,7 @@ Domain model specification for the **`rates` dev tenant** on the ESP platform. T
 
 **Machine-readable catalogs** (applied via **`pnpm seed:database`**):
 
-- [`apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json) — 11 entities
+- [`apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json) — 16 entities
 - [`apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json) — 20 metrics
 - [`apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json) — 35 saved queries
 - [`apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json) — 21 sidebar custom views
@@ -97,6 +97,9 @@ flowchart TB
         paymentSchedule[paymentSchedule]
         transaction[transaction]
         balanceSnapshot[balanceSnapshot]
+        attachment[attachment]
+        statement[statement]
+        email[email]
     end
     actor --> account
     actor --> financialItem
@@ -108,8 +111,16 @@ flowchart TB
     financialItem --> paymentSchedule
     financialItem --> balanceSnapshot
     financialItem --> transaction
+    financialItem --> statement
     account --> transaction
     paymentSchedule --> transaction
+    statement --> balanceSnapshot
+    statement --> attachment
+    email --> financialItem
+    email --> statement
+    email --> transaction
+    email --> paymentSchedule
+    email --> attachment
 ```
 
 ### Entity relationship diagram
@@ -127,7 +138,12 @@ erDiagram
     financialItem ||--o{ paymentSchedule : "generates"
     financialItem ||--o{ balanceSnapshot : "tracks"
     financialItem ||--o{ transaction : "linked"
+    financialItem ||--o{ statement : "period_close"
     paymentSchedule ||--o| transaction : "fulfilled_by"
+    statement ||--o{ balanceSnapshot : "derives"
+    statement ||--o{ attachment : "pdf"
+    statement ||--o{ paymentSchedule : "min_due"
+    email ||--o{ statement : "ingest"
 ```
 
 ### Sidebar navigation
@@ -137,7 +153,7 @@ erDiagram
 | **My Money** | `account`, `actor` | Wallet |
 | **Commitments** | `financialItem` | FileText |
 | **Details** | `loanDetails`, `incomeDetails`, `investmentDetails`, `serviceDetails` | Puzzle |
-| **Movements** | `transaction`, `paymentSchedule`, `balanceSnapshot`, `attachment` | ArrowLeftRight |
+| **Movements** | `transaction`, `paymentSchedule`, `balanceSnapshot`, `attachment`, `statement`, `email` | ArrowLeftRight |
 | **Classification** | `category` | FolderTree |
 
 Technical collection names and UI labels both use English (platform convention).
@@ -556,14 +572,16 @@ Tenant-wide document store for statements, receipts, contracts, and other PDFs. 
 | `accountId` | relation → `account` | No* | Monthly bank statements |
 | `balanceSnapshotId` | relation → `balanceSnapshot` | No* | Evidence for a balance entry |
 | `paymentScheduleId` | relation → `paymentSchedule` | No* | Invoice for a scheduled payment |
+| `emailId` | relation → `email` | No | Source Gmail ledger row when imported from ingest |
+| `statementId` | relation → `statement` | No | Period-closing statement (preferred for STATEMENT PDFs) |
 
-\*Exactly **one** parent FK must be set per row.
+\*Exactly **one** parent FK should be set per row among product parents (`financialItemId` / `transactionId` / `accountId` / `balanceSnapshotId` / `paymentScheduleId` / `statementId`). `emailId` is provenance and may coexist.
 
 **`documentType` enum:** `STATEMENT`, `RECEIPT`, `CONTRACT`, `INVOICE`, `SUPPORT`, `OTHER`
 
 | Value | Typical use |
 |---|---|
-| `STATEMENT` | Bank/card/account statements |
+| `STATEMENT` | Bank/card/account statement PDFs (prefer parent `statementId`) |
 | `RECEIPT` | Transaction receipts, payment confirmations |
 | `CONTRACT` | Loan, lease, service contracts |
 | `INVOICE` | Bills, invoices tied to schedules |
@@ -574,15 +592,85 @@ Tenant-wide document store for statements, receipts, contracts, and other PDFs. 
 
 | Parent | FK on `attachment` | Example documents |
 |---|---|---|
+| `statement` | `statementId` | Monthly extract PDF for a period closing |
 | `financialItem` | `financialItemId` | Mortgage contract, utility bill template |
 | `transaction` | `transactionId` | Expense receipt, transfer confirmation |
-| `account` | `accountId` | Monthly bank statement |
-| `balanceSnapshot` | `balanceSnapshotId` | Statement extract for balance on a date |
+| `account` | `accountId` | Ad-hoc bank PDF not yet modeled as `statement` |
+| `balanceSnapshot` | `balanceSnapshotId` | Evidence for a balance entry |
 | `paymentSchedule` | `paymentScheduleId` | Invoice for an upcoming/past due payment |
+| `email` | `emailId` | Provenance link to ingest ledger |
 
-Parent FKs use `onDelete: restrict` — delete attachments before deleting the parent, or reassign the link.
+Parent product FKs use `onDelete: restrict` where applicable — delete or reassign attachments first. `emailId` / `statementId` use `onDelete: nullify`.
 
 Attachments appear on parent detail pages via **RelatedRecords** (no parent-side relation field). Filter lists by `documentType` and `documentDate` when browsing attachments for a parent.
+
+---
+
+### 4.10 `statement` — period-closing source of truth
+
+Structured header for what the bank/product said for a billing or statement period. **Not** a chart point — that remains `balanceSnapshot`.
+
+```mermaid
+flowchart TD
+  Email["email ingest ledger"] --> Hook["Rates email hooks"]
+  Pdf["attachment STATEMENT PDF"] --> Hook
+  Hook --> Statement["statement period closing"]
+  Statement --> FI["financialItem.currentBalance / nextDueDate"]
+  Statement --> Snap["balanceSnapshot derived point"]
+  Statement --> Sched["paymentSchedule min due"]
+  Statement --> Txn["transaction.statementId Phase 2"]
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string | Yes | Display label, e.g. `Statement 2026-06-28` |
+| `financialItemId` | relation → `financialItem` | Yes | Product closed |
+| `accountId` | relation → `account` | No | Optional for pure bank accounts |
+| `periodStart` / `periodEnd` | date | periodEnd yes | Cycle bounds |
+| `statementDate` | date | No | Cut / document date (often = periodEnd) |
+| `closingBalance` | decimal | No | End-of-period balance (SoT when present) |
+| `minPayment` / `paymentDueDate` | decimal / date | No | Cards / revolving |
+| `interestCharged` / `feesCharged` / `purchasesTotal` / `paymentsTotal` | decimal | No | Header aggregates |
+| `currency` | enum | Yes | `COP` \| `USD` |
+| `status` | enum | Yes | `received` \| `applied` \| `superseded` |
+| `emailId` | relation → `email` | No | Ingest provenance |
+| `sourceGmailMessageId` | string | No | Idempotency key for email ingest |
+
+**Apply (Rates hooks, not the platform worker):** upsert `statement` from email extract → stamp `statementId` on schedule / attachment → when `closingBalance` present, upsert `balanceSnapshot(periodEnd)` and sync `financialItem.currentBalance`.
+
+**Phase 2 (out of scope now):** statement line items / bulk `transaction.statementId` from OCR or CSV. v1 is header-only SoT.
+
+Children that may hold `statementId`: `attachment`, `balanceSnapshot`, `transaction`, `paymentSchedule` (`many-to-one`, `onDelete: nullify`).
+
+---
+
+### 4.11 `email` — processed Gmail ledger
+
+User-visible history of Gmail messages that matched an email binding and were marked relevant. The Gmail worker upserts this row **before** attachment import and email hooks run, then injects `__emailLedger.id` into the hook envelope. Platform ops rows (`__email_ingest_processed` / fingerprints) remain for pipeline dedupe; this entity is the browseable relational hub.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `subject` | string | Yes | Message subject |
+| `fromAddress` | string | Yes | From header |
+| `snippet` | string | No | Gmail snippet |
+| `bodyText` | string | No | Plain body, truncated (~8k) |
+| `receivedAt` | date | No | Envelope date |
+| `gmailMessageId` | string | Yes | Idempotency key (per mailbox user) |
+| `threadId` | string | No | Gmail thread id |
+| `rfcMessageId` | string | No | RFC 5322 Message-ID when present |
+| `contentFingerprint` | string | No | Content fingerprint used by ingest dedupe |
+| `status` | enum | Yes | `processed` \| `skipped_irrelevant` \| `failed` |
+| `bindingId` | string | No | Matched binding id |
+| `matchEntityName` | string | No | Usually `financialItem` |
+| `matchRecordId` | relation → `financialItem` | No | Matched card/host (`onDelete: nullify`) |
+| `userId` | string | Yes | Mailbox owner |
+| `relevant` | boolean | No | Mirror of extract relevance |
+| `extractSource` | string | No | `ai` \| `manual` \| null |
+| `reason` | string | No | Extract/skip/failure reason |
+
+**Children hold `emailId`:** entities the email path writes directly — `transaction`, `attachment`, `paymentSchedule`, `financialItem`, `statement` — each have an optional `emailId` → `email` (`many-to-one`, `onDelete: nullify`). Email detail UIs use **RelatedRecords** on those FKs for a per-message trace. Indirect cascade updates (e.g. mark schedule PAID from a transaction) stay attributed via the transaction’s `emailId` unless the same email’s statement hook also patched that schedule.
+
+Keep `transaction.sourceGmailMessageId` for getOrCreate idempotency; `emailId` is the relational link.
 
 ---
 
@@ -912,8 +1000,8 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 | **Multi-currency** | USD accounts + exchange rate conversion | `exchangeRate` snapshot; display currency on tenant settings |
 | **Household sharing** | Spouse/family sees subset of items | Tenant RBAC field-level permissions (existing `@repo/rbac`) |
 | **Property registry** | Full real estate asset with valuation | `propertyDetails` extension; `marketValue` separate from `currentBalance` |
-| **File attachments** | Statement PDFs, receipts | Global `attachment` entity with `documentType` enum and parent FK (`financialItem`, `transaction`, `account`, `balanceSnapshot`, `paymentSchedule`) |
-| **Auto-import** | Bank CSV / email parsing | Hook on file upload → draft `transaction` rows |
+| **File attachments** | Statement PDFs, receipts | Global `attachment` entity with `documentType` enum, parent FKs, and optional `emailId` to the Gmail ledger |
+| **Auto-import** | Bank CSV / email parsing | Gmail ingest + domain `email` ledger + email hooks on `financialItem` |
 | **Budget targets** | Monthly caps per category | `budget` entity linked to `category` |
 | **Alerts** | Due date reminders, debt ratio warnings | Notification hooks on `paymentSchedule` |
 
@@ -963,6 +1051,8 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 
 - Post-save enrichment prompts
 - `attachment` entity for PDF documents (implemented in entity catalog)
+- `email` ledger entity + `emailId` on direct email writers (implemented in entity catalog)
+- `statement` period-closing SoT + optional `statementId` on attachment / snapshot / txn / schedule (implemented in entity catalog; applied via Rates email hooks)
 - Property consolidated P&L view
 
 ### Relationship to existing codebase

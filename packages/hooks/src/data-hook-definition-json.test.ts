@@ -179,10 +179,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(38);
+    expect(hooks.length).toBe(40);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(38);
+    expect(enabled.length).toBe(40);
 
     const ratesEntities = new Set([
       "actor",
@@ -198,6 +198,9 @@ describe("data-hook-definition-json", () => {
       "transaction",
       "paymentSchedule",
       "balanceSnapshot",
+      "attachment",
+      "statement",
+      "email",
     ]);
     for (const hook of hooks) {
       expect(ratesEntities.has(hook.entity), hook.entity).toBe(true);
@@ -223,6 +226,14 @@ describe("data-hook-definition-json", () => {
           action.as === "subscription",
       ),
     ).toBe(true);
+    expect(
+      emailIngestAi?.actions.some(
+        (action) =>
+          action.type === "getOrCreateRecord" &&
+          action.entity === "transaction" &&
+          action.data?.emailId != null,
+      ),
+    ).toBe(true);
 
     const emailIngestManual = hooks.find(
       (hook) => hook.name === "Email Ingest - Manual Extract",
@@ -242,6 +253,56 @@ describe("data-hook-definition-json", () => {
           action.type === "matchRelatedRecord" && action.as === "subscription",
       ),
     ).toBe(true);
+    expect(
+      emailIngestManual?.actions.some(
+        (action) =>
+          action.type === "getOrCreateRecord" &&
+          action.entity === "transaction" &&
+          action.data?.emailId != null,
+      ),
+    ).toBe(true);
+
+    const emailStatement = hooks.find(
+      (hook) => hook.name === "Email Credit Card Statement",
+    );
+    expect(emailStatement?.entity).toBe("financialItem");
+    expect(emailStatement?.trigger).toMatchObject({ kind: "email" });
+    expect(emailStatement?.chainHooks).toBe(false);
+    expect(emailStatement?.order).toBe(-1);
+    expect(
+      emailStatement?.condition &&
+        "children" in emailStatement.condition &&
+        emailStatement.condition.children.some(
+          (child) =>
+            child.type === "condition" &&
+            child.field === "__extracted.fields.amount",
+        ),
+    ).toBe(false);
+    expect(
+      emailStatement?.actions.some(
+        (action) =>
+          action.type === "getOrCreateRecord" &&
+          action.entity === "statement" &&
+          action.as === "periodStatement",
+      ),
+    ).toBe(true);
+    expect(
+      emailStatement?.actions.some(
+        (action) =>
+          action.type === "updateMatching" &&
+          action.entity === "paymentSchedule" &&
+          action.set?.emailId != null,
+      ),
+    ).toBe(true);
+    expect(
+      emailStatement?.actions.some(
+        (action) =>
+          action.type === "updateMatching" &&
+          action.entity === "financialItem" &&
+          action.set?.emailId != null &&
+          action.set?.nextDueDate != null,
+      ),
+    ).toBe(true);
 
     const emailReversal = hooks.find((hook) => hook.name === "Email Reversal");
     expect(emailReversal?.entity).toBe("financialItem");
@@ -249,11 +310,15 @@ describe("data-hook-definition-json", () => {
     expect(emailReversal?.chainHooks).toBe(false);
     expect(
       emailReversal?.actions.some(
-        (action) => action.type === "getOrCreateRecord",
+        (action) =>
+          action.type === "getOrCreateRecord" && action.data?.emailId != null,
       ),
     ).toBe(true);
     expect(
-      emailReversal?.actions.some((action) => action.type === "updateMatching"),
+      emailReversal?.actions.some(
+        (action) =>
+          action.type === "updateMatching" && action.set?.emailId != null,
+      ),
     ).toBe(true);
 
     const markPaid = hooks.find((hook) => hook.name === "Mark schedule PAID");

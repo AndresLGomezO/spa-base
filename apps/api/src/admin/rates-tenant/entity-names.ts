@@ -13,4 +13,7 @@ export const RATES_ENTITY_NAMES = [
   "transaction",
   "paymentSchedule",
   "balanceSnapshot",
+  "attachment",
+  "statement",
+  "email",
 ] as const;

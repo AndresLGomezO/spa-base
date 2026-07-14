@@ -25,6 +25,7 @@ export {
   findBestMatchingBinding,
   matchesFromAddress,
   matchesTextPattern,
+  resolveMatchingBinding,
 } from "./match.js";
 
 export {
@@ -35,7 +36,12 @@ export {
   type GmailTokenResponse,
 } from "./oauth.js";
 
-export { GmailApiClient, gmailApiMessageToEnvelope } from "./gmail-api.js";
+export {
+  GmailApiClient,
+  gmailApiMessageToEnvelope,
+  listPdfAttachmentsFromPayload,
+  decodeBase64UrlBuffer,
+} from "./gmail-api.js";
 
 export { buildEmailAiPrompt, buildEmailHookEnvelope } from "./hook-envelope.js";
 
@@ -81,31 +87,40 @@ export {
   emailIngestJobKindSchema,
   emailIngestJobRecordSchema,
   emailIngestJobStatusSchema,
+  emailIngestPendingCount,
   emailIngestProcessedRecordSchema,
   emailIngestProcessedStatusSchema,
+  emailIngestRunMetricsSchema,
   emailIngestStepTraceEntrySchema,
+  emptyEmailIngestRunMetrics,
   emailMatchBindingSchema,
+  emailAttachmentImportConfigSchema,
   gmailConnectionPublicStatusSchema,
   gmailConnectionRecordSchema,
   gmailConnectionStatusSchema,
+  gmailMessageAttachmentSchema,
   gmailMessageEnvelopeSchema,
   patchEmailMatchBindingInputSchema,
   toPublicGmailStatus,
   type CreateEmailMatchBindingInput,
   type EmailAiExtractResult,
+  type EmailAttachmentImportConfig,
   type EmailBodyFieldExtractor,
   type EmailBodyFieldTransform,
   type EmailIngestFingerprintRecord,
   type EmailIngestJobKind,
   type EmailIngestJobRecord,
   type EmailIngestJobStatus,
+  type EmailIngestMessageOutcome,
   type EmailIngestProcessedRecord,
   type EmailIngestProcessedStatus,
+  type EmailIngestRunMetrics,
   type EmailIngestStepTraceEntry,
   type EmailMatchBinding,
   type GmailConnectionPublicStatus,
   type GmailConnectionRecord,
   type GmailConnectionStatus,
+  type GmailMessageAttachment,
   type GmailMessageEnvelope,
   type PatchEmailMatchBindingInput,
 } from "./types.js";

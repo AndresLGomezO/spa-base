@@ -58,19 +58,8 @@ export async function gmailIngestTaskRoute(
         logLabel: "Processing Gmail message",
         process: () =>
           processMessageGate.run(async () => {
-            try {
-              await processGmailProcessMessage(deps, payload, logger);
-            } catch (error) {
-              const message =
-                error instanceof Error ? error.message : "process failed";
-              await deps.emailIngestJobRepository.complete(
-                payload.tenantId,
-                payload.jobId,
-                "failed",
-                message,
-              );
-              throw error;
-            }
+            // Per-message failures update runMetrics.failed; do not fail the whole run.
+            await processGmailProcessMessage(deps, payload, logger);
           }),
       });
     },

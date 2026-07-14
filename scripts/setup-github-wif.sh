@@ -93,6 +93,7 @@ BOOTSTRAP_APIS=(
   firebase.googleapis.com
   pubsub.googleapis.com
   cloudtasks.googleapis.com
+  cloudscheduler.googleapis.com
   aiplatform.googleapis.com
 )
 
@@ -109,6 +110,7 @@ DEPLOYER_ROLES=(
   roles/secretmanager.admin
   roles/pubsub.admin
   roles/cloudtasks.admin
+  roles/cloudscheduler.admin
 )
 
 github_secret_names() {

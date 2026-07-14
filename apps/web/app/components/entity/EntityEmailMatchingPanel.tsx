@@ -79,7 +79,14 @@ interface ExtractorFormRow {
   readonly label: string;
   readonly pattern: string;
   readonly captureGroup: string;
-  readonly transform: "trim" | "amount" | "slashDate" | "valueMap" | "literal";
+  readonly transform:
+    | "trim"
+    | "amount"
+    | "slashDate"
+    | "compactYmd"
+    | "monthNameDate"
+    | "valueMap"
+    | "literal";
   readonly valueMapJson: string;
   readonly literal: string;
 }
@@ -214,6 +221,8 @@ function toPortableFromRecord(binding: {
       | "trim"
       | "amount"
       | "slashDate"
+      | "compactYmd"
+      | "monthNameDate"
       | "valueMap"
       | "literal";
     readonly valueMap?: Readonly<Record<string, string>>;
@@ -886,6 +895,8 @@ export function EntityEmailMatchingPanel(props: {
                           <option value="trim">trim</option>
                           <option value="amount">amount</option>
                           <option value="slashDate">slashDate</option>
+                          <option value="compactYmd">compactYmd</option>
+                          <option value="monthNameDate">monthNameDate</option>
                           <option value="valueMap">valueMap</option>
                           <option value="literal">literal</option>
                         </select>

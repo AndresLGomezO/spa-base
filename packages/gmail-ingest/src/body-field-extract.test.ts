@@ -334,3 +334,147 @@ Bancolombia: Recibiste una transferencia por $3,206,391 de MARIA PARRA en tu cue
     });
   });
 });
+
+describe("Davivienda credit card statement extract", () => {
+  const SUBJECT = "Extracto tarjeta de Crédito Banco Davivienda 20260628";
+  const BODY = `¡Hola ANDRES LEONARDO GOMEZ ORTIZ!
+
+Adjunto encontrará el extracto de su Tarjeta de Crédito Visa, terminada en 7185, correspondiente al mes de junio.
+
+Pago mínimo
+$3,763,248
+
+Fecha límite de pago
+15/Jul/2026
+`;
+
+  const EXTRACTORS = [
+    {
+      field: "emailKind",
+      transform: "literal" as const,
+      literal: "creditCardStatement",
+      label: "",
+      sufficientForRelevance: true,
+    },
+    {
+      field: "statementDate",
+      label: "",
+      pattern: "/Extracto tarjeta de Cr[eé]dito Banco Davivienda\\s+(\\d{8})/i",
+      transform: "compactYmd" as const,
+    },
+    {
+      field: "amount",
+      label: "",
+      pattern: "/Pago m[ií]nimo\\s*\\n?\\s*\\$([\\d.,]+)/i",
+      transform: "amount" as const,
+    },
+    {
+      field: "nextDueDate",
+      label: "",
+      pattern:
+        "/Fecha l[ií]mite de pago\\s*\\n?\\s*(\\d{1,2}\\/[A-Za-z]{3}\\/\\d{4})/i",
+      transform: "monthNameDate" as const,
+    },
+  ];
+
+  it("extracts statement fields from subject+body text", () => {
+    const result = extractBodyFields(`${SUBJECT}\n${BODY}`, EXTRACTORS);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.emailKind).toBe("creditCardStatement");
+    expect(result.fields.statementDate).toBe("2026-06-28");
+    expect(result.fields.amount).toBe(3763248);
+    expect(result.fields.nextDueDate).toBe("2026-07-15");
+  });
+
+  it("stays relevant for creditCardStatement when amount cannot be parsed", () => {
+    const result = extractBodyFields(SUBJECT, EXTRACTORS);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.emailKind).toBe("creditCardStatement");
+    expect(result.fields.statementDate).toBe("2026-06-28");
+    expect(result.fields.amount).toBeUndefined();
+  });
+});
+
+describe("extractBodyFields Banco de Bogotá Visa statement", () => {
+  const SUBJECT = "Extracto Tarjeta de Crédito 15 Abril 2026";
+  const BODY = `
+Zona Segura: ANDRES L GOMEZ O
+
+Nº de identificación terminado en: 0933
+
+Tarjeta de Crédito
+
+Hola, ANDRES L GOMEZ O
+
+A continuación encontrarás el extracto de tu Tarjeta de Crédito.
+
+En este correo encontrarás un archivo adjunto.Al ingresar tu número de identificación, podrás consultar la información correspondiente a tu tarjeta de crédito terminada en 3075, correspondiente al mes de Abril.
+`;
+
+  const EXTRACTORS = [
+    {
+      field: "emailKind",
+      transform: "literal" as const,
+      literal: "creditCardStatement",
+      label: "",
+      sufficientForRelevance: true,
+    },
+    {
+      field: "statementDate",
+      label: "",
+      pattern:
+        "/Extracto Tarjeta de Cr[eé]dito\\s+(\\d{1,2}\\s+[A-Za-záéíóúÁÉÍÓÚñÑ]+\\s+\\d{4})/i",
+      transform: "monthNameDate" as const,
+    },
+  ];
+
+  it("extracts statementDate from Spanish subject date and stays relevant without amount", () => {
+    const result = extractBodyFields(`${SUBJECT}\n${BODY}`, EXTRACTORS);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.emailKind).toBe("creditCardStatement");
+    expect(result.fields.statementDate).toBe("2026-04-15");
+    expect(result.fields.amount).toBeUndefined();
+  });
+});
+
+describe("extractBodyFields Banco de Bogotá loan/mortgage statement", () => {
+  const SUBJECT = "Extracto Crédito 04 Abril 2026 00958100400";
+  const BODY = `
+Hola ANDRES LEONARDO GOMEZ ORTIZ
+
+En este tiempo de coyuntura queremos mantenerlo más informado sobre sus productos; por tal razón, adjunto encontrará el extracto de su Crédito.
+`;
+
+  const EXTRACTORS = [
+    {
+      field: "emailKind",
+      transform: "literal" as const,
+      literal: "creditCardStatement",
+      label: "",
+      sufficientForRelevance: true,
+    },
+    {
+      field: "statementDate",
+      label: "",
+      pattern:
+        "/Extracto Cr[eé]dito\\s+(\\d{1,2}\\s+[A-Za-záéíóúÁÉÍÓÚñÑ]+\\s+\\d{4})/i",
+      transform: "monthNameDate" as const,
+    },
+    {
+      field: "description",
+      label: "",
+      pattern:
+        "/Extracto Cr[eé]dito\\s+\\d{1,2}\\s+[A-Za-záéíóúÁÉÍÓÚñÑ]+\\s+\\d{4}\\s+(.+)$/im",
+      transform: "trim" as const,
+    },
+  ];
+
+  it("extracts statementDate and credit number description from subject", () => {
+    const result = extractBodyFields(`${SUBJECT}\n${BODY}`, EXTRACTORS);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.emailKind).toBe("creditCardStatement");
+    expect(result.fields.statementDate).toBe("2026-04-04");
+    expect(result.fields.description).toBe("00958100400");
+    expect(result.fields.amount).toBeUndefined();
+  });
+});

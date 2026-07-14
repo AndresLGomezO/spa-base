@@ -50,6 +50,8 @@ export const emailBodyFieldTransformSchema = z.enum([
   "trim",
   "amount",
   "slashDate",
+  "compactYmd",
+  "monthNameDate",
   "valueMap",
   "literal",
 ]);
@@ -66,7 +68,34 @@ export type EmailBodyFieldExtractor = {
   readonly transform?: EmailBodyFieldTransform;
   readonly valueMap?: Readonly<Record<string, string>>;
   readonly literal?: string;
+  /**
+   * When true and this field is present after extract, the message is relevant
+   * even if amount is missing (e.g. period-statement headers).
+   */
+  readonly sufficientForRelevance?: boolean;
 };
+
+/** Optional Gmail → file attachment import (worker-side; not a hook action). */
+export type EmailAttachmentImportConfig = {
+  readonly enabled: boolean;
+  /** Target attachment.documentType value (tenant-defined enum). */
+  readonly documentType: string;
+  /** Extracted field used as `documentDate` when present. */
+  readonly documentDateField?: string;
+  /**
+   * Entity field that receives `binding.recordId` (tenant configures the
+   * field name on the binding, e.g. a parent relation on `attachment`).
+   */
+  readonly recordIdField?: string;
+};
+
+export const emailAttachmentImportConfigSchema: z.ZodType<EmailAttachmentImportConfig> =
+  z.object({
+    enabled: z.boolean(),
+    documentType: z.string().trim().min(1),
+    documentDateField: z.string().trim().min(1).optional(),
+    recordIdField: z.string().trim().min(1).optional(),
+  }) as z.ZodType<EmailAttachmentImportConfig>;
 
 export const emailBodyFieldExtractorSchema: z.ZodType<EmailBodyFieldExtractor> =
   z
@@ -80,6 +109,7 @@ export const emailBodyFieldExtractorSchema: z.ZodType<EmailBodyFieldExtractor> =
       transform: emailBodyFieldTransformSchema.optional(),
       valueMap: z.record(z.string(), z.string()).optional(),
       literal: z.string().trim().min(1).optional(),
+      sufficientForRelevance: z.boolean().optional(),
     })
     .superRefine((value, ctx) => {
       const transform = value.transform ?? "trim";
@@ -125,6 +155,7 @@ export type EmailMatchBinding = {
   readonly useAi: boolean;
   readonly aiInstructions?: string | null;
   readonly bodyFieldExtractors: readonly EmailBodyFieldExtractor[];
+  readonly attachmentImport?: EmailAttachmentImportConfig | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 };
@@ -144,6 +175,7 @@ export const emailMatchBindingSchema: z.ZodType<EmailMatchBinding> = z.object({
   useAi: z.boolean().default(false),
   aiInstructions: z.string().trim().nullable().optional(),
   bodyFieldExtractors: z.array(emailBodyFieldExtractorSchema).default([]),
+  attachmentImport: emailAttachmentImportConfigSchema.nullable().optional(),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
 }) as z.ZodType<EmailMatchBinding>;
@@ -159,6 +191,7 @@ export type CreateEmailMatchBindingInput = {
   readonly useAi?: boolean;
   readonly aiInstructions?: string | null;
   readonly bodyFieldExtractors?: readonly EmailBodyFieldExtractor[];
+  readonly attachmentImport?: EmailAttachmentImportConfig | null;
 };
 
 export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindingInput> =
@@ -173,6 +206,7 @@ export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindi
     useAi: z.boolean().optional(),
     aiInstructions: z.string().trim().nullable().optional(),
     bodyFieldExtractors: z.array(emailBodyFieldExtractorSchema).optional(),
+    attachmentImport: emailAttachmentImportConfigSchema.nullable().optional(),
   }) as z.ZodType<CreateEmailMatchBindingInput>;
 
 export type PatchEmailMatchBindingInput = {
@@ -185,6 +219,7 @@ export type PatchEmailMatchBindingInput = {
   readonly useAi?: boolean;
   readonly aiInstructions?: string | null;
   readonly bodyFieldExtractors?: readonly EmailBodyFieldExtractor[];
+  readonly attachmentImport?: EmailAttachmentImportConfig | null;
 };
 
 export const patchEmailMatchBindingInputSchema: z.ZodType<PatchEmailMatchBindingInput> =
@@ -198,6 +233,7 @@ export const patchEmailMatchBindingInputSchema: z.ZodType<PatchEmailMatchBinding
     useAi: z.boolean().optional(),
     aiInstructions: z.string().trim().nullable().optional(),
     bodyFieldExtractors: z.array(emailBodyFieldExtractorSchema).optional(),
+    attachmentImport: emailAttachmentImportConfigSchema.nullable().optional(),
   }) as z.ZodType<PatchEmailMatchBindingInput>;
 
 export const emailIngestProcessedStatusSchema = z.enum([
@@ -267,6 +303,43 @@ export type EmailIngestStepTraceEntry = z.infer<
   typeof emailIngestStepTraceEntrySchema
 >;
 
+/** Per window-sync run counters (process-message updates atomically). */
+export const emailIngestRunMetricsSchema = z.object({
+  /** Distinct Gmail message ids listed for this run. */
+  fetched: z.number().int().nonnegative().default(0),
+  /** Process-message tasks enqueued. */
+  queued: z.number().int().nonnegative().default(0),
+  /** Messages currently being processed. */
+  processing: z.number().int().nonnegative().default(0),
+  /** Messages that reached a terminal outcome. */
+  finished: z.number().int().nonnegative().default(0),
+  /** Hooks applied successfully. */
+  processed: z.number().int().nonnegative().default(0),
+  skippedDedup: z.number().int().nonnegative().default(0),
+  skippedNoMatch: z.number().int().nonnegative().default(0),
+  skippedIrrelevant: z.number().int().nonnegative().default(0),
+  failed: z.number().int().nonnegative().default(0),
+});
+export type EmailIngestRunMetrics = z.infer<typeof emailIngestRunMetricsSchema>;
+
+export type EmailIngestMessageOutcome =
+  | "processed"
+  | "skippedDedup"
+  | "skippedNoMatch"
+  | "skippedIrrelevant"
+  | "failed";
+
+export function emptyEmailIngestRunMetrics(): EmailIngestRunMetrics {
+  return emailIngestRunMetricsSchema.parse({});
+}
+
+/** Messages still waiting in the queue (not started and not finished). */
+export function emailIngestPendingCount(
+  metrics: EmailIngestRunMetrics,
+): number {
+  return Math.max(0, metrics.queued - metrics.finished - metrics.processing);
+}
+
 export const emailIngestJobRecordSchema = z.object({
   id: z.string().trim().min(1),
   tenantId: z.string().trim().min(1),
@@ -275,12 +348,34 @@ export const emailIngestJobRecordSchema = z.object({
   status: emailIngestJobStatusSchema,
   title: z.string().trim().min(1),
   stepTrace: z.array(emailIngestStepTraceEntrySchema).default([]),
+  runMetrics: emailIngestRunMetricsSchema.default({
+    fetched: 0,
+    queued: 0,
+    processing: 0,
+    finished: 0,
+    processed: 0,
+    skippedDedup: 0,
+    skippedNoMatch: 0,
+    skippedIrrelevant: 0,
+    failed: 0,
+  }),
+  windowQuery: z.string().trim().nullable().optional(),
   errorMessage: z.string().trim().nullable().optional(),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
   completedAt: z.string().trim().nullable().optional(),
 });
 export type EmailIngestJobRecord = z.infer<typeof emailIngestJobRecordSchema>;
+
+export const gmailMessageAttachmentSchema = z.object({
+  attachmentId: z.string().trim().min(1),
+  filename: z.string().trim().min(1),
+  mimeType: z.string().trim().min(1),
+  size: z.number().int().nonnegative(),
+});
+export type GmailMessageAttachment = z.infer<
+  typeof gmailMessageAttachmentSchema
+>;
 
 export const gmailMessageEnvelopeSchema = z.object({
   messageId: z.string().trim().min(1),
@@ -292,6 +387,7 @@ export const gmailMessageEnvelopeSchema = z.object({
   snippet: z.string().trim(),
   date: z.string().trim().nullable(),
   bodyText: z.string().trim().nullable().optional(),
+  attachments: z.array(gmailMessageAttachmentSchema).optional().default([]),
 });
 export type GmailMessageEnvelope = z.infer<typeof gmailMessageEnvelopeSchema>;
 

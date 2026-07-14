@@ -240,6 +240,60 @@ function buildKpiItems(
         },
       );
       break;
+    case "emailIngest":
+      items.push(
+        {
+          key: "running",
+          label: t("debugger.summary.running"),
+          value: stats.statusCounts.running ?? 0,
+        },
+        {
+          key: "pending",
+          label: t("debugger.summary.pending"),
+          value: stats.statusCounts.pending ?? 0,
+        },
+        {
+          key: "completed",
+          label: t("debugger.summary.completed"),
+          value: stats.statusCounts.completed ?? 0,
+        },
+        {
+          key: "failed",
+          label: t("debugger.summary.failed"),
+          value: stats.statusCounts.failed ?? 0,
+        },
+        {
+          key: "fetched",
+          label: t("debugger.emailIngest.metrics.fetched"),
+          value: stats.emailIngestFetched ?? 0,
+        },
+        {
+          key: "queued",
+          label: t("debugger.emailIngest.metrics.queued"),
+          value: stats.emailIngestQueued ?? 0,
+        },
+        {
+          key: "processing",
+          label: t("debugger.emailIngest.metrics.processing"),
+          value: stats.emailIngestProcessing ?? 0,
+        },
+        {
+          key: "finished",
+          label: t("debugger.emailIngest.metrics.finished"),
+          value: stats.emailIngestFinished ?? 0,
+        },
+        {
+          key: "processed",
+          label: t("debugger.emailIngest.metrics.processed"),
+          value: stats.emailIngestProcessed ?? 0,
+        },
+        {
+          key: "failedMessages",
+          label: t("debugger.emailIngest.metrics.failed"),
+          value: stats.emailIngestFailedMessages ?? 0,
+        },
+      );
+      break;
     case "audit":
       items.push({
         key: "actors",

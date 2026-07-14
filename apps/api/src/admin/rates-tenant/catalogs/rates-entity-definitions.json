@@ -1444,6 +1444,12 @@
             "label": "Image",
             "component": "image",
             "order": 22
+          },
+          "emailId": {
+            "label": "Source email",
+            "component": "relation",
+            "filterable": true,
+            "order": 23
           }
         },
         "listViewType": "expandableTable"
@@ -1752,6 +1758,22 @@
             "label": "Image",
             "component": "image",
             "order": 22
+          }
+        },
+        {
+          "name": "emailId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "email",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Source email",
+            "order": 23,
+            "hidden": true,
+            "filterable": true
           }
         }
       ],
@@ -3809,6 +3831,18 @@
             "label": "Source Gmail message",
             "component": "input",
             "order": 10
+          },
+          "emailId": {
+            "label": "Source email",
+            "component": "relation",
+            "filterable": true,
+            "order": 11
+          },
+          "statementId": {
+            "label": "Statement",
+            "component": "relation",
+            "filterable": true,
+            "order": 12
           }
         },
         "listViewType": "expandableTable"
@@ -3956,6 +3990,38 @@
             "label": "Source Gmail message",
             "order": 10,
             "hidden": true
+          }
+        },
+        {
+          "name": "emailId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "email",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Source email",
+            "order": 11,
+            "hidden": true,
+            "filterable": true
+          }
+        },
+        {
+          "name": "statementId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "statement",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Statement",
+            "order": 12,
+            "hidden": true,
+            "filterable": true
           }
         }
       ],
@@ -4273,6 +4339,18 @@
             "component": "relation",
             "filterable": true,
             "order": 9
+          },
+          "emailId": {
+            "label": "Source email",
+            "component": "relation",
+            "filterable": true,
+            "order": 10
+          },
+          "statementId": {
+            "label": "Statement",
+            "component": "relation",
+            "filterable": true,
+            "order": 10
           }
         },
         "listViewType": "expandableTable"
@@ -4400,6 +4478,38 @@
           "ui": {
             "label": "Paid transaction",
             "order": 8,
+            "filterable": true
+          }
+        },
+        {
+          "name": "emailId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "email",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Source email",
+            "order": 9,
+            "hidden": true,
+            "filterable": true
+          }
+        },
+        {
+          "name": "statementId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "statement",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Statement",
+            "order": 10,
+            "hidden": true,
             "filterable": true
           }
         }
@@ -4587,6 +4697,12 @@
             "displayFormat": "currency",
             "sortable": true,
             "order": 3
+          },
+          "statementId": {
+            "label": "Statement",
+            "component": "relation",
+            "filterable": true,
+            "order": 4
           }
         },
         "listViewType": "expandableTable"
@@ -4641,6 +4757,22 @@
             "displayFormat": "currency",
             "component": "number",
             "sortable": true
+          }
+        },
+        {
+          "name": "statementId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "statement",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Statement",
+            "order": 4,
+            "hidden": true,
+            "filterable": true
           }
         }
       ],
@@ -4957,6 +5089,18 @@
             "component": "relation",
             "filterable": true,
             "order": 9
+          },
+          "emailId": {
+            "label": "Source email",
+            "component": "relation",
+            "filterable": true,
+            "order": 10
+          },
+          "statementId": {
+            "label": "Statement",
+            "component": "relation",
+            "filterable": true,
+            "order": 11
           }
         },
         "listViewType": "expandableTable"
@@ -5090,6 +5234,959 @@
             "label": "Payment schedule",
             "order": 9,
             "filterable": true
+          }
+        },
+        {
+          "name": "emailId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "email",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Source email",
+            "order": 10,
+            "hidden": true,
+            "filterable": true
+          }
+        },
+        {
+          "name": "statementId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "statement",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Statement",
+            "order": 11,
+            "hidden": true,
+            "filterable": true
+          }
+        }
+      ],
+      "inMemoryListQueries": true
+    },
+    {
+      "name": "statement",
+      "label": "Statements",
+      "description": "Period-closing source of truth for financial products (bank/card/loan extract headers)",
+      "displayField": "name",
+      "navCategoryId": "cat_movements",
+      "navOrder": 4,
+      "hiddenFromNav": true,
+      "ui": {
+        "nav": {
+          "label": "Statements",
+          "icon": "FileText"
+        },
+        "views": [
+          {
+            "type": "table",
+            "name": "default",
+            "fields": [
+              "name",
+              "financialItemId",
+              "periodEnd",
+              "closingBalance",
+              "minPayment",
+              "paymentDueDate",
+              "status"
+            ]
+          }
+        ],
+        "forms": {
+          "create": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-statement-create-001",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-statement-create-001",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-statement-create-wrap",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-name",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "name"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "financialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-period-end",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "periodEnd"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-closing",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "closingBalance"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-min",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "minPayment"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-due",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "paymentDueDate"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-status",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "status"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-create-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          },
+          "edit": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-statement-edit-001",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-statement-edit-001",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-statement-edit-wrap",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-name",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "name"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "financialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-period-end",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "periodEnd"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-closing",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "closingBalance"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-min",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "minPayment"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-due",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "paymentDueDate"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-status",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "status"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-statement-edit-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          }
+        },
+        "fields": {
+          "name": {
+            "label": "Name",
+            "component": "input",
+            "searchable": true,
+            "sortable": true,
+            "order": 0
+          },
+          "financialItemId": {
+            "label": "Financial item",
+            "component": "relation",
+            "filterable": true,
+            "order": 1
+          },
+          "accountId": {
+            "label": "Account",
+            "component": "relation",
+            "filterable": true,
+            "order": 2
+          },
+          "periodStart": {
+            "label": "Period start",
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "order": 3
+          },
+          "periodEnd": {
+            "label": "Period end",
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "sortable": true,
+            "order": 4
+          },
+          "statementDate": {
+            "label": "Statement date",
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "order": 5
+          },
+          "closingBalance": {
+            "label": "Closing balance",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 6
+          },
+          "minPayment": {
+            "label": "Minimum payment",
+            "component": "number",
+            "displayFormat": "currency",
+            "order": 7
+          },
+          "paymentDueDate": {
+            "label": "Payment due date",
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "order": 8
+          },
+          "interestCharged": {
+            "label": "Interest charged",
+            "component": "number",
+            "displayFormat": "currency",
+            "order": 9
+          },
+          "feesCharged": {
+            "label": "Fees charged",
+            "component": "number",
+            "displayFormat": "currency",
+            "order": 10
+          },
+          "purchasesTotal": {
+            "label": "Purchases total",
+            "component": "number",
+            "displayFormat": "currency",
+            "order": 11
+          },
+          "paymentsTotal": {
+            "label": "Payments total",
+            "component": "number",
+            "displayFormat": "currency",
+            "order": 12
+          },
+          "currency": {
+            "label": "Currency",
+            "component": "select",
+            "order": 13
+          },
+          "status": {
+            "label": "Status",
+            "component": "select",
+            "filterable": true,
+            "order": 14
+          },
+          "emailId": {
+            "label": "Source email",
+            "component": "relation",
+            "filterable": true,
+            "order": 15
+          },
+          "sourceGmailMessageId": {
+            "label": "Source Gmail message",
+            "component": "input",
+            "order": 16
+          }
+        },
+        "listViewType": "expandableTable"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "ui": {
+            "label": "Name",
+            "order": 0,
+            "sortable": true,
+            "searchable": true
+          }
+        },
+        {
+          "name": "financialItemId",
+          "type": "relation",
+          "required": true,
+          "relation": {
+            "target": "financialItem",
+            "type": "many-to-one",
+            "onDelete": "restrict"
+          },
+          "ui": {
+            "label": "Financial item",
+            "order": 1,
+            "filterable": true
+          }
+        },
+        {
+          "name": "accountId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "account",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Account",
+            "order": 2,
+            "filterable": true
+          }
+        },
+        {
+          "name": "periodStart",
+          "type": "date",
+          "ui": {
+            "label": "Period start",
+            "order": 3,
+            "component": "date",
+            "dateDisplayFormat": "date"
+          }
+        },
+        {
+          "name": "periodEnd",
+          "type": "date",
+          "required": true,
+          "ui": {
+            "label": "Period end",
+            "order": 4,
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "sortable": true
+          }
+        },
+        {
+          "name": "statementDate",
+          "type": "date",
+          "ui": {
+            "label": "Statement date",
+            "order": 5,
+            "component": "date",
+            "dateDisplayFormat": "date"
+          }
+        },
+        {
+          "name": "closingBalance",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Closing balance",
+            "order": 6,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "minPayment",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Minimum payment",
+            "order": 7,
+            "displayFormat": "currency",
+            "component": "number"
+          }
+        },
+        {
+          "name": "paymentDueDate",
+          "type": "date",
+          "ui": {
+            "label": "Payment due date",
+            "order": 8,
+            "component": "date",
+            "dateDisplayFormat": "date"
+          }
+        },
+        {
+          "name": "interestCharged",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Interest charged",
+            "order": 9,
+            "displayFormat": "currency",
+            "component": "number"
+          }
+        },
+        {
+          "name": "feesCharged",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Fees charged",
+            "order": 10,
+            "displayFormat": "currency",
+            "component": "number"
+          }
+        },
+        {
+          "name": "purchasesTotal",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Purchases total",
+            "order": 11,
+            "displayFormat": "currency",
+            "component": "number"
+          }
+        },
+        {
+          "name": "paymentsTotal",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Payments total",
+            "order": 12,
+            "displayFormat": "currency",
+            "component": "number"
+          }
+        },
+        {
+          "name": "currency",
+          "type": "enum",
+          "required": true,
+          "enumValues": ["COP", "USD"],
+          "ui": {
+            "label": "Currency",
+            "order": 13,
+            "component": "select"
+          }
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "required": true,
+          "enumValues": ["received", "applied", "superseded"],
+          "ui": {
+            "label": "Status",
+            "order": 14,
+            "component": "select",
+            "filterable": true
+          }
+        },
+        {
+          "name": "emailId",
+          "type": "relation",
+          "required": false,
+          "relation": {
+            "target": "email",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Source email",
+            "order": 15,
+            "hidden": true,
+            "filterable": true
+          }
+        },
+        {
+          "name": "sourceGmailMessageId",
+          "type": "string",
+          "required": false,
+          "ui": {
+            "label": "Source Gmail message",
+            "order": 16,
+            "hidden": true,
+            "searchable": true
+          }
+        }
+      ],
+      "inMemoryListQueries": true
+    },
+    {
+      "name": "email",
+      "label": "Emails",
+      "description": "Processed Gmail messages matched to financial items (ingest ledger)",
+      "displayField": "subject",
+      "navCategoryId": "cat_movements",
+      "navOrder": 5,
+      "hiddenFromNav": true,
+      "ui": {
+        "nav": {
+          "label": "Emails",
+          "icon": "Mail"
+        },
+        "views": [
+          {
+            "type": "table",
+            "name": "default",
+            "fields": [
+              "subject",
+              "fromAddress",
+              "receivedAt",
+              "status",
+              "matchRecordId"
+            ]
+          }
+        ],
+        "forms": {
+          "create": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-email-create-001",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-email-create-001",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-email-create-wrap",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-email-create-subject",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "subject"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-create-from",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "fromAddress"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-create-received",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "receivedAt"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-create-status",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "status"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-create-match",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "matchRecordId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-create-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          },
+          "edit": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-email-edit-001",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-email-edit-001",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-email-edit-wrap",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-email-edit-subject",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "subject"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-edit-from",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "fromAddress"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-edit-status",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "status"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-edit-match",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "matchRecordId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-email-edit-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          }
+        },
+        "fields": {
+          "subject": {
+            "label": "Subject",
+            "component": "input",
+            "searchable": true,
+            "sortable": true,
+            "order": 0
+          },
+          "fromAddress": {
+            "label": "From",
+            "component": "input",
+            "searchable": true,
+            "filterable": true,
+            "order": 1
+          },
+          "receivedAt": {
+            "label": "Received at",
+            "component": "date",
+            "dateDisplayFormat": "datetime",
+            "sortable": true,
+            "order": 2
+          },
+          "status": {
+            "label": "Status",
+            "component": "select",
+            "filterable": true,
+            "order": 3
+          },
+          "matchRecordId": {
+            "label": "Matched financial item",
+            "component": "relation",
+            "filterable": true,
+            "order": 4
+          },
+          "gmailMessageId": {
+            "label": "Gmail message id",
+            "component": "input",
+            "order": 5
+          },
+          "relevant": {
+            "label": "Relevant",
+            "component": "toggle",
+            "filterable": true,
+            "order": 6
+          },
+          "extractSource": {
+            "label": "Extract source",
+            "component": "input",
+            "order": 7
+          },
+          "reason": {
+            "label": "Reason",
+            "component": "input",
+            "order": 8
+          }
+        },
+        "listViewType": "expandableTable"
+      },
+      "fields": [
+        {
+          "name": "subject",
+          "type": "string",
+          "required": true,
+          "ui": {
+            "label": "Subject",
+            "order": 0,
+            "sortable": true,
+            "searchable": true
+          }
+        },
+        {
+          "name": "fromAddress",
+          "type": "string",
+          "required": true,
+          "ui": {
+            "label": "From",
+            "order": 1,
+            "searchable": true,
+            "filterable": true
+          }
+        },
+        {
+          "name": "snippet",
+          "type": "string",
+          "ui": {
+            "label": "Snippet",
+            "order": 2,
+            "searchable": true
+          }
+        },
+        {
+          "name": "bodyText",
+          "type": "string",
+          "ui": {
+            "label": "Body",
+            "order": 3,
+            "hidden": true
+          }
+        },
+        {
+          "name": "receivedAt",
+          "type": "date",
+          "ui": {
+            "label": "Received at",
+            "order": 4,
+            "component": "date",
+            "dateDisplayFormat": "datetime",
+            "sortable": true
+          }
+        },
+        {
+          "name": "gmailMessageId",
+          "type": "string",
+          "required": true,
+          "ui": {
+            "label": "Gmail message id",
+            "order": 5,
+            "hidden": true,
+            "searchable": true
+          }
+        },
+        {
+          "name": "threadId",
+          "type": "string",
+          "ui": {
+            "label": "Thread id",
+            "order": 6,
+            "hidden": true
+          }
+        },
+        {
+          "name": "rfcMessageId",
+          "type": "string",
+          "ui": {
+            "label": "RFC Message-ID",
+            "order": 7,
+            "hidden": true
+          }
+        },
+        {
+          "name": "contentFingerprint",
+          "type": "string",
+          "ui": {
+            "label": "Content fingerprint",
+            "order": 8,
+            "hidden": true
+          }
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "required": true,
+          "enumValues": ["processed", "skipped_irrelevant", "failed"],
+          "ui": {
+            "label": "Status",
+            "order": 9,
+            "component": "select",
+            "filterable": true
+          }
+        },
+        {
+          "name": "bindingId",
+          "type": "string",
+          "ui": {
+            "label": "Binding id",
+            "order": 10,
+            "hidden": true
+          }
+        },
+        {
+          "name": "matchEntityName",
+          "type": "string",
+          "ui": {
+            "label": "Match entity",
+            "order": 11,
+            "hidden": true
+          }
+        },
+        {
+          "name": "matchRecordId",
+          "type": "relation",
+          "relation": {
+            "target": "financialItem",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Matched financial item",
+            "order": 12,
+            "filterable": true
+          }
+        },
+        {
+          "name": "userId",
+          "type": "string",
+          "required": true,
+          "ui": {
+            "label": "Mailbox user",
+            "order": 13,
+            "hidden": true
+          }
+        },
+        {
+          "name": "relevant",
+          "type": "boolean",
+          "ui": {
+            "label": "Relevant",
+            "order": 14,
+            "component": "toggle",
+            "filterable": true
+          }
+        },
+        {
+          "name": "extractSource",
+          "type": "string",
+          "ui": {
+            "label": "Extract source",
+            "order": 15,
+            "hidden": true
+          }
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "ui": {
+            "label": "Reason",
+            "order": 16
           }
         }
       ],

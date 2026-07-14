@@ -11,6 +11,7 @@ import { createFirestoreAdminPlatformRuntimeSettingsRepository } from "@repo/gcp
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
 import { createGmailIngestProcessorDeps } from "./services/gmail-ingest-processor.js";
+import { startLocalGmailPollScheduler } from "./services/local-gmail-poll-scheduler.js";
 import { createWorkerGmailTaskEnqueuer } from "./services/worker-gmail-task-enqueuer.js";
 import { buildWorkerServer } from "./server.js";
 
@@ -93,6 +94,13 @@ await server.listen({
   host: workerEnv.HOST,
 });
 
+if (workerEnv.IS_LOCAL && gmailIngest) {
+  startLocalGmailPollScheduler({
+    workerBaseUrl: workerEnv.WORKER_SERVICE_URL,
+    getDeliveryMode: () => runtimeSettingsCache.getGmailIngestDeliveryMode(),
+  });
+}
+
 console.log(
   JSON.stringify({
     message: "worker-service started",
@@ -103,5 +111,6 @@ console.log(
     vertexProjectId: vertexAiConfig.projectId,
     vertexMock: vertexAiConfig.mockEnabled,
     gmailIngestEnabled: Boolean(gmailIngest),
+    localGmailPollScheduler: workerEnv.IS_LOCAL && Boolean(gmailIngest),
   }),
 );

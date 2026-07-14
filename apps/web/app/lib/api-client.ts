@@ -1665,6 +1665,48 @@ export async function getDebugAiJob(jobId: string): Promise<AiJobRecord> {
   return apiRequest(`/api/debug/ai-jobs/${encodeURIComponent(jobId)}`);
 }
 
+export interface EmailIngestRunMetrics {
+  readonly fetched: number;
+  readonly queued: number;
+  readonly processing: number;
+  readonly finished: number;
+  readonly processed: number;
+  readonly skippedDedup: number;
+  readonly skippedNoMatch: number;
+  readonly skippedIrrelevant: number;
+  readonly failed: number;
+}
+
+export interface EmailIngestStepTraceEntry {
+  readonly stepId: string;
+  readonly timestamp: string;
+  readonly status: "info" | "success" | "error" | "skipped";
+  readonly message: string;
+  readonly meta?: Readonly<Record<string, unknown>>;
+}
+
+export interface EmailIngestJobRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly kind: "windowSync" | "watchRenew" | "processMessage";
+  readonly status: "pending" | "running" | "completed" | "failed";
+  readonly title: string;
+  readonly stepTrace: readonly EmailIngestStepTraceEntry[];
+  readonly runMetrics: EmailIngestRunMetrics;
+  readonly windowQuery?: string | null;
+  readonly errorMessage?: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly completedAt?: string | null;
+}
+
+export async function getDebugEmailIngestJob(
+  jobId: string,
+): Promise<EmailIngestJobRecord> {
+  return apiRequest(`/api/debug/email-ingest/${encodeURIComponent(jobId)}`);
+}
+
 export interface SubmitAiUiBuilderInput {
   readonly question: string;
   readonly entityName: string;

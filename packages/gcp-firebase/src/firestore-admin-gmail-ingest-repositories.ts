@@ -9,7 +9,9 @@ import {
   emailIngestFingerprintRecordSchema,
   emailIngestJobRecordSchema,
   emailIngestProcessedRecordSchema,
+  emailIngestRunMetricsSchema,
   emailMatchBindingSchema,
+  emptyEmailIngestRunMetrics,
   GMAIL_CONNECTIONS_BY_EMAIL_COLLECTION,
   GMAIL_INTEGRATION_DOC_ID,
   GMAIL_INTEGRATIONS_SUBCOLLECTION,
@@ -22,6 +24,7 @@ import {
   type EmailIngestJobRecord,
   type EmailIngestProcessedRecord,
   type EmailIngestProcessedStatus,
+  type EmailIngestRunMetrics,
   type EmailIngestStepTraceEntry,
   type EmailMatchBinding,
   type GmailConnectionRecord,
@@ -35,6 +38,18 @@ import {
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
+
+const RUN_METRICS_KEYS = [
+  "fetched",
+  "queued",
+  "processing",
+  "finished",
+  "processed",
+  "skippedDedup",
+  "skippedNoMatch",
+  "skippedIrrelevant",
+  "failed",
+] as const satisfies ReadonlyArray<keyof EmailIngestRunMetrics>;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -109,6 +124,18 @@ export interface EmailIngestFingerprintRepository {
   ): Promise<EmailIngestFingerprintRecord>;
 }
 
+export type EmailIngestRunMetricsPatch = Partial<{
+  readonly fetched: number;
+  readonly queued: number;
+  readonly processing: number;
+  readonly finished: number;
+  readonly processed: number;
+  readonly skippedDedup: number;
+  readonly skippedNoMatch: number;
+  readonly skippedIrrelevant: number;
+  readonly failed: number;
+}>;
+
 export interface EmailIngestJobRepository {
   create(input: {
     readonly tenantId: string;
@@ -120,6 +147,22 @@ export interface EmailIngestJobRepository {
     tenantId: string,
     jobId: string,
     step: EmailIngestStepTraceEntry,
+  ): Promise<EmailIngestJobRecord | null>;
+  /**
+   * Atomically append a step and/or adjust run metrics. When `finalizeIfIdle`
+   * is true and finished >= queued with processing <= 0, marks the job completed.
+   */
+  applyRunProgress(
+    tenantId: string,
+    jobId: string,
+    options: {
+      readonly step?: EmailIngestStepTraceEntry;
+      readonly setMetrics?: EmailIngestRunMetricsPatch;
+      readonly increments?: EmailIngestRunMetricsPatch;
+      readonly windowQuery?: string | null;
+      readonly finalizeIfIdle?: boolean;
+      readonly status?: "pending" | "running" | "completed" | "failed";
+    },
   ): Promise<EmailIngestJobRecord | null>;
   complete(
     tenantId: string,
@@ -372,6 +415,7 @@ export function createFirestoreAdminEmailMatchBindingRepository(
         useAi: parsed.useAi ?? false,
         aiInstructions: parsed.aiInstructions ?? null,
         bodyFieldExtractors: parsed.bodyFieldExtractors ?? [],
+        attachmentImport: parsed.attachmentImport ?? null,
         createdAt: timestamp,
         updatedAt: timestamp,
       });
@@ -404,6 +448,10 @@ export function createFirestoreAdminEmailMatchBindingRepository(
           parsed.bodyFieldExtractors !== undefined
             ? parsed.bodyFieldExtractors
             : (existing.bodyFieldExtractors ?? []),
+        attachmentImport:
+          parsed.attachmentImport !== undefined
+            ? parsed.attachmentImport
+            : (existing.attachmentImport ?? null),
         updatedAt: nowIso(),
       });
       await collection(tenantId).doc(bindingId).set(next);
@@ -512,6 +560,8 @@ export function createFirestoreAdminEmailIngestJobRepository(
         status: "pending",
         title: input.title,
         stepTrace: [],
+        runMetrics: emptyEmailIngestRunMetrics(),
+        windowQuery: null,
         errorMessage: null,
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -521,16 +571,83 @@ export function createFirestoreAdminEmailIngestJobRepository(
       return record;
     },
     async appendStep(tenantId, jobId, step) {
-      const existing = await this.get(tenantId, jobId);
-      if (!existing) return null;
-      const next = emailIngestJobRecordSchema.parse({
-        ...existing,
-        status: existing.status === "pending" ? "running" : existing.status,
-        stepTrace: [...existing.stepTrace, step],
-        updatedAt: nowIso(),
+      return this.applyRunProgress(tenantId, jobId, { step });
+    },
+    async applyRunProgress(tenantId, jobId, options) {
+      const ref = collection(tenantId).doc(jobId);
+      return getFirestoreAdmin(config).runTransaction(async (tx) => {
+        const snapshot = await tx.get(ref);
+        if (!snapshot.exists) return null;
+        const existing = emailIngestJobRecordSchema.parse({
+          id: snapshot.id,
+          ...snapshot.data(),
+        });
+
+        const metrics = { ...existing.runMetrics };
+        if (options.setMetrics) {
+          for (const key of RUN_METRICS_KEYS) {
+            const value = options.setMetrics[key];
+            if (typeof value === "number") {
+              metrics[key] = Math.max(0, value);
+            }
+          }
+        }
+        if (options.increments) {
+          for (const key of RUN_METRICS_KEYS) {
+            const delta = options.increments[key];
+            if (typeof delta === "number" && delta !== 0) {
+              metrics[key] = Math.max(0, metrics[key] + delta);
+            }
+          }
+        }
+
+        const stepTrace = options.step
+          ? [...existing.stepTrace, options.step]
+          : existing.stepTrace;
+
+        const idle =
+          metrics.queued > 0 &&
+          metrics.finished >= metrics.queued &&
+          metrics.processing <= 0;
+        const shouldFinalize = options.finalizeIfIdle === true && idle;
+
+        let status = options.status ?? existing.status;
+        if (shouldFinalize) {
+          status = "completed";
+        } else if (
+          status === "pending" &&
+          (options.step || options.setMetrics)
+        ) {
+          status = "running";
+        } else if (
+          options.finalizeIfIdle !== true &&
+          status === "completed" &&
+          metrics.finished < metrics.queued
+        ) {
+          // Re-open if messages still outstanding after early complete.
+          status = "running";
+        }
+
+        const timestamp = nowIso();
+        const next = emailIngestJobRecordSchema.parse({
+          ...existing,
+          status,
+          stepTrace,
+          runMetrics: emailIngestRunMetricsSchema.parse(metrics),
+          windowQuery:
+            options.windowQuery !== undefined
+              ? options.windowQuery
+              : (existing.windowQuery ?? null),
+          updatedAt: timestamp,
+          completedAt: shouldFinalize
+            ? timestamp
+            : status === "completed" || status === "failed"
+              ? (existing.completedAt ?? timestamp)
+              : null,
+        });
+        tx.set(ref, next);
+        return next;
       });
-      await collection(tenantId).doc(jobId).set(next);
-      return next;
     },
     async complete(tenantId, jobId, status, errorMessage) {
       const existing = await this.get(tenantId, jobId);

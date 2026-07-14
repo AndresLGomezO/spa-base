@@ -339,4 +339,45 @@ export async function registerDebugRoutes(
       );
     },
   );
+
+  app.get(
+    "/api/debug/email-ingest/:jobId",
+    {
+      preHandler: [options.authenticate, requireDebugRead],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+      if (!options.emailIngestJobRepository) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Email ingest debugger is not available.",
+        );
+      }
+
+      const jobId = (request.params as { jobId?: string }).jobId?.trim();
+      if (!jobId) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Job id is required.",
+        );
+      }
+
+      const job = await options.emailIngestJobRepository.get(tenantId, jobId);
+      if (!job) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Email ingest job not found.",
+        );
+      }
+
+      return reply.send(successEnvelope(job));
+    },
+  );
 }

@@ -133,6 +133,98 @@ function transformSlashDate(raw: string): string | null {
   return null;
 }
 
+function transformCompactYmd(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length !== 8) {
+    return null;
+  }
+  const year = digits.slice(0, 4);
+  const month = digits.slice(4, 6);
+  const day = digits.slice(6, 8);
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+  if (
+    !Number.isFinite(y) ||
+    !Number.isFinite(m) ||
+    !Number.isFinite(d) ||
+    m < 1 ||
+    m > 12 ||
+    d < 1 ||
+    d > 31
+  ) {
+    return null;
+  }
+  return `${year}-${month}-${day}`;
+}
+
+const MONTH_NAME_TO_NUMBER: Readonly<Record<string, string>> = {
+  jan: "01",
+  january: "01",
+  ene: "01",
+  enero: "01",
+  feb: "02",
+  february: "02",
+  febrero: "02",
+  mar: "03",
+  march: "03",
+  marzo: "03",
+  apr: "04",
+  april: "04",
+  abr: "04",
+  abril: "04",
+  may: "05",
+  mayo: "05",
+  jun: "06",
+  june: "06",
+  junio: "06",
+  jul: "07",
+  july: "07",
+  julio: "07",
+  aug: "08",
+  august: "08",
+  ago: "08",
+  agosto: "08",
+  sep: "09",
+  sept: "09",
+  september: "09",
+  set: "09",
+  septiembre: "09",
+  oct: "10",
+  october: "10",
+  octubre: "10",
+  nov: "11",
+  november: "11",
+  noviembre: "11",
+  dec: "12",
+  december: "12",
+  dic: "12",
+  diciembre: "12",
+};
+
+/** Parses `15/Jul/2026`, `15-Jul-2026`, `15 Jul 2026` (EN/ES month names). */
+function transformMonthNameDate(raw: string): string | null {
+  const match =
+    /^(\d{1,2})[/\-\s]+([A-Za-zÁÉÍÓÚáéíóúüñÑ.]{3,})[/\-\s]+(\d{4})$/u.exec(
+      raw.trim(),
+    );
+  if (!match) {
+    return null;
+  }
+  const day = match[1]!.padStart(2, "0");
+  const monthKey = match[2]!.replace(/\./g, "").toLowerCase();
+  const year = match[3]!;
+  const month = MONTH_NAME_TO_NUMBER[monthKey];
+  if (!month) {
+    return null;
+  }
+  const d = Number(day);
+  if (!Number.isFinite(d) || d < 1 || d > 31) {
+    return null;
+  }
+  return `${year}-${month}-${day}`;
+}
+
 function transformValueMap(
   raw: string,
   valueMap: Readonly<Record<string, string>> | undefined,
@@ -173,6 +265,10 @@ function applyTransform(
       return transformAmount(raw);
     case "slashDate":
       return transformSlashDate(raw);
+    case "compactYmd":
+      return transformCompactYmd(raw);
+    case "monthNameDate":
+      return transformMonthNameDate(raw);
     case "valueMap":
       return transformValueMap(raw, extractor.valueMap);
     case "literal":
@@ -258,7 +354,16 @@ export function extractBodyFields(
       ? Number.isFinite(amount)
       : typeof amount === "string" && amount.trim().length > 0;
 
-  if (!hasAmount) {
+  // Statement / period-closing extracts mark relevance via extractor flag.
+  const hasSufficientRelevanceField = extractors.some((extractor) => {
+    if (!extractor.sufficientForRelevance) return false;
+    const value = fields[extractor.field];
+    if (value === undefined || value === null) return false;
+    if (typeof value === "string") return value.trim().length > 0;
+    return true;
+  });
+
+  if (!hasAmount && !hasSufficientRelevanceField) {
     return {
       relevant: false,
       reason: "Body field extract: amount missing or invalid",
@@ -268,7 +373,9 @@ export function extractBodyFields(
 
   return {
     relevant: true,
-    reason: "Body field extract",
+    reason: hasAmount
+      ? "Body field extract"
+      : "Body field extract: relevance field present",
     fields,
   };
 }

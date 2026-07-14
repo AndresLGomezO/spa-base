@@ -80,10 +80,11 @@ Canonical event format:
 | `{entity}.beforeDelete` | After relation checks, before delete |
 | `{entity}.afterDelete` | After successful delete |
 | `{entity}.afterSchedule` | Scheduled tick (time-based trigger) |
+| `{entity}.afterEmail` | Gmail ingest matched a binding for this entity |
 
-Examples: `loan.beforeCreate`, `payment.afterUpdate`, `paymentSchedule.afterSchedule`.
+Examples: `loan.beforeCreate`, `payment.afterUpdate`, `paymentSchedule.afterSchedule`, `financialItem.afterEmail`.
 
-The hook definition stores `entity`, `phase` (`before` | `after`), and `trigger` separately; the runtime composes the event string. CRUD hooks use `trigger.kind: "crud"` (or legacy `{ "operation": "create" }`) with `trigger.operation`. Scheduled hooks use `trigger.kind: "schedule"`.
+The hook definition stores `entity`, `phase` (`before` | `after`), and `trigger` separately; the runtime composes the event string. CRUD hooks use `trigger.kind: "crud"` (or legacy `{ "operation": "create" }`) with `trigger.operation`. Scheduled hooks use `trigger.kind: "schedule"`. Email hooks use `trigger.kind: "email"`.
 
 ### Lifecycle
 
@@ -203,7 +204,7 @@ Action target entities (`createRecord`, `createRecords`, `updateMatching`) must 
 
 ## 4. Triggers
 
-Triggers are a discriminated union on `kind`: **`crud`** (default) or **`schedule`**. Legacy definitions omit `kind` and are treated as CRUD when `operation` is present.
+Triggers are a discriminated union on `kind`: **`crud`** (default), **`schedule`**, or **`email`**. Legacy definitions omit `kind` and are treated as CRUD when `operation` is present.
 
 ### CRUD trigger (`kind: "crud"`)
 
@@ -258,6 +259,37 @@ Time-based hooks run on a cron schedule via worker-service (`POST /tasks/schedul
 - `execution: "queued"` is recommended for long-running scheduled hooks; the tick runner invokes `runDataHook` directly on worker-service (no re-enqueue loop).
 
 **Infrastructure:** set `SCHEDULED_HOOK_USER_UID` on worker-service to a user with tenant admin (or equivalent) permissions for hook actions. Cloud Scheduler should POST to `{WORKER_SERVICE_URL}/tasks/schedule-tick` every minute with OIDC from `TASKS_SA_EMAIL`.
+
+### Email trigger (`kind: "email"`)
+
+Gmail ingest (worker-service) runs these after a message matches an email binding, extract marks it relevant, and the worker has upserted the domain `email` ledger row.
+
+```json
+{ "kind": "email" }
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `kind` | `"email"` | yes | Discriminator |
+
+**Email constraints:**
+
+- `phase` must be `after`.
+- `current` is the matched entity record plus envelope fields injected by the worker.
+
+**Envelope fields on `current` (email hooks):**
+
+| Path | Description |
+|------|-------------|
+| `__email.*` | Gmail message envelope (`messageId`, `subject`, `from`, `date`, …) |
+| `__extracted.*` | Extract result (`relevant`, `reason`, `fields`, …) |
+| `__emailRelevant` | Boolean relevance flag |
+| `__matchBindingId` / `__matchEntityName` / `__matchRecordId` | Matched binding |
+| `__emailLedger.id` | Domain `email` ledger row id (set before hooks; use for `emailId` FKs) |
+
+Period-closing **`statement`** rows are created by **tenant email hooks** (not the platform worker). Persist SoT fields from `__extracted` and stamp `statementId` onto schedules / attachments as needed.
+
+Example field expression: `{ "kind": "field", "source": "current", "path": "__emailLedger.id" }`.
 
 ---
 

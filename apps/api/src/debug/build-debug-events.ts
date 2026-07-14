@@ -211,6 +211,18 @@ export function toEmailIngestDebugEvent(record: {
   readonly errorMessage?: string | null;
   readonly stepTrace?: readonly unknown[];
   readonly userId?: string;
+  readonly runMetrics?: {
+    readonly fetched?: number;
+    readonly queued?: number;
+    readonly processing?: number;
+    readonly finished?: number;
+    readonly processed?: number;
+    readonly skippedDedup?: number;
+    readonly skippedNoMatch?: number;
+    readonly skippedIrrelevant?: number;
+    readonly failed?: number;
+  } | null;
+  readonly windowQuery?: string | null;
 }): DebugEvent {
   const status =
     record.status === "completed"
@@ -220,12 +232,27 @@ export function toEmailIngestDebugEvent(record: {
         : record.status === "running"
           ? "running"
           : "pending";
+  const metrics = record.runMetrics ?? {};
+  const fetched = metrics.fetched ?? 0;
+  const queued = metrics.queued ?? 0;
+  const finished = metrics.finished ?? 0;
+  const processing = metrics.processing ?? 0;
+  const pending = Math.max(0, queued - finished - processing);
+  const failed = metrics.failed ?? 0;
+  const subtitleParts = [record.kind];
+  if (queued > 0 || fetched > 0) {
+    subtitleParts.push(`${finished}/${queued || fetched} done`);
+  }
+  if (pending > 0) subtitleParts.push(`${pending} queued`);
+  if (processing > 0) subtitleParts.push(`${processing} active`);
+  if (failed > 0) subtitleParts.push(`${failed} failed`);
+
   return {
     id: record.id,
     source: "emailIngest",
     timestamp: record.updatedAt || record.createdAt,
     title: record.title,
-    subtitle: record.kind,
+    subtitle: subtitleParts.join(" · "),
     status,
     summary: {
       kind: record.kind,
@@ -233,6 +260,17 @@ export function toEmailIngestDebugEvent(record: {
       userId: record.userId,
       errorMessage: record.errorMessage,
       stepCount: record.stepTrace?.length ?? 0,
+      fetched,
+      queued,
+      processing,
+      finished,
+      pending,
+      processed: metrics.processed ?? 0,
+      skippedDedup: metrics.skippedDedup ?? 0,
+      skippedNoMatch: metrics.skippedNoMatch ?? 0,
+      skippedIrrelevant: metrics.skippedIrrelevant ?? 0,
+      failed,
+      windowQuery: record.windowQuery ?? null,
     },
     payload: record,
   };

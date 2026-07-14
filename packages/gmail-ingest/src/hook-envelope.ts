@@ -8,6 +8,8 @@ export function buildEmailHookEnvelope(options: {
   readonly recordId: string;
   readonly extracted: EmailAiExtractResult | null;
   readonly relevant: boolean;
+  /** Domain email ledger row id when the worker upserted one before hooks. */
+  readonly emailLedgerId?: string | null;
 }): Record<string, unknown> {
   return {
     ...options.record,
@@ -17,6 +19,9 @@ export function buildEmailHookEnvelope(options: {
     __matchBindingId: options.bindingId,
     __matchEntityName: options.entityName,
     __matchRecordId: options.recordId,
+    ...(options.emailLedgerId
+      ? { __emailLedger: { id: options.emailLedgerId } }
+      : {}),
   };
 }
 

@@ -18,6 +18,7 @@ import { useDebugger } from "./debugger-context";
 import { useIndexProvisioningJobs } from "./hooks/useIndexProvisioningJobs";
 import { AiJobDebugDetail } from "./sources/ai-job-detail";
 import { AuditDebugDetail } from "./sources/audit-detail";
+import { EmailIngestDebugDetail } from "./sources/email-ingest-detail";
 import { HookExecutionDebugDetail } from "./sources/hook-execution-detail";
 import { HookLogDebugDetail } from "./sources/hook-log-detail";
 import { RequestPerfDebugDetail } from "./sources/request-perf-detail";
@@ -50,6 +51,8 @@ function DebuggerDetailBody({
       return <RequestPerfDebugDetail event={event} />;
     case "indexProvision":
       return <IndexProvisionDebugDetail event={event} />;
+    case "emailIngest":
+      return <EmailIngestDebugDetail event={event} />;
     default:
       return null;
   }

@@ -152,11 +152,20 @@ export function toPortableEmailMatchBinding(binding: {
       | "trim"
       | "amount"
       | "slashDate"
+      | "compactYmd"
+      | "monthNameDate"
       | "valueMap"
       | "literal";
     readonly valueMap?: Readonly<Record<string, string>>;
     readonly literal?: string;
+    readonly sufficientForRelevance?: boolean;
   }[];
+  readonly attachmentImport?: {
+    readonly enabled: boolean;
+    readonly documentType: string;
+    readonly documentDateField?: string;
+    readonly recordIdField?: string;
+  } | null;
 }): PortableEmailMatchBinding {
   return portableEmailMatchBindingSchema.parse({
     entityName: binding.entityName,
@@ -192,8 +201,16 @@ export function toPortableEmailMatchBinding(binding: {
               ? { valueMap: { ...extractor.valueMap } }
               : {}),
             ...(extractor.literal ? { literal: extractor.literal } : {}),
+            ...(extractor.sufficientForRelevance !== undefined
+              ? {
+                  sufficientForRelevance: extractor.sufficientForRelevance,
+                }
+              : {}),
           })),
         }
+      : {}),
+    ...(binding.attachmentImport !== undefined
+      ? { attachmentImport: binding.attachmentImport }
       : {}),
   });
 }

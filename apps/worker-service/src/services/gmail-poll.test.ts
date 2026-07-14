@@ -27,6 +27,7 @@ function baseDeps(
     emailIngestJobRepository: {
       create: vi.fn(),
       appendStep: vi.fn(),
+      applyRunProgress: vi.fn(),
       complete: vi.fn(),
       listRecent: vi.fn(),
       get: vi.fn(),
@@ -78,6 +79,7 @@ describe("processGmailPoll", () => {
         emailIngestJobRepository: {
           create,
           appendStep: vi.fn(),
+          applyRunProgress: vi.fn(),
           complete: vi.fn(),
           listRecent: vi.fn(),
           get: vi.fn(),

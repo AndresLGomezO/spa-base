@@ -168,3 +168,28 @@ export function findBestMatchingBinding<T extends EmailMatchBinding>(
     return rightScore - leftScore;
   })[0]!;
 }
+
+/**
+ * Prefer `preferredBindingId` when it matches; otherwise fall back to the
+ * best match among enabled bindings (catch-up listing can claim the wrong rule).
+ */
+export function resolveMatchingBinding<T extends EmailMatchBinding>(
+  bindings: readonly T[],
+  message: {
+    readonly from: string;
+    readonly subject: string;
+    readonly snippet: string;
+    readonly bodyText?: string | null;
+  },
+  preferredBindingId?: string | null,
+): T | null {
+  if (preferredBindingId) {
+    const preferred = bindings.find(
+      (candidate) => candidate.id === preferredBindingId,
+    );
+    if (preferred && bindingMatchesMessage(preferred, message)) {
+      return preferred;
+    }
+  }
+  return findBestMatchingBinding(bindings, message);
+}
