@@ -173,11 +173,18 @@ class FirestoreAdminEntityRepository<
   }) {
     const limit = normalizeLimit(params.limit);
     const collectionRef = this.getCollection(params.tenantId);
+    const fieldEquals = collectionRef.where(params.field, "==", params.value);
+    const useCursorPagination = Boolean(params.cursor);
 
-    let query = collectionRef
-      .where(params.field, "==", params.value)
-      .orderBy("id")
-      .limit(limit);
+    // Equality-only queries use Firestore automatic single-field indexes, so
+    // hook lookups (getOrCreateRecord / updateMatching / relations) work for
+    // any tenant and any entity field without per-field composite indexes.
+    // orderBy("id") is only required for stable cursor pagination and needs a
+    // composite (field ASC, id ASC) that production enforces and the emulator
+    // does not — keep it gated on cursor so local/prod behave the same.
+    let query = useCursorPagination
+      ? fieldEquals.orderBy("id").limit(limit)
+      : fieldEquals.limit(limit);
 
     if (params.cursor) {
       const cursorDoc = await collectionRef.doc(params.cursor).get();
@@ -186,8 +193,7 @@ class FirestoreAdminEntityRepository<
       }
     }
 
-    const countQuery = collectionRef.where(params.field, "==", params.value);
-    const countSnapshot = await countQuery.count().get();
+    const countSnapshot = await fieldEquals.count().get();
     const totalCount = countSnapshot.data().count;
 
     const snapshot = await query.get();
@@ -196,8 +202,11 @@ class FirestoreAdminEntityRepository<
     );
 
     const hasMore = items.length === limit;
+    // Without orderBy, page tokens are not stable across requests.
     const nextCursor =
-      hasMore && items.length > 0 ? items[items.length - 1]!.id : null;
+      useCursorPagination && hasMore && items.length > 0
+        ? items[items.length - 1]!.id
+        : null;
 
     return {
       items,

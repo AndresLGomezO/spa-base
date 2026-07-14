@@ -154,6 +154,28 @@ describe.skipIf(!emulatorConfigured)(
       expect(wrongTenant).toBeNull();
     });
 
+    it("findByField equality lookup does not require a composite index", async () => {
+      await repository.create(
+        "tenant_a",
+        createWidgetRecord({ id: "widget_name_a", name: "Netflix" }),
+      );
+      await repository.create(
+        "tenant_a",
+        createWidgetRecord({ id: "widget_name_b", name: "Other" }),
+      );
+
+      const result = await repository.findByField({
+        tenantId: "tenant_a",
+        field: "name",
+        value: "Netflix",
+        limit: 10,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]?.id).toBe("widget_name_a");
+      expect(result.nextCursor).toBeNull();
+    });
+
     it("updates a record and refreshes updatedAt", async () => {
       const record = createWidgetRecord({ id: "widget_update" });
       await repository.create("tenant_a", record);
