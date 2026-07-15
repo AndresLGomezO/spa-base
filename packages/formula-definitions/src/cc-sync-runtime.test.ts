@@ -1,9 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  parseDataHooksCatalogJson,
   runDataHook,
   type DataHookDefinition,
   type HookContext,
@@ -11,11 +8,7 @@ import {
   type PortableDataHookDefinition,
 } from "@repo/hooks";
 import { createRatesFormulaResolver } from "./rates-formula-test-utils.js";
-
-const catalogPath = resolve(
-  import.meta.dirname,
-  "../../../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
-);
+import { loadRatesDataHookByName } from "./test/load-rates-data-hooks-catalog.js";
 
 const parentCard = {
   id: "9f660323-25ca-413c-86a8-710a375be97f",
@@ -46,19 +39,7 @@ const childLoanDetails = {
 };
 
 function loadCatalogHook(name: string): PortableDataHookDefinition {
-  const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) {
-    throw new Error("Failed to parse rates data hooks catalog.");
-  }
-
-  const hook = parsed.data.dataHooks.find((entry) => entry.name === name);
-  expect(hook).toBeDefined();
-  if (!hook) {
-    throw new Error(`Hook not found: ${name}`);
-  }
-
-  return hook;
+  return loadRatesDataHookByName(name);
 }
 
 function toDataHookDefinition(

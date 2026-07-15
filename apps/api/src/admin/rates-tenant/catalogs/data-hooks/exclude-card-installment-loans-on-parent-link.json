@@ -1,0 +1,33 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Exclude card installment loans on parent link",
+    "description": "When parentFinancialItemId is set on update, force balanceSheetRole NONE.",
+    "entity": "financialItem",
+    "phase": "before",
+    "trigger": {
+      "operation": "update",
+      "updateFields": [
+        "parentFinancialItemId"
+      ]
+    },
+    "condition": {
+      "type": "condition",
+      "field": "parentFinancialItemId",
+      "operator": "isNotEmpty"
+    },
+    "actions": [
+      {
+        "type": "setField",
+        "field": "balanceSheetRole",
+        "value": {
+          "kind": "literal",
+          "value": "NONE"
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 2
+  }
+}

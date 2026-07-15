@@ -1,0 +1,58 @@
+{
+  "kind": "entity-query-definition",
+  "version": 1,
+  "data": {
+    "name": "Overdue payments (metrics)",
+    "sourceEntity": "paymentSchedule",
+    "filter": {
+      "type": "group",
+      "combinator": "and",
+      "children": [
+        {
+          "type": "condition",
+          "field": "status",
+          "operator": "==",
+          "value": {
+            "type": "static",
+            "value": "OVERDUE"
+          }
+        },
+        {
+          "type": "condition",
+          "field": "financialItemId.flowKind",
+          "operator": "!=",
+          "value": {
+            "type": "static",
+            "value": "INCOME"
+          }
+        },
+        {
+          "type": "condition",
+          "field": "dueDate",
+          "operator": "<=",
+          "value": {
+            "type": "parameter",
+            "name": "period",
+            "bound": "end"
+          }
+        }
+      ]
+    },
+    "sort": [
+      {
+        "field": "dueDate",
+        "direction": "asc"
+      }
+    ],
+    "limitMode": "all",
+    "status": "ACTIVE",
+    "parameters": [
+      {
+        "name": "period",
+        "valueType": "dateBucket",
+        "granularity": "month",
+        "field": "dueDate"
+      }
+    ]
+  }
+}

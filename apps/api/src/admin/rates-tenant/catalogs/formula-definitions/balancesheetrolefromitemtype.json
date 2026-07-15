@@ -1,0 +1,129 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "balanceSheetRoleFromItemType",
+    "description": "Financial item: map itemType to balanceSheetRole",
+    "inputs": [
+      {
+        "name": "itemType",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "switch",
+      "input": {
+        "kind": "input",
+        "name": "itemType"
+      },
+      "cases": [
+        {
+          "when": {
+            "kind": "literal",
+            "value": "MORTGAGE"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "LIABILITY"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "LOAN"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "LIABILITY"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "CREDIT_CARD"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "LIABILITY"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "REVOLVING_CREDIT"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "LIABILITY"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "PERSONAL_DEBT"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "LIABILITY"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "SCHEDULED_SAVINGS"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "ASSET"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "YIELD_SAVINGS"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "ASSET"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "FIDUCIARY"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "ASSET"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "INVESTMENT_FUND"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "ASSET"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "OTHER_INVESTMENT"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "ASSET"
+          }
+        }
+      ],
+      "default": {
+        "kind": "literal",
+        "value": "NONE"
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

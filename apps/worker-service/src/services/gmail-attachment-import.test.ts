@@ -60,6 +60,8 @@ describe("importGmailAttachmentsForBinding", () => {
         enabled: true,
         useAi: false,
         catchupNeeded: false,
+        order: 0,
+        ingestMode: "create",
         attachmentImport: {
           enabled: true,
           documentType: "STATEMENT",

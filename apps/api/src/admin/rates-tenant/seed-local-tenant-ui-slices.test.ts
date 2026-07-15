@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,47 @@ const FIXTURES_UI_DIR = join(
   "local-ui-slices",
 );
 
+function loadFixtureQueryCatalogJson(): string {
+  const queryDir = join(FIXTURES_UI_DIR, "query-definitions");
+  const entityQueryDefinitions = readdirSync(queryDir)
+    .filter((name) => name.endsWith(".json"))
+    .sort()
+    .map(
+      (name) =>
+        (
+          JSON.parse(readFileSync(join(queryDir, name), "utf8")) as {
+            data: unknown;
+          }
+        ).data,
+    );
+  return JSON.stringify({
+    kind: "entity-query-definitions-catalog",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    entityQueryDefinitions,
+  });
+}
+
+function loadFixtureOverridesCatalogJson(): string {
+  const overrideDir = join(FIXTURES_UI_DIR, "entity-ui-overrides");
+  const overrides = readdirSync(overrideDir)
+    .filter((name) => name.endsWith(".json"))
+    .sort()
+    .map(
+      (name) =>
+        (
+          JSON.parse(readFileSync(join(overrideDir, name), "utf8")) as {
+            data: unknown;
+          }
+        ).data,
+    );
+  return JSON.stringify({
+    kind: "entity-ui-overrides-catalog",
+    version: 1,
+    overrides,
+  });
+}
+
 describe("seed-local-tenant-ui-slices", () => {
   it("detects local UI slice files when present", () => {
     expect(hasLocalTenantUiSlices(FIXTURES_UI_DIR)).toBe(true);
@@ -32,10 +73,7 @@ describe("seed-local-tenant-ui-slices", () => {
 
   it("parses local query definitions slice", () => {
     const parsed = parseEntityQueryDefinitionsCatalogJson(
-      readFileSync(
-        join(FIXTURES_UI_DIR, "entity-query-definitions-slice.json"),
-        "utf8",
-      ),
+      loadFixtureQueryCatalogJson(),
     );
 
     expect(parsed.ok).toBe(true);
@@ -44,10 +82,6 @@ describe("seed-local-tenant-ui-slices", () => {
     }
 
     expect(parsed.data.entityQueryDefinitions).toHaveLength(4);
-    expect(parsed.data.entityQueryDefinitions[0]?.name).toBe(
-      "Upcoming payments (dashboard)",
-    );
-    expect(parsed.data.entityQueryDefinitions[0]?.limitMode).toBe("all");
     expect(
       parsed.data.entityQueryDefinitions.map((query) => query.name),
     ).toEqual(
@@ -58,6 +92,10 @@ describe("seed-local-tenant-ui-slices", () => {
         "Upcoming this week (metrics)",
       ]),
     );
+    const upcomingDashboard = parsed.data.entityQueryDefinitions.find(
+      (query) => query.name === "Upcoming payments (dashboard)",
+    );
+    expect(upcomingDashboard?.limitMode).toBe("all");
     expect(
       parsed.data.entityQueryDefinitions.map((query) => query.name),
     ).not.toEqual(
@@ -184,10 +222,7 @@ describe("seed-local-tenant-ui-slices", () => {
 
   it("parses local paymentSchedule widget override slice", () => {
     const catalog = parseRatesEntityUiOverridesCatalog(
-      readFileSync(
-        join(FIXTURES_UI_DIR, "paymentSchedule-entity-ui-overrides.json"),
-        "utf8",
-      ),
+      loadFixtureOverridesCatalogJson(),
     );
 
     const override = catalog.overrides[0];

@@ -1,0 +1,53 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Regenerate schedules on item update",
+    "description": "Delete UPCOMING paymentSchedule rows when schedule fields change.",
+    "entity": "financialItem",
+    "phase": "after",
+    "trigger": {
+      "operation": "update",
+      "updateFields": [
+        "frequency",
+        "nextDueDate",
+        "amount",
+        "scheduleHorizonMonths"
+      ]
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "deleteMatching",
+        "entity": "paymentSchedule",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "id"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "==",
+              "value": {
+                "kind": "literal",
+                "value": "UPCOMING"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 10
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanOriginationDate",
+    "description": "Loan: coalesced origination date (terms or current loanDetails)",
+    "inputs": [],
+    "body": {
+      "kind": "call",
+      "fn": "coalesce",
+      "args": [
+        {
+          "kind": "field",
+          "source": "loaded",
+          "alias": "terms",
+          "path": "originationDate"
+        },
+        {
+          "kind": "field",
+          "source": "current",
+          "path": "originationDate"
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

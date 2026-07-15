@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,26 @@ const repoRoot = join(
   "../../../../../",
 );
 
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
+
 function loadCatalogRecords(): FormulaDefinitionRecord[] {
   const platform = JSON.parse(
     readFileSync(
@@ -25,12 +45,13 @@ function loadCatalogRecords(): FormulaDefinitionRecord[] {
     ),
   ) as { formulaDefinitions: Array<Omit<FormulaDefinitionRecord, "id">> };
   const rates = JSON.parse(
-    readFileSync(
+    mergeCatalog(
       join(
         repoRoot,
-        "apps/api/src/admin/rates-tenant/catalogs/rates-formula-definitions.json",
+        "apps/api/src/admin/rates-tenant/catalogs/formula-definitions",
       ),
-      "utf8",
+      "formula-definitions-catalog",
+      "formulaDefinitions",
     ),
   ) as { formulaDefinitions: Array<Omit<FormulaDefinitionRecord, "id">> };
 

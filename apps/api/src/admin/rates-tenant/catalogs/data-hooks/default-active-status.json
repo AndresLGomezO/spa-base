@@ -1,0 +1,26 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Default active status",
+    "description": "Set status ACTIVE on new financial items.",
+    "entity": "financialItem",
+    "phase": "before",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "setField",
+        "field": "status",
+        "value": {
+          "kind": "literal",
+          "value": "ACTIVE"
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 0
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "frequencyAdvanceDueDate",
+    "description": "Recurring schedule: single-step roll-forward due date",
+    "inputs": [
+      {
+        "name": "baseDate",
+        "required": true
+      },
+      {
+        "name": "frequency",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "formula",
+      "name": "frequencyDueDate",
+      "inputs": {
+        "baseDate": {
+          "kind": "input",
+          "name": "baseDate"
+        },
+        "frequency": {
+          "kind": "input",
+          "name": "frequency"
+        },
+        "periodIndex": {
+          "kind": "formula",
+          "name": "frequencyStepMultiplier",
+          "inputs": {
+            "frequency": {
+              "kind": "input",
+              "name": "frequency"
+            }
+          }
+        }
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

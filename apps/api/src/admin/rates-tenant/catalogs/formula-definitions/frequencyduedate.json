@@ -1,0 +1,54 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "frequencyDueDate",
+    "description": "Recurring schedule: due date from base date, frequency, and period index (YYYY-MM-DD)",
+    "inputs": [
+      {
+        "name": "baseDate",
+        "required": true
+      },
+      {
+        "name": "frequency",
+        "required": true
+      },
+      {
+        "name": "periodIndex",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "call",
+      "fn": "dateOnly",
+      "args": [
+        {
+          "kind": "call",
+          "fn": "dateAdd",
+          "args": [
+            {
+              "kind": "input",
+              "name": "baseDate"
+            },
+            {
+              "kind": "input",
+              "name": "periodIndex"
+            },
+            {
+              "kind": "formula",
+              "name": "frequencyUnit",
+              "inputs": {
+                "frequency": {
+                  "kind": "input",
+                  "name": "frequency"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

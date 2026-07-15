@@ -1,0 +1,52 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "frequencyScheduleDueDate",
+    "description": "Recurring schedule: batch row due date (loopIndex * step multiplier)",
+    "inputs": [
+      {
+        "name": "baseDate",
+        "required": true
+      },
+      {
+        "name": "frequency",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "formula",
+      "name": "frequencyDueDate",
+      "inputs": {
+        "baseDate": {
+          "kind": "input",
+          "name": "baseDate"
+        },
+        "frequency": {
+          "kind": "input",
+          "name": "frequency"
+        },
+        "periodIndex": {
+          "kind": "binary",
+          "op": "*",
+          "left": {
+            "kind": "var",
+            "name": "loopIndex"
+          },
+          "right": {
+            "kind": "formula",
+            "name": "frequencyStepMultiplier",
+            "inputs": {
+              "frequency": {
+                "kind": "input",
+                "name": "frequency"
+              }
+            }
+          }
+        }
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

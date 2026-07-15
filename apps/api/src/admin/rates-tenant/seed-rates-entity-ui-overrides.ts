@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import {
   defineEntityFromRecord,
   type EntityDefinitionRecord,
@@ -22,12 +18,7 @@ import {
   injectMetricWidgetChartRefs,
   resolveMetricWidgetChartRefs,
 } from "./resolve-metric-widget-chart-refs.js";
-
-const CATALOG_PATH = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "catalogs",
-  "rates-entity-ui-overrides.json",
-);
+import { loadEntityUiOverridesCatalogJson } from "./seed-catalog-dir.js";
 
 const metricWidgetCatalogSchema = z
   .object({
@@ -132,8 +123,9 @@ export async function seedRatesEntityUiOverrides(
   firebaseAdminConfig: FirebaseAdminConfig,
   definitionRecords: readonly EntityDefinitionRecord[],
 ): Promise<{ readonly seeded: number }> {
-  const catalogJson = readFileSync(CATALOG_PATH, "utf8");
-  const catalog = parseRatesEntityUiOverridesCatalog(catalogJson);
+  const catalog = parseRatesEntityUiOverridesCatalog(
+    loadEntityUiOverridesCatalogJson(),
+  );
   const chartRefsByRowId = await resolveMetricWidgetChartRefs(
     tenantId,
     firebaseAdminConfig,

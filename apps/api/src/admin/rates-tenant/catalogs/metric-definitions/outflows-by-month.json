@@ -1,0 +1,38 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Outflows by Month",
+    "description": "Sum of expense transactions bucketed by calendar month on date.",
+    "sourceModel": "transaction",
+    "aggregations": [
+      {
+        "operation": "SUM",
+        "field": "amount"
+      }
+    ],
+    "filters": [
+      {
+        "field": "type",
+        "op": "eq",
+        "value": "EXPENSE"
+      }
+    ],
+    "groupBy": [],
+    "dimensions": [
+      "date"
+    ],
+    "dateFieldGranularity": {
+      "date": "month"
+    },
+    "valueDisplayFormat": "currency",
+    "version": 1,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [
+      "amount",
+      "type",
+      "date"
+    ],
+    "status": "ACTIVE"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Income by Month",
+    "description": "Sum of income transactions bucketed by calendar month on date.",
+    "sourceModel": "transaction",
+    "aggregations": [
+      {
+        "operation": "SUM",
+        "field": "amount"
+      }
+    ],
+    "filters": [
+      {
+        "field": "type",
+        "op": "eq",
+        "value": "INCOME"
+      }
+    ],
+    "groupBy": [],
+    "dimensions": [
+      "date"
+    ],
+    "dateFieldGranularity": {
+      "date": "month"
+    },
+    "valueDisplayFormat": "currency",
+    "version": 1,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [
+      "amount",
+      "type",
+      "date"
+    ],
+    "status": "ACTIVE"
+  }
+}

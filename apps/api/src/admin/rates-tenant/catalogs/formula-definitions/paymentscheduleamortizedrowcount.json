@@ -1,0 +1,57 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "paymentScheduleAmortizedRowCount",
+    "description": "Schedule: amortized row count by type",
+    "inputs": [],
+    "body": {
+      "kind": "switch",
+      "input": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "amortizationType"
+          },
+          {
+            "kind": "literal",
+            "value": "FRENCH"
+          }
+        ]
+      },
+      "cases": [
+        {
+          "when": {
+            "kind": "literal",
+            "value": "GERMAN"
+          },
+          "then": {
+            "kind": "call",
+            "fn": "max",
+            "args": [
+              {
+                "kind": "literal",
+                "value": 1
+              },
+              {
+                "kind": "formula",
+                "name": "loanTermMonths",
+                "inputs": {}
+              }
+            ]
+          }
+        }
+      ],
+      "default": {
+        "kind": "formula",
+        "name": "paymentScheduleFrenchRowCount",
+        "inputs": {}
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

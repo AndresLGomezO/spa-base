@@ -1,0 +1,64 @@
+{
+  "kind": "chart-definition",
+  "version": 1,
+  "data": {
+    "name": "Payments trend chart",
+    "chartType": "area",
+    "status": "ACTIVE",
+    "displayMode": "overlay",
+    "dataSource": {
+      "type": "entityQuery",
+      "entityQueryDefinitionId": "Transaction trend",
+      "xFieldPath": "date",
+      "yFieldPath": "amount",
+      "timeSeries": {
+        "periodParameter": "period",
+        "bucketCount": 30,
+        "layout": "monthToDateRightAligned",
+        "step": {
+          "unit": "day",
+          "offsetStart": 0,
+          "offsetEnd": 0
+        },
+        "aggregate": "sum",
+        "rowFilters": [
+          {
+            "whenField": "type",
+            "whenOperator": "==",
+            "whenValue": "PAYMENT"
+          }
+        ]
+      }
+    },
+    "series": [
+      {
+        "id": "default",
+        "label": "Payments",
+        "color": "var(--color-chart-glow-3)",
+        "showAreaFill": true,
+        "areaFillColor": "var(--color-chart-glow-3)",
+        "areaFillOpacity": 0.18,
+        "strokeWidth": 2
+      }
+    ],
+    "xAxis": {
+      "visible": false,
+      "showTicks": false
+    },
+    "yAxis": {
+      "visible": false,
+      "showTicks": false
+    },
+    "legend": {
+      "visible": false,
+      "position": "none"
+    },
+    "grid": {
+      "visible": false
+    },
+    "animation": {
+      "enabled": true,
+      "durationMs": 600
+    }
+  }
+}

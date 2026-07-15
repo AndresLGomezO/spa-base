@@ -1,0 +1,245 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Update item balance on payment",
+    "description": "Decrease financialItem balance on PAYMENT — revolvingBalance when host card has installment children, else currentBalance.",
+    "entity": "transaction",
+    "phase": "after",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": {
+      "type": "group",
+      "combinator": "and",
+      "children": [
+        {
+          "type": "condition",
+          "field": "type",
+          "operator": "==",
+          "value": {
+            "kind": "literal",
+            "value": "PAYMENT"
+          }
+        },
+        {
+          "type": "condition",
+          "field": "financialItemId",
+          "operator": "isNotEmpty"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "getRecord",
+        "entity": "financialItem",
+        "id": {
+          "kind": "field",
+          "source": "current",
+          "path": "financialItemId"
+        },
+        "as": "payTarget"
+      },
+      {
+        "type": "aggregateMatching",
+        "entity": "financialItem",
+        "op": "count",
+        "as": "installmentChildCount",
+        "where": {
+          "type": "condition",
+          "field": "parentFinancialItemId",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "payTarget",
+            "path": "id"
+          }
+        }
+      },
+      {
+        "type": "updateMatching",
+        "entity": "financialItem",
+        "where": {
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          }
+        },
+        "set": {
+          "currentBalance": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "payTarget",
+                  "path": "itemType"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": "CREDIT_CARD"
+                }
+              },
+              {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "binary",
+                    "op": ">",
+                    "left": {
+                      "kind": "field",
+                      "source": "aggregate",
+                      "alias": "installmentChildCount"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "currentBalance"
+                  },
+                  {
+                    "kind": "binary",
+                    "op": "-",
+                    "left": {
+                      "kind": "call",
+                      "fn": "coalesce",
+                      "args": [
+                        {
+                          "kind": "field",
+                          "source": "current",
+                          "path": "currentBalance"
+                        },
+                        {
+                          "kind": "literal",
+                          "value": 0
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "field",
+                      "source": "previous",
+                      "path": "amount"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "binary",
+                "op": "-",
+                "left": {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "currentBalance"
+                    },
+                    {
+                      "kind": "literal",
+                      "value": 0
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "field",
+                  "source": "previous",
+                  "path": "amount"
+                }
+              }
+            ]
+          },
+          "revolvingBalance": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "payTarget",
+                  "path": "itemType"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": "CREDIT_CARD"
+                }
+              },
+              {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "binary",
+                    "op": ">",
+                    "left": {
+                      "kind": "field",
+                      "source": "aggregate",
+                      "alias": "installmentChildCount"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "kind": "binary",
+                    "op": "-",
+                    "left": {
+                      "kind": "call",
+                      "fn": "coalesce",
+                      "args": [
+                        {
+                          "kind": "field",
+                          "source": "current",
+                          "path": "revolvingBalance"
+                        },
+                        {
+                          "kind": "literal",
+                          "value": 0
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "field",
+                      "source": "previous",
+                      "path": "amount"
+                    }
+                  },
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "revolvingBalance"
+                  }
+                ]
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "revolvingBalance"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 1,
+    "chainHooks": true
+  }
+}

@@ -1,31 +1,26 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { uiBuilderPresetRecordSchema } from "@repo/entities";
 import { uiLayoutDocumentSchema } from "@repo/ui-builder-core";
 
+import { loadUiBuilderPresetsCatalogJson } from "./seed-catalog-dir.js";
 import { parseRatesUiBuilderPresetsCatalog } from "./seed-rates-ui-builder-presets.js";
-
-const catalogPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "catalogs",
-  "rates-ui-builder-presets.json",
-);
 
 describe("rates UI builder presets catalog", () => {
   it("parses catalog with inline templateJson and builds valid preset records", () => {
     const catalog = parseRatesUiBuilderPresetsCatalog(
-      readFileSync(catalogPath, "utf8"),
+      loadUiBuilderPresetsCatalogJson(),
     );
 
     expect(catalog.presets).toHaveLength(5);
-    expect(catalog.presets[0]).toMatchObject({
+    const compactMetricCard = catalog.presets.find(
+      (preset) => preset.id === "rates-compact-metric-card",
+    );
+    expect(compactMetricCard).toMatchObject({
       id: "rates-compact-metric-card",
       templateJson: expect.any(String),
     });
-    expect(catalog.presets[0]).not.toHaveProperty("compactMetricCard");
+    expect(compactMetricCard).not.toHaveProperty("compactMetricCard");
 
     for (const preset of catalog.presets) {
       expect(() =>

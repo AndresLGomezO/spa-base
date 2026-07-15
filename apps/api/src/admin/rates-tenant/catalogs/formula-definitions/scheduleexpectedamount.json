@@ -1,0 +1,114 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "scheduleExpectedAmount",
+    "description": "Schedule: expected payment amount for row",
+    "inputs": [],
+    "body": {
+      "kind": "switch",
+      "input": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "amortizationType"
+          },
+          {
+            "kind": "literal",
+            "value": "FRENCH"
+          }
+        ]
+      },
+      "cases": [
+        {
+          "when": {
+            "kind": "literal",
+            "value": "NONE"
+          },
+          "then": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "amount"
+              },
+              {
+                "kind": "binary",
+                "op": "+",
+                "left": {
+                  "kind": "formula",
+                  "name": "loanPrincipalPayment",
+                  "inputs": {}
+                },
+                "right": {
+                  "kind": "formula",
+                  "name": "loanInterestPayment",
+                  "inputs": {}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "GERMAN"
+          },
+          "then": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "formula",
+                "name": "loanGermanUsesStatementAmount",
+                "inputs": {}
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "amount"
+              },
+              {
+                "kind": "binary",
+                "op": "+",
+                "left": {
+                  "kind": "formula",
+                  "name": "loanPrincipalPayment",
+                  "inputs": {}
+                },
+                "right": {
+                  "kind": "formula",
+                  "name": "loanInterestPayment",
+                  "inputs": {}
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "default": {
+        "kind": "binary",
+        "op": "+",
+        "left": {
+          "kind": "formula",
+          "name": "loanPrincipalPayment",
+          "inputs": {}
+        },
+        "right": {
+          "kind": "formula",
+          "name": "loanInterestPayment",
+          "inputs": {}
+        }
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

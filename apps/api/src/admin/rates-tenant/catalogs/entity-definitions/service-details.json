@@ -1,0 +1,205 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "serviceDetails",
+    "label": "Service Details",
+    "description": "Billing and auto-pay settings for bills and subscriptions",
+    "displayField": "financialItemId",
+    "navCategoryId": "cat_details",
+    "navOrder": 4,
+    "hiddenFromNav": true,
+    "ui": {
+      "nav": {
+        "label": "Service Details",
+        "icon": "Receipt"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "financialItemId",
+            "autoPay",
+            "meterOrPolicyRef"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-54d71135-3375-4cbc-ac48-c8d0379e6c05",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-8beab551-0474-4f40-8e77-dd0c9dcbc985",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-ca588569-7343-44af-ba9a-540aba87e9d0",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-68b6da30-1e2b-43d5-bfb8-f361566b3a32",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-0e7a1a3b-3da5-4587-970e-f3fa54b08c04",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "autoPay"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-965cde31-88f3-4eda-8e9c-6febc1938fa1",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "meterOrPolicyRef"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-e1d780e8-ecbb-4d9a-8179-b8263cc79307",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-dd8fdbed-e19c-4b37-b592-741c425332a1",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-e276df17-5b03-42b7-8c14-817d2cd26347",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-9cf3094c-12dd-4b96-9ca2-cd4e93ad32ba",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-a030f91a-d325-477d-9e88-55061ba07b5e",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ddab2176-00e2-4fe5-a81a-a7b15c16bd5d",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "autoPay"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-87c7ddb7-9afb-4add-9508-983c4ac66d10",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "meterOrPolicyRef"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-657505d0-14bd-4f79-91ff-27ce5f1d1e61",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "financialItemId": {
+          "label": "Financial item",
+          "component": "relation",
+          "filterable": true,
+          "order": 0
+        },
+        "autoPay": {
+          "label": "Auto pay",
+          "component": "toggle",
+          "filterable": true,
+          "order": 1
+        },
+        "meterOrPolicyRef": {
+          "label": "Reference",
+          "component": "input",
+          "searchable": true,
+          "order": 2
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "financialItemId",
+        "type": "relation",
+        "required": true,
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "restrict"
+        },
+        "ui": {
+          "label": "Financial item",
+          "order": 0,
+          "filterable": true
+        }
+      },
+      {
+        "name": "autoPay",
+        "type": "boolean",
+        "ui": {
+          "label": "Auto pay",
+          "order": 1,
+          "filterable": true
+        }
+      },
+      {
+        "name": "meterOrPolicyRef",
+        "type": "string",
+        "ui": {
+          "label": "Reference",
+          "order": 2,
+          "searchable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

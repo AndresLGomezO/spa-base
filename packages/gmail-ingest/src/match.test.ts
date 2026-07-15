@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   bindingMatchesMessage,
   buildGmailSearchQuery,
+  findAllMatchingBindings,
   findBestMatchingBinding,
   matchesFromAddress,
   matchesTextPattern,
   resolveMatchingBinding,
+  resolveMatchingBindings,
 } from "./match.js";
 import type { EmailMatchBinding } from "./types.js";
 
@@ -159,9 +161,76 @@ function bindingFixture(
     updatedAt: "a",
     useAi: false,
     bodyFieldExtractors: [],
+    order: 100,
+    ingestMode: "create",
     ...overrides,
   };
 }
+
+describe("findAllMatchingBindings", () => {
+  it("returns card + merchant-specific bindings for the same alert", () => {
+    const card = bindingFixture({
+      id: "card",
+      recordId: "visa",
+      fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+      subjectPatterns: ["DAVIVIENDA"],
+      bodyPatterns: [
+        "/\\*{4}7185[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)|Respuesta:\\s*Aprobado\\(a\\)[\\s\\S]*\\*{4}7185/",
+      ],
+    });
+    const netflix = bindingFixture({
+      id: "netflix",
+      recordId: "netflix",
+      fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+      subjectPatterns: ["DAVIVIENDA"],
+      bodyPatterns: [
+        "/\\*{4}7185[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)[\\s\\S]*NETFLIX|NETFLIX[\\s\\S]*\\*{4}7185[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)/i",
+      ],
+    });
+    const reversal = bindingFixture({
+      id: "reversal",
+      recordId: "visa",
+      fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+      subjectPatterns: ["DAVIVIENDA"],
+      bodyPatterns: [
+        "/\\*{4}7185[\\s\\S]*Clase de Movimiento:\\s*Compra Reversada\\(o\\)|Clase de Movimiento:\\s*Compra Reversada\\(o\\)[\\s\\S]*\\*{4}7185/",
+      ],
+    });
+    const message = {
+      from: "BANCO_DAVIVIENDA@davivienda.com",
+      subject: "DAVIVIENDA alerta",
+      snippet: "",
+      bodyText:
+        "****7185\nRespuesta: Aprobado(a)\nLugar de Transacción: NETFLIX.COM",
+    };
+    const all = findAllMatchingBindings([card, netflix, reversal], message);
+    expect(all.map((binding) => binding.id)).toEqual(["card", "netflix"]);
+  });
+
+  it("returns a single binding when patterns are mutually exclusive", () => {
+    const approved = bindingFixture({
+      id: "approved",
+      recordId: "1",
+      fromAddresses: ["alerts@bank.com"],
+      subjectPatterns: ["alert"],
+      bodyPatterns: ["approved"],
+    });
+    const reversed = bindingFixture({
+      id: "reversed",
+      recordId: "1",
+      fromAddresses: ["alerts@bank.com"],
+      subjectPatterns: ["alert"],
+      bodyPatterns: ["reversed"],
+    });
+    const all = findAllMatchingBindings([approved, reversed], {
+      from: "alerts@bank.com",
+      subject: "Alert",
+      snippet: "purchase approved",
+      bodyText: "purchase approved",
+    });
+    expect(all.map((binding) => binding.id)).toEqual(["approved"]);
+  });
+});
 
 describe("findBestMatchingBinding", () => {
   it("prefers more specific bindings", () => {
@@ -245,5 +314,64 @@ describe("resolveMatchingBinding", () => {
       "reversal",
     );
     expect(resolved).toBeNull();
+  });
+});
+
+describe("resolveMatchingBindings", () => {
+  it("returns every matching binding even when preferred is set", () => {
+    const card = bindingFixture({
+      id: "card",
+      recordId: "visa",
+      fromAddresses: ["@bank.com"],
+      subjectPatterns: ["alert"],
+      bodyPatterns: ["approved"],
+      order: 0,
+      ingestMode: "create",
+    });
+    const sub = bindingFixture({
+      id: "sub",
+      recordId: "netflix",
+      fromAddresses: ["@bank.com"],
+      subjectPatterns: ["alert"],
+      bodyPatterns: ["approved", "NETFLIX"],
+      order: 10,
+      ingestMode: "link",
+    });
+    const all = resolveMatchingBindings(
+      [card, sub],
+      {
+        from: "alerts@bank.com",
+        subject: "alert",
+        snippet: "approved NETFLIX",
+        bodyText: "approved NETFLIX",
+      },
+      "card",
+    );
+    expect(all.map((binding) => binding.id).sort()).toEqual(["card", "sub"]);
+  });
+
+  it("sorts by order when callers sort after resolve", () => {
+    const link = bindingFixture({
+      id: "link",
+      recordId: "netflix",
+      order: 10,
+      ingestMode: "link",
+      fromAddresses: ["@bank.com"],
+      subjectPatterns: ["alert"],
+    });
+    const create = bindingFixture({
+      id: "create",
+      recordId: "visa",
+      order: 0,
+      ingestMode: "create",
+      fromAddresses: ["@bank.com"],
+      subjectPatterns: ["alert"],
+    });
+    const sorted = [...resolveMatchingBindings([link, create], {
+      from: "alerts@bank.com",
+      subject: "alert",
+      snippet: "",
+    })].sort((a, b) => a.order - b.order);
+    expect(sorted.map((b) => b.id)).toEqual(["create", "link"]);
   });
 });

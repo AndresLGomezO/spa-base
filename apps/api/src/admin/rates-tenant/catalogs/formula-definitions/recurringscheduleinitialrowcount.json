@@ -1,0 +1,53 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "recurringScheduleInitialRowCount",
+    "description": "Recurring schedule: initial createRecords count",
+    "inputs": [
+      {
+        "name": "frequency",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "call",
+      "fn": "if",
+      "args": [
+        {
+          "kind": "binary",
+          "op": "==",
+          "left": {
+            "kind": "input",
+            "name": "frequency"
+          },
+          "right": {
+            "kind": "literal",
+            "value": "ONE_TIME"
+          }
+        },
+        {
+          "kind": "literal",
+          "value": 1
+        },
+        {
+          "kind": "call",
+          "fn": "min",
+          "args": [
+            {
+              "kind": "formula",
+              "name": "scheduleHorizonOrDefault",
+              "inputs": {}
+            },
+            {
+              "kind": "literal",
+              "value": 1000
+            }
+          ]
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

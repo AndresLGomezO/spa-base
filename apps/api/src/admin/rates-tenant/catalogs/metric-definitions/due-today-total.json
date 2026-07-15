@@ -1,0 +1,48 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Due Today Total",
+    "description": "Live sum of expected amounts for unpaid schedules due today (calendar day; excludes income).",
+    "computationMode": "computed",
+    "sourceModel": "paymentSchedule",
+    "parameters": [],
+    "computation": {
+      "type": "expression",
+      "inputs": {
+        "value": {
+          "type": "queryRef",
+          "queryDefinitionId": "Due today (metrics)",
+          "parameterMap": {},
+          "aggregationOperation": "SUM",
+          "aggregationField": "expectedAmount"
+        }
+      },
+      "tokens": [
+        {
+          "type": "input",
+          "name": "value"
+        }
+      ]
+    },
+    "aggregations": [
+      {
+        "operation": "SUM",
+        "field": "expectedAmount"
+      }
+    ],
+    "filters": [],
+    "groupBy": [],
+    "dimensions": [],
+    "dateFieldGranularity": {},
+    "valueDisplayFormat": "currency",
+    "version": 7,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [
+      "expectedAmount",
+      "dueDate",
+      "status"
+    ],
+    "status": "ACTIVE"
+  }
+}

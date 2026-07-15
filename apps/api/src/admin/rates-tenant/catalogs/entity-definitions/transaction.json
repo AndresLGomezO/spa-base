@@ -1,0 +1,565 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "transaction",
+    "label": "Transactions",
+    "description": "Actual money movements",
+    "displayField": "description",
+    "navCategoryId": "cat_movements",
+    "navOrder": 2,
+    "hiddenFromNav": true,
+    "ui": {
+      "nav": {
+        "label": "Transactions",
+        "icon": "ArrowLeftRight"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "type",
+            "amount",
+            "date",
+            "description",
+            "reversed",
+            "accountId",
+            "toAccountId",
+            "financialItemId",
+            "relatedFinancialItemId",
+            "paymentScheduleId",
+            "categoryId"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-7ad45751-a451-4378-8a09-688e9fd38872",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-61d2032c-7fff-459a-b0ed-3a7cd90a75b1",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-bc66819a-faa3-4533-a8b0-8f64b7d76fea",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-11f3ed9e-18bc-477c-bd8e-5fce83d1ce26",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "type"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-361e091b-5e95-4116-8bdb-7a695a91535e",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "amount"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ab8ad736-3908-43c1-9ac9-54f8c9d37510",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "date"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-3a2100bc-a38a-4967-8f86-3d4200f28070",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "description"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-txn-create-reversed",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "reversed"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-04f22774-ab67-4eba-a0dd-8ad2f4d1a21e",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "accountId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-48f6fed6-9f01-4348-a8cf-87a340e4982b",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "toAccountId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b6f599f7-cd98-442a-92bb-b74cb9da59ee",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-txn-create-relatedFinancialItemId",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "relatedFinancialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-57a47f7c-cd93-4b4d-9e3e-2f436cf4b360",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "paymentScheduleId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-98f8d96e-52ce-4044-9006-89d37fef1beb",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "categoryId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-dccf9455-12f2-445c-809c-63aafacc7584",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-60960633-82e0-442a-98ee-a31d1de44fde",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-c5856e02-7b7e-4690-b6eb-6f1dc060326c",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-e2fa1224-485d-4786-aa96-0d84b7da5701",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-6c02b21d-8713-46d3-9bc7-2e90eaf3b01e",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "type"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-312960b0-b029-4b75-9d9a-f4c28a8bb12f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "amount"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-58ec91cc-7f70-4bc0-b0e9-3c2c86a068f1",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "date"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-afd3c94e-0880-499d-b87e-b3c017532edf",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "description"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-txn-edit-reversed",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "reversed"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-40b3b30b-71b3-4116-a911-1757a50b3146",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "accountId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-1f61ba62-ec3e-49f6-9254-ce939e339055",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "toAccountId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-e22ab850-20c9-4091-97a8-d82d069b1e99",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-txn-edit-relatedFinancialItemId",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "relatedFinancialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-0d970bd3-8757-40bd-99f6-df90b887aea3",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "paymentScheduleId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-cec50122-5faf-4d68-b8b1-81b60eb0506f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "categoryId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-8d2b3247-d33a-43a6-b97a-0bf44162e8ba",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "type": {
+          "label": "Type",
+          "component": "select",
+          "filterable": true,
+          "order": 0
+        },
+        "amount": {
+          "label": "Amount",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 1
+        },
+        "date": {
+          "label": "Date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 2
+        },
+        "description": {
+          "label": "Description",
+          "component": "input",
+          "searchable": true,
+          "order": 3
+        },
+        "reversed": {
+          "label": "Reversed",
+          "component": "toggle",
+          "filterable": true,
+          "order": 4
+        },
+        "accountId": {
+          "label": "Account",
+          "component": "relation",
+          "filterable": true,
+          "order": 5
+        },
+        "toAccountId": {
+          "label": "To account",
+          "component": "relation",
+          "filterable": true,
+          "order": 6
+        },
+        "financialItemId": {
+          "label": "Financial item",
+          "component": "relation",
+          "filterable": true,
+          "order": 7
+        },
+        "paymentScheduleId": {
+          "label": "Payment schedule",
+          "component": "relation",
+          "filterable": true,
+          "order": 9
+        },
+        "categoryId": {
+          "label": "Category",
+          "component": "relation",
+          "filterable": true,
+          "order": 10
+        },
+        "sourceGmailMessageId": {
+          "label": "Source Gmail message",
+          "component": "input",
+          "order": 11
+        },
+        "emailId": {
+          "label": "Source email",
+          "component": "relation",
+          "filterable": true,
+          "order": 12
+        },
+        "statementId": {
+          "label": "Statement",
+          "component": "relation",
+          "filterable": true,
+          "order": 13
+        },
+        "relatedFinancialItemId": {
+          "label": "Related financial item",
+          "component": "relation",
+          "filterable": true,
+          "order": 8
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "type",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "INCOME",
+          "EXPENSE",
+          "TRANSFER",
+          "PAYMENT",
+          "INTEREST",
+          "FEE",
+          "INVESTMENT"
+        ],
+        "ui": {
+          "label": "Type",
+          "order": 0,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "required": true,
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Amount",
+          "order": 1,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": true,
+        "ui": {
+          "label": "Date",
+          "order": 2,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "ui": {
+          "label": "Description",
+          "order": 3,
+          "searchable": true
+        }
+      },
+      {
+        "name": "reversed",
+        "type": "boolean",
+        "required": false,
+        "ui": {
+          "label": "Reversed",
+          "order": 4,
+          "component": "toggle",
+          "filterable": true
+        }
+      },
+      {
+        "name": "accountId",
+        "type": "relation",
+        "relation": {
+          "target": "account",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Account",
+          "order": 5,
+          "filterable": true
+        }
+      },
+      {
+        "name": "toAccountId",
+        "type": "relation",
+        "relation": {
+          "target": "account",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "To account",
+          "order": 6,
+          "filterable": true
+        }
+      },
+      {
+        "name": "financialItemId",
+        "type": "relation",
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Financial item",
+          "order": 7,
+          "filterable": true
+        }
+      },
+      {
+        "name": "relatedFinancialItemId",
+        "type": "relation",
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Related financial item",
+          "order": 8,
+          "filterable": true
+        }
+      },
+      {
+        "name": "paymentScheduleId",
+        "type": "relation",
+        "relation": {
+          "target": "paymentSchedule",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Payment schedule",
+          "order": 9,
+          "filterable": true
+        }
+      },
+      {
+        "name": "categoryId",
+        "type": "relation",
+        "relation": {
+          "target": "category",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Category",
+          "order": 10,
+          "filterable": true
+        }
+      },
+      {
+        "name": "sourceGmailMessageId",
+        "type": "string",
+        "required": false,
+        "ui": {
+          "label": "Source Gmail message",
+          "order": 11,
+          "hidden": true
+        }
+      },
+      {
+        "name": "emailId",
+        "type": "relation",
+        "required": false,
+        "relation": {
+          "target": "email",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Source email",
+          "order": 12,
+          "hidden": true,
+          "filterable": true
+        }
+      },
+      {
+        "name": "statementId",
+        "type": "relation",
+        "required": false,
+        "relation": {
+          "target": "statement",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Statement",
+          "order": 13,
+          "hidden": true,
+          "filterable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

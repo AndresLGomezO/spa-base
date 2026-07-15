@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { parseEntityDefinitionsCatalogJson } from "@repo/dynamic-entities";
 import { parseCustomViewsCatalogJson } from "@repo/custom-views";
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
@@ -39,12 +35,15 @@ import { replaceDataHooksCatalog } from "../../hooks/replace-data-hooks-catalog.
 import { parseFormulaDefinitionsCatalogJson } from "@repo/formula-definitions";
 import { createFormulaRuntimeContext } from "../../formulas/formula-runtime-context.js";
 import { replaceFormulasCatalog } from "../../formulas/replace-formulas-catalog.js";
-
-const CATALOG_DIR = join(dirname(fileURLToPath(import.meta.url)), "catalogs");
-
-function readCatalogJson(filename: string): string {
-  return readFileSync(join(CATALOG_DIR, filename), "utf8");
-}
+import {
+  loadChartDefinitionsCatalogJson,
+  loadCustomViewsCatalogJson,
+  loadDataHooksCatalogJson,
+  loadEntityDefinitionsCatalogJson,
+  loadFormulaDefinitionsCatalogJson,
+  loadMetricDefinitionsCatalogJson,
+  loadQueryDefinitionsCatalogJson,
+} from "./seed-catalog-dir.js";
 
 interface SeedRatesCatalogsResult {
   readonly entityCounts: {
@@ -87,73 +86,39 @@ interface SeedRatesCatalogsResult {
   >["items"];
 }
 
+const EMPTY_CATALOG_COUNTS: {
+  created: number;
+  updated: number;
+  deleted: number;
+} = {
+  created: 0,
+  updated: 0,
+  deleted: 0,
+};
+
+export interface SeedRatesCatalogsOptions {
+  readonly entities?: boolean;
+  readonly metrics?: boolean;
+  readonly queries?: boolean;
+  readonly hooks?: boolean;
+  readonly formulas?: boolean;
+  readonly charts?: boolean;
+  readonly customViews?: boolean;
+}
+
 export async function seedRatesCatalogs(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
   entityRuntime: EntityRuntimeContext,
+  options: SeedRatesCatalogsOptions = {},
 ): Promise<SeedRatesCatalogsResult> {
-  const entityParsed = parseEntityDefinitionsCatalogJson(
-    readCatalogJson("rates-entity-definitions.json"),
-  );
-  if (!entityParsed.ok) {
-    throw new Error(
-      `Invalid rates entity catalog: ${entityParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
-
-  const metricParsed = parseMetricDefinitionsCatalogJson(
-    readCatalogJson("rates-metric-definitions.json"),
-  );
-  if (!metricParsed.ok) {
-    throw new Error(
-      `Invalid rates metric catalog: ${metricParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
-
-  const queryParsed = parseEntityQueryDefinitionsCatalogJson(
-    readCatalogJson("rates-query-definitions.json"),
-  );
-  if (!queryParsed.ok) {
-    throw new Error(
-      `Invalid rates query catalog: ${queryParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
-
-  const chartParsed = parseChartDefinitionsCatalogJson(
-    readCatalogJson("rates-chart-definitions.json"),
-  );
-  if (!chartParsed.ok) {
-    throw new Error(
-      `Invalid rates chart catalog: ${chartParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
-
-  const customViewParsed = parseCustomViewsCatalogJson(
-    readCatalogJson("rates-custom-views.json"),
-  );
-  if (!customViewParsed.ok) {
-    throw new Error(
-      `Invalid rates custom views catalog: ${customViewParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
-
-  const dataHooksParsed = parseDataHooksCatalogJson(
-    readCatalogJson("rates-data-hooks.json"),
-  );
-  if (!dataHooksParsed.ok) {
-    throw new Error(
-      `Invalid rates data hooks catalog: ${dataHooksParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
-
-  const formulasParsed = parseFormulaDefinitionsCatalogJson(
-    readCatalogJson("rates-formula-definitions.json"),
-  );
-  if (!formulasParsed.ok) {
-    throw new Error(
-      `Invalid rates formula catalog: ${formulasParsed.errors.map((error) => error.message).join("; ")}`,
-    );
-  }
+  const includeEntities = options.entities ?? true;
+  const includeMetrics = options.metrics ?? true;
+  const includeQueries = options.queries ?? true;
+  const includeHooks = options.hooks ?? true;
+  const includeFormulas = options.formulas ?? true;
+  const includeCharts = options.charts ?? true;
+  const includeCustomViews = options.customViews ?? true;
 
   const entityCategoryRepository =
     createFirestoreAdminEntityCategoryRepository(firebaseAdminConfig);
@@ -174,106 +139,196 @@ export async function seedRatesCatalogs(
     formulaDefinitionRepository,
   );
 
-  const entityResult = await replaceEntityDefinitionsCatalog(
-    {
-      entityRuntime,
-      entityCategoryRepository,
-    },
-    tenantId,
-    entityParsed.data,
-  );
+  let entityCounts = { ...EMPTY_CATALOG_COUNTS };
+  let definitionRecords: SeedRatesCatalogsResult["definitionRecords"] = [];
 
-  const metricRuntime = createMetricRuntimeContext({
-    metricDefinitionRepository,
-    aggregationEventRepository:
-      createFirestoreAdminAggregationEventRepository(firebaseAdminConfig),
-    metricValueRepository:
-      createFirestoreAdminMetricValueRepository(firebaseAdminConfig),
-    backfillJobRepository:
-      createFirestoreAdminBackfillJobRepository(firebaseAdminConfig),
-    metricContributionRepository:
-      createFirestoreAdminMetricContributionRepository(firebaseAdminConfig),
-    listSourceDocuments: (resolvedTenantId, metric) =>
-      listSourceDocumentsForMetricDefinition(
+  if (includeEntities) {
+    const entityParsed = parseEntityDefinitionsCatalogJson(
+      loadEntityDefinitionsCatalogJson(),
+    );
+    if (!entityParsed.ok) {
+      throw new Error(
+        `Invalid rates entity catalog: ${entityParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const entityResult = await replaceEntityDefinitionsCatalog(
+      {
+        entityRuntime,
+        entityCategoryRepository,
+      },
+      tenantId,
+      entityParsed.data,
+    );
+    entityCounts = entityResult.counts;
+    definitionRecords = entityResult.items;
+  } else {
+    definitionRecords = await entityRuntime.entityDefinitionRepository.list(
+      tenantId,
+    );
+  }
+
+  let queryCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeQueries) {
+    const queryParsed = parseEntityQueryDefinitionsCatalogJson(
+      loadQueryDefinitionsCatalogJson(),
+    );
+    if (!queryParsed.ok) {
+      throw new Error(
+        `Invalid rates query catalog: ${queryParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const queryResult = await replaceEntityQueryDefinitionsCatalog(
+      {
         entityRuntime,
         entityQueryDefinitionRepository,
-        resolvedTenantId,
-        metric,
-      ),
-    resolveQueryMembership: createMetricQueryMembershipResolver({
-      entityRuntime,
-      entityQueryDefinitionRepository,
-    }),
-  });
+        metricDefinitionRepository,
+      },
+      tenantId,
+      queryParsed.data,
+    );
+    queryCounts = queryResult.counts;
+  }
 
-  const queryResult = await replaceEntityQueryDefinitionsCatalog(
-    {
-      entityRuntime,
-      entityQueryDefinitionRepository,
+  let metricCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeMetrics) {
+    const metricParsed = parseMetricDefinitionsCatalogJson(
+      loadMetricDefinitionsCatalogJson(),
+    );
+    if (!metricParsed.ok) {
+      throw new Error(
+        `Invalid rates metric catalog: ${metricParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const metricRuntime = createMetricRuntimeContext({
       metricDefinitionRepository,
-    },
-    tenantId,
-    queryParsed.data,
-  );
+      aggregationEventRepository:
+        createFirestoreAdminAggregationEventRepository(firebaseAdminConfig),
+      metricValueRepository:
+        createFirestoreAdminMetricValueRepository(firebaseAdminConfig),
+      backfillJobRepository:
+        createFirestoreAdminBackfillJobRepository(firebaseAdminConfig),
+      metricContributionRepository:
+        createFirestoreAdminMetricContributionRepository(firebaseAdminConfig),
+      listSourceDocuments: (resolvedTenantId, metric) =>
+        listSourceDocumentsForMetricDefinition(
+          entityRuntime,
+          entityQueryDefinitionRepository,
+          resolvedTenantId,
+          metric,
+        ),
+      resolveQueryMembership: createMetricQueryMembershipResolver({
+        entityRuntime,
+        entityQueryDefinitionRepository,
+      }),
+    });
+    const metricResult = await replaceMetricDefinitionsCatalog(
+      {
+        entityRuntime,
+        metricRuntime,
+        entityQueryDefinitionRepository,
+      },
+      tenantId,
+      metricParsed.data,
+    );
+    metricCounts = metricResult.counts;
+  }
 
-  const metricResult = await replaceMetricDefinitionsCatalog(
-    {
-      entityRuntime,
-      metricRuntime,
-      entityQueryDefinitionRepository,
-    },
-    tenantId,
-    metricParsed.data,
-  );
+  let chartCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeCharts) {
+    const chartParsed = parseChartDefinitionsCatalogJson(
+      loadChartDefinitionsCatalogJson(),
+    );
+    if (!chartParsed.ok) {
+      throw new Error(
+        `Invalid rates chart catalog: ${chartParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const chartResult = await replaceChartDefinitionsCatalog(
+      {
+        chartDefinitionRepository,
+      },
+      tenantId,
+      chartParsed.data,
+    );
+    chartCounts = chartResult.counts;
+  }
 
-  const chartResult = await replaceChartDefinitionsCatalog(
-    {
-      chartDefinitionRepository,
-    },
-    tenantId,
-    chartParsed.data,
-  );
-
-  const formulaResult = await replaceFormulasCatalog(
-    formulaRuntime,
-    tenantId,
-    formulasParsed.data,
-  );
-
-  const hookResult = await replaceDataHooksCatalog(
-    {
-      entityRuntime,
-      hookRepository: dataHookRepository,
-      hookRuntime,
+  let formulaCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeFormulas) {
+    const formulasParsed = parseFormulaDefinitionsCatalogJson(
+      loadFormulaDefinitionsCatalogJson(),
+    );
+    if (!formulasParsed.ok) {
+      throw new Error(
+        `Invalid rates formula catalog: ${formulasParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const formulaResult = await replaceFormulasCatalog(
       formulaRuntime,
-    },
-    tenantId,
-    dataHooksParsed.data,
-  );
+      tenantId,
+      formulasParsed.data,
+    );
+    formulaCounts = formulaResult.counts;
+  }
 
-  const customViewResult = await replaceCustomViewsCatalog(
-    {
-      entityRuntime,
-      customViewRepository,
-      entityQueryDefinitionRepository,
-      entityCategoryRepository,
-    },
-    tenantId,
-    customViewParsed.data,
-  );
+  let hookCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeHooks) {
+    const dataHooksParsed = parseDataHooksCatalogJson(
+      loadDataHooksCatalogJson(),
+    );
+    if (!dataHooksParsed.ok) {
+      throw new Error(
+        `Invalid rates data hooks catalog: ${dataHooksParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const hookResult = await replaceDataHooksCatalog(
+      {
+        entityRuntime,
+        hookRepository: dataHookRepository,
+        hookRuntime,
+        formulaRuntime,
+      },
+      tenantId,
+      dataHooksParsed.data,
+    );
+    hookCounts = hookResult.counts;
+  }
+
+  let customViewCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeCustomViews) {
+    const customViewParsed = parseCustomViewsCatalogJson(
+      loadCustomViewsCatalogJson(),
+    );
+    if (!customViewParsed.ok) {
+      throw new Error(
+        `Invalid rates custom views catalog: ${customViewParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const customViewResult = await replaceCustomViewsCatalog(
+      {
+        entityRuntime,
+        customViewRepository,
+        entityQueryDefinitionRepository,
+        entityCategoryRepository,
+      },
+      tenantId,
+      customViewParsed.data,
+    );
+    customViewCounts = customViewResult.counts;
+  }
 
   console.log(
-    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}, charts +${chartResult.counts.created}/~${chartResult.counts.updated}/-${chartResult.counts.deleted}, formulas +${formulaResult.counts.created}/~${formulaResult.counts.updated}/-${formulaResult.counts.deleted}, hooks +${hookResult.counts.created}/~${hookResult.counts.updated}/-${hookResult.counts.deleted}, customViews +${customViewResult.counts.created}/~${customViewResult.counts.updated}/-${customViewResult.counts.deleted}`,
+    `[rates seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}`,
   );
 
   return {
-    entityCounts: entityResult.counts,
-    metricCounts: metricResult.counts,
-    queryCounts: queryResult.counts,
-    chartCounts: chartResult.counts,
-    formulaCounts: formulaResult.counts,
-    hookCounts: hookResult.counts,
-    customViewCounts: customViewResult.counts,
-    definitionRecords: entityResult.items,
+    entityCounts,
+    metricCounts,
+    queryCounts,
+    chartCounts,
+    formulaCounts,
+    hookCounts,
+    customViewCounts,
+    definitionRecords,
   };
 }

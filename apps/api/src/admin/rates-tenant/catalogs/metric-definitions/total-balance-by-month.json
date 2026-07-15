@@ -1,0 +1,94 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Total Balance by Month",
+    "description": "Income minus expenses minus payments minus investments for a selected month bucket.",
+    "computationMode": "computed",
+    "sourceModel": "transaction",
+    "parameters": [
+      {
+        "name": "period",
+        "valueType": "dateBucket",
+        "granularity": "month"
+      }
+    ],
+    "computation": {
+      "type": "expression",
+      "inputs": {
+        "income": {
+          "type": "metricRef",
+          "metricDefinitionId": "Income by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        },
+        "outflows": {
+          "type": "metricRef",
+          "metricDefinitionId": "Outflows by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        },
+        "payments": {
+          "type": "metricRef",
+          "metricDefinitionId": "Payments by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        },
+        "invests": {
+          "type": "metricRef",
+          "metricDefinitionId": "Invested by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        }
+      },
+      "tokens": [
+        {
+          "type": "input",
+          "name": "income"
+        },
+        {
+          "type": "input",
+          "name": "outflows"
+        },
+        {
+          "type": "operator",
+          "op": "-"
+        },
+        {
+          "type": "input",
+          "name": "payments"
+        },
+        {
+          "type": "operator",
+          "op": "-"
+        },
+        {
+          "type": "input",
+          "name": "invests"
+        },
+        {
+          "type": "operator",
+          "op": "-"
+        }
+      ]
+    },
+    "aggregations": [
+      {
+        "operation": "COUNT"
+      }
+    ],
+    "filters": [],
+    "groupBy": [],
+    "dimensions": [],
+    "dateFieldGranularity": {},
+    "valueDisplayFormat": "currency",
+    "version": 1,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [],
+    "status": "ACTIVE"
+  }
+}

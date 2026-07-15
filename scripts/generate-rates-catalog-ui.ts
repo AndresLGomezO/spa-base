@@ -1,10 +1,10 @@
 /**
- * Merges full default UI (views, forms, nav.label, nav.icon) into the Rates
- * entity catalog. Run after editing field definitions:
+ * Merges full default UI (views, forms, nav.label, nav.icon) into each Rates
+ * entity definition singular JSON. Run after editing field definitions:
  *
  *   pnpm tsx scripts/generate-rates-catalog-ui.ts
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,9 +13,9 @@ import { validateEntityUIConfig } from "@repo/entities";
 import { defineEntityFromRecord } from "@repo/dynamic-entities";
 import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
 
-const catalogPath = join(
+const entityDefinitionsDir = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json",
+  "../apps/api/src/admin/rates-tenant/catalogs/entity-definitions",
 );
 
 const NAV_ICONS: Record<string, string> = {
@@ -24,31 +24,52 @@ const NAV_ICONS: Record<string, string> = {
   category: "FolderTree",
   financialItem: "FileText",
   loanDetails: "ClipboardList",
+  loanMonthlyCost: "Shield",
+  loanUtilization: "CreditCard",
   incomeDetails: "HandCoins",
   investmentDetails: "LineChart",
   serviceDetails: "Receipt",
   paymentSchedule: "CalendarClock",
   transaction: "ArrowLeftRight",
   balanceSnapshot: "Camera",
+  attachment: "Paperclip",
+  statement: "FileText",
+  email: "Mail",
 };
 
-interface CatalogEnvelope {
+interface SingularEntityEnvelope {
   readonly kind: string;
   readonly version: number;
-  readonly exportedAt: string;
-  readonly entityCategories: readonly unknown[];
-  readonly entityDefinitions: Array<{
+  data: {
     readonly name: string;
     readonly label: string;
     readonly fields: EntityDefinitionRecord["fields"];
     ui?: unknown;
     [key: string]: unknown;
-  }>;
+  };
 }
 
-const catalog = JSON.parse(readFileSync(catalogPath, "utf8")) as CatalogEnvelope;
+if (!existsSync(entityDefinitionsDir)) {
+  throw new Error(`Catalog directory not found: ${entityDefinitionsDir}`);
+}
 
-for (const definition of catalog.entityDefinitions) {
+const entityFiles = readdirSync(entityDefinitionsDir)
+  .filter(
+    (name) =>
+      name.endsWith(".json") &&
+      !name.startsWith("_") &&
+      !name.startsWith("."),
+  )
+  .sort((a, b) => a.localeCompare(b));
+
+let updated = 0;
+for (const fileName of entityFiles) {
+  const filePath = join(entityDefinitionsDir, fileName);
+  const envelope = JSON.parse(
+    readFileSync(filePath, "utf8"),
+  ) as SingularEntityEnvelope;
+  const definition = envelope.data;
+
   const navIcon = NAV_ICONS[definition.name];
   if (!navIcon) {
     throw new Error(`Missing nav icon mapping for entity "${definition.name}"`);
@@ -74,7 +95,11 @@ for (const definition of catalog.entityDefinitions) {
 
   const entity = defineEntityFromRecord(record);
   validateEntityUIConfig(entity, definition.ui as EntityDefinitionRecord["ui"]);
+
+  writeFileSync(filePath, `${JSON.stringify(envelope, null, 2)}\n`, "utf8");
+  updated += 1;
 }
 
-writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
-console.log(`Updated UI for ${catalog.entityDefinitions.length} entities in ${catalogPath}`);
+console.log(
+  `Updated UI for ${updated} entities in ${entityDefinitionsDir}`,
+);

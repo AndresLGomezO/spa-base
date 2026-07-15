@@ -1,0 +1,16 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "scheduleInterestPortion",
+    "description": "Schedule: interest portion for payment row",
+    "inputs": [],
+    "body": {
+      "kind": "formula",
+      "name": "loanInterestPayment",
+      "inputs": {}
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Mark overdue schedules",
+    "description": "Daily sweep — UPCOMING rows with dueDate before today become OVERDUE.",
+    "entity": "paymentSchedule",
+    "phase": "after",
+    "trigger": {
+      "kind": "schedule",
+      "cron": "0 6 * * *",
+      "timezone": "UTC",
+      "scope": "eachRecord",
+      "eachRecordWhere": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "kind": "literal",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<",
+            "value": {
+              "kind": "var",
+              "name": "now"
+            }
+          }
+        ]
+      }
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "setField",
+        "field": "status",
+        "value": {
+          "kind": "literal",
+          "value": "OVERDUE"
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 10,
+    "execution": "queued"
+  }
+}

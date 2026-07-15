@@ -1,0 +1,274 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "category",
+    "label": "Categories",
+    "description": "User-facing grouping for income, expenses, transfers, and investments",
+    "displayField": "name",
+    "navCategoryId": "cat_classification",
+    "navOrder": 1,
+    "ui": {
+      "nav": {
+        "label": "Categories",
+        "icon": "FolderTree"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "name",
+            "kind",
+            "iconName",
+            "image",
+            "parentId"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-7d663462-0b9e-40bb-bef3-b3d87b458564",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-1f1f56be-47da-4648-bda8-947d145ab07b",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-f9b4df11-8648-4758-bea5-33491bca000c",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-32fbfdc5-7a99-41cb-ba31-32184d71240f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-9a7d5b6c-81cc-4da9-b1a4-8f4a6ff1dad0",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "kind"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-cat-icon-name-create",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "iconName"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-cat-image-create",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "image"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-8b7aa431-be30-4743-a4f1-e95771f3445a",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "parentId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-d631bf61-12e2-4ec5-92e4-c07712c3e3b8",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-6315b56d-0cbf-4b42-9a74-7e4c97a5b1de",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-d3fff8d3-41b0-44d6-8635-49fdb9f85602",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-2875c8cb-2bd1-476b-b26f-180d55b9395f",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-b8beb8d9-dac9-4392-9363-b0582d3e9fa4",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-35e1e83c-0c8f-40f1-91b1-1b3189061bec",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "kind"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-cat-icon-name-edit",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "iconName"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-cat-image-edit",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "image"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-9e583efa-9eac-4ad8-9dcc-fd6d83bc86e2",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "parentId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-c359e42f-f624-456f-bd6c-549e63f09810",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "name": {
+          "label": "Name",
+          "component": "input",
+          "sortable": true,
+          "searchable": true,
+          "order": 0
+        },
+        "kind": {
+          "label": "Kind",
+          "component": "select",
+          "filterable": true,
+          "order": 1
+        },
+        "iconName": {
+          "label": "Icon",
+          "component": "input",
+          "order": 2
+        },
+        "image": {
+          "label": "Image",
+          "component": "image",
+          "order": 3
+        },
+        "parentId": {
+          "label": "Parent",
+          "component": "relation",
+          "filterable": true,
+          "order": 4
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "ui": {
+          "label": "Name",
+          "order": 0,
+          "sortable": true,
+          "searchable": true
+        }
+      },
+      {
+        "name": "kind",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "INCOME",
+          "EXPENSE",
+          "TRANSFER",
+          "INVESTMENT"
+        ],
+        "ui": {
+          "label": "Kind",
+          "order": 1,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "iconName",
+        "type": "string",
+        "ui": {
+          "label": "Icon",
+          "order": 2
+        }
+      },
+      {
+        "name": "image",
+        "type": "image",
+        "ui": {
+          "label": "Image",
+          "order": 3
+        }
+      },
+      {
+        "name": "parentId",
+        "type": "relation",
+        "relation": {
+          "target": "category",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Parent",
+          "order": 4,
+          "filterable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

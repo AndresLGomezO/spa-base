@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   uiLayoutDocumentSchema,
@@ -23,6 +23,26 @@ vi.mock("@visx/responsive", () => ({
   }) => children({ width: 320, height: 160 }),
 }));
 
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
+
 const minimalContext: LayoutRenderContext = {
   mode: "listItem",
   data: {},
@@ -33,12 +53,13 @@ const minimalContext: LayoutRenderContext = {
 describe("card glow overlay rows", () => {
   it("renders glow overlay out of document flow without flex stretch shell", () => {
     const catalog = JSON.parse(
-      readFileSync(
+      mergeCatalog(
         join(
           process.cwd(),
-          "../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-ui-overrides.json",
+          "../../apps/api/src/admin/rates-tenant/catalogs/entity-ui-overrides",
         ),
-        "utf8",
+        "entity-ui-overrides-catalog",
+        "overrides",
       ),
     ) as {
       overrides: Array<{

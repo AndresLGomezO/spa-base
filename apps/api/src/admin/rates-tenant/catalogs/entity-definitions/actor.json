@@ -1,0 +1,245 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "actor",
+    "label": "Actors",
+    "description": "Banks, people, employers, utilities, and other counterparties",
+    "displayField": "name",
+    "navCategoryId": "cat_my_money",
+    "navOrder": 1,
+    "ui": {
+      "nav": {
+        "label": "Actors",
+        "icon": "Building2"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "name",
+            "type",
+            "logo",
+            "website"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-f601dad5-a81a-430d-aa45-b5d00717b0c2",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-21af4293-7496-4169-8c47-2c56fadb0280",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-a24750bf-fa58-40d1-a5e1-59d197cf02af",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-6b175a1f-f601-4111-ba59-339d808aa0d5",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-f45821b8-58d5-40d2-bd4a-00ba06debeee",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "type"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-255e0e11-f04f-44b2-b86e-667b3d0dd777",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "logo"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-7a1e77e6-53a0-4105-9377-e907699cb532",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "website"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-63cc4d9f-0b0a-4f1d-9120-d4a2d36d39a8",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-c7961720-9922-4d2f-bfc0-d7c439ced896",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-5456d0bd-fc31-4684-a036-68f9b372cb5c",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-194198d7-b92c-43ae-bbf4-c716964e9a29",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-d25dca01-8382-4263-b200-13a9ae11df25",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-7c3a5307-c6cd-41a5-8fbf-d43a42191c8f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "type"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-13346244-11a4-4ce2-919e-72ff3af96f18",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "logo"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-daf60526-5b7a-4609-8e62-58199f9a47f1",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "website"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-61542e42-786c-4f88-aada-78591ae76ebb",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "name": {
+          "label": "Name",
+          "component": "input",
+          "sortable": true,
+          "searchable": true,
+          "order": 0
+        },
+        "type": {
+          "label": "Type",
+          "component": "select",
+          "filterable": true,
+          "order": 1
+        },
+        "logo": {
+          "label": "Logo",
+          "component": "image",
+          "filterable": false,
+          "sortable": false,
+          "searchable": false,
+          "order": 2
+        },
+        "website": {
+          "label": "Website",
+          "component": "input",
+          "searchable": true,
+          "order": 3
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "ui": {
+          "label": "Name",
+          "order": 0,
+          "sortable": true,
+          "searchable": true
+        }
+      },
+      {
+        "name": "type",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "BANK",
+          "PERSON",
+          "EMPLOYER",
+          "UTILITY",
+          "GOVERNMENT",
+          "FIDUCIARY",
+          "PROPERTY",
+          "OTHER"
+        ],
+        "ui": {
+          "label": "Type",
+          "order": 1,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "logo",
+        "type": "image",
+        "ui": {
+          "label": "Logo",
+          "order": 2
+        }
+      },
+      {
+        "name": "website",
+        "type": "string",
+        "ui": {
+          "label": "Website",
+          "order": 3
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

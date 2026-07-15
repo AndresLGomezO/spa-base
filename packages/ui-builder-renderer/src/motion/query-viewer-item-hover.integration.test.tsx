@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ComponentRowNode,
@@ -14,6 +14,26 @@ import { describe, expect, it } from "vitest";
 import type { LayoutRenderContext } from "../context.js";
 import { EmbeddedLayoutRenderer } from "../layout/EmbeddedLayoutRenderer.js";
 import { resolveMotionPreset } from "./resolve-motion.js";
+
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
 
 const minimalContext: LayoutRenderContext = {
   mode: "listItem",
@@ -167,14 +187,16 @@ describe("query viewer item row hover", () => {
   });
 
   it("renders See all text links with interactive hover on the row wrapper", () => {
-    const json = readFileSync(
-      join(
-        process.cwd(),
-        "../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-ui-overrides.json",
+    const catalog = JSON.parse(
+      mergeCatalog(
+        join(
+          process.cwd(),
+          "../../apps/api/src/admin/rates-tenant/catalogs/entity-ui-overrides",
+        ),
+        "entity-ui-overrides-catalog",
+        "overrides",
       ),
-      "utf8",
-    );
-    const catalog = JSON.parse(json) as {
+    ) as {
       overrides: Array<{
         metricWidgets: Array<{ id: string; layout: unknown }>;
       }>;

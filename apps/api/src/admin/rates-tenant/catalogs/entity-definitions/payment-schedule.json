@@ -1,0 +1,498 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "paymentSchedule",
+    "label": "Payment Schedules",
+    "description": "Upcoming and past due dates for financial items",
+    "displayField": "dueDate",
+    "navCategoryId": "cat_movements",
+    "navOrder": 1,
+    "hiddenFromNav": true,
+    "ui": {
+      "nav": {
+        "label": "Payment Schedules",
+        "icon": "CalendarClock"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "financialItemId",
+            "dueDate",
+            "expectedAmount",
+            "principalPortion",
+            "interestPortion",
+            "additionalPortion",
+            "sequence",
+            "planVersion",
+            "status",
+            "paidTransactionId"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-aa7ca1ca-1b2c-48ac-8b91-8e51d423be46",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-acef71c0-d363-4243-99b4-15d12cd875a1",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-60e82bf4-664b-4c64-b5ca-d34ee5f236c2",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-49bb1134-121a-4399-bf65-b556f5668d07",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-e16c349c-a52d-4396-a3df-6cf297bb9f2c",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "dueDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-0686d5b1-e003-41c7-8d00-e79eefc52855",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "expectedAmount"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-94791749-1fc2-49b2-a4cc-90da008a3ca3",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "principalPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-96dcc947-50fe-48e9-9539-337c206907f1",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-8cf56a48-1f2f-4bb9-8b2e-36b1f2bb90fc",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "sequence"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-a6ee6342-bece-4283-bd19-e9f309562235",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "planVersion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-d9064da2-3c30-4efc-a828-3325516dcfc3",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "status"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-1061681a-c9fa-470f-8aec-925fddcba132",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "paidTransactionId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-d6db8857-a93c-4589-bb1a-dd3f83cb7d46",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-4f331bc4-7964-4347-9a99-b99c4faf10fb",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-1ad25af5-4be2-4e50-8deb-151bfbeaf14e",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-1e88a630-dbb7-449e-a18d-4f5f1903e597",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-8dd085d6-7cac-48f2-b424-11ad9c2a98c0",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-aadce36a-e712-44c9-b8d3-3faad346ce50",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "dueDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-9a6e4ffb-fca4-4fb8-b2b6-005381ee8e71",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "expectedAmount"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-77224994-895f-4d5f-9a7a-ae2da806c57f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "principalPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-728f9fec-9c38-4c27-8e2f-b84f989880dd",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-11ace8ed-0082-40cb-b3d7-6e19645309ae",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "sequence"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-1913a5f2-24ff-4f44-90c1-aa50cd2348bf",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "planVersion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-10f1a671-5544-4aea-bdca-130ae43bd763",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "status"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-8fb8f744-8b4e-45ba-9b34-59e9258ed2f7",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "paidTransactionId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b0d16a6b-8d69-43c1-b6f7-3358c4bb03f5",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "financialItemId": {
+          "label": "Financial item",
+          "component": "relation",
+          "filterable": true,
+          "order": 0
+        },
+        "dueDate": {
+          "label": "Due date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 1
+        },
+        "expectedAmount": {
+          "label": "Expected amount",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 2
+        },
+        "principalPortion": {
+          "label": "Principal portion",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 3
+        },
+        "interestPortion": {
+          "label": "Interest portion",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 4
+        },
+        "additionalPortion": {
+          "label": "Additional portion",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 5
+        },
+        "sequence": {
+          "label": "Sequence",
+          "component": "number",
+          "displayFormat": "plain",
+          "sortable": true,
+          "order": 6
+        },
+        "planVersion": {
+          "label": "Plan version",
+          "component": "number",
+          "displayFormat": "plain",
+          "sortable": true,
+          "order": 7
+        },
+        "status": {
+          "label": "Status",
+          "component": "select",
+          "filterable": true,
+          "order": 8
+        },
+        "paidTransactionId": {
+          "label": "Paid transaction",
+          "component": "relation",
+          "filterable": true,
+          "order": 9
+        },
+        "emailId": {
+          "label": "Source email",
+          "component": "relation",
+          "filterable": true,
+          "order": 10
+        },
+        "statementId": {
+          "label": "Statement",
+          "component": "relation",
+          "filterable": true,
+          "order": 10
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "financialItemId",
+        "type": "relation",
+        "required": true,
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "restrict"
+        },
+        "ui": {
+          "label": "Financial item",
+          "order": 0,
+          "filterable": true
+        }
+      },
+      {
+        "name": "dueDate",
+        "type": "date",
+        "required": true,
+        "ui": {
+          "label": "Due date",
+          "order": 1,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "expectedAmount",
+        "type": "number",
+        "required": true,
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Expected amount",
+          "order": 2,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "principalPortion",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Principal portion",
+          "order": 3,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "interestPortion",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Interest portion",
+          "order": 4,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "additionalPortion",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Additional portion",
+          "order": 5,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "sequence",
+        "type": "number",
+        "numberKind": "integer",
+        "ui": {
+          "label": "Sequence",
+          "order": 6,
+          "displayFormat": "plain",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "planVersion",
+        "type": "number",
+        "numberKind": "integer",
+        "ui": {
+          "label": "Plan version",
+          "order": 7,
+          "displayFormat": "plain",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "status",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "UPCOMING",
+          "PAID",
+          "OVERDUE",
+          "SKIPPED"
+        ],
+        "ui": {
+          "label": "Status",
+          "order": 7,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "paidTransactionId",
+        "type": "relation",
+        "relation": {
+          "target": "transaction",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Paid transaction",
+          "order": 8,
+          "filterable": true
+        }
+      },
+      {
+        "name": "emailId",
+        "type": "relation",
+        "required": false,
+        "relation": {
+          "target": "email",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Source email",
+          "order": 9,
+          "hidden": true,
+          "filterable": true
+        }
+      },
+      {
+        "name": "statementId",
+        "type": "relation",
+        "required": false,
+        "relation": {
+          "target": "statement",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Statement",
+          "order": 10,
+          "hidden": true,
+          "filterable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

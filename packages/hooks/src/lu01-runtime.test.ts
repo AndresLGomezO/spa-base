@@ -1,9 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  parseDataHooksCatalogJson,
   runDataHook,
   type DataHookDefinition,
   type HookContext,
@@ -11,11 +8,7 @@ import {
   type PortableDataHookDefinition,
 } from "@repo/hooks";
 import { createIncrementPlanRevisionFormulaResolver } from "./test/increment-plan-revision-formula-resolver.js";
-
-const catalogPath = resolve(
-  import.meta.dirname,
-  "../../../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
-);
+import { loadRatesDataHookByName } from "./test/load-rates-data-hooks-catalog.js";
 
 const loanDetails = {
   id: "8f5ddd04-18c9-4ea2-b302-cb6dc4c1e987",
@@ -44,21 +37,7 @@ const loanUtilization = {
 };
 
 function loadLu01Hook() {
-  const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) {
-    throw new Error("Failed to parse rates data hooks catalog.");
-  }
-
-  const hook = parsed.data.dataHooks.find(
-    (entry) => entry.name === "Apply utilization to balance and replan",
-  );
-  expect(hook).toBeDefined();
-  if (!hook) {
-    throw new Error("Apply utilization to balance and replan hook not found.");
-  }
-
-  return hook;
+  return loadRatesDataHookByName("Apply utilization to balance and replan");
 }
 
 function toDataHookDefinition(

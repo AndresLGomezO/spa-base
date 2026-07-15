@@ -1,0 +1,564 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "loanDetails",
+    "label": "Loan Details",
+    "description": "Loan terms: rates, amortization, original principal (term loans), credit limit and deferral term (deferred revolving credit)",
+    "displayField": "financialItemId",
+    "navCategoryId": "cat_details",
+    "navOrder": 1,
+    "hiddenFromNav": true,
+    "ui": {
+      "nav": {
+        "label": "Loan Details",
+        "icon": "ClipboardList"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "financialItemId",
+            "interestRateQuote",
+            "interestRate",
+            "principalPortion",
+            "interestPortion",
+            "rateType",
+            "amortizationType",
+            "termMonths",
+            "originationDate",
+            "maturityDate",
+            "originalPrincipal",
+            "creditLimit",
+            "planRevision"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-b6406d67-8834-46c1-8979-dff445eb3b2d",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-1341dca2-16b3-423a-9abb-790ae38aa9f3",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-8d033781-ac25-4c2c-b983-344b3c09ae47",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-5180b567-710d-4d67-93be-e41c3ed17e36",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-create-interestRateQuote",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestRateQuote"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-a5cdd240-4b49-47d9-aec5-6ed5b4fe05a2",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestRate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-f53b4f79-460a-4373-bebb-4bac0d0eca76",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "principalPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-f633745c-b951-400e-b6ee-8beace948f6a",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-5ef2bf99-adae-4f35-b1a8-d01e7ed44804",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "rateType"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-306760cf-dbed-49c8-82f1-97339897184a",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "amortizationType"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-61550093-6580-4722-838f-52c13de605bc",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "termMonths"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-create-originationDate",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "originationDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-create-maturityDate",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "maturityDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-create-originalPrincipal",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "originalPrincipal"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-create-creditLimit",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "creditLimit"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-8a86eade-09fe-4110-8393-72b517e66bec",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-ac9d8a70-e6c6-4b28-a5d3-477078eda69c",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-23cb1cc2-aece-46c6-9625-20d6ee062571",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-2badd171-5b96-4e0a-aa2d-4d5ec3cc9fda",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-3463879b-bcce-4626-8d20-d300da04d4e6",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-edit-interestRateQuote",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestRateQuote"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ce8beffd-c060-4389-bb4d-10488f3afbc0",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestRate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-73300588-c5a2-4563-aa93-eccd137285df",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "principalPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-9c9eb02a-65f2-44dd-b216-1121b6b28017",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "interestPortion"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b0c0e18a-9196-4a41-adcd-5d4e5fec393b",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "rateType"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-fe526346-a565-4cfb-86a5-61180df7d81b",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "amortizationType"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-c223a0af-0585-42eb-9294-8c2045ea0b50",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "termMonths"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-edit-originationDate",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "originationDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-edit-maturityDate",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "maturityDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-edit-originalPrincipal",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "originalPrincipal"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ld-edit-creditLimit",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "creditLimit"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-6784e917-96f8-4bc1-88fb-9d96fa2ee24e",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "financialItemId": {
+          "label": "Financial item",
+          "component": "relation",
+          "filterable": true,
+          "order": 0
+        },
+        "interestRateQuote": {
+          "label": "Rate quote type",
+          "component": "select",
+          "filterable": true,
+          "order": 1
+        },
+        "interestRate": {
+          "label": "Interest rate (%)",
+          "component": "number",
+          "displayFormat": "percentage",
+          "sortable": true,
+          "order": 2
+        },
+        "principalPortion": {
+          "label": "Principal portion",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 3
+        },
+        "interestPortion": {
+          "label": "Interest portion",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 4
+        },
+        "rateType": {
+          "label": "Rate type",
+          "component": "select",
+          "filterable": true,
+          "order": 5
+        },
+        "amortizationType": {
+          "label": "Amortization type",
+          "component": "select",
+          "filterable": true,
+          "order": 6
+        },
+        "termMonths": {
+          "label": "Term (months)",
+          "component": "number",
+          "displayFormat": "plain",
+          "sortable": true,
+          "order": 7
+        },
+        "originationDate": {
+          "label": "Origination date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 8
+        },
+        "maturityDate": {
+          "label": "Maturity date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 9
+        },
+        "creditLimit": {
+          "label": "Credit limit (revolving)",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 11
+        },
+        "originalPrincipal": {
+          "label": "Original principal",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 10
+        },
+        "planRevision": {
+          "label": "Plan revision",
+          "component": "number",
+          "displayFormat": "plain",
+          "sortable": true,
+          "order": 12
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "financialItemId",
+        "type": "relation",
+        "required": true,
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "restrict"
+        },
+        "ui": {
+          "label": "Financial item",
+          "order": 0,
+          "filterable": true
+        }
+      },
+      {
+        "name": "interestRateQuote",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "EA",
+          "NA",
+          "NMV"
+        ],
+        "ui": {
+          "label": "Rate quote type",
+          "order": 1,
+          "filterable": true,
+          "description": "EA = annual effective; NA = annual nominal; NMV = monthly nominal."
+        }
+      },
+      {
+        "name": "interestRate",
+        "type": "number",
+        "required": true,
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Interest rate (%)",
+          "order": 2,
+          "displayFormat": "percentage",
+          "component": "number",
+          "sortable": true,
+          "description": "Quoted rate as stated by the bank; pair with Rate quote type."
+        }
+      },
+      {
+        "name": "principalPortion",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Principal portion",
+          "order": 2,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "interestPortion",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Interest portion",
+          "order": 3,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "rateType",
+        "type": "enum",
+        "enumValues": [
+          "FIXED",
+          "VARIABLE",
+          "MIXED"
+        ],
+        "ui": {
+          "label": "Rate type",
+          "order": 4,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "amortizationType",
+        "type": "enum",
+        "enumValues": [
+          "FRENCH",
+          "GERMAN",
+          "AMERICAN",
+          "BULLET",
+          "NONE"
+        ],
+        "ui": {
+          "label": "Amortization type",
+          "order": 5,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "termMonths",
+        "type": "number",
+        "numberKind": "integer",
+        "ui": {
+          "label": "Term (months)",
+          "order": 6,
+          "displayFormat": "plain",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "originationDate",
+        "type": "date",
+        "ui": {
+          "label": "Origination date",
+          "order": 7,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "maturityDate",
+        "type": "date",
+        "ui": {
+          "label": "Maturity date",
+          "order": 8,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "originalPrincipal",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Original principal",
+          "order": 9,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "creditLimit",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Credit limit (revolving)",
+          "order": 10,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "planRevision",
+        "type": "number",
+        "numberKind": "integer",
+        "ui": {
+          "label": "Plan revision",
+          "order": 11,
+          "displayFormat": "plain",
+          "component": "number",
+          "sortable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

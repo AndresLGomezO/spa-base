@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RATES_GCP_DEMO_OWNER_UID } from "./constants.js";
 import {
   enrichFinancialItemRecordsWithActorLogos,
+  filterImportRecordsByIds,
+  filterImportSpecsByEntityNames,
   listPresentLocalGeneratedImportSpecs,
   listPresentLocalImportSpecs,
   normalizeLocalImportRecord,
@@ -47,16 +49,46 @@ vi.mock("@repo/gcp-firebase", () => ({
 }));
 
 describe("seed-local-tenant-import", () => {
-  it("lists only JSON files that exist in the import directory", () => {
+  it("lists only record directories that contain JSON files", () => {
     const importDir = mkdtempSync(join(tmpdir(), "tenant-import-"));
-    writeFileSync(join(importDir, "actor.json"), "[]");
-    writeFileSync(join(importDir, "category.json"), "[]");
+    mkdirSync(join(importDir, "records/actor"), { recursive: true });
+    mkdirSync(join(importDir, "records/category"), { recursive: true });
+    writeFileSync(
+      join(importDir, "records/actor/a1.json"),
+      JSON.stringify({ id: "a1", name: "A" }),
+    );
+    writeFileSync(
+      join(importDir, "records/category/c1.json"),
+      JSON.stringify({ id: "c1", name: "C" }),
+    );
 
     const specs = listPresentLocalImportSpecs(importDir);
-    expect(specs.map((spec) => spec.fileName)).toEqual([
-      "category.json",
-      "actor.json",
+    expect(specs.map((spec) => spec.dirName)).toEqual([
+      "records/category",
+      "records/actor",
     ]);
+  });
+
+  it("filters import specs and records by entity name / id", () => {
+    const specs = filterImportSpecsByEntityNames(
+      [
+        { dirName: "records/actor", entityName: "actor" },
+        { dirName: "records/financialItem", entityName: "financialItem" },
+      ],
+      ["financialItem"],
+    );
+    expect(specs).toEqual([
+      { dirName: "records/financialItem", entityName: "financialItem" },
+    ]);
+
+    const records = filterImportRecordsByIds(
+      [
+        { id: "keep-me", name: "A" },
+        { id: "skip-me", name: "B" },
+      ],
+      new Set(["keep-me"]),
+    );
+    expect(records).toEqual([{ id: "keep-me", name: "A" }]);
   });
 
   it("returns empty list when import directory has no known JSON files", () => {
@@ -64,16 +96,22 @@ describe("seed-local-tenant-import", () => {
     expect(listPresentLocalImportSpecs(importDir)).toEqual([]);
   });
 
-  it("lists generated import JSON files when present", () => {
+  it("lists generated import directories when present", () => {
     const importDir = mkdtempSync(join(tmpdir(), "tenant-import-generated-"));
-    mkdirSync(join(importDir, "generated"), { recursive: true });
-    writeFileSync(join(importDir, "generated/paymentSchedule.json"), "[]");
-    writeFileSync(join(importDir, "generated/transaction.json"), "[]");
+    mkdirSync(join(importDir, "generated/paymentSchedule"), {
+      recursive: true,
+    });
+    mkdirSync(join(importDir, "generated/transaction"), { recursive: true });
+    writeFileSync(
+      join(importDir, "generated/paymentSchedule/fi1.json"),
+      "[]",
+    );
+    writeFileSync(join(importDir, "generated/transaction/fi1.json"), "[]");
 
     const specs = listPresentLocalGeneratedImportSpecs(importDir);
-    expect(specs.map((spec) => spec.fileName)).toEqual([
-      "generated/paymentSchedule.json",
-      "generated/transaction.json",
+    expect(specs.map((spec) => spec.dirName)).toEqual([
+      "generated/paymentSchedule",
+      "generated/transaction",
     ]);
   });
 

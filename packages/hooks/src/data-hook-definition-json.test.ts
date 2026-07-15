@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
 
 import { DATA_HOOK_COOKBOOK_FIXTURES } from "./data-hook-cookbook-fixtures.js";
@@ -15,6 +11,7 @@ import {
   parseDataHooksCatalogJson,
   toPortableDataHookDefinition,
 } from "./data-hook-definition-json.js";
+import { loadRatesDataHooksCatalogJson } from "./test/load-rates-data-hooks-catalog.js";
 
 const baseRecord: DataHookDefinition = {
   id: "hook_1",
@@ -168,21 +165,17 @@ describe("data-hook-definition-json", () => {
   });
 
   it("parses rates tenant data hooks catalog", () => {
-    const catalogPath = join(
-      dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
-    );
-    const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
+    const parsed = parseDataHooksCatalogJson(loadRatesDataHooksCatalogJson());
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
       return;
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(40);
+    expect(hooks.length).toBe(41);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(40);
+    expect(enabled.length).toBe(41);
 
     const ratesEntities = new Set([
       "actor",

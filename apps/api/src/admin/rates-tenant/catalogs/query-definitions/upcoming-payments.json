@@ -1,0 +1,44 @@
+{
+  "kind": "entity-query-definition",
+  "version": 1,
+  "data": {
+    "name": "Upcoming payments",
+    "sourceEntity": "paymentSchedule",
+    "filter": {
+      "type": "group",
+      "combinator": "and",
+      "children": [
+        {
+          "type": "condition",
+          "field": "status",
+          "operator": "in",
+          "value": {
+            "type": "static",
+            "value": [
+              "UPCOMING",
+              "OVERDUE"
+            ]
+          }
+        },
+        {
+          "type": "condition",
+          "field": "financialItemId.flowKind",
+          "operator": "!=",
+          "value": {
+            "type": "static",
+            "value": "INCOME"
+          }
+        }
+      ]
+    },
+    "sort": [
+      {
+        "field": "dueDate",
+        "direction": "asc"
+      }
+    ],
+    "limitMode": "topN",
+    "limit": 50,
+    "status": "ACTIVE"
+  }
+}

@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -14,10 +21,14 @@ import {
   uploadEntityFile,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
-import { parseEmailMatchBindingsJson } from "@repo/gmail-ingest";
+import {
+  parseEmailMatchBindingJson,
+  type PortableEmailMatchBinding,
+} from "@repo/gmail-ingest";
 import { getAuth } from "firebase-admin/auth";
 
 import { apiEnv } from "../../config/env.js";
+import { resolveTenantImportDir } from "../../scripts/resolve-tenant-import-dir.js";
 import {
   RATES_GCP_DEMO_OWNER_UID,
   RATES_LOCAL_IMPORT_OWNER_EMAIL,
@@ -29,36 +40,34 @@ import {
   importRatesRecordsBatch,
 } from "./seed-record-helpers.js";
 
-const LOCAL_IMPORT_DIR =
-  process.env.TENANT_IMPORT_DIR?.trim() ||
-  join(process.cwd(), ".local/tenant-import");
+const LOCAL_IMPORT_DIR = resolveTenantImportDir();
 
 const LOCAL_IMPORT_SPECS = [
-  { fileName: "category.json", entityName: "category" },
-  { fileName: "actor.json", entityName: "actor" },
-  { fileName: "account.json", entityName: "account" },
-  { fileName: "financialItem.json", entityName: "financialItem" },
-  { fileName: "loanDetails.json", entityName: "loanDetails" },
-  { fileName: "loanMonthlyCost.json", entityName: "loanMonthlyCost" },
-  { fileName: "loanUtilization.json", entityName: "loanUtilization" },
-  { fileName: "incomeDetails.json", entityName: "incomeDetails" },
-  { fileName: "investmentDetails.json", entityName: "investmentDetails" },
-  { fileName: "serviceDetails.json", entityName: "serviceDetails" },
+  { dirName: "records/category", entityName: "category" },
+  { dirName: "records/actor", entityName: "actor" },
+  { dirName: "records/account", entityName: "account" },
+  { dirName: "records/financialItem", entityName: "financialItem" },
+  { dirName: "records/loanDetails", entityName: "loanDetails" },
+  { dirName: "records/loanMonthlyCost", entityName: "loanMonthlyCost" },
+  { dirName: "records/loanUtilization", entityName: "loanUtilization" },
+  { dirName: "records/incomeDetails", entityName: "incomeDetails" },
+  { dirName: "records/investmentDetails", entityName: "investmentDetails" },
+  { dirName: "records/serviceDetails", entityName: "serviceDetails" },
 ] as const;
 
 const LOCAL_GENERATED_IMPORT_SPECS = [
   {
-    fileName: "generated/paymentSchedule.json",
+    dirName: "generated/paymentSchedule",
     entityName: "paymentSchedule",
   },
-  { fileName: "generated/transaction.json", entityName: "transaction" },
+  { dirName: "generated/transaction", entityName: "transaction" },
   {
-    fileName: "generated/balanceSnapshot.json",
+    dirName: "generated/balanceSnapshot",
     entityName: "balanceSnapshot",
   },
 ] as const;
 
-const LOCAL_EMAIL_MATCH_BINDINGS_FILE = "emailMatchBindings.json";
+const LOCAL_EMAIL_MATCH_BINDINGS_DIR = "email-match-bindings";
 
 type LocalImportSpec = (typeof LOCAL_IMPORT_SPECS)[number];
 type LocalGeneratedImportSpec = (typeof LOCAL_GENERATED_IMPORT_SPECS)[number];
@@ -97,25 +106,64 @@ function bindingSeedKey(binding: {
   ].join("\0");
 }
 
+function listJsonFilesInDir(dirPath: string): string[] {
+  if (!existsSync(dirPath)) {
+    return [];
+  }
+  return readdirSync(dirPath)
+    .filter(
+      (name) =>
+        name.endsWith(".json") &&
+        !name.startsWith("_") &&
+        !name.startsWith("."),
+    )
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function readEmailMatchBindingsDir(
+  importDir: string,
+): PortableEmailMatchBinding[] {
+  const dirPath = join(importDir, LOCAL_EMAIL_MATCH_BINDINGS_DIR);
+  const files = listJsonFilesInDir(dirPath);
+  if (files.length === 0) {
+    return [];
+  }
+
+  return files.map((fileName) => {
+    const filePath = join(dirPath, fileName);
+    const parsed = parseEmailMatchBindingJson(readFileSync(filePath, "utf8"));
+    if (!parsed.ok) {
+      const detail = parsed.errors
+        .map((error) => `${error.path}: ${error.message}`)
+        .join("; ");
+      throw new Error(`Invalid email match binding ${filePath}: ${detail}`);
+    }
+    return parsed.data;
+  });
+}
+
 async function seedLocalEmailMatchBindingsIfPresent(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
   ownerId: string,
   importDir: string,
+  recordIds?: ReadonlySet<string>,
 ): Promise<number> {
-  const filePath = join(importDir, LOCAL_EMAIL_MATCH_BINDINGS_FILE);
-  if (!existsSync(filePath)) {
+  const allBindings = readEmailMatchBindingsDir(importDir);
+  if (allBindings.length === 0) {
     return 0;
   }
 
-  const parsed = parseEmailMatchBindingsJson(readFileSync(filePath, "utf8"));
-  if (!parsed.ok) {
-    const detail = parsed.errors
-      .map((error) => `${error.path}: ${error.message}`)
-      .join("; ");
-    throw new Error(
-      `Invalid ${LOCAL_EMAIL_MATCH_BINDINGS_FILE} in ${importDir}: ${detail}`,
+  const portableBindings =
+    recordIds && recordIds.size > 0
+      ? allBindings.filter((binding) => recordIds.has(binding.recordId))
+      : allBindings;
+
+  if (recordIds && recordIds.size > 0 && portableBindings.length === 0) {
+    console.warn(
+      `[seed] No email match bindings matched --ids filter (${[...recordIds].join(", ")}).`,
     );
+    return 0;
   }
 
   const repository =
@@ -126,11 +174,13 @@ async function seedLocalEmailMatchBindingsIfPresent(
   );
 
   let upserted = 0;
-  for (const portable of parsed.data) {
+  for (const portable of portableBindings) {
     const key = bindingSeedKey(portable);
     const match = existingByKey.get(key);
     const patchInput = {
       enabled: portable.enabled ?? true,
+      order: portable.order ?? 100,
+      ingestMode: portable.ingestMode ?? "create",
       fromAddresses: portable.fromAddresses ?? [],
       subjectPatterns: portable.subjectPatterns ?? [],
       bodyPatterns: portable.bodyPatterns ?? [],
@@ -159,9 +209,49 @@ async function seedLocalEmailMatchBindingsIfPresent(
 
   return upserted;
 }
+
+export function filterImportRecordsByIds(
+  records: readonly Record<string, unknown>[],
+  recordIds: ReadonlySet<string> | undefined,
+): Record<string, unknown>[] {
+  if (!recordIds || recordIds.size === 0) {
+    return [...records];
+  }
+  return records.filter(
+    (record) =>
+      typeof record.id === "string" && recordIds.has(record.id.trim()),
+  );
+}
+
+export function filterImportSpecsByEntityNames<
+  T extends { readonly entityName: string },
+>(
+  specs: readonly T[],
+  entityNames: readonly string[] | undefined,
+): T[] {
+  if (entityNames === undefined) {
+    return [...specs];
+  }
+  const allowed = new Set(entityNames);
+  return specs.filter((spec) => allowed.has(spec.entityName));
+}
 export interface LocalTenantImportOptions {
   readonly requireOwner?: boolean;
   readonly expectedUid?: string;
+  /** When set, only import these structural entity names. */
+  readonly entityNames?: readonly string[];
+  /** When set, only import these generated entity names. */
+  readonly generatedEntityNames?: readonly string[];
+  /** When set, only upsert rows / bindings whose id/recordId is in the set. */
+  readonly recordIds?: ReadonlySet<string>;
+  /** Skip orphan paymentSchedule/transaction deletes (default false for full seed). */
+  readonly skipOrphanDelete?: boolean;
+  /** Run schedule/payment mock generator (default true for full seed). */
+  readonly runMockGenerator?: boolean;
+  /** Upsert email-match-bindings/*.json (default true for full seed). */
+  readonly includeEmailMatchBindings?: boolean;
+  /** Upload logos/images from local files (default true). */
+  readonly includeEntityImages?: boolean;
 }
 
 function isAuthUserNotFound(error: unknown): boolean {
@@ -183,37 +273,59 @@ export function resolveLocalTenantImportOwnerEmail(): string {
 export function listPresentLocalImportSpecs(
   importDir: string = LOCAL_IMPORT_DIR,
 ): LocalImportSpec[] {
-  return LOCAL_IMPORT_SPECS.filter((spec) =>
-    existsSync(join(importDir, spec.fileName)),
+  return LOCAL_IMPORT_SPECS.filter(
+    (spec) => listJsonFilesInDir(join(importDir, spec.dirName)).length > 0,
   );
 }
 
 export function listPresentLocalGeneratedImportSpecs(
   importDir: string = LOCAL_IMPORT_DIR,
 ): LocalGeneratedImportSpec[] {
-  return LOCAL_GENERATED_IMPORT_SPECS.filter((spec) =>
-    existsSync(join(importDir, spec.fileName)),
+  return LOCAL_GENERATED_IMPORT_SPECS.filter(
+    (spec) => listJsonFilesInDir(join(importDir, spec.dirName)).length > 0,
   );
 }
 
-function readImportRecords(filePath: string): Record<string, unknown>[] {
-  const parsed: unknown = JSON.parse(readFileSync(filePath, "utf8"));
-  if (!Array.isArray(parsed)) {
-    throw new Error(`Expected JSON array in ${filePath}.`);
+function assertRecordObject(
+  row: unknown,
+  source: string,
+): Record<string, unknown> {
+  if (!row || typeof row !== "object" || Array.isArray(row)) {
+    throw new Error(`Invalid record object in ${source}.`);
   }
+  const record = row as Record<string, unknown>;
+  if (typeof record.id !== "string" || record.id.trim().length === 0) {
+    throw new Error(`Missing id in ${source}.`);
+  }
+  return record;
+}
 
-  return parsed.map((row, index) => {
-    if (!row || typeof row !== "object" || Array.isArray(row)) {
-      throw new Error(`Invalid record at index ${index} in ${filePath}.`);
-    }
-
-    const record = row as Record<string, unknown>;
-    if (typeof record.id !== "string" || record.id.trim().length === 0) {
-      throw new Error(`Missing id at index ${index} in ${filePath}.`);
-    }
-
-    return record;
+/** One object per `records/{entity}/{id}.json` file. */
+function readImportRecordsDir(dirPath: string): Record<string, unknown>[] {
+  return listJsonFilesInDir(dirPath).map((fileName) => {
+    const filePath = join(dirPath, fileName);
+    const parsed: unknown = JSON.parse(readFileSync(filePath, "utf8"));
+    return assertRecordObject(parsed, filePath);
   });
+}
+
+/**
+ * One JSON array per `generated/{entity}/{financialItemId}.json` file;
+ * concatenate for import.
+ */
+function readGeneratedRecordsDir(dirPath: string): Record<string, unknown>[] {
+  const records: Record<string, unknown>[] = [];
+  for (const fileName of listJsonFilesInDir(dirPath)) {
+    const filePath = join(dirPath, fileName);
+    const parsed: unknown = JSON.parse(readFileSync(filePath, "utf8"));
+    if (!Array.isArray(parsed)) {
+      throw new Error(`Expected JSON array in ${filePath}.`);
+    }
+    parsed.forEach((row, index) => {
+      records.push(assertRecordObject(row, `${filePath}[${index}]`));
+    });
+  }
+  return records;
 }
 
 export function normalizeLocalImportRecord(
@@ -260,17 +372,17 @@ export function readEntityImageFileName(
 const LOCAL_ENTITY_IMAGE_SEED_SPECS = [
   {
     entityName: "actor",
-    jsonFile: "actor.json",
+    dirName: "records/actor",
     fieldName: "logo",
   },
   {
     entityName: "category",
-    jsonFile: "category.json",
+    dirName: "records/category",
     fieldName: "image",
   },
   {
     entityName: "financialItem",
-    jsonFile: "financialItem.json",
+    dirName: "records/financialItem",
     fieldName: "image",
   },
 ] as const;
@@ -302,13 +414,13 @@ function buildEntityImageFileRef(
 function buildActorLogoFileNameById(
   importDir: string,
 ): ReadonlyMap<string, string> {
-  const actorPath = join(importDir, "actor.json");
-  if (!existsSync(actorPath)) {
+  const actorDir = join(importDir, "records/actor");
+  if (!existsSync(actorDir)) {
     return new Map();
   }
 
   const actorLogoById = new Map<string, string>();
-  for (const record of readImportRecords(actorPath)) {
+  for (const record of readImportRecordsDir(actorDir)) {
     const objectId = record.id;
     if (typeof objectId !== "string" || objectId.trim().length === 0) {
       continue;
@@ -353,12 +465,12 @@ function resolveEntityImageSeedRecords(
   importDir: string,
   spec: (typeof LOCAL_ENTITY_IMAGE_SEED_SPECS)[number],
 ): Record<string, unknown>[] {
-  const entityPath = join(importDir, spec.jsonFile);
-  if (!existsSync(entityPath)) {
+  const entityDir = join(importDir, spec.dirName);
+  if (!existsSync(entityDir)) {
     return [];
   }
 
-  const records = readImportRecords(entityPath);
+  const records = readImportRecordsDir(entityDir);
   if (spec.entityName !== "financialItem") {
     return records;
   }
@@ -543,26 +655,17 @@ async function runLocalSchedulePaymentMockGenerator(
       anchorDate,
     );
 
-    const outputDir = join(importDir, "generated");
-    mkdirSync(outputDir, { recursive: true });
-    writeFileSync(
-      join(outputDir, "paymentSchedule.json"),
-      `${JSON.stringify(payload.paymentSchedule, null, 2)}\n`,
-      "utf8",
-    );
-    writeFileSync(
-      join(outputDir, "transaction.json"),
-      `${JSON.stringify(payload.transaction, null, 2)}\n`,
-      "utf8",
-    );
-    writeFileSync(
-      join(outputDir, "balanceSnapshot.json"),
-      `${JSON.stringify(payload.balanceSnapshot, null, 2)}\n`,
-      "utf8",
-    );
+    if (typeof generator.writeGeneratedArtifacts === "function") {
+      generator.writeGeneratedArtifacts(payload);
+    } else {
+      writeGeneratedRecordsByFinancialItem(
+        join(importDir, "generated"),
+        payload,
+      );
+    }
 
     console.log(
-      `[tenant-import] Generated schedule payment mocks in ${outputDir} ` +
+      `[tenant-import] Generated schedule payment mocks in ${join(importDir, "generated")} ` +
         `(${payload.paymentSchedule.length} schedules, ${payload.transaction.length} transactions, ${payload.balanceSnapshot.length} snapshots, anchor ${anchorDate}).`,
     );
   } finally {
@@ -654,20 +757,87 @@ export async function verifyGcpImportOwner(
   return ownerId;
 }
 
+function writeGeneratedRecordsByFinancialItem(
+  outputDir: string,
+  payload: {
+    readonly paymentSchedule: readonly Record<string, unknown>[];
+    readonly transaction: readonly Record<string, unknown>[];
+    readonly balanceSnapshot: readonly Record<string, unknown>[];
+  },
+): void {
+  const groups: Array<{
+    readonly entityName: string;
+    readonly rows: readonly Record<string, unknown>[];
+  }> = [
+    { entityName: "paymentSchedule", rows: payload.paymentSchedule },
+    { entityName: "transaction", rows: payload.transaction },
+    { entityName: "balanceSnapshot", rows: payload.balanceSnapshot },
+  ];
+
+  for (const group of groups) {
+    const entityDir = join(outputDir, group.entityName);
+    if (existsSync(entityDir)) {
+      rmSync(entityDir, { recursive: true, force: true });
+    }
+    mkdirSync(entityDir, { recursive: true });
+
+    const byFi = new Map<string, Record<string, unknown>[]>();
+    for (const row of group.rows) {
+      const fiId = row.financialItemId;
+      if (typeof fiId !== "string" || fiId.trim().length === 0) {
+        throw new Error(
+          `Missing financialItemId on generated ${group.entityName} row.`,
+        );
+      }
+      const list = byFi.get(fiId) ?? [];
+      list.push(row);
+      byFi.set(fiId, list);
+    }
+
+    for (const [fiId, rows] of byFi) {
+      writeFileSync(
+        join(entityDir, `${fiId}.json`),
+        `${JSON.stringify(rows, null, 2)}\n`,
+        "utf8",
+      );
+    }
+  }
+}
+
 async function importLocalRecords(
   context: ReturnType<typeof createRatesRecordSeedContext>,
   importDir: string,
-  specs: readonly { readonly fileName: string; readonly entityName: string }[],
+  specs: readonly { readonly dirName: string; readonly entityName: string }[],
   uploadedImages: UploadedEntityImages = new Map(),
+  options: {
+    readonly recordIds?: ReadonlySet<string>;
+    readonly skipOrphanDelete?: boolean;
+    readonly generated?: boolean;
+  } = {},
 ): Promise<void> {
   for (const spec of specs) {
-    const filePath = join(importDir, spec.fileName);
-    const records = readImportRecords(filePath);
+    const dirPath = join(importDir, spec.dirName);
+    const allRecords = options.generated
+      ? readGeneratedRecordsDir(dirPath)
+      : readImportRecordsDir(dirPath);
+    const records = filterImportRecordsByIds(allRecords, options.recordIds);
     const startedAt = Date.now();
 
     if (
-      spec.entityName === "paymentSchedule" ||
-      spec.entityName === "transaction"
+      options.recordIds &&
+      options.recordIds.size > 0 &&
+      records.length === 0
+    ) {
+      console.warn(
+        `[seed]   ${spec.dirName}: 0 ${spec.entityName} record(s) matched --ids filter.`,
+      );
+      continue;
+    }
+
+    if (
+      !options.skipOrphanDelete &&
+      (spec.entityName === "paymentSchedule" ||
+        spec.entityName === "transaction")
     ) {
       const keepIds = new Set(
         records
@@ -683,7 +853,7 @@ async function importLocalRecords(
       );
       if (deleted > 0) {
         console.log(
-          `[seed]   Removed ${deleted} orphan ${spec.entityName} record(s) not in ${spec.fileName}.`,
+          `[seed]   Removed ${deleted} orphan ${spec.entityName} record(s) not in ${spec.dirName}.`,
         );
       }
     }
@@ -707,7 +877,7 @@ async function importLocalRecords(
     );
 
     console.log(
-      `[seed]   ${spec.fileName}: ${records.length} ${spec.entityName} record(s) (${Date.now() - startedAt}ms)`,
+      `[seed]   ${spec.dirName}: ${records.length} ${spec.entityName} record(s) (${Date.now() - startedAt}ms)`,
     );
   }
 }
@@ -719,8 +889,35 @@ export async function seedLocalTenantImportIfPresent(
   importDir: string = LOCAL_IMPORT_DIR,
   importOptions: LocalTenantImportOptions = {},
 ): Promise<{ readonly seeded: boolean; readonly ownerEmail: string | null }> {
-  const presentSpecs = listPresentLocalImportSpecs(importDir);
-  if (presentSpecs.length === 0) {
+  const includeEmailMatchBindings =
+    importOptions.includeEmailMatchBindings ?? true;
+  const runMockGenerator = importOptions.runMockGenerator ?? true;
+  const includeEntityImages = importOptions.includeEntityImages ?? true;
+  const skipOrphanDelete = importOptions.skipOrphanDelete ?? false;
+
+  const presentSpecs = filterImportSpecsByEntityNames(
+    listPresentLocalImportSpecs(importDir),
+    importOptions.entityNames,
+  );
+  const wantsGenerated =
+    importOptions.generatedEntityNames === undefined ||
+    importOptions.generatedEntityNames.length > 0 ||
+    runMockGenerator;
+  const presentGeneratedSpecs = filterImportSpecsByEntityNames(
+    listPresentLocalGeneratedImportSpecs(importDir),
+    importOptions.generatedEntityNames,
+  );
+
+  const hasStructuralWork = presentSpecs.length > 0;
+  const hasGeneratedWork =
+    wantsGenerated &&
+    (runMockGenerator || presentGeneratedSpecs.length > 0);
+  const hasBindingWork =
+    includeEmailMatchBindings &&
+    listJsonFilesInDir(join(importDir, LOCAL_EMAIL_MATCH_BINDINGS_DIR)).length >
+      0;
+
+  if (!hasStructuralWork && !hasGeneratedWork && !hasBindingWork) {
     if (importOptions.requireOwner) {
       throw new Error(
         `GCP seed requires local import JSON in ${importDir}, but no supported files were found.`,
@@ -750,36 +947,66 @@ export async function seedLocalTenantImportIfPresent(
     ownerId,
   );
 
-  console.log(
-    `[seed] Importing ${presentSpecs.length} local JSON file(s) for ${ownerEmail} from ${importDir}...`,
-  );
+  const importRecordOptions = {
+    recordIds: importOptions.recordIds,
+    skipOrphanDelete,
+  };
 
-  const uploadedImages = await uploadEntityImagesFromLocalFiles(
-    tenantId,
-    firebaseAdminConfig,
-    importDir,
-  );
-  await importLocalRecords(context, importDir, presentSpecs, uploadedImages);
-  await runLocalSchedulePaymentMockGenerator(importDir);
-
-  const generatedSpecs = listPresentLocalGeneratedImportSpecs(importDir);
-  if (generatedSpecs.length > 0) {
+  if (hasStructuralWork) {
     console.log(
-      `[seed] Importing ${generatedSpecs.length} generated local JSON file(s)...`,
+      `[seed] Importing ${presentSpecs.length} local record dir(s) for ${ownerEmail} from ${importDir}...`,
     );
-    await importLocalRecords(context, importDir, generatedSpecs);
+
+    const uploadedImages = includeEntityImages
+      ? await uploadEntityImagesFromLocalFiles(
+          tenantId,
+          firebaseAdminConfig,
+          importDir,
+        )
+      : new Map();
+    await importLocalRecords(
+      context,
+      importDir,
+      presentSpecs,
+      uploadedImages,
+      importRecordOptions,
+    );
   }
 
-  const bindingsUpserted = await seedLocalEmailMatchBindingsIfPresent(
-    tenantId,
-    firebaseAdminConfig,
-    ownerId,
-    importDir,
+  if (runMockGenerator) {
+    await runLocalSchedulePaymentMockGenerator(importDir);
+  }
+
+  const generatedSpecs = filterImportSpecsByEntityNames(
+    listPresentLocalGeneratedImportSpecs(importDir),
+    importOptions.generatedEntityNames,
   );
-  if (bindingsUpserted > 0) {
+  if (generatedSpecs.length > 0) {
     console.log(
-      `[seed] Upserted ${bindingsUpserted} email match binding(s) from ${LOCAL_EMAIL_MATCH_BINDINGS_FILE}.`,
+      `[seed] Importing ${generatedSpecs.length} generated local record dir(s)...`,
     );
+    await importLocalRecords(
+      context,
+      importDir,
+      generatedSpecs,
+      new Map(),
+      { ...importRecordOptions, generated: true },
+    );
+  }
+
+  if (includeEmailMatchBindings) {
+    const bindingsUpserted = await seedLocalEmailMatchBindingsIfPresent(
+      tenantId,
+      firebaseAdminConfig,
+      ownerId,
+      importDir,
+      importOptions.recordIds,
+    );
+    if (bindingsUpserted > 0) {
+      console.log(
+        `[seed] Upserted ${bindingsUpserted} email match binding(s) from ${LOCAL_EMAIL_MATCH_BINDINGS_DIR}.`,
+      );
+    }
   }
 
   console.log(`[seed] Local tenant import complete for ${ownerEmail}.`);

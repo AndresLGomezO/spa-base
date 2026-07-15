@@ -114,11 +114,40 @@ describe("seedRatesTenantGcp", () => {
       firebaseAdminConfig,
       [],
       undefined,
-      {
+      expect.objectContaining({
         requireOwner: true,
         expectedUid: RATES_GCP_DEMO_OWNER_UID,
-      },
+      }),
     );
+  });
+
+  it("seeds only selected catalog components without local import", async () => {
+    const { seedLocalTenantUiSlicesIfPresent } = await import(
+      "./seed-local-tenant-ui-slices.js"
+    );
+    const { seedRatesEntityUiOverrides } = await import(
+      "./seed-rates-entity-ui-overrides.js"
+    );
+
+    await seedRatesTenantGcp(firebaseAdminConfig, entityRuntime, {
+      components: new Set(["hooks"]),
+      ids: null,
+    });
+
+    expect(seedRatesCatalogs).toHaveBeenCalledWith(
+      "rates",
+      firebaseAdminConfig,
+      entityRuntime,
+      expect.objectContaining({
+        hooks: true,
+        entities: false,
+        metrics: false,
+      }),
+    );
+    expect(seedLocalTenantImportIfPresent).not.toHaveBeenCalled();
+    expect(activateAndBackfillRatesMetrics).not.toHaveBeenCalled();
+    expect(seedRatesEntityUiOverrides).not.toHaveBeenCalled();
+    expect(seedLocalTenantUiSlicesIfPresent).not.toHaveBeenCalled();
   });
 });
 
@@ -156,5 +185,35 @@ describe("seedRatesTenantMock", () => {
     await seedRatesTenantMock(firebaseAdminConfig, entityRuntime);
 
     expect(seedRatesBusinessRecords).toHaveBeenCalled();
+  });
+
+  it("passes record id filters for partial local import", async () => {
+    seedLocalTenantImportIfPresent.mockResolvedValue({
+      seeded: true,
+      ownerEmail: "andreslgomezo@gmail.com",
+    });
+
+    const hubId = "7c2e9f11-2518-4b3a-9d4e-030cd8568c15";
+    await seedRatesTenantMock(firebaseAdminConfig, entityRuntime, {
+      components: new Set(["financialItem", "emailMatchBindings"]),
+      ids: new Set([hubId]),
+    });
+
+    expect(seedLocalTenantImportIfPresent).toHaveBeenCalledWith(
+      "rates",
+      firebaseAdminConfig,
+      [],
+      undefined,
+      expect.objectContaining({
+        entityNames: ["financialItem"],
+        generatedEntityNames: [],
+        recordIds: new Set([hubId]),
+        skipOrphanDelete: true,
+        runMockGenerator: false,
+        includeEmailMatchBindings: true,
+      }),
+    );
+    expect(seedRatesBusinessRecords).not.toHaveBeenCalled();
+    expect(activateAndBackfillRatesMetrics).not.toHaveBeenCalled();
   });
 });

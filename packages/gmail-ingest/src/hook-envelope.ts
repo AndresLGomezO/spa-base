@@ -10,6 +10,8 @@ export function buildEmailHookEnvelope(options: {
   readonly relevant: boolean;
   /** Domain email ledger row id when the worker upserted one before hooks. */
   readonly emailLedgerId?: string | null;
+  /** Binding ingest mode: create a txn vs link an existing source txn. */
+  readonly ingestMode?: "create" | "link";
 }): Record<string, unknown> {
   return {
     ...options.record,
@@ -19,6 +21,7 @@ export function buildEmailHookEnvelope(options: {
     __matchBindingId: options.bindingId,
     __matchEntityName: options.entityName,
     __matchRecordId: options.recordId,
+    __matchIngestMode: options.ingestMode ?? "create",
     ...(options.emailLedgerId
       ? { __emailLedger: { id: options.emailLedgerId } }
       : {}),

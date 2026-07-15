@@ -1,0 +1,25 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "amortizationLoopState",
+    "description": "Schedule: remaining balance after principal payment",
+    "inputs": [],
+    "body": {
+      "kind": "binary",
+      "op": "-",
+      "left": {
+        "kind": "formula",
+        "name": "loanPeriodBalance",
+        "inputs": {}
+      },
+      "right": {
+        "kind": "formula",
+        "name": "schedulePrincipalPortion",
+        "inputs": {}
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

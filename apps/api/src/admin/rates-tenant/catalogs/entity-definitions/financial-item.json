@@ -1,0 +1,982 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "financialItem",
+    "label": "Financial Items",
+    "description": "Universal financial commitment — income, expense, transfer, or investment",
+    "displayField": "name",
+    "navCategoryId": "cat_commitments",
+    "navOrder": 1,
+    "hiddenFromNav": true,
+    "emailMatchingEnabled": true,
+    "ui": {
+      "nav": {
+        "label": "Financial Items",
+        "icon": "FileText"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "name",
+            "flowKind",
+            "itemType",
+            "amount",
+            "currency",
+            "isRecurring",
+            "frequency",
+            "nextDueDate",
+            "currentBalance",
+            "revolvingBalance",
+            "parentFinancialItemId",
+            "balanceSheetRole",
+            "status",
+            "startDate",
+            "endDate",
+            "description",
+            "tags",
+            "billingAliases",
+            "categoryId",
+            "actorId",
+            "accountId",
+            "scheduleHorizonMonths"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-f0dcb92a-7f81-4212-b6ea-aa9477c08ba7",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-d8dce8c6-9f4c-4936-b3fe-8ad6b7d6a18c",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-c67a123b-519f-40cc-9733-5ed965398863",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-8ae5ed6a-15a8-41a5-af61-ea106c4f418e",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-1e86e195-b496-4e41-99f2-329c3d5bd77e",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "flowKind"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-3a195808-30b8-468b-b8e4-84ca9e1d3a1f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "itemType"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-f9d21702-e4dc-450d-932e-eef3a38f0c83",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "amount"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-4985b228-da65-470b-87e6-3492f9571e18",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "currency"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-810994ab-f87d-4a84-97c4-fea620acdbd7",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "isRecurring"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ea7a6e2c-cd76-45b7-a896-ce6b826e0118",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "frequency"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-55b137d3-4b2a-47fd-89e9-d751d85186bc",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "nextDueDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-0fa18c3f-ca08-4b4c-8dab-6f35236d0be8",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "currentBalance"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-fi-create-revolvingBalance",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "revolvingBalance"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-fi-create-parentFinancialItemId",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "parentFinancialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-a38356d4-c8d0-4bc4-b83a-d84a2de8cc85",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "balanceSheetRole"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-5b7554f1-c536-458a-88bc-0ca61f14993a",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "status"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b7db19ae-b699-496f-a42b-cf8e1596be1b",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "startDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-979acb59-1c9a-41ce-ba7f-1939fd7db919",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "endDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-6c3e5533-9ff8-4a2e-9662-1e65a631b4de",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "description"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-94a631f5-4fc7-4f67-8750-6c192180c659",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "tags"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-billing-aliases-create-fi",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "billingAliases"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-47d9ffdc-9273-4f14-8ef6-aacf2669faa6",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "categoryId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-62cec22d-4d5e-4062-b060-4207f91279a2",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "actorId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-599a3736-c011-455f-b8f8-a13ec004e783",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "accountId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-9b66db28-4c5a-45b2-8f76-7bf7e46c6665",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "scheduleHorizonMonths"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-a1b2c3d4-e5f6-4789-a012-b3c4d5e6f701",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "image"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-d1264541-8caf-4d44-be9f-2fa8b0802d83",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-0ab2c189-fb0c-413e-ad9a-1bf43cc7eada",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-427a1992-a685-4080-8b3b-474147715c8d",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-e7a18794-77e2-418f-988f-9930aa1a1a42",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-e0a42237-ffed-44eb-bcd0-1a0e2e60f4cd",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-4bf7d6e1-5cdd-4139-9096-be400664c132",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "flowKind"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-3f1fd3e3-c8b9-44fa-9791-5cb41b2055cf",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "itemType"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-f957135a-1985-4b29-b0e3-0c515d93b497",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "amount"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b96967ab-66ae-4b8f-a088-54432d6a8273",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "currency"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-e828ef03-dd55-48bb-9aab-b4693bad026d",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "isRecurring"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-4c392da2-e7df-48bc-855e-aa4b9084c6bc",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "frequency"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-642e1ae4-c893-4f6c-bdea-e4753d65e515",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "nextDueDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-091ac415-56e4-4a24-8753-76f70fc72fdf",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "currentBalance"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-fi-edit-revolvingBalance",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "revolvingBalance"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-fi-edit-parentFinancialItemId",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "parentFinancialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-1e8de62b-9c0b-46f1-9637-2b9bb7a22c87",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "balanceSheetRole"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-efb1e289-3a3b-436d-a149-ba9b1571e0c2",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "status"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b5859c96-759f-41bf-b03a-7239563de719",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "startDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-a92c55ef-c16f-4d4d-8d19-0aa7f2141e33",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "endDate"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-6c3f3b9e-1444-4785-a604-34249b737d12",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "description"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-eab4a7b5-318c-4add-88df-d0b94257fc93",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "tags"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-billing-aliases-edit-fi",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "billingAliases"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-4e9a25d0-1507-44ca-b40a-7f065afe44fe",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "categoryId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-4b1f3d47-2f5f-4a32-ba9a-59aadf240cf5",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "actorId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b5c38ffa-3674-452b-b771-886c230795b2",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "accountId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-44475539-f92f-4468-9097-44565f8179bb",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "scheduleHorizonMonths"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-c3d4e5f6-a7b8-4901-c234-d5e6f7081923",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "image"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-bd0298ab-85a8-4852-8c3c-e3ac89316e6b",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "name": {
+          "label": "Name",
+          "component": "input",
+          "sortable": true,
+          "searchable": true,
+          "order": 0
+        },
+        "flowKind": {
+          "label": "Flow kind",
+          "component": "select",
+          "filterable": true,
+          "order": 1
+        },
+        "itemType": {
+          "label": "Item type",
+          "component": "select",
+          "filterable": true,
+          "order": 2
+        },
+        "amount": {
+          "label": "Payment amount",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 3
+        },
+        "currency": {
+          "label": "Currency",
+          "component": "select",
+          "filterable": true,
+          "order": 4
+        },
+        "isRecurring": {
+          "label": "Recurring",
+          "component": "toggle",
+          "filterable": true,
+          "order": 5
+        },
+        "frequency": {
+          "label": "Frequency",
+          "component": "select",
+          "filterable": true,
+          "order": 6
+        },
+        "nextDueDate": {
+          "label": "Next due date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 7
+        },
+        "currentBalance": {
+          "label": "Outstanding balance",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 8
+        },
+        "revolvingBalance": {
+          "label": "Revolving balance",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 9
+        },
+        "parentFinancialItemId": {
+          "label": "Host credit card",
+          "component": "relation",
+          "filterable": true,
+          "order": 10
+        },
+        "balanceSheetRole": {
+          "label": "Balance sheet role",
+          "component": "select",
+          "filterable": true,
+          "order": 11
+        },
+        "status": {
+          "label": "Status",
+          "component": "select",
+          "filterable": true,
+          "order": 12
+        },
+        "startDate": {
+          "label": "Start date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 13
+        },
+        "endDate": {
+          "label": "End date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 14
+        },
+        "description": {
+          "label": "Description",
+          "component": "input",
+          "searchable": true,
+          "order": 15
+        },
+        "tags": {
+          "label": "Tags",
+          "component": "input",
+          "filterable": true,
+          "sortable": false,
+          "searchable": true,
+          "order": 16
+        },
+        "billingAliases": {
+          "label": "Billing aliases",
+          "component": "input",
+          "filterable": true,
+          "sortable": false,
+          "searchable": true,
+          "order": 17
+        },
+        "categoryId": {
+          "label": "Category",
+          "component": "relation",
+          "filterable": true,
+          "order": 18
+        },
+        "actorId": {
+          "label": "Counterparty",
+          "component": "relation",
+          "filterable": true,
+          "order": 19
+        },
+        "accountId": {
+          "label": "Transfer source account",
+          "component": "relation",
+          "filterable": true,
+          "order": 20
+        },
+        "scheduleHorizonMonths": {
+          "label": "Schedule horizon (months)",
+          "component": "number",
+          "displayFormat": "plain",
+          "sortable": true,
+          "order": 21
+        },
+        "image": {
+          "label": "Image",
+          "component": "image",
+          "order": 22
+        },
+        "emailId": {
+          "label": "Source email",
+          "component": "relation",
+          "filterable": true,
+          "order": 23
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "ui": {
+          "label": "Name",
+          "order": 0,
+          "sortable": true,
+          "searchable": true
+        }
+      },
+      {
+        "name": "flowKind",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "INCOME",
+          "EXPENSE",
+          "TRANSFER",
+          "ASSET_GROWTH"
+        ],
+        "ui": {
+          "label": "Flow kind",
+          "order": 1,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "itemType",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "SALARY",
+          "RENTAL_INCOME",
+          "BUSINESS_INCOME",
+          "YIELD_INCOME",
+          "OTHER_INCOME",
+          "MORTGAGE",
+          "LOAN",
+          "CREDIT_CARD",
+          "REVOLVING_CREDIT",
+          "PERSONAL_DEBT",
+          "UTILITY",
+          "HOUSING_FEE",
+          "SUBSCRIPTION",
+          "INSURANCE",
+          "SOCIAL_SECURITY",
+          "OTHER_EXPENSE",
+          "ACCOUNT_TRANSFER",
+          "TO_SAVINGS",
+          "TO_INVESTMENT",
+          "SCHEDULED_SAVINGS",
+          "YIELD_SAVINGS",
+          "FIDUCIARY",
+          "INVESTMENT_FUND",
+          "OTHER_INVESTMENT"
+        ],
+        "ui": {
+          "label": "Item type",
+          "order": 2,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "required": true,
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Payment amount",
+          "order": 3,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "currency",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "COP",
+          "USD"
+        ],
+        "ui": {
+          "label": "Currency",
+          "order": 4,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "isRecurring",
+        "type": "boolean",
+        "required": true,
+        "ui": {
+          "label": "Recurring",
+          "order": 5,
+          "filterable": true
+        }
+      },
+      {
+        "name": "frequency",
+        "type": "enum",
+        "enumValues": [
+          "MONTHLY",
+          "ONE_TIME",
+          "WEEKLY",
+          "BIWEEKLY",
+          "QUARTERLY",
+          "ANNUAL",
+          "IRREGULAR"
+        ],
+        "ui": {
+          "label": "Frequency",
+          "order": 6,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "nextDueDate",
+        "type": "date",
+        "ui": {
+          "label": "Next due date",
+          "order": 7,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "currentBalance",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Outstanding balance",
+          "order": 8,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "revolvingBalance",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Revolving balance",
+          "order": 9,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "parentFinancialItemId",
+        "type": "relation",
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Host credit card",
+          "order": 10,
+          "filterable": true
+        }
+      },
+      {
+        "name": "balanceSheetRole",
+        "type": "enum",
+        "enumValues": [
+          "ASSET",
+          "LIABILITY",
+          "NONE"
+        ],
+        "ui": {
+          "label": "Balance sheet role",
+          "order": 11,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "status",
+        "type": "enum",
+        "required": true,
+        "enumValues": [
+          "ACTIVE",
+          "PAUSED",
+          "COMPLETED",
+          "DEFAULTED",
+          "CLOSED"
+        ],
+        "ui": {
+          "label": "Status",
+          "order": 12,
+          "component": "select",
+          "filterable": true
+        }
+      },
+      {
+        "name": "startDate",
+        "type": "date",
+        "ui": {
+          "label": "Start date",
+          "order": 13,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "endDate",
+        "type": "date",
+        "ui": {
+          "label": "End date",
+          "order": 14,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "ui": {
+          "label": "Description",
+          "order": 15,
+          "searchable": true
+        }
+      },
+      {
+        "name": "tags",
+        "type": "string",
+        "isArray": true,
+        "ui": {
+          "label": "Tags",
+          "order": 16,
+          "filterable": true,
+          "searchable": true
+        }
+      },
+      {
+        "name": "billingAliases",
+        "type": "string",
+        "isArray": true,
+        "ui": {
+          "label": "Billing aliases",
+          "order": 17,
+          "filterable": true,
+          "searchable": true
+        }
+      },
+      {
+        "name": "categoryId",
+        "type": "relation",
+        "relation": {
+          "target": "category",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Category",
+          "order": 18,
+          "filterable": true
+        }
+      },
+      {
+        "name": "actorId",
+        "type": "relation",
+        "relation": {
+          "target": "actor",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Counterparty",
+          "order": 19,
+          "filterable": true
+        }
+      },
+      {
+        "name": "accountId",
+        "type": "relation",
+        "relation": {
+          "target": "account",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Transfer source account",
+          "order": 20,
+          "filterable": true
+        }
+      },
+      {
+        "name": "scheduleHorizonMonths",
+        "type": "number",
+        "numberKind": "integer",
+        "ui": {
+          "label": "Schedule horizon (months)",
+          "order": 21,
+          "displayFormat": "plain",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "image",
+        "type": "image",
+        "ui": {
+          "label": "Image",
+          "component": "image",
+          "order": 22
+        }
+      },
+      {
+        "name": "emailId",
+        "type": "relation",
+        "required": false,
+        "relation": {
+          "target": "email",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Source email",
+          "order": 23,
+          "hidden": true,
+          "filterable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

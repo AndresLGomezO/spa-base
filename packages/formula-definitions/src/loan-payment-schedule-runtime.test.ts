@@ -1,9 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  parseDataHooksCatalogJson,
   runDataHook,
   type DataHookDefinition,
   type HookContext,
@@ -12,11 +9,7 @@ import {
   type PortableDataHookDefinition,
 } from "@repo/hooks";
 import { createRatesFormulaResolver } from "./rates-formula-test-utils.js";
-
-const catalogPath = resolve(
-  import.meta.dirname,
-  "../../../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
-);
+import { loadRatesDataHookByName } from "./test/load-rates-data-hooks-catalog.js";
 
 const loanDetails = {
   id: "7f7fd68c-948e-455c-a131-b4903601c217",
@@ -41,21 +34,7 @@ const financialItem = {
 };
 
 function loadLoanPaymentPlanHook() {
-  const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) {
-    throw new Error("Failed to parse rates data hooks catalog.");
-  }
-
-  const hook = parsed.data.dataHooks.find(
-    (entry) => entry.name === "Generate loan payment plan",
-  );
-  expect(hook).toBeDefined();
-  if (!hook) {
-    throw new Error("Generate loan payment plan hook not found.");
-  }
-
-  return hook;
+  return loadRatesDataHookByName("Generate loan payment plan");
 }
 
 function toDataHookDefinition(
@@ -307,21 +286,7 @@ describe("loan payment schedule runtime", () => {
 
 describe("loan origination date inference runtime", () => {
   function loadOriginationDateHook() {
-    const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      throw new Error("Failed to parse rates data hooks catalog.");
-    }
-
-    const hook = parsed.data.dataHooks.find(
-      (entry) => entry.name === "Persist inferred loan origination date",
-    );
-    expect(hook).toBeDefined();
-    if (!hook) {
-      throw new Error("Persist inferred loan origination date hook not found.");
-    }
-
-    return hook;
+    return loadRatesDataHookByName("Persist inferred loan origination date");
   }
 
   it("skips deferred GERMAN revolving loans without principal snapshots", async () => {

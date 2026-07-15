@@ -408,6 +408,8 @@ export function createFirestoreAdminEmailMatchBindingRepository(
         recordId: parsed.recordId,
         enabled: parsed.enabled ?? true,
         catchupNeeded: true,
+        order: parsed.order ?? 100,
+        ingestMode: parsed.ingestMode ?? "create",
         fromAddresses: parsed.fromAddresses ?? [],
         subjectPatterns: parsed.subjectPatterns ?? [],
         bodyPatterns: parsed.bodyPatterns ?? [],

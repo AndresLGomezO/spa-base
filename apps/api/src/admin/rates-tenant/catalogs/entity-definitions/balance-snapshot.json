@@ -1,0 +1,271 @@
+{
+  "kind": "entity-definition",
+  "version": 1,
+  "data": {
+    "name": "balanceSnapshot",
+    "label": "Balance Snapshots",
+    "description": "Point-in-time balance history for financial items",
+    "displayField": "date",
+    "navCategoryId": "cat_movements",
+    "navOrder": 3,
+    "hiddenFromNav": true,
+    "ui": {
+      "nav": {
+        "label": "Balance Snapshots",
+        "icon": "Camera"
+      },
+      "views": [
+        {
+          "type": "table",
+          "name": "default",
+          "fields": [
+            "financialItemId",
+            "date",
+            "balance",
+            "accruedInterest"
+          ]
+        }
+      ],
+      "forms": {
+        "create": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-8fbf9138-c8d5-42e7-b359-7f6e438cfaf6",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-0123f64d-b41a-4f13-9e73-f991109a9813",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-ddb31722-79de-4767-88ea-afec78375350",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-00f84a40-0e6e-4136-8a09-62ebaf61d5ef",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-5184f170-2554-433b-bb46-545c8bd04b0f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "date"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-9e703198-5e40-4699-b23c-5d7fa931e78f",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "balance"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-550bc06a-d9f1-4236-b56c-32d133b7fb1a",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "accruedInterest"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-295df361-1646-4ef3-a485-1dc33a630017",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        "edit": {
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-b988130d-3064-4ac5-869a-a7b5ae7c857e",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-a0a27af0-97d2-4a9f-a5c0-7dabd45c42ac",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-2fb5a7af-f9d9-4adc-8351-d41144833f96",
+                      "component": {
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-d313a877-ba44-4010-9643-895b23d540dd",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "financialItemId"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-b681aa31-e5fd-4e6c-bdbd-d127374d5d48",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "date"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-49d32309-2715-463b-abff-ae1308cbe176",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "balance"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-ba61a8c3-fc18-43ea-aa95-5f91e9b81b3c",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "accruedInterest"
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-034e4f32-a2d4-461e-88b2-e955f84b9f62",
+                            "component": {
+                              "kind": "form-actions"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      },
+      "fields": {
+        "financialItemId": {
+          "label": "Financial item",
+          "component": "relation",
+          "filterable": true,
+          "order": 0
+        },
+        "date": {
+          "label": "Date",
+          "component": "date",
+          "dateDisplayFormat": "date",
+          "sortable": true,
+          "order": 1
+        },
+        "balance": {
+          "label": "Balance",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 2
+        },
+        "accruedInterest": {
+          "label": "Accrued interest",
+          "component": "number",
+          "displayFormat": "currency",
+          "sortable": true,
+          "order": 3
+        },
+        "statementId": {
+          "label": "Statement",
+          "component": "relation",
+          "filterable": true,
+          "order": 4
+        }
+      },
+      "listViewType": "expandableTable"
+    },
+    "fields": [
+      {
+        "name": "financialItemId",
+        "type": "relation",
+        "required": true,
+        "relation": {
+          "target": "financialItem",
+          "type": "many-to-one",
+          "onDelete": "restrict"
+        },
+        "ui": {
+          "label": "Financial item",
+          "order": 0,
+          "filterable": true
+        }
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": true,
+        "ui": {
+          "label": "Date",
+          "order": 1,
+          "dateDisplayFormat": "date",
+          "sortable": true
+        }
+      },
+      {
+        "name": "balance",
+        "type": "number",
+        "required": true,
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Balance",
+          "order": 2,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "accruedInterest",
+        "type": "number",
+        "numberKind": "decimal",
+        "ui": {
+          "label": "Accrued interest",
+          "order": 3,
+          "displayFormat": "currency",
+          "component": "number",
+          "sortable": true
+        }
+      },
+      {
+        "name": "statementId",
+        "type": "relation",
+        "required": false,
+        "relation": {
+          "target": "statement",
+          "type": "many-to-one",
+          "onDelete": "nullify"
+        },
+        "ui": {
+          "label": "Statement",
+          "order": 4,
+          "hidden": true,
+          "filterable": true
+        }
+      }
+    ],
+    "inMemoryListQueries": true
+  }
+}

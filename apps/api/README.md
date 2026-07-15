@@ -226,6 +226,26 @@ Requires Firestore (and Auth emulator for the demo user). With Docker dev, start
 
 Re-run after `pnpm dev:docker:reset` or when refreshing catalog/demo data.
 
+#### Partial seed (`--only` / `--ids`)
+
+Seed only selected components so you can refresh bindings or a few records without regenerating schedules, orphan-deleting transactions, backfilling metrics, or reloading the hook cache:
+
+```bash
+# Email match bindings only
+pnpm seed:database -- --only emailMatchBindings
+
+# One financialItem + its email bindings (same --ids filter)
+pnpm seed:database -- --only financialItem,emailMatchBindings --ids 7c2e9f11-2518-4b3a-9d4e-030cd8568c15
+
+# Data hooks catalog only (then optionally refresh worker/API caches)
+pnpm seed:database -- --only hooks
+pnpm seed:database -- --only hooks,hook-cache
+```
+
+Component keys: `platform`, `entities`, `metrics`, `queries`, `hooks`, `formulas`, `charts`, `custom-views`, local entities (`category`, `actor`, `account`, `financialItem`, …), generated entities (`paymentSchedule`, `transaction`, `balanceSnapshot`), `generated` (run mock generator + import all three), `emailMatchBindings`, `ui`, `demo`, `metrics-backfill`, `hook-cache`.
+
+`--ids` only applies to record-level components (local/generated entities + `emailMatchBindings`). Partial mode always skips orphan schedule/transaction deletes.
+
 #### GCP seed (real Firestore / Auth)
 
 To seed the same `rates` tenant against a deployed GCP project using your local gcloud credentials:
@@ -266,31 +286,36 @@ Sign in through the web app with the Auth emulator enabled. No manual Firestore 
 
 ### Local tenant import (optional)
 
-If JSON files exist under [`.local/tenant-import/`](../../.local/tenant-import/) at the repo root, `pnpm seed:database` imports them **in addition to** the demo mock data above (emulator mode only). In `--gcp` mode, personal import is the only business-record seed. Missing files are skipped individually in emulator mode; GCP mode fails if no import JSON is present.
+If record directories exist under [`.local/tenant-import/`](../../.local/tenant-import/) at the repo root, `pnpm seed:database` imports them **in addition to** the demo mock data above (emulator mode only). In `--gcp` mode, personal import is the only business-record seed. Missing dirs are skipped individually in emulator mode; GCP mode fails if no import JSON is present.
 
-| Field           | Value                                                                                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Owner           | First email in `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (default `andreslgomezo@gmail.com`)                                                                      |
-| Tenant role     | `admin`                                                                                                                                                        |
-| Supported files | `category.json`, `actor.json`, `account.json`, `financialItem.json`, `loanDetails.json`, `incomeDetails.json`, `investmentDetails.json`, `serviceDetails.json` |
+Granular layout (one JSON object per hand-maintained record; generated rows grouped by `financialItemId`):
+
+| Path | Contents |
+| ---- | -------- |
+| `sources/tenant-data.yaml` | YAML SSOT for generators |
+| `records/{entity}/{id}.json` | Structural records (`category`, `actor`, `account`, `financialItem`, loan/income/investment/service details, …) |
+| `email-match-bindings/{recordId}--{order}.json` | Singular email-match-binding envelopes |
+| `history/transaction-history.json` | Payment history SSOT for the schedule generator |
+| `generated/{entity}/{financialItemId}.json` | Arrays of schedules / transactions / snapshots per financial item |
+| `ui/query-definitions/`, `ui/entity-ui-overrides/` | Optional UI overlays |
+
+| Field       | Value                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| Owner       | First email in `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (default `andreslgomezo@gmail.com`) |
+| Tenant role | `admin`                                                                                   |
 
 The Auth user must already exist in the emulator (sign in once). If the user is missing, personal import is skipped and only the test-user mock data is seeded.
 
-During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../../.local/tenant-import/generate-schedule-payment-mocks.ts) exists, the seed runs it to build historical **payment schedules**, **transactions**, and **balance snapshots** from your imported definitions (2022 default start, or loan `originationDate`). Real payments come from optional [`.local/tenant-import/transaction-history.json`](../../.local/tenant-import/transaction-history.json):
+During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../../.local/tenant-import/generate-schedule-payment-mocks.ts) exists, the seed runs it to build historical **payment schedules**, **transactions**, and **balance snapshots** from your imported definitions (2022 default start, or loan `originationDate`). Real payments come from optional [`.local/tenant-import/history/transaction-history.json`](../../.local/tenant-import/history/transaction-history.json):
 
 - **`payments`**: `financialItemName` → `YYYY-MM` → COP amount (transaction dated on the item's schedule due day).
 - **`entries`**: explicit `{ "date": "YYYY-MM-DD", "amount": COP }` rows for irregular dates (e.g. salary deposits); supports multiple entries on the same day.
 
-Only months/entries you include produce transactions. Output is written to [`.local/tenant-import/generated/`](../../.local/tenant-import/generated/) and imported automatically:
+Only months/entries you include produce transactions. Output is written under [`.local/tenant-import/generated/`](../../.local/tenant-import/generated/) (one array file per financial item) and imported automatically.
 
-| Generated file                          | Entity                        |
-| --------------------------------------- | ----------------------------- |
-| `generated/paymentSchedule.json`        | `paymentSchedule`             |
-| `generated/transaction.json`            | `transaction`                 |
-| `generated/balanceSnapshot.json`        | `balanceSnapshot`             |
-| `generated/schedule-payment-mocks.json` | Combined artifact (same data) |
+Past due rows without a matching history entry stay **OVERDUE**. Rows with a real payment are **PAID** on the schedule due date. Current-day and future rows stay **UPCOMING**. Default payment account: **Ahorros**.
 
-Past due rows without a matching `transaction-history.json` entry stay **OVERDUE**. Rows with a real payment are **PAID** on the schedule due date. Current-day and future rows stay **UPCOMING**. Default payment account: **Ahorros** (`account.json`).
+Rates platform catalogs are also granular under [`src/admin/rates-tenant/catalogs/`](src/admin/rates-tenant/catalogs/) (`entity-definitions/`, `data-hooks/`, …) — one singular envelope JSON per definition. See that folder's README.
 
 Run the generator manually (from repo root):
 
@@ -304,13 +329,13 @@ Run its tests:
 pnpm --filter=api test:local-import
 ```
 
-Generate static entity import JSON from [`tenant-data.yaml`](../../.local/tenant-import/tenant-data.yaml):
+Generate static entity import JSON from [`sources/tenant-data.yaml`](../../.local/tenant-import/sources/tenant-data.yaml):
 
 ```bash
 python3 .local/tenant-import/generate-import-json.py
 ```
 
-**Actor and category logos (optional):** place normalized image files under [`.local/tenant-import/logos/`](../../.local/tenant-import/logos/). File names must match the `fileName` in `actor.json` (`logo`) and `category.json` (`image`). See [`logos/manifest.json`](../../.local/tenant-import/logos/manifest.json) for the actor/category mapping. On `pnpm seed:database` (emulator or `--gcp`), matching files are uploaded to tenant storage and wired on the imported records.
+**Actor and category logos (optional):** place normalized image files under [`.local/tenant-import/logos/`](../../.local/tenant-import/logos/). File names must match the `fileName` in `records/actor/{id}.json` (`logo`) and `records/category/{id}.json` (`image`). See [`logos/manifest.json`](../../.local/tenant-import/logos/manifest.json) for the actor/category mapping. On `pnpm seed:database` (emulator or `--gcp`), matching files are uploaded to tenant storage and wired on the imported records.
 
 **Total Balance chart asset (optional):** place `total-balance-chart.png` under [`.local/tenant-import/assets/`](../../.local/tenant-import/assets/). On `pnpm seed:database`, the Rates seed uploads it to tenant storage and wires the Accounts metrics widget chart overlay. If the file is missing, the seed uses the bundled SVG fallback at `apps/web/public/images/total-balance-area-chart.svg`.
 

@@ -1,20 +1,12 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { loadEntityUiOverridesCatalogJson } from "./seed-catalog-dir.js";
 import { parseRatesEntityUiOverridesCatalog } from "./seed-rates-entity-ui-overrides.js";
-
-const catalogPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "catalogs",
-  "rates-entity-ui-overrides.json",
-);
 
 describe("rates entity UI overrides catalog", () => {
   it("parses JSON handoff catalog with inline layout documents", () => {
     const catalog = parseRatesEntityUiOverridesCatalog(
-      readFileSync(catalogPath, "utf8"),
+      loadEntityUiOverridesCatalogJson(),
     );
 
     expect(catalog.overrides).toHaveLength(2);

@@ -22,10 +22,12 @@ export {
 export {
   bindingMatchesMessage,
   buildGmailSearchQuery,
+  findAllMatchingBindings,
   findBestMatchingBinding,
   matchesFromAddress,
   matchesTextPattern,
   resolveMatchingBinding,
+  resolveMatchingBindings,
 } from "./match.js";
 
 export {
@@ -94,6 +96,7 @@ export {
   emailIngestStepTraceEntrySchema,
   emptyEmailIngestRunMetrics,
   emailMatchBindingSchema,
+  emailMatchIngestModeSchema,
   emailAttachmentImportConfigSchema,
   gmailConnectionPublicStatusSchema,
   gmailConnectionRecordSchema,
@@ -117,6 +120,7 @@ export {
   type EmailIngestRunMetrics,
   type EmailIngestStepTraceEntry,
   type EmailMatchBinding,
+  type EmailMatchIngestMode,
   type GmailConnectionPublicStatus,
   type GmailConnectionRecord,
   type GmailConnectionStatus,

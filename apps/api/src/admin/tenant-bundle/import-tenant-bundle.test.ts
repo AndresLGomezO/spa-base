@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 import { serializeDataHookForFirestore } from "@repo/gcp-firebase";
 import { parseDataHooksCatalogJson } from "@repo/hooks";
 import { describe, expect, it } from "vitest";
@@ -9,6 +6,8 @@ import {
   TENANT_BUNDLE_COLLECTION_IMPORT_ORDER,
   assertTenantBundleCollectionImportOrder,
 } from "@repo/tenant-bundle";
+
+import { loadDataHooksCatalogJson } from "../rates-tenant/seed-catalog-dir.js";
 
 function maxFirestoreDepth(value: unknown, depth = 0): number {
   if (value === null || typeof value !== "object") {
@@ -45,11 +44,7 @@ describe("tenant bundle import order", () => {
   });
 
   it("serializes imported data hooks within Firestore nesting limits", () => {
-    const catalogPath = resolve(
-      import.meta.dirname,
-      "../rates-tenant/catalogs/rates-data-hooks.json",
-    );
-    const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
+    const parsed = parseDataHooksCatalogJson(loadDataHooksCatalogJson());
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
       return;

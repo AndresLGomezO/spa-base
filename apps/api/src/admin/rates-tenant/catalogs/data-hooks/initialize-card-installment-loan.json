@@ -1,0 +1,84 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Initialize card installment loan",
+    "description": "Seed child LOAN balance from originalPrincipal and sync host card total.",
+    "entity": "loanDetails",
+    "phase": "after",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "getRecord",
+        "entity": "financialItem",
+        "id": {
+          "kind": "field",
+          "source": "current",
+          "path": "financialItemId"
+        },
+        "as": "installmentItem"
+      },
+      {
+        "type": "updateMatching",
+        "entity": "financialItem",
+        "where": {
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          }
+        },
+        "set": {
+          "currentBalance": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "call",
+                "fn": "isEmpty",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "installmentItem",
+                    "path": "parentFinancialItemId"
+                  }
+                ]
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "currentBalance"
+              },
+              {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "currentBalance"
+                  },
+                  {
+                    "kind": "field",
+                    "source": "previous",
+                    "path": "originalPrincipal"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 1,
+    "chainHooks": true,
+    "execution": "queued"
+  }
+}

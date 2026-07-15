@@ -1,0 +1,80 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Skip upcoming on pause or close",
+    "description": "Mark UPCOMING paymentSchedule rows SKIPPED when item is PAUSED or CLOSED.",
+    "entity": "financialItem",
+    "phase": "after",
+    "trigger": {
+      "operation": "update",
+      "updateFields": [
+        "status"
+      ]
+    },
+    "condition": {
+      "type": "group",
+      "combinator": "or",
+      "children": [
+        {
+          "type": "condition",
+          "field": "status",
+          "operator": "==",
+          "value": {
+            "kind": "literal",
+            "value": "PAUSED"
+          }
+        },
+        {
+          "type": "condition",
+          "field": "status",
+          "operator": "==",
+          "value": {
+            "kind": "literal",
+            "value": "CLOSED"
+          }
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "updateMatching",
+        "entity": "paymentSchedule",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "id"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "==",
+              "value": {
+                "kind": "literal",
+                "value": "UPCOMING"
+              }
+            }
+          ]
+        },
+        "set": {
+          "status": {
+            "kind": "literal",
+            "value": "SKIPPED"
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 12,
+    "execution": "queued"
+  }
+}

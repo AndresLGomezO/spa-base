@@ -1,0 +1,667 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Email Ingest - Link Related",
+    "description": "When ingestMode=link, find the source transaction created by a prior create binding (same Gmail message id + amount, unlinked relatedFinancialItemId) and attach relatedFinancialItemId + closest open paymentSchedule on the matched financial item. Does not create transactions — if no source txn exists, the link is a no-op.",
+    "entity": "financialItem",
+    "phase": "after",
+    "trigger": {
+      "kind": "email"
+    },
+    "condition": {
+      "type": "group",
+      "combinator": "and",
+      "children": [
+        {
+          "type": "condition",
+          "field": "__emailRelevant",
+          "operator": "==",
+          "value": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "type": "condition",
+          "field": "__matchIngestMode",
+          "operator": "==",
+          "value": {
+            "kind": "literal",
+            "value": "link"
+          }
+        },
+        {
+          "type": "condition",
+          "field": "__extracted.fields.amount",
+          "operator": "isNotEmpty"
+        },
+        {
+          "type": "condition",
+          "field": "__extracted.fields.isReversal",
+          "operator": "!=",
+          "value": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "type": "condition",
+          "field": "__extracted.fields.emailKind",
+          "operator": "!=",
+          "value": {
+            "kind": "literal",
+            "value": "creditCardStatement"
+          }
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "aggregateMatching",
+        "entity": "paymentSchedule",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "id"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "in",
+              "value": {
+                "kind": "literal",
+                "value": [
+                  "UPCOMING",
+                  "OVERDUE"
+                ]
+              }
+            },
+            {
+              "type": "condition",
+              "field": "dueDate",
+              "operator": "<=",
+              "value": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__extracted.fields.date"
+                  },
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__email.date"
+                  },
+                  {
+                    "kind": "var",
+                    "name": "now"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "op": "max",
+        "field": "dueDate",
+        "as": "linkDueOnOrBefore"
+      },
+      {
+        "type": "aggregateMatching",
+        "entity": "paymentSchedule",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "id"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "in",
+              "value": {
+                "kind": "literal",
+                "value": [
+                  "UPCOMING",
+                  "OVERDUE"
+                ]
+              }
+            },
+            {
+              "type": "condition",
+              "field": "dueDate",
+              "operator": ">=",
+              "value": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__extracted.fields.date"
+                  },
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__email.date"
+                  },
+                  {
+                    "kind": "var",
+                    "name": "now"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "op": "min",
+        "field": "dueDate",
+        "as": "linkDueOnOrAfter"
+      },
+      {
+        "type": "getOrCreateRecord",
+        "entity": "paymentSchedule",
+        "createIfMissing": false,
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "id"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "dueDate",
+              "operator": "==",
+              "value": {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "call",
+                    "fn": "isEmpty",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "aggregate",
+                        "alias": "linkDueOnOrBefore"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "field",
+                    "source": "aggregate",
+                    "alias": "linkDueOnOrAfter"
+                  },
+                  {
+                    "kind": "call",
+                    "fn": "if",
+                    "args": [
+                      {
+                        "kind": "call",
+                        "fn": "isEmpty",
+                        "args": [
+                          {
+                            "kind": "field",
+                            "source": "aggregate",
+                            "alias": "linkDueOnOrAfter"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "field",
+                        "source": "aggregate",
+                        "alias": "linkDueOnOrBefore"
+                      },
+                      {
+                        "kind": "call",
+                        "fn": "if",
+                        "args": [
+                          {
+                            "kind": "binary",
+                            "op": "==",
+                            "left": {
+                              "kind": "call",
+                              "fn": "coalesce",
+                              "args": [
+                                {
+                                  "kind": "field",
+                                  "source": "current",
+                                  "path": "__extracted.fields.type"
+                                },
+                                {
+                                  "kind": "literal",
+                                  "value": "EXPENSE"
+                                }
+                              ]
+                            },
+                            "right": {
+                              "kind": "literal",
+                              "value": "INCOME"
+                            }
+                          },
+                          {
+                            "kind": "field",
+                            "source": "aggregate",
+                            "alias": "linkDueOnOrAfter"
+                          },
+                          {
+                            "kind": "call",
+                            "fn": "if",
+                            "args": [
+                              {
+                                "kind": "binary",
+                                "op": "<=",
+                                "left": {
+                                  "kind": "call",
+                                  "fn": "abs",
+                                  "args": [
+                                    {
+                                      "kind": "call",
+                                      "fn": "dateDiff",
+                                      "args": [
+                                        {
+                                          "kind": "call",
+                                          "fn": "coalesce",
+                                          "args": [
+                                            {
+                                              "kind": "field",
+                                              "source": "current",
+                                              "path": "__extracted.fields.date"
+                                            },
+                                            {
+                                              "kind": "field",
+                                              "source": "current",
+                                              "path": "__email.date"
+                                            },
+                                            {
+                                              "kind": "var",
+                                              "name": "now"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "field",
+                                          "source": "aggregate",
+                                          "alias": "linkDueOnOrBefore"
+                                        },
+                                        {
+                                          "kind": "literal",
+                                          "value": "DAY"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "right": {
+                                  "kind": "call",
+                                  "fn": "abs",
+                                  "args": [
+                                    {
+                                      "kind": "call",
+                                      "fn": "dateDiff",
+                                      "args": [
+                                        {
+                                          "kind": "call",
+                                          "fn": "coalesce",
+                                          "args": [
+                                            {
+                                              "kind": "field",
+                                              "source": "current",
+                                              "path": "__extracted.fields.date"
+                                            },
+                                            {
+                                              "kind": "field",
+                                              "source": "current",
+                                              "path": "__email.date"
+                                            },
+                                            {
+                                              "kind": "var",
+                                              "name": "now"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "field",
+                                          "source": "aggregate",
+                                          "alias": "linkDueOnOrAfter"
+                                        },
+                                        {
+                                          "kind": "literal",
+                                          "value": "DAY"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "kind": "field",
+                                "source": "aggregate",
+                                "alias": "linkDueOnOrBefore"
+                              },
+                              {
+                                "kind": "field",
+                                "source": "aggregate",
+                                "alias": "linkDueOnOrAfter"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "in",
+              "value": {
+                "kind": "literal",
+                "value": [
+                  "UPCOMING",
+                  "OVERDUE"
+                ]
+              }
+            }
+          ]
+        },
+        "as": "linkSchedule"
+      },
+      {
+        "type": "getOrCreateRecord",
+        "entity": "transaction",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "amount",
+              "operator": "==",
+              "value": {
+                "kind": "call",
+                "fn": "toNumber",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__extracted.fields.amount"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "condition",
+              "field": "reversed",
+              "operator": "==",
+              "value": {
+                "kind": "literal",
+                "value": false
+              }
+            },
+            {
+              "type": "condition",
+              "field": "relatedFinancialItemId",
+              "operator": "isEmpty"
+            },
+            {
+              "type": "group",
+              "combinator": "or",
+              "children": [
+                {
+                  "type": "condition",
+                  "field": "sourceGmailMessageId",
+                  "operator": "==",
+                  "value": {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__email.messageId"
+                  }
+                },
+                {
+                  "type": "group",
+                  "combinator": "and",
+                  "children": [
+                    {
+                      "type": "condition",
+                      "field": "financialItemId",
+                      "operator": "==",
+                      "value": {
+                        "kind": "call",
+                        "fn": "coalesce",
+                        "args": [
+                          {
+                            "kind": "field",
+                            "source": "current",
+                            "path": "parentFinancialItemId"
+                          },
+                          {
+                            "kind": "literal",
+                            "value": "__never_match_parent__"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "condition",
+                      "field": "date",
+                      "operator": ">=",
+                      "value": {
+                        "kind": "call",
+                        "fn": "dateOnly",
+                        "args": [
+                          {
+                            "kind": "call",
+                            "fn": "coalesce",
+                            "args": [
+                              {
+                                "kind": "field",
+                                "source": "current",
+                                "path": "__extracted.fields.date"
+                              },
+                              {
+                                "kind": "field",
+                                "source": "current",
+                                "path": "__email.date"
+                              },
+                              {
+                                "kind": "var",
+                                "name": "now"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "condition",
+                      "field": "date",
+                      "operator": "<=",
+                      "value": {
+                        "kind": "call",
+                        "fn": "dateOnly",
+                        "args": [
+                          {
+                            "kind": "call",
+                            "fn": "coalesce",
+                            "args": [
+                              {
+                                "kind": "field",
+                                "source": "current",
+                                "path": "__extracted.fields.date"
+                              },
+                              {
+                                "kind": "field",
+                                "source": "current",
+                                "path": "__email.date"
+                              },
+                              {
+                                "kind": "var",
+                                "name": "now"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "as": "linkedTransaction",
+        "createIfMissing": false
+      },
+      {
+        "type": "updateMatching",
+        "entity": "transaction",
+        "where": {
+          "type": "condition",
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "linkedTransaction",
+            "path": "id"
+          }
+        },
+        "set": {
+          "relatedFinancialItemId": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "linkedTransaction",
+                  "path": "financialItemId"
+                },
+                "right": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "id"
+                }
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "linkedTransaction",
+                "path": "relatedFinancialItemId"
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "id"
+              }
+            ]
+          },
+          "paymentScheduleId": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "linkSchedule",
+                "path": "id"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "linkedTransaction",
+                "path": "paymentScheduleId"
+              }
+            ]
+          },
+          "accountId": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "linkedTransaction",
+                "path": "accountId"
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "__extracted.fields.accountId"
+              },
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "accountId"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": "sendNotification",
+        "message": {
+          "kind": "call",
+          "fn": "concat",
+          "args": [
+            {
+              "kind": "literal",
+              "value": "Email ingest linked: "
+            },
+            {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "name"
+                },
+                {
+                  "kind": "literal",
+                  "value": "item"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 1,
+    "chainHooks": true
+  }
+}

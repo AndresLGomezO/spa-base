@@ -1,0 +1,103 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Extend schedule horizon",
+    "description": "Monthly queued extension — top up paymentSchedule rows toward scheduleHorizonMonths.",
+    "entity": "financialItem",
+    "phase": "after",
+    "execution": "queued",
+    "trigger": {
+      "kind": "schedule",
+      "cron": "0 0 1 * *",
+      "timezone": "UTC",
+      "scope": "eachRecord",
+      "eachRecordWhere": {
+        "type": "condition",
+        "field": "status",
+        "operator": "==",
+        "value": {
+          "kind": "literal",
+          "value": "ACTIVE"
+        }
+      }
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "aggregateMatching",
+        "entity": "paymentSchedule",
+        "op": "count",
+        "as": "existingCount",
+        "where": {
+          "type": "condition",
+          "field": "financialItemId",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "id"
+          }
+        }
+      },
+      {
+        "type": "createRecords",
+        "entity": "paymentSchedule",
+        "count": {
+          "kind": "formula",
+          "name": "recurringScheduleExtensionRowCount",
+          "inputs": {
+            "existingCount": {
+              "kind": "field",
+              "source": "aggregate",
+              "alias": "existingCount"
+            }
+          }
+        },
+        "startIndex": {
+          "kind": "field",
+          "source": "aggregate",
+          "alias": "existingCount"
+        },
+        "data": {
+          "financialItemId": {
+            "kind": "field",
+            "source": "current",
+            "path": "id"
+          },
+          "dueDate": {
+            "kind": "formula",
+            "name": "frequencyScheduleDueDate",
+            "inputs": {
+              "baseDate": {
+                "kind": "field",
+                "source": "current",
+                "path": "nextDueDate"
+              },
+              "frequency": {
+                "kind": "field",
+                "source": "current",
+                "path": "frequency"
+              }
+            }
+          },
+          "expectedAmount": {
+            "kind": "field",
+            "source": "current",
+            "path": "amount"
+          },
+          "sequence": {
+            "kind": "var",
+            "name": "loopIndex"
+          },
+          "status": {
+            "kind": "literal",
+            "value": "UPCOMING"
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 13
+  }
+}

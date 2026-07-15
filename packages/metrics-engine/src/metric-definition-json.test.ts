@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,6 +15,26 @@ import {
   toPortableMetricDefinition,
 } from "./metric-definition-json.js";
 import type { MetricDefinitionRecord } from "./types.js";
+
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
 
 const baseRecord: MetricDefinitionRecord = {
   id: "metric_1",
@@ -139,11 +159,15 @@ describe("metric-definition-json", () => {
   });
 
   it("parses rates metric definitions catalog", () => {
-    const catalogPath = join(
+    const catalogDir = join(
       dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json",
+      "../../../apps/api/src/admin/rates-tenant/catalogs/metric-definitions",
     );
-    const text = readFileSync(catalogPath, "utf8");
+    const text = mergeCatalog(
+      catalogDir,
+      "metric-definitions-catalog",
+      "metricDefinitions",
+    );
     const parsed = parseMetricDefinitionsCatalogJson(text);
 
     expect(parsed.ok).toBe(true);
@@ -155,7 +179,7 @@ describe("metric-definition-json", () => {
       );
     }
 
-    expect(parsed.data.metricDefinitions.length).toBe(20);
+    expect(parsed.data.metricDefinitions.length).toBe(19);
     expect(
       parsed.data.metricDefinitions.some(
         (metric) => metric.sourceModel === "transaction",

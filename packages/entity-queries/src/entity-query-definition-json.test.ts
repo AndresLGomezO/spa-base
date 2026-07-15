@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +13,26 @@ import {
   toPortableEntityQueryDefinition,
 } from "./entity-query-definition-json.js";
 import type { EntityQueryDefinitionRecord } from "./types.js";
+
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
 
 const baseRecord: EntityQueryDefinitionRecord = {
   id: "entity_query_1",
@@ -168,11 +188,15 @@ describe("entity-query-definition-json", () => {
   });
 
   it("parses rates query definitions catalog", () => {
-    const catalogPath = join(
+    const catalogDir = join(
       dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json",
+      "../../../apps/api/src/admin/rates-tenant/catalogs/query-definitions",
     );
-    const text = readFileSync(catalogPath, "utf8");
+    const text = mergeCatalog(
+      catalogDir,
+      "entity-query-definitions-catalog",
+      "entityQueryDefinitions",
+    );
     const parsed = parseEntityQueryDefinitionsCatalogJson(text);
 
     expect(parsed.ok).toBe(true);

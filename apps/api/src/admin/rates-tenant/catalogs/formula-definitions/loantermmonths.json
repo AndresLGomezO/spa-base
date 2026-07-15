@@ -1,0 +1,26 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanTermMonths",
+    "description": "Loan: term length in months",
+    "inputs": [],
+    "body": {
+      "kind": "call",
+      "fn": "coalesce",
+      "args": [
+        {
+          "kind": "field",
+          "source": "current",
+          "path": "termMonths"
+        },
+        {
+          "kind": "literal",
+          "value": 12
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

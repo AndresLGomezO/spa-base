@@ -1,0 +1,17 @@
+{
+  "kind": "custom-view-definition",
+  "version": 1,
+  "data": {
+    "name": "Transactions",
+    "viewId": "transactions-this-month",
+    "entityQueryDefinitionName": "Transactions this month",
+    "navCategoryId": "cat_movements",
+    "navOrder": 5,
+    "nav": {
+      "label": "Transactions",
+      "icon": "ArrowLeftRight"
+    },
+    "status": "ACTIVE",
+    "hiddenFromNav": true
+  }
+}

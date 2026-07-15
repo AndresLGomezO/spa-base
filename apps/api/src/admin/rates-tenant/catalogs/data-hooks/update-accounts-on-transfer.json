@@ -1,0 +1,115 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Update accounts on transfer",
+    "description": "Debit accountId and credit toAccountId for TRANSFER transactions.",
+    "entity": "transaction",
+    "phase": "after",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": {
+      "type": "group",
+      "combinator": "and",
+      "children": [
+        {
+          "type": "condition",
+          "field": "type",
+          "operator": "==",
+          "value": {
+            "kind": "literal",
+            "value": "TRANSFER"
+          }
+        },
+        {
+          "type": "condition",
+          "field": "toAccountId",
+          "operator": "isNotEmpty"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "updateMatching",
+        "entity": "account",
+        "where": {
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "accountId"
+          }
+        },
+        "set": {
+          "currentBalance": {
+            "kind": "binary",
+            "op": "-",
+            "left": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "currentBalance"
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            "right": {
+              "kind": "field",
+              "source": "previous",
+              "path": "amount"
+            }
+          }
+        }
+      },
+      {
+        "type": "updateMatching",
+        "entity": "account",
+        "where": {
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "toAccountId"
+          }
+        },
+        "set": {
+          "currentBalance": {
+            "kind": "binary",
+            "op": "+",
+            "left": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "currentBalance"
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            "right": {
+              "kind": "field",
+              "source": "previous",
+              "path": "amount"
+            }
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 5
+  }
+}

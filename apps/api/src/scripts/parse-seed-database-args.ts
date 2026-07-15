@@ -1,4 +1,12 @@
-export interface SeedDatabaseCliOptions {
+import {
+  assertIdsAllowedForSelection,
+  assertValidSeedComponents,
+  parseCommaSeparatedSet,
+  type SeedComponentKey,
+  type SeedSelection,
+} from "./seed-selection.js";
+
+export interface SeedDatabaseCliOptions extends SeedSelection {
   readonly gcp: boolean;
   readonly projectId?: string;
 }
@@ -19,12 +27,34 @@ function readFlagValue(
   return value;
 }
 
+function readFlagValueOrEquals(
+  argv: readonly string[],
+  index: number,
+  flag: string,
+): { readonly value: string; readonly consumedNext: boolean } {
+  const arg = argv[index]!;
+  const equalsPrefix = `${flag}=`;
+  if (arg.startsWith(equalsPrefix)) {
+    const value = arg.slice(equalsPrefix.length).trim();
+    if (!value) {
+      throw new Error(`Missing value for ${flag}.`);
+    }
+    return { value, consumedNext: false };
+  }
+  return {
+    value: readFlagValue(argv, index, flag),
+    consumedNext: true,
+  };
+}
+
 export function parseSeedDatabaseArgs(
   argv: readonly string[],
 ): SeedDatabaseCliOptions {
   const normalizedArgv = normalizeArgv(argv);
   let gcp = false;
   let projectId: string | undefined;
+  let onlyRaw: string | undefined;
+  let idsRaw: string | undefined;
 
   for (let index = 0; index < normalizedArgv.length; index += 1) {
     const arg = normalizedArgv[index]!;
@@ -32,15 +62,27 @@ export function parseSeedDatabaseArgs(
       gcp = true;
       continue;
     }
-    if (arg === "--project") {
-      projectId = readFlagValue(normalizedArgv, index, arg);
-      index += 1;
+    if (arg === "--project" || arg.startsWith("--project=")) {
+      const parsed = readFlagValueOrEquals(normalizedArgv, index, "--project");
+      projectId = parsed.value;
+      if (parsed.consumedNext) {
+        index += 1;
+      }
       continue;
     }
-    if (arg.startsWith("--project=")) {
-      projectId = arg.slice("--project=".length).trim();
-      if (!projectId) {
-        throw new Error("Missing value for --project.");
+    if (arg === "--only" || arg.startsWith("--only=")) {
+      const parsed = readFlagValueOrEquals(normalizedArgv, index, "--only");
+      onlyRaw = parsed.value;
+      if (parsed.consumedNext) {
+        index += 1;
+      }
+      continue;
+    }
+    if (arg === "--ids" || arg.startsWith("--ids=")) {
+      const parsed = readFlagValueOrEquals(normalizedArgv, index, "--ids");
+      idsRaw = parsed.value;
+      if (parsed.consumedNext) {
+        index += 1;
       }
       continue;
     }
@@ -51,5 +93,29 @@ export function parseSeedDatabaseArgs(
     throw new Error("--project is required when using --gcp.");
   }
 
-  return { gcp, projectId };
+  if (idsRaw !== undefined && onlyRaw === undefined) {
+    throw new Error("--ids requires --only.");
+  }
+
+  let components: ReadonlySet<SeedComponentKey> | null = null;
+  let ids: ReadonlySet<string> | null = null;
+
+  if (onlyRaw !== undefined) {
+    const parsedComponents = parseCommaSeparatedSet(onlyRaw);
+    assertValidSeedComponents(parsedComponents);
+    components = parsedComponents;
+  }
+
+  if (idsRaw !== undefined) {
+    const parsedIds = parseCommaSeparatedSet(idsRaw);
+    if (parsedIds.size === 0) {
+      throw new Error("Missing value for --ids (expected comma-separated ids).");
+    }
+    ids = parsedIds;
+    if (components) {
+      assertIdsAllowedForSelection(components, ids);
+    }
+  }
+
+  return { gcp, projectId, components, ids };
 }

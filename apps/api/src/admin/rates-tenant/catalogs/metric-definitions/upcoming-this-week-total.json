@@ -1,0 +1,33 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Upcoming This Week Total",
+    "description": "Sum of expected amounts for UPCOMING payment schedule rows due this week (excludes overdue).",
+    "sourceModel": "paymentSchedule",
+    "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+    "aggregations": [
+      {
+        "operation": "SUM",
+        "field": "expectedAmount"
+      }
+    ],
+    "filters": [],
+    "groupBy": [],
+    "dimensions": [
+      "dueDate"
+    ],
+    "dateFieldGranularity": {
+      "dueDate": "month"
+    },
+    "valueDisplayFormat": "currency",
+    "version": 3,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [
+      "expectedAmount",
+      "dueDate",
+      "status"
+    ],
+    "status": "ACTIVE"
+  }
+}

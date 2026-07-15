@@ -1,0 +1,42 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Scheduled Amount by Due Month",
+    "description": "Sum of scheduled payment amounts (upcoming, paid, overdue) grouped by due date month.",
+    "sourceModel": "paymentSchedule",
+    "aggregations": [
+      {
+        "operation": "SUM",
+        "field": "expectedAmount"
+      }
+    ],
+    "filters": [
+      {
+        "field": "status",
+        "op": "in",
+        "value": [
+          "UPCOMING",
+          "PAID",
+          "OVERDUE"
+        ]
+      }
+    ],
+    "groupBy": [],
+    "dimensions": [
+      "dueDate"
+    ],
+    "dateFieldGranularity": {
+      "dueDate": "month"
+    },
+    "valueDisplayFormat": "currency",
+    "version": 1,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [
+      "expectedAmount",
+      "status",
+      "dueDate"
+    ],
+    "status": "ACTIVE"
+  }
+}

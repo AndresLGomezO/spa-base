@@ -1,0 +1,339 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Generate loan payment plan",
+    "description": "Monthly loan payment plan with evolving principal/interest by amortization type (hook JSON math). Full term from originationDate; mid-loan forward from currentBalance + nextDueDate.",
+    "entity": "loanDetails",
+    "phase": "after",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "deleteMatching",
+        "entity": "paymentSchedule",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "financialItemId"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "==",
+              "value": {
+                "kind": "literal",
+                "value": "UPCOMING"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "getRecord",
+        "entity": "financialItem",
+        "id": {
+          "kind": "field",
+          "source": "current",
+          "path": "financialItemId"
+        },
+        "as": "parent"
+      },
+      {
+        "type": "getRecord",
+        "entity": "loanDetails",
+        "id": {
+          "kind": "field",
+          "source": "current",
+          "path": "id"
+        },
+        "as": "terms"
+      },
+      {
+        "type": "sendNotification",
+        "message": {
+          "kind": "call",
+          "fn": "if",
+          "args": [
+            {
+              "kind": "call",
+              "fn": "isEmpty",
+              "args": [
+                {
+                  "kind": "call",
+                  "fn": "if",
+                  "args": [
+                    {
+                      "kind": "unary",
+                      "op": "!",
+                      "operand": {
+                        "kind": "call",
+                        "fn": "isEmpty",
+                        "args": [
+                          {
+                            "kind": "call",
+                            "fn": "coalesce",
+                            "args": [
+                              {
+                                "kind": "field",
+                                "source": "loaded",
+                                "alias": "terms",
+                                "path": "originationDate"
+                              },
+                              {
+                                "kind": "field",
+                                "source": "current",
+                                "path": "originationDate"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "call",
+                      "fn": "coalesce",
+                      "args": [
+                        {
+                          "kind": "field",
+                          "source": "loaded",
+                          "alias": "terms",
+                          "path": "originationDate"
+                        },
+                        {
+                          "kind": "field",
+                          "source": "current",
+                          "path": "originationDate"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "nextDueDate"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "call",
+              "fn": "concat",
+              "args": [
+                {
+                  "kind": "literal",
+                  "value": "Skipped loan payment plan — no schedule anchor (originationDate or nextDueDate). loanDetails="
+                },
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "id"
+                },
+                {
+                  "kind": "literal",
+                  "value": ", financialItem="
+                },
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "financialItemId"
+                }
+              ]
+            },
+            {
+              "kind": "literal",
+              "value": null
+            }
+          ]
+        }
+      },
+      {
+        "type": "aggregateMatching",
+        "entity": "loanMonthlyCost",
+        "op": "sum",
+        "field": "amount",
+        "as": "monthlyAddOns",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "financialItemId"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "==",
+              "value": {
+                "kind": "literal",
+                "value": "ACTIVE"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "createRecords",
+        "entity": "paymentSchedule",
+        "count": {
+          "kind": "formula",
+          "name": "paymentScheduleRowCount",
+          "inputs": {}
+        },
+        "data": {
+          "financialItemId": {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "parent",
+            "path": "id"
+          },
+          "dueDate": {
+            "kind": "formula",
+            "name": "paymentScheduleDueDate",
+            "inputs": {
+              "originationDate": {
+                "kind": "field",
+                "source": "current",
+                "path": "originationDate"
+              },
+              "nextDueDate": {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "nextDueDate"
+              }
+            }
+          },
+          "expectedAmount": {
+            "kind": "formula",
+            "name": "scheduleExpectedAmount",
+            "inputs": {}
+          },
+          "principalPortion": {
+            "kind": "formula",
+            "name": "schedulePrincipalPortion",
+            "inputs": {}
+          },
+          "interestPortion": {
+            "kind": "formula",
+            "name": "scheduleInterestPortion",
+            "inputs": {}
+          },
+          "sequence": {
+            "kind": "var",
+            "name": "loopIndex"
+          },
+          "planVersion": {
+            "kind": "literal",
+            "value": 1
+          },
+          "status": {
+            "kind": "literal",
+            "value": "UPCOMING"
+          },
+          "__loopState": {
+            "kind": "formula",
+            "name": "amortizationLoopState",
+            "inputs": {}
+          },
+          "additionalPortion": {
+            "kind": "field",
+            "source": "aggregate",
+            "alias": "monthlyAddOns"
+          }
+        }
+      },
+      {
+        "type": "aggregateMatching",
+        "entity": "paymentSchedule",
+        "op": "count",
+        "as": "scheduleRowCount",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "financialItemId"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "==",
+              "value": {
+                "kind": "literal",
+                "value": "UPCOMING"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "sendNotification",
+        "message": {
+          "kind": "call",
+          "fn": "concat",
+          "args": [
+            {
+              "kind": "literal",
+              "value": "Generated loan payment plan: "
+            },
+            {
+              "kind": "field",
+              "source": "aggregate",
+              "alias": "scheduleRowCount"
+            },
+            {
+              "kind": "literal",
+              "value": " row(s) for "
+            },
+            {
+              "kind": "field",
+              "source": "loaded",
+              "alias": "parent",
+              "path": "name"
+            }
+          ]
+        },
+        "recordEntity": {
+          "kind": "literal",
+          "value": "financialItem"
+        },
+        "recordId": {
+          "kind": "field",
+          "source": "loaded",
+          "alias": "parent",
+          "path": "id"
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 0,
+    "execution": "queued"
+  }
+}

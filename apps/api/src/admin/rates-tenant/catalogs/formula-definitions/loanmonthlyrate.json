@@ -1,0 +1,27 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanMonthlyRate",
+    "description": "Loan: monthly decimal rate from current quote fields",
+    "inputs": [],
+    "body": {
+      "kind": "formula",
+      "name": "monthlyRateFromQuote",
+      "inputs": {
+        "rate": {
+          "kind": "field",
+          "source": "current",
+          "path": "interestRate"
+        },
+        "quote": {
+          "kind": "field",
+          "source": "current",
+          "path": "interestRateQuote"
+        }
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

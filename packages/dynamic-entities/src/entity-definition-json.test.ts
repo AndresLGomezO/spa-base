@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +21,35 @@ import {
   validateCatalogDeleteSafety,
 } from "./entity-definition-json.js";
 import type { EntityDefinitionRecord } from "./types.js";
+
+function mergeEntityDefinitionsCatalog(dir: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  const categoriesPath = join(dir, "_categories.json");
+  const entityCategories = existsSync(categoriesPath)
+    ? (
+        JSON.parse(readFileSync(categoriesPath, "utf8")) as {
+          entityCategories?: unknown[];
+        }
+      ).entityCategories
+    : undefined;
+  return JSON.stringify({
+    kind: "entity-definitions-catalog",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    ...(entityCategories ? { entityCategories } : {}),
+    entityDefinitions: items,
+  });
+}
 
 const loanRecord: EntityDefinitionRecord = {
   id: "def_loan",
@@ -254,11 +283,11 @@ describe("entity-definition-json", () => {
   });
 
   it("parses rates entity definitions catalog", () => {
-    const catalogPath = join(
+    const catalogDir = join(
       dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json",
+      "../../../apps/api/src/admin/rates-tenant/catalogs/entity-definitions",
     );
-    const text = readFileSync(catalogPath, "utf8");
+    const text = mergeEntityDefinitionsCatalog(catalogDir);
     const parsed = parseEntityDefinitionsCatalogJson(text);
 
     expect(parsed.ok).toBe(true);
@@ -271,22 +300,24 @@ describe("entity-definition-json", () => {
     }
 
     expect(parsed.data.entityCategories).toHaveLength(5);
-    expect(parsed.data.entityDefinitions).toHaveLength(14);
+    expect(parsed.data.entityDefinitions).toHaveLength(16);
     expect(parsed.data.entityDefinitions.map((entity) => entity.name)).toEqual([
-      "actor",
       "account",
+      "actor",
+      "attachment",
+      "balanceSnapshot",
       "category",
+      "email",
       "financialItem",
+      "incomeDetails",
+      "investmentDetails",
       "loanDetails",
       "loanMonthlyCost",
       "loanUtilization",
-      "incomeDetails",
-      "investmentDetails",
-      "serviceDetails",
-      "transaction",
       "paymentSchedule",
-      "balanceSnapshot",
-      "attachment",
+      "serviceDetails",
+      "statement",
+      "transaction",
     ]);
 
     for (const definition of parsed.data.entityDefinitions) {

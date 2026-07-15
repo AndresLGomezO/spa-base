@@ -1,0 +1,28 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanCoalescePrincipal",
+    "description": "Loan: coalesce(originalPrincipal, parent.currentBalance)",
+    "inputs": [],
+    "body": {
+      "kind": "call",
+      "fn": "coalesce",
+      "args": [
+        {
+          "kind": "field",
+          "source": "current",
+          "path": "originalPrincipal"
+        },
+        {
+          "kind": "field",
+          "source": "loaded",
+          "alias": "parent",
+          "path": "currentBalance"
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

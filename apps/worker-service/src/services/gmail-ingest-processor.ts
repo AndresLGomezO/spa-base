@@ -12,13 +12,14 @@ import {
   extractBodyFields,
   GmailApiClient,
   refreshGmailAccessToken,
-  resolveMatchingBinding,
+  resolveMatchingBindings,
   resolveWindowAfterDate,
   resolveWindowBeforeDate,
   shouldRenewGmailWatchSoon,
   type EmailAiExtractResult,
   type EmailIngestMessageOutcome,
   type EmailIngestStepTraceEntry,
+  type EmailMatchBinding,
   type GmailIngestDeliveryMode,
   type GmailMessageEnvelope,
 } from "@repo/gmail-ingest";
@@ -416,12 +417,16 @@ export async function processGmailProcessMessage(
       return entity?.metadata.emailMatchingEnabled === true;
     });
 
-    const binding = resolveMatchingBinding(
+    const matchedBindings = [...resolveMatchingBindings(
       enabledBindings,
       email,
       payload.bindingId,
-    );
-    if (!binding) {
+    )].sort((left, right) => {
+      const orderDelta = (left.order ?? 100) - (right.order ?? 100);
+      if (orderDelta !== 0) return orderDelta;
+      return left.id.localeCompare(right.id);
+    });
+    if (matchedBindings.length === 0) {
       await deps.emailIngestProcessedRepository.upsert(tenantId, {
         userId,
         gmailMessageId,
@@ -448,172 +453,32 @@ export async function processGmailProcessMessage(
       return;
     }
 
+    const matchedBindingIds = matchedBindings.map((binding) => binding.id);
     outcomeMeta = {
       ...outcomeMeta,
-      bindingId: binding.id,
-      entityName: binding.entityName,
-      recordId: binding.recordId,
+      bindingIds: matchedBindingIds,
+      bindingId: matchedBindings[0]!.id,
+      entityName: matchedBindings[0]!.entityName,
+      recordId: matchedBindings[0]!.recordId,
+      matchedBindingCount: matchedBindings.length,
     };
 
-    await deps.hookRuntime.ensureTenantHooksLoaded(tenantId);
-
-    const repository = deps.entityRuntime.getRepository(
+    await appendJobStep(
+      deps,
       tenantId,
-      binding.entityName,
+      jobId,
+      step(
+        "match-bindings",
+        "success",
+        `Matched ${matchedBindings.length} binding(s)`,
+        {
+          bindingIds: matchedBindingIds,
+          preferredBindingId: payload.bindingId ?? null,
+        },
+      ),
     );
-    if (!repository) {
-      await deps.emailIngestProcessedRepository.upsert(tenantId, {
-        userId,
-        gmailMessageId,
-        threadId: email.threadId,
-        contentFingerprint,
-        bindingId: binding.id,
-        entityName: binding.entityName,
-        recordId: binding.recordId,
-        status: "failed",
-        errorMessage: "Entity repository unavailable",
-        processedAt: new Date().toISOString(),
-      });
-      outcome = "failed";
-      outcomeMeta = { ...outcomeMeta, error: "Entity repository unavailable" };
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step("load-record", "error", "Entity repository unavailable", {
-          entityName: binding.entityName,
-        }),
-      );
-      return;
-    }
-    const record = await repository.findById(binding.recordId, tenantId);
-    if (!record) {
-      await deps.emailIngestProcessedRepository.upsert(tenantId, {
-        userId,
-        gmailMessageId,
-        threadId: email.threadId,
-        contentFingerprint,
-        bindingId: binding.id,
-        entityName: binding.entityName,
-        recordId: binding.recordId,
-        status: "failed",
-        errorMessage: "Matched record not found",
-        processedAt: new Date().toISOString(),
-      });
-      outcome = "failed";
-      outcomeMeta = { ...outcomeMeta, error: "Matched record not found" };
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step("load-record", "error", "Matched entity record missing", {
-          entityName: binding.entityName,
-          recordId: binding.recordId,
-        }),
-      );
-      return;
-    }
 
-    let extracted: EmailAiExtractResult | null = null;
-    let relevant = true;
-    if (binding.useAi) {
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step("ai-extract", "info", "Running AI extract", {
-          bindingId: binding.id,
-        }),
-      );
-      const entity = deps.entityRuntime.resolveEntity(
-        binding.entityName,
-        tenantId,
-      );
-      const fieldNames = entity ? Object.keys(entity.metadata.fields) : [];
-      extracted = await runAiExtract(deps, {
-        email,
-        entityName: binding.entityName,
-        record: { ...record },
-        fieldNames,
-        aiInstructions: binding.aiInstructions,
-      });
-      if (extracted) {
-        extracted = {
-          ...extracted,
-          fields: { ...extracted.fields, extractSource: "ai" },
-        };
-      }
-      relevant = extracted?.relevant ?? false;
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step(
-          "ai-extract",
-          extracted ? "success" : "error",
-          extracted
-            ? `AI relevance=${extracted.relevant}`
-            : "AI extract failed",
-          extracted
-            ? { reason: extracted.reason, fields: extracted.fields }
-            : { gmailMessageId },
-        ),
-      );
-    } else if ((binding.bodyFieldExtractors?.length ?? 0) > 0) {
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step("body-extract", "info", "Running body field extractors", {
-          extractorCount: binding.bodyFieldExtractors?.length ?? 0,
-        }),
-      );
-      const extractText = [email.subject, email.bodyText ?? ""]
-        .filter((part) => part.trim().length > 0)
-        .join("\n");
-      extracted = extractBodyFields(
-        extractText,
-        binding.bodyFieldExtractors ?? [],
-      );
-      relevant = extracted.relevant;
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step(
-          "body-extract",
-          extracted.relevant ? "success" : "skipped",
-          extracted.reason,
-          { fields: extracted.fields },
-        ),
-      );
-    }
-
-    if (!relevant) {
-      await deps.emailIngestProcessedRepository.upsert(tenantId, {
-        userId,
-        gmailMessageId,
-        threadId: email.threadId,
-        contentFingerprint,
-        bindingId: binding.id,
-        entityName: binding.entityName,
-        recordId: binding.recordId,
-        status: "skipped_irrelevant",
-        processedAt: new Date().toISOString(),
-      });
-      outcome = "skippedIrrelevant";
-      outcomeMeta = {
-        ...outcomeMeta,
-        reason: extracted?.reason ?? "not_relevant",
-      };
-      await appendJobStep(
-        deps,
-        tenantId,
-        jobId,
-        step("relevance", "skipped", "Email marked irrelevant", outcomeMeta),
-      );
-      return;
-    }
+    await deps.hookRuntime.ensureTenantHooksLoaded(tenantId);
 
     const user = await resolveHookUserContext(
       tenantId,
@@ -633,170 +498,440 @@ export async function processGmailProcessMessage(
     });
     emailLedgerEntities = entities;
 
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("email-ledger", "info", "Upserting email ledger row", {
-        gmailMessageId,
-        bindingId: binding.id,
-      }),
-    );
-    const ledger = await upsertProcessedEmailLedger({
-      entities,
-      email,
-      userId,
-      bindingId: binding.id,
-      matchEntityName: binding.entityName,
-      matchRecordId: binding.recordId,
-      extracted,
-      relevant,
-      contentFingerprint,
-      status: "processed",
-    });
-    emailLedgerId = ledger.id;
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step(
-        "email-ledger",
-        "success",
-        ledger.created
-          ? "Created email ledger row"
-          : "Updated email ledger row",
-        { emailId: ledger.id, created: ledger.created },
-      ),
-    );
+    type BindingPassResult =
+      | { readonly kind: "processed"; readonly hooksRan: number }
+      | { readonly kind: "skipped_irrelevant"; readonly reason: string }
+      | { readonly kind: "failed"; readonly error: string };
 
-    if (binding.attachmentImport?.enabled) {
-      await appendJobStep(
-        deps,
+    const bindingResults: Array<{
+      readonly bindingId: string;
+      readonly result: BindingPassResult;
+    }> = [];
+    let totalHooksRan = 0;
+    let primaryBinding: EmailMatchBinding | null = null;
+    let primaryExtracted: EmailAiExtractResult | null = null;
+
+    for (const binding of matchedBindings) {
+      const passMeta = {
+        bindingId: binding.id,
+        entityName: binding.entityName,
+        recordId: binding.recordId,
+      };
+
+      const repository = deps.entityRuntime.getRepository(
         tenantId,
-        jobId,
-        step("attachment-import", "info", "Importing Gmail PDF attachments", {
-          bindingId: binding.id,
-        }),
+        binding.entityName,
       );
-      try {
-        const result = await importGmailAttachmentsForBinding({
-          gmail,
-          email,
-          binding,
-          extracted,
-          entities,
-          firebaseAdminConfig: deps.firebaseAdminConfig,
-          tenantId,
-          uploadedBy: userId,
-          emailId: ledger.id,
+      if (!repository) {
+        bindingResults.push({
+          bindingId: binding.id,
+          result: {
+            kind: "failed",
+            error: "Entity repository unavailable",
+          },
         });
         await appendJobStep(
           deps,
           tenantId,
           jobId,
-          step(
-            "attachment-import",
-            "success",
-            `Attachments created=${result.created} skipped=${result.skipped}`,
-            result,
-          ),
+          step("load-record", "error", "Entity repository unavailable", passMeta),
         );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        continue;
+      }
+
+      const record = await repository.findById(binding.recordId, tenantId);
+      if (!record) {
+        bindingResults.push({
+          bindingId: binding.id,
+          result: {
+            kind: "failed",
+            error: "Matched record not found",
+          },
+        });
         await appendJobStep(
           deps,
           tenantId,
           jobId,
-          step("attachment-import", "error", message, { gmailMessageId }),
+          step("load-record", "error", "Matched entity record missing", passMeta),
         );
-        throw error;
+        continue;
       }
-    }
 
-    const current = buildEmailHookEnvelope({
-      record: { ...record },
-      email,
-      bindingId: binding.id,
-      entityName: binding.entityName,
-      recordId: binding.recordId,
-      extracted,
-      relevant,
-      emailLedgerId: ledger.id,
-    });
+      let extracted: EmailAiExtractResult | null = null;
+      let relevant = true;
+      if (binding.useAi) {
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step("ai-extract", "info", "Running AI extract", passMeta),
+        );
+        const entity = deps.entityRuntime.resolveEntity(
+          binding.entityName,
+          tenantId,
+        );
+        const fieldNames = entity ? Object.keys(entity.metadata.fields) : [];
+        extracted = await runAiExtract(deps, {
+          email,
+          entityName: binding.entityName,
+          record: { ...record },
+          fieldNames,
+          aiInstructions: binding.aiInstructions,
+        });
+        if (extracted) {
+          extracted = {
+            ...extracted,
+            fields: { ...extracted.fields, extractSource: "ai" },
+          };
+        }
+        relevant = extracted?.relevant ?? false;
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step(
+            "ai-extract",
+            extracted ? "success" : "error",
+            extracted
+              ? `AI relevance=${extracted.relevant}`
+              : "AI extract failed",
+            extracted
+              ? {
+                  ...passMeta,
+                  reason: extracted.reason,
+                  fields: extracted.fields,
+                }
+              : { ...passMeta, gmailMessageId },
+          ),
+        );
+      } else if ((binding.bodyFieldExtractors?.length ?? 0) > 0) {
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step("body-extract", "info", "Running body field extractors", {
+            ...passMeta,
+            extractorCount: binding.bodyFieldExtractors?.length ?? 0,
+          }),
+        );
+        const extractText = [email.subject, email.bodyText ?? ""]
+          .filter((part) => part.trim().length > 0)
+          .join("\n");
+        extracted = extractBodyFields(
+          extractText,
+          binding.bodyFieldExtractors ?? [],
+        );
+        relevant = extracted.relevant;
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step(
+            "body-extract",
+            extracted.relevant ? "success" : "skipped",
+            extracted.reason,
+            { ...passMeta, fields: extracted.fields },
+          ),
+        );
+      }
 
-    const event = formatHookEvent({
-      entity: binding.entityName,
-      phase: "after",
-      operation: "email",
-    });
+      if (!relevant) {
+        bindingResults.push({
+          bindingId: binding.id,
+          result: {
+            kind: "skipped_irrelevant",
+            reason: extracted?.reason ?? "not_relevant",
+          },
+        });
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step("relevance", "skipped", "Email marked irrelevant for binding", {
+            ...passMeta,
+            reason: extracted?.reason ?? "not_relevant",
+          }),
+        );
+        continue;
+      }
 
-    const definitions = (await deps.hookRuntime.repository.list(tenantId))
-      .filter(
-        (definition) =>
-          definition.enabled &&
-          definition.entity === binding.entityName &&
-          isEmailTrigger(definition.trigger) &&
-          definition.phase === "after",
-      )
-      .sort((left, right) => left.order - right.order);
-
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("hooks", "info", `Dispatching ${definitions.length} email hook(s)`, {
-        event,
-        bindingId: binding.id,
-        hookIds: definitions.map((definition) => definition.id),
-      }),
-    );
-
-    for (const definition of definitions) {
-      const recordDataHookExecution = deps.hookExecutionRepository
-        ? createRecordDataHookExecution(deps.hookExecutionRepository, tenantId)
-        : undefined;
-      const dataHookExecutionRecorder = deps.hookExecutionRepository
-        ? createDataHookExecutionRecorderForTenant(
-            deps.hookExecutionRepository,
-            tenantId,
-          )
-        : undefined;
-
-      await runDataHook(definition, {
-        tenantId,
-        entityName: binding.entityName,
-        event,
-        current: { ...current },
-        user: { uid: user.uid },
-        ...(formulaResolver ? { formulaResolver } : {}),
-        services: {
-          logger,
+      if (!primaryBinding) {
+        primaryBinding = binding;
+        primaryExtracted = extracted;
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step("email-ledger", "info", "Upserting email ledger row", passMeta),
+        );
+        const ledger = await upsertProcessedEmailLedger({
           entities,
-          ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
-          ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
-          ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
-          ...(deps.userNotificationRepository
-            ? {
-                sendUserNotification: createSendUserNotification(
-                  deps.userNotificationRepository,
-                  tenantId,
-                ),
-              }
-            : {}),
-        },
+          email,
+          userId,
+          bindingId: binding.id,
+          matchEntityName: binding.entityName,
+          matchRecordId: binding.recordId,
+          extracted,
+          relevant,
+          contentFingerprint,
+          status: "processed",
+        });
+        emailLedgerId = ledger.id;
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step(
+            "email-ledger",
+            "success",
+            ledger.created
+              ? "Created email ledger row"
+              : "Updated email ledger row",
+            { emailId: ledger.id, created: ledger.created, ...passMeta },
+          ),
+        );
+      }
+
+      if (!emailLedgerId) {
+        bindingResults.push({
+          bindingId: binding.id,
+          result: { kind: "failed", error: "Email ledger unavailable" },
+        });
+        continue;
+      }
+
+      if (binding.attachmentImport?.enabled) {
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step("attachment-import", "info", "Importing Gmail PDF attachments", {
+            ...passMeta,
+          }),
+        );
+        try {
+          const result = await importGmailAttachmentsForBinding({
+            gmail,
+            email,
+            binding,
+            extracted,
+            entities,
+            firebaseAdminConfig: deps.firebaseAdminConfig,
+            tenantId,
+            uploadedBy: userId,
+            emailId: emailLedgerId,
+          });
+          await appendJobStep(
+            deps,
+            tenantId,
+            jobId,
+            step(
+              "attachment-import",
+              "success",
+              `Attachments created=${result.created} skipped=${result.skipped}`,
+              { ...result, ...passMeta },
+            ),
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          await appendJobStep(
+            deps,
+            tenantId,
+            jobId,
+            step("attachment-import", "error", message, {
+              ...passMeta,
+              gmailMessageId,
+            }),
+          );
+          throw error;
+        }
+      }
+
+      const current = buildEmailHookEnvelope({
+        record: { ...record },
+        email,
+        bindingId: binding.id,
+        entityName: binding.entityName,
+        recordId: binding.recordId,
+        extracted,
+        relevant,
+        emailLedgerId,
+        ingestMode: binding.ingestMode ?? "create",
+      });
+
+      const event = formatHookEvent({
+        entity: binding.entityName,
+        phase: "after",
+        operation: "email",
+      });
+
+      const definitions = (await deps.hookRuntime.repository.list(tenantId))
+        .filter(
+          (definition) =>
+            definition.enabled &&
+            definition.entity === binding.entityName &&
+            isEmailTrigger(definition.trigger) &&
+            definition.phase === "after",
+        )
+        .sort((left, right) => left.order - right.order);
+
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step(
+          "hooks",
+          "info",
+          `Dispatching ${definitions.length} email hook(s)`,
+          {
+            event,
+            ...passMeta,
+            hookIds: definitions.map((definition) => definition.id),
+          },
+        ),
+      );
+
+      for (const definition of definitions) {
+        const recordDataHookExecution = deps.hookExecutionRepository
+          ? createRecordDataHookExecution(
+              deps.hookExecutionRepository,
+              tenantId,
+            )
+          : undefined;
+        const dataHookExecutionRecorder = deps.hookExecutionRepository
+          ? createDataHookExecutionRecorderForTenant(
+              deps.hookExecutionRepository,
+              tenantId,
+            )
+          : undefined;
+
+        await runDataHook(definition, {
+          tenantId,
+          entityName: binding.entityName,
+          event,
+          current: { ...current },
+          user: { uid: user.uid },
+          ...(formulaResolver ? { formulaResolver } : {}),
+          services: {
+            logger,
+            entities,
+            ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
+            ...(dataHookExecutionRecorder
+              ? { dataHookExecutionRecorder }
+              : {}),
+            ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+            ...(deps.userNotificationRepository
+              ? {
+                  sendUserNotification: createSendUserNotification(
+                    deps.userNotificationRepository,
+                    tenantId,
+                  ),
+                }
+              : {}),
+          },
+        });
+      }
+
+      totalHooksRan += definitions.length;
+      bindingResults.push({
+        bindingId: binding.id,
+        result: { kind: "processed", hooksRan: definitions.length },
       });
     }
 
+    const processedBindings = bindingResults.filter(
+      (entry) => entry.result.kind === "processed",
+    );
+    const failedBindings = bindingResults.filter(
+      (entry) => entry.result.kind === "failed",
+    );
+    const irrelevantBindings = bindingResults.filter(
+      (entry) => entry.result.kind === "skipped_irrelevant",
+    );
+
+    if (processedBindings.length === 0 && failedBindings.length > 0) {
+      const primaryFailed = failedBindings[0]!;
+      await deps.emailIngestProcessedRepository.upsert(tenantId, {
+        userId,
+        gmailMessageId,
+        threadId: email.threadId,
+        contentFingerprint,
+        bindingId: primaryFailed.bindingId,
+        entityName:
+          matchedBindings.find((binding) => binding.id === primaryFailed.bindingId)
+            ?.entityName ?? null,
+        recordId:
+          matchedBindings.find((binding) => binding.id === primaryFailed.bindingId)
+            ?.recordId ?? null,
+        status: "failed",
+        errorMessage:
+          primaryFailed.result.kind === "failed"
+            ? primaryFailed.result.error
+            : "Binding processing failed",
+        hookSummary: `bindings: ${matchedBindingIds.join(",")}`,
+        processedAt: new Date().toISOString(),
+      });
+      outcome = "failed";
+      outcomeMeta = {
+        ...outcomeMeta,
+        error:
+          primaryFailed.result.kind === "failed"
+            ? primaryFailed.result.error
+            : "Binding processing failed",
+        bindingResults,
+      };
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("done", "error", "All matching bindings failed", outcomeMeta),
+      );
+      return;
+    }
+
+    if (processedBindings.length === 0) {
+      await deps.emailIngestProcessedRepository.upsert(tenantId, {
+        userId,
+        gmailMessageId,
+        threadId: email.threadId,
+        contentFingerprint,
+        bindingId: matchedBindings[0]!.id,
+        entityName: matchedBindings[0]!.entityName,
+        recordId: matchedBindings[0]!.recordId,
+        status: "skipped_irrelevant",
+        hookSummary: `bindings: ${matchedBindingIds.join(",")}`,
+        processedAt: new Date().toISOString(),
+      });
+      outcome = "skippedIrrelevant";
+      outcomeMeta = {
+        ...outcomeMeta,
+        reason:
+          irrelevantBindings[0]?.result.kind === "skipped_irrelevant"
+            ? irrelevantBindings[0].result.reason
+            : "not_relevant",
+        bindingResults,
+      };
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("done", "skipped", "All matching bindings irrelevant", outcomeMeta),
+      );
+      return;
+    }
+
+    const primary = primaryBinding ?? matchedBindings[0]!;
     await deps.emailIngestProcessedRepository.upsert(tenantId, {
       userId,
       gmailMessageId,
       threadId: email.threadId,
       contentFingerprint,
-      bindingId: binding.id,
-      entityName: binding.entityName,
-      recordId: binding.recordId,
+      bindingId: primary.id,
+      entityName: primary.entityName,
+      recordId: primary.recordId,
       status: "processed",
-      hookSummary: `Ran ${definitions.length} email hook(s)`,
+      hookSummary: `bindings: ${matchedBindingIds.join(",")}; Ran ${totalHooksRan} email hook(s) across ${processedBindings.length} binding(s)`,
       processedAt: new Date().toISOString(),
     });
     await deps.emailIngestFingerprintRepository.upsert(tenantId, {
@@ -809,7 +944,11 @@ export async function processGmailProcessMessage(
     outcome = "processed";
     outcomeMeta = {
       ...outcomeMeta,
-      hooksRan: definitions.length,
+      hooksRan: totalHooksRan,
+      processedBindingCount: processedBindings.length,
+      failedBindingCount: failedBindings.length,
+      bindingResults,
+      primaryExtractedFields: primaryExtracted?.fields ?? null,
     };
     await appendJobStep(
       deps,
@@ -820,11 +959,12 @@ export async function processGmailProcessMessage(
 
     logger.info("Gmail message processed", {
       tenantId,
-      entityName: binding.entityName,
+      entityName: primary.entityName,
       meta: {
         gmailMessageId,
-        bindingId: binding.id,
-        hooks: definitions.length,
+        bindingId: primary.id,
+        bindingIds: matchedBindingIds,
+        hooks: totalHooksRan,
       },
     });
   } catch (error) {
@@ -937,7 +1077,9 @@ export async function processGmailWindowSync(
   });
 
   const messageIds = new Set<string>();
-  const bindingIdsByMessage = new Map<string, string>();
+  // Preferred binding is informational for catch-up tracing only; process
+  // message resolves *all* matching bindings in one pass.
+  const preferredBindingIdsByMessage = new Map<string, string>();
 
   async function listAllMessageIds(query: string): Promise<readonly string[]> {
     const ids: string[] = [];
@@ -1003,8 +1145,8 @@ export async function processGmailWindowSync(
     );
     for (const messageId of listed) {
       messageIds.add(messageId);
-      if (!bindingIdsByMessage.has(messageId)) {
-        bindingIdsByMessage.set(messageId, binding.id);
+      if (!preferredBindingIdsByMessage.has(messageId)) {
+        preferredBindingIdsByMessage.set(messageId, binding.id);
       }
     }
     await deps.emailMatchBindingRepository.patch(tenantId, binding.id, userId, {
@@ -1014,7 +1156,7 @@ export async function processGmailWindowSync(
 
   let enqueued = 0;
   for (const messageId of messageIds) {
-    const bindingId = bindingIdsByMessage.get(messageId);
+    const bindingId = preferredBindingIdsByMessage.get(messageId);
     await deps.enqueueProcessMessage({
       tenantId,
       userId,

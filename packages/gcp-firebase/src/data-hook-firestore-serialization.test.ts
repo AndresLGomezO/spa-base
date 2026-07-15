@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import { parseDataHooksCatalogJson } from "@repo/hooks";
 
@@ -8,6 +8,26 @@ import {
   deserializeDataHookFromFirestore,
   serializeDataHookForFirestore,
 } from "./data-hook-firestore-serialization.js";
+
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
 
 function maxFirestoreDepth(value: unknown, depth = 0): number {
   if (value === null || typeof value !== "object") {
@@ -54,11 +74,13 @@ describe("data hook firestore serialization", () => {
   });
 
   it("keeps serialized loan hooks within Firestore nesting limits", () => {
-    const catalogPath = resolve(
+    const catalogDir = resolve(
       import.meta.dirname,
-      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
+      "../../../apps/api/src/admin/rates-tenant/catalogs/data-hooks",
     );
-    const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
+    const parsed = parseDataHooksCatalogJson(
+      mergeCatalog(catalogDir, "data-hooks-catalog", "dataHooks"),
+    );
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
       return;

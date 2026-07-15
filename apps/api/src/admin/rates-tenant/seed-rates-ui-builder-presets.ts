@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import {
   toPersistedUiBuilderPreset,
   uiBuilderPresetRecordSchema,
@@ -16,11 +12,7 @@ import { TENANTS_COLLECTION } from "@repo/shared-types";
 import { uiLayoutDocumentSchema } from "@repo/ui-builder-core";
 import { z } from "zod";
 
-const CATALOG_PATH = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "catalogs",
-  "rates-ui-builder-presets.json",
-);
+import { loadUiBuilderPresetsCatalogJson } from "./seed-catalog-dir.js";
 
 const uiBuilderPresetsCatalogSchema = z
   .object({
@@ -82,8 +74,9 @@ export async function seedRatesUiBuilderPresets(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
 ): Promise<{ readonly seeded: number }> {
-  const catalogJson = readFileSync(CATALOG_PATH, "utf8");
-  const catalog = parseRatesUiBuilderPresetsCatalog(catalogJson);
+  const catalog = parseRatesUiBuilderPresetsCatalog(
+    loadUiBuilderPresetsCatalogJson(),
+  );
   const collection = getFirestoreAdmin(firebaseAdminConfig)
     .collection(TENANTS_COLLECTION)
     .doc(tenantId)

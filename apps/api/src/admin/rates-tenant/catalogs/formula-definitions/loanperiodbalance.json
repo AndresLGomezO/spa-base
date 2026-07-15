@@ -1,0 +1,26 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanPeriodBalance",
+    "description": "Loan: period opening balance (coalesce loopState, base principal)",
+    "inputs": [],
+    "body": {
+      "kind": "call",
+      "fn": "coalesce",
+      "args": [
+        {
+          "kind": "var",
+          "name": "loopState"
+        },
+        {
+          "kind": "formula",
+          "name": "loanBasePrincipal",
+          "inputs": {}
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

@@ -5,6 +5,17 @@ import {
 } from "@repo/gcp-firebase";
 
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
+import {
+  isFullSeed,
+  listSelectedGeneratedEntityNames,
+  listSelectedLocalEntityNames,
+  selectionIncludes,
+  selectionIncludesAny,
+  SEED_CATALOG_COMPONENTS,
+  SEED_GENERATED_ENTITY_COMPONENTS,
+  SEED_LOCAL_ENTITY_COMPONENTS,
+  type SeedSelection,
+} from "../../scripts/seed-selection.js";
 import { seedTenantRolesFromTemplates } from "../seed-tenant-roles-from-templates.js";
 import { activateAndBackfillRatesMetrics } from "./backfill-rates-metrics.js";
 import {
@@ -32,6 +43,12 @@ import { seedRatesTestUser } from "./seed-rates-test-user.js";
 
 type RatesDemoOwnerStrategy = "localTestUser" | "gcpUid" | "gcpImportOwner";
 
+const EMPTY_COUNTS: {
+  created: number;
+  updated: number;
+  deleted: number;
+} = { created: 0, updated: 0, deleted: 0 };
+
 interface SeedRatesTenantOptions {
   readonly tenantId?: string;
   readonly tenantName?: string;
@@ -39,6 +56,7 @@ interface SeedRatesTenantOptions {
   readonly demoOwnerStrategy?: RatesDemoOwnerStrategy;
   readonly backfillMetrics?: boolean;
   readonly localImportOptions?: LocalTenantImportOptions;
+  readonly selection?: SeedSelection;
 }
 
 interface SeedRatesTenantResult {
@@ -57,6 +75,45 @@ interface SeedRatesTenantResult {
   readonly metricsBackfillFailures: number;
 }
 
+function buildLocalImportOptionsFromSelection(
+  selection: SeedSelection,
+  base: LocalTenantImportOptions | undefined,
+): LocalTenantImportOptions | null {
+  const full = isFullSeed(selection);
+  const localEntities = listSelectedLocalEntityNames(selection);
+  const generatedEntities = listSelectedGeneratedEntityNames(selection);
+  const includeEmail = selectionIncludes(selection, "emailMatchBindings");
+  const runMock = selectionIncludes(selection, "generated");
+
+  const wantsLocal =
+    full ||
+    (localEntities !== undefined && localEntities.length > 0) ||
+    (generatedEntities !== undefined && generatedEntities.length > 0) ||
+    includeEmail ||
+    runMock;
+
+  if (!wantsLocal) {
+    return null;
+  }
+
+  if (full) {
+    return { ...base };
+  }
+
+  return {
+    ...base,
+    entityNames: localEntities ?? [],
+    generatedEntityNames: generatedEntities ?? [],
+    recordIds: selection.ids ?? undefined,
+    skipOrphanDelete: true,
+    runMockGenerator: runMock,
+    includeEmailMatchBindings: includeEmail,
+    includeEntityImages:
+      (localEntities?.includes("actor") ?? false) ||
+      (localEntities?.includes("category") ?? false),
+  };
+}
+
 async function seedRatesTenant(
   firebaseAdminConfig: FirebaseAdminConfig,
   entityRuntime: EntityRuntimeContext,
@@ -66,7 +123,13 @@ async function seedRatesTenant(
   const tenantName = options.tenantName ?? RATES_TENANT_NAME;
   const ensureTenant = options.ensureTenant ?? false;
   const demoOwnerStrategy = options.demoOwnerStrategy ?? "localTestUser";
-  const backfillMetrics = options.backfillMetrics ?? true;
+  const selection: SeedSelection = options.selection ?? {
+    components: null,
+    ids: null,
+  };
+  const full = isFullSeed(selection);
+  const backfillMetrics =
+    options.backfillMetrics ?? selectionIncludes(selection, "metrics-backfill");
   const enableLocalImport =
     demoOwnerStrategy === "localTestUser" ||
     demoOwnerStrategy === "gcpImportOwner";
@@ -88,46 +151,98 @@ async function seedRatesTenant(
     }
   }
 
-  await seedTenantRolesFromTemplates(firebaseAdminConfig, tenantId);
+  if (full || selectionIncludes(selection, "platform")) {
+    await seedTenantRolesFromTemplates(firebaseAdminConfig, tenantId);
+  }
 
-  const catalogResult = await seedRatesCatalogs(
-    tenantId,
-    firebaseAdminConfig,
-    entityRuntime,
-  );
+  const wantsAnyCatalog =
+    full || selectionIncludesAny(selection, [...SEED_CATALOG_COMPONENTS]);
+  const needsDefinitions =
+    wantsAnyCatalog ||
+    (enableLocalImport &&
+      (full ||
+        selectionIncludesAny(selection, [
+          ...SEED_LOCAL_ENTITY_COMPONENTS,
+          ...SEED_GENERATED_ENTITY_COMPONENTS,
+          "generated",
+          "emailMatchBindings",
+          "ui",
+          "demo",
+        ])));
 
-  if (demoOwnerStrategy === "localTestUser") {
-    for (const role of buildRatesCustomRoles()) {
-      await ensureRatesRole(roleRepository, tenantId, role);
+  let catalogResult: Awaited<ReturnType<typeof seedRatesCatalogs>> = {
+    definitionRecords: [],
+    entityCounts: { ...EMPTY_COUNTS },
+    metricCounts: { ...EMPTY_COUNTS },
+    queryCounts: { ...EMPTY_COUNTS },
+    chartCounts: { ...EMPTY_COUNTS },
+    formulaCounts: { ...EMPTY_COUNTS },
+    hookCounts: { ...EMPTY_COUNTS },
+    customViewCounts: { ...EMPTY_COUNTS },
+  };
+
+  if (needsDefinitions) {
+    catalogResult = await seedRatesCatalogs(
+      tenantId,
+      firebaseAdminConfig,
+      entityRuntime,
+      full
+        ? {}
+        : {
+            entities: selectionIncludes(selection, "entities"),
+            metrics: selectionIncludes(selection, "metrics"),
+            queries: selectionIncludes(selection, "queries"),
+            hooks: selectionIncludes(selection, "hooks"),
+            formulas: selectionIncludes(selection, "formulas"),
+            charts: selectionIncludes(selection, "charts"),
+            customViews: selectionIncludes(selection, "custom-views"),
+          },
+    );
+  }
+
+  if (full || selectionIncludes(selection, "platform")) {
+    if (demoOwnerStrategy === "localTestUser") {
+      for (const role of buildRatesCustomRoles()) {
+        await ensureRatesRole(roleRepository, tenantId, role);
+      }
     }
   }
 
   let demoOwnerId: string | null = null;
-  if (demoOwnerStrategy === "localTestUser") {
-    demoOwnerId = await seedRatesTestUser(firebaseAdminConfig);
-  } else if (demoOwnerStrategy === "gcpUid") {
-    demoOwnerId = await seedRatesGcpDemoUserAccess(
-      tenantId,
-      firebaseAdminConfig,
-    );
+  if (full || selectionIncludes(selection, "platform")) {
+    if (demoOwnerStrategy === "localTestUser") {
+      demoOwnerId = await seedRatesTestUser(firebaseAdminConfig);
+    } else if (demoOwnerStrategy === "gcpUid") {
+      demoOwnerId = await seedRatesGcpDemoUserAccess(
+        tenantId,
+        firebaseAdminConfig,
+      );
+    }
   }
 
   let localImportSeeded = false;
   if (enableLocalImport) {
-    const localImportResult = await seedLocalTenantImportIfPresent(
-      tenantId,
-      firebaseAdminConfig,
-      catalogResult.definitionRecords,
-      undefined,
+    const localImportOptions = buildLocalImportOptionsFromSelection(
+      selection,
       options.localImportOptions,
     );
-    localImportSeeded = localImportResult.seeded;
+    if (localImportOptions) {
+      const localImportResult = await seedLocalTenantImportIfPresent(
+        tenantId,
+        firebaseAdminConfig,
+        catalogResult.definitionRecords,
+        undefined,
+        localImportOptions,
+      );
+      localImportSeeded = localImportResult.seeded;
+    }
   }
 
   // Prefer real `.local/tenant-import` transactions over fictional demo records.
   if (
     demoOwnerId &&
     demoOwnerStrategy === "localTestUser" &&
+    (full || selectionIncludes(selection, "demo")) &&
     !localImportSeeded
   ) {
     console.log(
@@ -139,32 +254,38 @@ async function seedRatesTenant(
       catalogResult.definitionRecords,
       demoOwnerId,
     );
-  } else if (localImportSeeded && demoOwnerStrategy === "localTestUser") {
+  } else if (
+    localImportSeeded &&
+    demoOwnerStrategy === "localTestUser" &&
+    full
+  ) {
     console.log(
       `[seed] Skipping fictional demo business records; local tenant import already seeded real transactions.`,
     );
   }
 
-  await seedRatesEntityUiOverrides(
-    tenantId,
-    firebaseAdminConfig,
-    catalogResult.definitionRecords,
-  );
-
-  await seedRatesUiBuilderPresets(tenantId, firebaseAdminConfig);
-
-  await seedRatesTenantDashboardLayout(tenantId, firebaseAdminConfig);
-
-  await seedRatesTenantSidebarLayout(tenantId, firebaseAdminConfig);
-
-  await seedRatesTenantAppearance(tenantId, firebaseAdminConfig);
-
-  if (enableLocalImport) {
-    await seedLocalTenantUiSlicesIfPresent(
+  if (full || selectionIncludes(selection, "ui")) {
+    await seedRatesEntityUiOverrides(
       tenantId,
       firebaseAdminConfig,
       catalogResult.definitionRecords,
     );
+
+    await seedRatesUiBuilderPresets(tenantId, firebaseAdminConfig);
+
+    await seedRatesTenantDashboardLayout(tenantId, firebaseAdminConfig);
+
+    await seedRatesTenantSidebarLayout(tenantId, firebaseAdminConfig);
+
+    await seedRatesTenantAppearance(tenantId, firebaseAdminConfig);
+
+    if (enableLocalImport) {
+      await seedLocalTenantUiSlicesIfPresent(
+        tenantId,
+        firebaseAdminConfig,
+        catalogResult.definitionRecords,
+      );
+    }
   }
 
   let metricsBackfillFailures = 0;
@@ -197,24 +318,32 @@ async function seedRatesTenant(
 export async function seedRatesTenantMock(
   firebaseAdminConfig: FirebaseAdminConfig,
   entityRuntime: EntityRuntimeContext,
+  selection?: SeedSelection,
 ): Promise<SeedRatesTenantResult> {
   return seedRatesTenant(firebaseAdminConfig, entityRuntime, {
     tenantId: RATES_TENANT_ID,
     tenantName: RATES_TENANT_NAME,
     demoOwnerStrategy: "localTestUser",
-    backfillMetrics: true,
+    backfillMetrics: selection
+      ? selectionIncludes(selection, "metrics-backfill")
+      : true,
+    selection,
   });
 }
 
 export async function seedRatesTenantGcp(
   firebaseAdminConfig: FirebaseAdminConfig,
   entityRuntime: EntityRuntimeContext,
+  selection?: SeedSelection,
 ): Promise<SeedRatesTenantResult> {
   return seedRatesTenant(firebaseAdminConfig, entityRuntime, {
     tenantId: RATES_TENANT_ID,
     tenantName: RATES_TENANT_NAME,
     demoOwnerStrategy: "gcpImportOwner",
-    backfillMetrics: true,
+    backfillMetrics: selection
+      ? selectionIncludes(selection, "metrics-backfill")
+      : true,
+    selection,
     localImportOptions: {
       requireOwner: true,
       expectedUid: RATES_GCP_DEMO_OWNER_UID,

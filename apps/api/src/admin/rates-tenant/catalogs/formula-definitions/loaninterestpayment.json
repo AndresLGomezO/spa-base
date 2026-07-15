@@ -1,0 +1,68 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanInterestPayment",
+    "description": "Loan: interest portion by amortization strategy",
+    "inputs": [],
+    "body": {
+      "kind": "switch",
+      "input": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "amortizationType"
+          },
+          {
+            "kind": "literal",
+            "value": "FRENCH"
+          }
+        ]
+      },
+      "cases": [
+        {
+          "when": {
+            "kind": "literal",
+            "value": "NONE"
+          },
+          "then": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "interestPortion"
+              },
+              {
+                "kind": "literal",
+                "value": 0
+              }
+            ]
+          }
+        }
+      ],
+      "default": {
+        "kind": "formula",
+        "name": "simpleInterest",
+        "inputs": {
+          "amount": {
+            "kind": "formula",
+            "name": "loanPeriodBalance",
+            "inputs": {}
+          },
+          "rate": {
+            "kind": "formula",
+            "name": "loanMonthlyRate",
+            "inputs": {}
+          }
+        }
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

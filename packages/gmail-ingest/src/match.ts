@@ -142,6 +142,45 @@ export function buildGmailSearchQuery(
   return queryParts.join(" ");
 }
 
+function bindingSpecificityScore(
+  binding: Pick<
+    EmailMatchBinding,
+    "fromAddresses" | "subjectPatterns" | "bodyPatterns"
+  >,
+): number {
+  return (
+    binding.fromAddresses.length * 4 +
+    binding.subjectPatterns.length * 2 +
+    binding.bodyPatterns.length
+  );
+}
+
+/**
+ * All enabled bindings that match the message, most-specific first
+ * (same specificity weights as {@link findBestMatchingBinding}).
+ */
+export function findAllMatchingBindings<T extends EmailMatchBinding>(
+  bindings: readonly T[],
+  message: {
+    readonly from: string;
+    readonly subject: string;
+    readonly snippet: string;
+    readonly bodyText?: string | null;
+  },
+): readonly T[] {
+  const matches = bindings.filter((binding) =>
+    bindingMatchesMessage(binding, message),
+  );
+  if (matches.length === 0) return [];
+
+  return [...matches].sort((left, right) => {
+    const scoreDelta =
+      bindingSpecificityScore(right) - bindingSpecificityScore(left);
+    if (scoreDelta !== 0) return scoreDelta;
+    return left.id.localeCompare(right.id);
+  });
+}
+
 export function findBestMatchingBinding<T extends EmailMatchBinding>(
   bindings: readonly T[],
   message: {
@@ -151,22 +190,7 @@ export function findBestMatchingBinding<T extends EmailMatchBinding>(
     readonly bodyText?: string | null;
   },
 ): T | null {
-  const matches = bindings.filter((binding) =>
-    bindingMatchesMessage(binding, message),
-  );
-  if (matches.length === 0) return null;
-
-  return [...matches].sort((left, right) => {
-    const leftScore =
-      left.fromAddresses.length * 4 +
-      left.subjectPatterns.length * 2 +
-      left.bodyPatterns.length;
-    const rightScore =
-      right.fromAddresses.length * 4 +
-      right.subjectPatterns.length * 2 +
-      right.bodyPatterns.length;
-    return rightScore - leftScore;
-  })[0]!;
+  return findAllMatchingBindings(bindings, message)[0] ?? null;
 }
 
 /**
@@ -183,13 +207,39 @@ export function resolveMatchingBinding<T extends EmailMatchBinding>(
   },
   preferredBindingId?: string | null,
 ): T | null {
-  if (preferredBindingId) {
-    const preferred = bindings.find(
-      (candidate) => candidate.id === preferredBindingId,
-    );
-    if (preferred && bindingMatchesMessage(preferred, message)) {
-      return preferred;
-    }
+  return (
+    resolveMatchingBindings(bindings, message, preferredBindingId)[0] ?? null
+  );
+}
+
+/**
+ * All matching bindings for a message (most-specific first). A preferred
+ * catch-up id is included when it matches, but does not collapse the set —
+ * every matching binding should still be processed in one ingest pass.
+ */
+export function resolveMatchingBindings<T extends EmailMatchBinding>(
+  bindings: readonly T[],
+  message: {
+    readonly from: string;
+    readonly subject: string;
+    readonly snippet: string;
+    readonly bodyText?: string | null;
+  },
+  preferredBindingId?: string | null,
+): readonly T[] {
+  const matches = findAllMatchingBindings(bindings, message);
+  if (!preferredBindingId || matches.length === 0) return matches;
+
+  const preferred = bindings.find(
+    (candidate) => candidate.id === preferredBindingId,
+  );
+  if (!preferred || !bindingMatchesMessage(preferred, message)) {
+    return matches;
   }
-  return findBestMatchingBinding(bindings, message);
+
+  if (matches.some((match) => match.id === preferred.id)) {
+    return matches;
+  }
+  // Preferred matched but was filtered out of enabled list differently — include it.
+  return findAllMatchingBindings([...matches, preferred], message);
 }

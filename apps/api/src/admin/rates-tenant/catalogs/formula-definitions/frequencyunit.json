@@ -1,0 +1,79 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "frequencyUnit",
+    "description": "Recurring schedule: dateAdd unit by frequency",
+    "inputs": [
+      {
+        "name": "frequency",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "switch",
+      "input": {
+        "kind": "input",
+        "name": "frequency"
+      },
+      "cases": [
+        {
+          "when": {
+            "kind": "literal",
+            "value": "WEEKLY"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "WEEK"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "BIWEEKLY"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "WEEK"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "MONTHLY"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "MONTH"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "QUARTERLY"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "MONTH"
+          }
+        },
+        {
+          "when": {
+            "kind": "literal",
+            "value": "ANNUAL"
+          },
+          "then": {
+            "kind": "literal",
+            "value": "YEAR"
+          }
+        }
+      ],
+      "default": {
+        "kind": "literal",
+        "value": "MONTH"
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

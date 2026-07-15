@@ -1,0 +1,58 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "loanGermanUsesStatementAmount",
+    "description": "Loan: GERMAN mid-loan first row uses parent statement amount",
+    "inputs": [],
+    "body": {
+      "kind": "binary",
+      "op": "&&",
+      "left": {
+        "kind": "call",
+        "fn": "isEmpty",
+        "args": [
+          {
+            "kind": "formula",
+            "name": "loanOriginationDate",
+            "inputs": {}
+          }
+        ]
+      },
+      "right": {
+        "kind": "binary",
+        "op": "&&",
+        "left": {
+          "kind": "binary",
+          "op": "==",
+          "left": {
+            "kind": "var",
+            "name": "loopIndex"
+          },
+          "right": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        "right": {
+          "kind": "unary",
+          "op": "!",
+          "operand": {
+            "kind": "call",
+            "fn": "isEmpty",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "amount"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

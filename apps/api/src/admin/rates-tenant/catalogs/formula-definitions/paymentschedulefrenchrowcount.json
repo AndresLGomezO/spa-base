@@ -1,0 +1,100 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "paymentScheduleFrenchRowCount",
+    "description": "Schedule: French amortization row count",
+    "inputs": [],
+    "body": {
+      "kind": "call",
+      "fn": "max",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 1
+        },
+        {
+          "kind": "call",
+          "fn": "min",
+          "args": [
+            {
+              "kind": "formula",
+              "name": "loanTermMonths",
+              "inputs": {}
+            },
+            {
+              "kind": "call",
+              "fn": "ceil",
+              "args": [
+                {
+                  "kind": "binary",
+                  "op": "/",
+                  "left": {
+                    "kind": "call",
+                    "fn": "ln",
+                    "args": [
+                      {
+                        "kind": "binary",
+                        "op": "/",
+                        "left": {
+                          "kind": "formula",
+                          "name": "loanAnnuityPayment",
+                          "inputs": {}
+                        },
+                        "right": {
+                          "kind": "binary",
+                          "op": "-",
+                          "left": {
+                            "kind": "formula",
+                            "name": "loanAnnuityPayment",
+                            "inputs": {}
+                          },
+                          "right": {
+                            "kind": "binary",
+                            "op": "*",
+                            "left": {
+                              "kind": "field",
+                              "source": "loaded",
+                              "alias": "parent",
+                              "path": "currentBalance"
+                            },
+                            "right": {
+                              "kind": "formula",
+                              "name": "loanMonthlyRate",
+                              "inputs": {}
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "call",
+                    "fn": "ln",
+                    "args": [
+                      {
+                        "kind": "binary",
+                        "op": "+",
+                        "left": {
+                          "kind": "literal",
+                          "value": 1
+                        },
+                        "right": {
+                          "kind": "formula",
+                          "name": "loanMonthlyRate",
+                          "inputs": {}
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

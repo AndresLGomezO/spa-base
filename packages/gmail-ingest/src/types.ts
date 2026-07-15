@@ -136,6 +136,9 @@ export const emailBodyFieldExtractorSchema: z.ZodType<EmailBodyFieldExtractor> =
       }
     }) as z.ZodType<EmailBodyFieldExtractor>;
 
+export const emailMatchIngestModeSchema = z.enum(["create", "link"]);
+export type EmailMatchIngestMode = z.infer<typeof emailMatchIngestModeSchema>;
+
 export type EmailMatchBinding = {
   readonly id: string;
   readonly tenantId: string;
@@ -148,6 +151,16 @@ export type EmailMatchBinding = {
    * lower bound (one-shot historical catch-up for new/enabled rules).
    */
   readonly catchupNeeded?: boolean;
+  /**
+   * Lower values run first when multiple bindings match the same email.
+   * Source (create) bindings should be lower than link bindings.
+   */
+  readonly order: number;
+  /**
+   * `create` books a transaction on the matched financial item.
+   * `link` finds an existing source transaction and sets related FI + schedule.
+   */
+  readonly ingestMode: EmailMatchIngestMode;
   readonly fromAddresses: readonly string[];
   readonly subjectPatterns: readonly string[];
   readonly bodyPatterns: readonly string[];
@@ -168,6 +181,8 @@ export const emailMatchBindingSchema: z.ZodType<EmailMatchBinding> = z.object({
   recordId: z.string().trim().min(1),
   enabled: z.boolean(),
   catchupNeeded: z.boolean().default(true),
+  order: z.number().int().default(100),
+  ingestMode: emailMatchIngestModeSchema.default("create"),
   fromAddresses: z.array(z.string().trim().min(1)).default([]),
   subjectPatterns: z.array(z.string().trim().min(1)).default([]),
   bodyPatterns: z.array(z.string().trim().min(1)).default([]),
@@ -184,6 +199,8 @@ export type CreateEmailMatchBindingInput = {
   readonly entityName: string;
   readonly recordId: string;
   readonly enabled?: boolean;
+  readonly order?: number;
+  readonly ingestMode?: EmailMatchIngestMode;
   readonly fromAddresses?: readonly string[];
   readonly subjectPatterns?: readonly string[];
   readonly bodyPatterns?: readonly string[];
@@ -199,6 +216,8 @@ export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindi
     entityName: z.string().trim().min(1),
     recordId: z.string().trim().min(1),
     enabled: z.boolean().optional(),
+    order: z.number().int().optional(),
+    ingestMode: emailMatchIngestModeSchema.optional(),
     fromAddresses: z.array(z.string().trim().min(1)).optional(),
     subjectPatterns: z.array(z.string().trim().min(1)).optional(),
     bodyPatterns: z.array(z.string().trim().min(1)).optional(),
@@ -212,6 +231,8 @@ export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindi
 export type PatchEmailMatchBindingInput = {
   readonly enabled?: boolean;
   readonly catchupNeeded?: boolean;
+  readonly order?: number;
+  readonly ingestMode?: EmailMatchIngestMode;
   readonly fromAddresses?: readonly string[];
   readonly subjectPatterns?: readonly string[];
   readonly bodyPatterns?: readonly string[];
@@ -226,6 +247,8 @@ export const patchEmailMatchBindingInputSchema: z.ZodType<PatchEmailMatchBinding
   z.object({
     enabled: z.boolean().optional(),
     catchupNeeded: z.boolean().optional(),
+    order: z.number().int().optional(),
+    ingestMode: emailMatchIngestModeSchema.optional(),
     fromAddresses: z.array(z.string().trim().min(1)).optional(),
     subjectPatterns: z.array(z.string().trim().min(1)).optional(),
     bodyPatterns: z.array(z.string().trim().min(1)).optional(),

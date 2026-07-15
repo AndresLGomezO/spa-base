@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { runSnapshotBackfillForMetric } from "@repo/aggregation-engine";
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
 import {
@@ -21,6 +17,7 @@ import { runMetricBackfill } from "../../aggregation/run-backfill.js";
 import { createMetricRuntimeContext } from "../../aggregation/metric-runtime-context.js";
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 import { createFirestoreAdminEntityQueryDefinitionRepository } from "@repo/gcp-firebase";
+import { loadMetricDefinitionsCatalogJson } from "./seed-catalog-dir.js";
 
 interface BackfillRatesMetricsResult {
   readonly activated: number;
@@ -33,12 +30,8 @@ interface BackfillRatesMetricsResult {
 }
 
 function loadRatesMetricNames(): readonly string[] {
-  const catalogPath = join(
-    dirname(fileURLToPath(import.meta.url)),
-    "catalogs/rates-metric-definitions.json",
-  );
   const parsed = parseMetricDefinitionsCatalogJson(
-    readFileSync(catalogPath, "utf8"),
+    loadMetricDefinitionsCatalogJson(),
   );
   if (!parsed.ok) {
     throw new Error(

@@ -1,0 +1,77 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Advance next due date",
+    "description": "After payment, set financialItem.nextDueDate to earliest remaining UPCOMING or OVERDUE schedule dueDate. Runs before loan replan so mid-loan regenerate anchors on the advanced due date.",
+    "entity": "transaction",
+    "phase": "after",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": {
+      "type": "condition",
+      "field": "financialItemId",
+      "operator": "isNotEmpty"
+    },
+    "actions": [
+      {
+        "type": "aggregateMatching",
+        "entity": "paymentSchedule",
+        "op": "min",
+        "field": "dueDate",
+        "as": "nextDue",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "current",
+                "path": "financialItemId"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "in",
+              "value": {
+                "kind": "literal",
+                "value": [
+                  "UPCOMING",
+                  "OVERDUE"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "updateMatching",
+        "entity": "financialItem",
+        "where": {
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          }
+        },
+        "set": {
+          "nextDueDate": {
+            "kind": "field",
+            "source": "aggregate",
+            "alias": "nextDue"
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 2
+  }
+}

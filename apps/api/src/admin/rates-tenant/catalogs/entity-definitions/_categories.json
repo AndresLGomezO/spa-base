@@ -1,0 +1,34 @@
+{
+  "entityCategories": [
+    {
+      "id": "cat_my_money",
+      "name": "My Money",
+      "icon": "Wallet",
+      "order": 0
+    },
+    {
+      "id": "cat_commitments",
+      "name": "Commitments",
+      "icon": "FileText",
+      "order": 1
+    },
+    {
+      "id": "cat_details",
+      "name": "Details",
+      "icon": "Puzzle",
+      "order": 2
+    },
+    {
+      "id": "cat_movements",
+      "name": "Movements",
+      "icon": "ArrowLeftRight",
+      "order": 3
+    },
+    {
+      "id": "cat_classification",
+      "name": "Classification",
+      "icon": "FolderTree",
+      "order": 4
+    }
+  ]
+}

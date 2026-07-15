@@ -1,0 +1,41 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Replan loan on monthly cost create",
+    "description": "Bump loanDetails.planRevision when loanMonthlyCost create triggers loan payment plan replan.",
+    "entity": "loanMonthlyCost",
+    "phase": "after",
+    "trigger": {
+      "operation": "create"
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "updateMatching",
+        "entity": "loanDetails",
+        "where": {
+          "type": "condition",
+          "field": "financialItemId",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          }
+        },
+        "set": {
+          "planRevision": {
+            "kind": "formula",
+            "name": "incrementPlanRevision",
+            "inputs": {}
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 0,
+    "chainHooks": true,
+    "execution": "queued"
+  }
+}

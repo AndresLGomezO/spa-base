@@ -18,6 +18,7 @@ import {
   type SeedDatabaseCliOptions,
 } from "./parse-seed-database-args.js";
 import { resolveTenantImportDir } from "./resolve-tenant-import-dir.js";
+import { isFullSeed, selectionIncludes } from "./seed-selection.js";
 
 function isInsideDocker(): boolean {
   return existsSync("/.dockerenv");
@@ -26,8 +27,9 @@ function isInsideDocker(): boolean {
 /**
  * To seed the database on the emulator, run: pnpm seed:database
  * To seed the database on GCP, run: pnpm seed:database -- --gcp --project entitysystem-development
-* /
- 
+ * Partial: pnpm seed:database -- --only financialItem,emailMatchBindings --ids <uuid>
+ */
+
 /** Map Compose service names to localhost when seeding from the host machine. */
 function normalizeEmulatorHost(
   host: string | undefined,
@@ -170,9 +172,18 @@ async function reloadHookCachesForTenants(
 }
 
 export async function runDatabaseSeed(
-  options: SeedDatabaseCliOptions = { gcp: false },
+  options: SeedDatabaseCliOptions = {
+    gcp: false,
+    components: null,
+    ids: null,
+  },
 ): Promise<void> {
   let firebaseAdminConfig: FirebaseAdminConfig;
+  const selection = {
+    components: options.components,
+    ids: options.ids,
+  };
+  const full = isFullSeed(selection);
 
   if (options.gcp) {
     assertGcpSeedPreflight(options.projectId!);
@@ -208,6 +219,13 @@ export async function runDatabaseSeed(
     }
   }
 
+  if (!full) {
+    console.log(
+      `[seed] Partial mode: ${[...(selection.components ?? [])].join(", ")}` +
+        (selection.ids ? ` (ids: ${[...selection.ids].join(", ")})` : ""),
+    );
+  }
+
   const entityDefinitionRepository =
     createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
   const entityRuntime = createEntityRuntimeContext({
@@ -220,8 +238,10 @@ export async function runDatabaseSeed(
     indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
   });
 
-  console.log("[seed] Seeding platform roles...");
-  await seedPlatformRoles(firebaseAdminConfig);
+  if (full || selectionIncludes(selection, "platform")) {
+    console.log("[seed] Seeding platform roles...");
+    await seedPlatformRoles(firebaseAdminConfig);
+  }
 
   console.log(
     options.gcp
@@ -230,9 +250,10 @@ export async function runDatabaseSeed(
   );
   await seedPlatformTenants(firebaseAdminConfig, entityRuntime, {
     gcp: options.gcp,
+    selection,
   });
 
-  if (!options.gcp) {
+  if (!options.gcp && (full || selectionIncludes(selection, "hook-cache"))) {
     await reloadHookCachesForTenants([RATES_TENANT_ID]);
   }
 

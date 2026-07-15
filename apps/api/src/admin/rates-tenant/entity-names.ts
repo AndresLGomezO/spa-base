@@ -1,4 +1,4 @@
-/** Entity names from rates-entity-definitions.json catalog. */
+/** Entity names from catalogs/entity-definitions/*.json. */
 export const RATES_ENTITY_NAMES = [
   "actor",
   "account",

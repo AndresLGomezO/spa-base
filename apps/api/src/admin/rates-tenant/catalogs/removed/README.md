@@ -1,6 +1,6 @@
 # Archived Rates seed definitions (not seeded)
 
-Definitions removed from active catalogs during v1 cleanup. **Seed does not read this folder** — only parent `catalogs/*.json` files are imported by `seedRatesCatalogs`.
+Definitions removed from active catalogs during v1 cleanup. **Seed does not read this folder** — only parent `catalogs/<component>/*.json` definition directories (and shell UI JSON files) are imported by `seedRatesCatalogs`.
 
 ## Contents
 

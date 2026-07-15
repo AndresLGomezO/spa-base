@@ -1,0 +1,39 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "recurringScheduleExtensionRowCount",
+    "description": "Recurring schedule: monthly horizon extension row count",
+    "inputs": [
+      {
+        "name": "existingCount",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "call",
+      "fn": "min",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 100
+        },
+        {
+          "kind": "binary",
+          "op": "-",
+          "left": {
+            "kind": "formula",
+            "name": "scheduleHorizonOrDefault",
+            "inputs": {}
+          },
+          "right": {
+            "kind": "input",
+            "name": "existingCount"
+          }
+        }
+      ]
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

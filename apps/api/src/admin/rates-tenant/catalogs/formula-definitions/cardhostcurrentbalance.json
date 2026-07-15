@@ -1,0 +1,52 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "cardHostCurrentBalance",
+    "description": "Credit card: host currentBalance from revolving + installment sum",
+    "inputs": [
+      {
+        "name": "revolvingBalance",
+        "required": false
+      },
+      {
+        "name": "installmentSum",
+        "required": true
+      }
+    ],
+    "body": {
+      "kind": "binary",
+      "op": "+",
+      "left": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "input",
+            "name": "revolvingBalance"
+          },
+          {
+            "kind": "literal",
+            "value": 0
+          }
+        ]
+      },
+      "right": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "input",
+            "name": "installmentSum"
+          },
+          {
+            "kind": "literal",
+            "value": 0
+          }
+        ]
+      }
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

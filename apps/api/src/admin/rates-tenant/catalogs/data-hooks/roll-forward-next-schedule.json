@@ -1,0 +1,221 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Roll forward next schedule",
+    "description": "After a schedule row is PAID, create the next UPCOMING row only when one does not already exist for the advanced dueDate (skipped for ONE_TIME and IRREGULAR; frequency-aware date step). Horizon seeding often already has the next period.",
+    "entity": "paymentSchedule",
+    "phase": "after",
+    "trigger": {
+      "operation": "update",
+      "updateFields": [
+        "status"
+      ]
+    },
+    "condition": {
+      "type": "condition",
+      "field": "status",
+      "operator": "==",
+      "value": {
+        "kind": "literal",
+        "value": "PAID"
+      }
+    },
+    "actions": [
+      {
+        "type": "getRecord",
+        "entity": "financialItem",
+        "id": {
+          "kind": "field",
+          "source": "current",
+          "path": "financialItemId"
+        },
+        "as": "parent"
+      },
+      {
+        "type": "aggregateMatching",
+        "entity": "paymentSchedule",
+        "op": "count",
+        "as": "existingNextDue",
+        "where": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "financialItemId",
+              "operator": "==",
+              "value": {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "id"
+              }
+            },
+            {
+              "type": "condition",
+              "field": "dueDate",
+              "operator": "==",
+              "value": {
+                "kind": "formula",
+                "name": "frequencyAdvanceDueDate",
+                "inputs": {
+                  "baseDate": {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "dueDate"
+                  },
+                  "frequency": {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "parent",
+                    "path": "frequency"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "createRecords",
+        "entity": "paymentSchedule",
+        "count": {
+          "kind": "call",
+          "fn": "if",
+          "args": [
+            {
+              "kind": "binary",
+              "op": "==",
+              "left": {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "frequency"
+              },
+              "right": {
+                "kind": "literal",
+                "value": "ONE_TIME"
+              }
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "binary",
+                  "op": "==",
+                  "left": {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "parent",
+                    "path": "frequency"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": "IRREGULAR"
+                  }
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                },
+                {
+                  "kind": "call",
+                  "fn": "if",
+                  "args": [
+                    {
+                      "kind": "binary",
+                      "op": ">",
+                      "left": {
+                        "kind": "field",
+                        "source": "aggregate",
+                        "alias": "existingNextDue"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": 0
+                      }
+                    },
+                    {
+                      "kind": "literal",
+                      "value": 0
+                    },
+                    {
+                      "kind": "literal",
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "data": {
+          "financialItemId": {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "parent",
+            "path": "id"
+          },
+          "dueDate": {
+            "kind": "formula",
+            "name": "frequencyAdvanceDueDate",
+            "inputs": {
+              "baseDate": {
+                "kind": "field",
+                "source": "current",
+                "path": "dueDate"
+              },
+              "frequency": {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "frequency"
+              }
+            }
+          },
+          "expectedAmount": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "expectedAmount"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "amount"
+              }
+            ]
+          },
+          "principalPortion": {
+            "kind": "field",
+            "source": "current",
+            "path": "principalPortion"
+          },
+          "interestPortion": {
+            "kind": "field",
+            "source": "current",
+            "path": "interestPortion"
+          },
+          "status": {
+            "kind": "literal",
+            "value": "UPCOMING"
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 0,
+    "chainHooks": true,
+    "execution": "queued"
+  }
+}

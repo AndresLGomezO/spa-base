@@ -1,0 +1,16 @@
+{
+  "kind": "formula-definition",
+  "version": 1,
+  "data": {
+    "name": "schedulePrincipalPortion",
+    "description": "Schedule: principal portion for payment row",
+    "inputs": [],
+    "body": {
+      "kind": "formula",
+      "name": "loanPrincipalPayment",
+      "inputs": {}
+    },
+    "enabled": true,
+    "source": "tenant"
+  }
+}

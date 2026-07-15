@@ -1,0 +1,36 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Derive balance sheet role on type change",
+    "description": "Re-apply balanceSheetRole when itemType changes (same switch as create).",
+    "entity": "financialItem",
+    "phase": "before",
+    "trigger": {
+      "operation": "update",
+      "updateFields": [
+        "itemType"
+      ]
+    },
+    "condition": null,
+    "actions": [
+      {
+        "type": "setField",
+        "field": "balanceSheetRole",
+        "value": {
+          "kind": "formula",
+          "name": "balanceSheetRoleFromItemType",
+          "inputs": {
+            "itemType": {
+              "kind": "field",
+              "source": "current",
+              "path": "itemType"
+            }
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 0
+  }
+}

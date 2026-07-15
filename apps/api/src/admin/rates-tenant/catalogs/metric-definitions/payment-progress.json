@@ -1,0 +1,48 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Payment Progress %",
+    "description": "Share of scheduled period payments that have been paid (paid amount ÷ scheduled amount).",
+    "computationMode": "computed",
+    "sourceModel": "paymentSchedule",
+    "parameters": [
+      {
+        "name": "period",
+        "valueType": "dateBucket",
+        "granularity": "month"
+      }
+    ],
+    "computation": {
+      "type": "ratio",
+      "numerator": {
+        "type": "metricRef",
+        "metricDefinitionId": "Paid Amount by Due Month",
+        "parameterMap": {
+          "dueDate": "period"
+        }
+      },
+      "denominator": {
+        "type": "metricRef",
+        "metricDefinitionId": "Scheduled Amount by Due Month",
+        "parameterMap": {
+          "dueDate": "period"
+        }
+      }
+    },
+    "aggregations": [
+      {
+        "operation": "COUNT"
+      }
+    ],
+    "filters": [],
+    "groupBy": [],
+    "dimensions": [],
+    "dateFieldGranularity": {},
+    "valueDisplayFormat": "percent",
+    "version": 1,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [],
+    "status": "ACTIVE"
+  }
+}

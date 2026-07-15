@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import type { FormulaResolver } from "@repo/hooks";
 
@@ -10,14 +10,51 @@ import {
   type PortableFormulaDefinition,
 } from "./index.js";
 
-const ratesCatalogPath = resolve(
+const ratesFormulasDir = resolve(
   import.meta.dirname,
-  "../../../apps/api/src/admin/rates-tenant/catalogs/rates-formula-definitions.json",
+  "../../../apps/api/src/admin/rates-tenant/catalogs/formula-definitions",
 );
+
+function mergeSingularCatalogDir(
+  dirPath: string,
+  catalog: {
+    readonly kind: string;
+    readonly version: number;
+    readonly itemsKey: string;
+  },
+): string {
+  if (!existsSync(dirPath)) {
+    throw new Error(`Catalog directory not found: ${dirPath}`);
+  }
+  const items = readdirSync(dirPath)
+    .filter(
+      (name) =>
+        name.endsWith(".json") &&
+        !name.startsWith("_") &&
+        !name.startsWith("."),
+    )
+    .sort((a, b) => a.localeCompare(b))
+    .map((fileName) => {
+      const parsed = JSON.parse(
+        readFileSync(join(dirPath, fileName), "utf8"),
+      ) as { data: unknown };
+      return parsed.data;
+    });
+  return JSON.stringify({
+    kind: catalog.kind,
+    version: catalog.version,
+    exportedAt: new Date().toISOString(),
+    [catalog.itemsKey]: items,
+  });
+}
 
 export function loadRatesFormulaDefinitions(): readonly PortableFormulaDefinition[] {
   const parsed = parseFormulaDefinitionsCatalogJson(
-    readFileSync(ratesCatalogPath, "utf8"),
+    mergeSingularCatalogDir(ratesFormulasDir, {
+      kind: "formula-definitions-catalog",
+      version: 1,
+      itemsKey: "formulaDefinitions",
+    }),
   );
   if (!parsed.ok) {
     throw new Error(

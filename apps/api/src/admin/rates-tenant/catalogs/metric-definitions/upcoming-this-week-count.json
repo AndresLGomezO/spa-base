@@ -1,0 +1,31 @@
+{
+  "kind": "metric-definition",
+  "version": 1,
+  "data": {
+    "name": "Upcoming This Week Count",
+    "description": "Count of UPCOMING payment schedule rows due this week (excludes overdue).",
+    "sourceModel": "paymentSchedule",
+    "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+    "aggregations": [
+      {
+        "operation": "COUNT"
+      }
+    ],
+    "filters": [],
+    "groupBy": [],
+    "dimensions": [
+      "dueDate"
+    ],
+    "dateFieldGranularity": {
+      "dueDate": "month"
+    },
+    "valueDisplayFormat": "number",
+    "version": 3,
+    "schemaVersionDependency": 0,
+    "fieldsDependency": [
+      "dueDate",
+      "status"
+    ],
+    "status": "ACTIVE"
+  }
+}

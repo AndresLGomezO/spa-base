@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,7 +6,7 @@ import {
   defineEntityFromRecord,
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
-import { parseEntityQueryDefinitionsCatalogJson } from "@repo/entity-queries";
+import { parseEntityQueryDefinitionJson } from "@repo/entity-queries";
 import {
   dashboardSectionsSchema,
   validateEntityUIConfig,
@@ -28,27 +28,17 @@ import {
 } from "@repo/ui-builder-core";
 import { z } from "zod";
 
+import { resolveTenantImportDir } from "../../scripts/resolve-tenant-import-dir.js";
 import { parseRatesEntityUiOverridesCatalog } from "./seed-rates-entity-ui-overrides.js";
 import { parseRatesTenantDashboardLayoutCatalog } from "./seed-rates-tenant-dashboard-layout.js";
 
-const LOCAL_UI_DIR = join(resolveLocalTenantImportDir(), "ui");
-
 function resolveLocalTenantImportDir(): string {
-  const fromCwd = join(process.cwd(), ".local/tenant-import");
-  if (existsSync(fromCwd)) {
-    return fromCwd;
-  }
-
-  const fromParent = join(process.cwd(), "..", ".local/tenant-import");
-  if (existsSync(fromParent)) {
-    return fromParent;
-  }
-
-  return fromCwd;
+  return resolveTenantImportDir();
 }
 
-const LOCAL_UI_QUERY_SLICE = "entity-query-definitions-slice.json";
-const LOCAL_UI_OVERRIDE_SLICE = "paymentSchedule-entity-ui-overrides.json";
+const LOCAL_UI_DIR = join(resolveLocalTenantImportDir(), "ui");
+const LOCAL_UI_QUERY_DIR = "query-definitions";
+const LOCAL_UI_OVERRIDE_DIR = "entity-ui-overrides";
 const LOCAL_UI_DASHBOARD_SLICE = "tenant-dashboard-layout-slice.json";
 
 const tenantDashboardLayoutSliceSchema = z
@@ -61,6 +51,20 @@ const tenantDashboardLayoutSliceSchema = z
     shellRemoveRowIds: z.array(z.string()).optional(),
   })
   .strict();
+
+function listJsonFiles(dirPath: string): string[] {
+  if (!existsSync(dirPath)) {
+    return [];
+  }
+  return readdirSync(dirPath)
+    .filter(
+      (name) =>
+        name.endsWith(".json") &&
+        !name.startsWith("_") &&
+        !name.startsWith("."),
+    )
+    .sort((a, b) => a.localeCompare(b));
+}
 
 function readLocalUiJson(fileName: string): string | null {
   const filePath = join(LOCAL_UI_DIR, fileName);
@@ -119,24 +123,31 @@ async function seedLocalQueryDefinitionsSlice(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
 ): Promise<number> {
-  const jsonText = readLocalUiJson(LOCAL_UI_QUERY_SLICE);
-  if (!jsonText) {
+  const queryDir = join(LOCAL_UI_DIR, LOCAL_UI_QUERY_DIR);
+  const files = listJsonFiles(queryDir);
+  if (files.length === 0) {
     return 0;
   }
 
-  const parsed = parseEntityQueryDefinitionsCatalogJson(jsonText);
-  if (!parsed.ok) {
-    throw new Error(
-      `[seed] Invalid ${LOCAL_UI_QUERY_SLICE}: ${parsed.errors[0]?.message ?? "unknown error"}`,
+  const definitions = files.map((fileName) => {
+    const filePath = join(queryDir, fileName);
+    const parsed = parseEntityQueryDefinitionJson(
+      readFileSync(filePath, "utf8"),
     );
-  }
+    if (!parsed.ok) {
+      throw new Error(
+        `[seed] Invalid ${filePath}: ${parsed.errors[0]?.message ?? "unknown error"}`,
+      );
+    }
+    return parsed.data;
+  });
 
   const repository =
     createFirestoreAdminEntityQueryDefinitionRepository(firebaseAdminConfig);
   const existing = await repository.list(tenantId);
   let seeded = 0;
 
-  for (const imported of parsed.data.entityQueryDefinitions) {
+  for (const imported of definitions) {
     const match = existing.find(
       (item) =>
         item.name.trim().toLowerCase() === imported.name.trim().toLowerCase(),
@@ -181,12 +192,33 @@ async function seedLocalEntityUiOverrideSlice(
   firebaseAdminConfig: FirebaseAdminConfig,
   definitionRecords: readonly EntityDefinitionRecord[],
 ): Promise<number> {
-  const jsonText = readLocalUiJson(LOCAL_UI_OVERRIDE_SLICE);
-  if (!jsonText) {
+  const overrideDir = join(LOCAL_UI_DIR, LOCAL_UI_OVERRIDE_DIR);
+  const files = listJsonFiles(overrideDir);
+  if (files.length === 0) {
     return 0;
   }
 
-  const catalog = parseRatesEntityUiOverridesCatalog(jsonText);
+  const overrides = files.map((fileName) => {
+    const filePath = join(overrideDir, fileName);
+    const parsed: unknown = JSON.parse(readFileSync(filePath, "utf8"));
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed) ||
+      (parsed as { data?: unknown }).data === undefined
+    ) {
+      throw new Error(`[seed] Invalid UI override envelope: ${filePath}`);
+    }
+    return (parsed as { data: unknown }).data;
+  });
+
+  const catalog = parseRatesEntityUiOverridesCatalog(
+    JSON.stringify({
+      kind: "entity-ui-overrides-catalog",
+      version: 1,
+      overrides,
+    }),
+  );
   const repository =
     createFirestoreAdminEntityUiOverrideRepository(firebaseAdminConfig);
   const definitionByName = new Map(
@@ -306,8 +338,8 @@ async function seedLocalDashboardLayoutSlice(
 
 export function hasLocalTenantUiSlices(uiDir: string = LOCAL_UI_DIR): boolean {
   return (
-    existsSync(join(uiDir, LOCAL_UI_QUERY_SLICE)) ||
-    existsSync(join(uiDir, LOCAL_UI_OVERRIDE_SLICE)) ||
+    listJsonFiles(join(uiDir, LOCAL_UI_QUERY_DIR)).length > 0 ||
+    listJsonFiles(join(uiDir, LOCAL_UI_OVERRIDE_DIR)).length > 0 ||
     existsSync(join(uiDir, LOCAL_UI_DASHBOARD_SLICE))
   );
 }

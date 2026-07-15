@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +14,26 @@ import {
   toPortableCustomViewDefinition,
 } from "./custom-view-definition-json.js";
 import type { CustomViewRecord } from "./types.js";
+
+function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
+  if (!existsSync(dir)) {
+    throw new Error(`Catalog directory not found: ${dir}`);
+  }
+  const items = readdirSync(dir)
+    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
+    .sort()
+    .map(
+      (n) =>
+        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
+          .data,
+    );
+  return JSON.stringify({
+    kind,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    [itemsKey]: items,
+  });
+}
 
 const baseRecord: CustomViewRecord = {
   id: "custom_view_1",
@@ -129,12 +149,12 @@ describe("custom-view-definition-json", () => {
   });
 
   it("parses rates custom views catalog", () => {
-    const catalogPath = join(
+    const catalogDir = join(
       dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json",
+      "../../../apps/api/src/admin/rates-tenant/catalogs/custom-views",
     );
     const parsed = parseCustomViewsCatalogJson(
-      readFileSync(catalogPath, "utf8"),
+      mergeCatalog(catalogDir, "custom-views-catalog", "customViews"),
     );
 
     expect(parsed.ok).toBe(true);

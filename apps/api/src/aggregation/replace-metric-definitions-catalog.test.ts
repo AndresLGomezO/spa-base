@@ -1,19 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const CATALOG_PATH = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "../admin/rates-tenant/catalogs/rates-metric-definitions.json",
-);
+import { loadMetricDefinitionsCatalogJson } from "../admin/rates-tenant/seed-catalog-dir.js";
 
 describe("rates metric catalog", () => {
   it("defines Payment Progress % with metricRef inputs for fast evaluate", () => {
     const parsed = parseMetricDefinitionsCatalogJson(
-      readFileSync(CATALOG_PATH, "utf8"),
+      loadMetricDefinitionsCatalogJson(),
     );
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {

@@ -137,6 +137,8 @@ export function toPortableEmailMatchBinding(binding: {
   readonly entityName: string;
   readonly recordId: string;
   readonly enabled?: boolean;
+  readonly order?: number;
+  readonly ingestMode?: "create" | "link";
   readonly fromAddresses?: readonly string[];
   readonly subjectPatterns?: readonly string[];
   readonly bodyPatterns?: readonly string[];
@@ -171,6 +173,10 @@ export function toPortableEmailMatchBinding(binding: {
     entityName: binding.entityName,
     recordId: binding.recordId,
     ...(binding.enabled !== undefined ? { enabled: binding.enabled } : {}),
+    ...(binding.order !== undefined ? { order: binding.order } : {}),
+    ...(binding.ingestMode !== undefined
+      ? { ingestMode: binding.ingestMode }
+      : {}),
     ...(binding.fromAddresses
       ? { fromAddresses: [...binding.fromAddresses] }
       : {}),
