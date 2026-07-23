@@ -21,6 +21,7 @@
     "./vertex-ai.client": "./src/vertex-ai.client.ts",
     "./vertex-imagen.client": "./src/vertex-imagen.client.ts",
     "./vertex-mock-responses": "./src/vertex-mock-responses.ts",
+    "./text-embedding": "./src/text-embedding.ts",
     "./extract-json-from-model-answer": "./src/extract-json-from-model-answer.ts",
     "./ui-builder-output-prompts": "./src/ui-builder-output-prompts.ts",
     "./parse-ui-builder-list-suggestion": "./src/parse-ui-builder-list-suggestion.ts",
@@ -28,6 +29,7 @@
     "./ui-builder-orchestrator": "./src/ui-builder-orchestrator/index.ts"
   },
   "dependencies": {
+    "@google-cloud/aiplatform": "catalog:",
     "@google-cloud/vertexai": "catalog:",
     "@google/genai": "catalog:",
     "@repo/ai-context": "workspace:*",

@@ -123,9 +123,9 @@ describe("buildEmailMatchingPreviewModel", () => {
       mockContext(),
     );
 
-    expect(
-      model.steps.find((step) => step.kind === "senders")?.summary,
-    ).toBe("emailMatchingWorkbench.preview.steps.sendersEmpty");
+    expect(model.steps.find((step) => step.kind === "senders")?.summary).toBe(
+      "emailMatchingWorkbench.preview.steps.sendersEmpty",
+    );
     expect(
       model.steps.find((step) => step.kind === "extractors")?.summary,
     ).toBe("emailMatchingWorkbench.preview.steps.extractorsEmpty");
@@ -133,8 +133,6 @@ describe("buildEmailMatchingPreviewModel", () => {
       "emailMatchingWorkbench.list.statusDisabled",
     );
     expect(model.metaChips).toContain("emailMatchingWorkbench.list.useAiOn");
-    expect(model.metaChips).toContain(
-      "emailMatchingWorkbench.list.ingestLink",
-    );
+    expect(model.metaChips).toContain("emailMatchingWorkbench.list.ingestLink");
   });
 });

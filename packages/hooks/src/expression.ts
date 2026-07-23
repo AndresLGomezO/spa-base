@@ -65,6 +65,8 @@ export const EXPRESSION_FUNCTIONS = [
   "includes",
   "pow",
   "ln",
+  "normalizeMerchantText",
+  "arrayOf",
 ] as const;
 
 export type ExpressionFunction = (typeof EXPRESSION_FUNCTIONS)[number];
@@ -597,6 +599,26 @@ function evaluateCall(
       );
     case "ln":
       return Math.log(coerceNumber(args[0] ?? null));
+    case "normalizeMerchantText":
+      return normalizeMerchantText(args[0] ?? null);
+    case "arrayOf": {
+      const items: ExpressionScalar[] = [];
+      for (const value of args) {
+        if (Array.isArray(value)) {
+          for (const entry of value) {
+            items.push(entry);
+          }
+        } else if (
+          value === null ||
+          typeof value === "string" ||
+          typeof value === "number" ||
+          typeof value === "boolean"
+        ) {
+          items.push(value);
+        }
+      }
+      return items;
+    }
     default: {
       const exhaustive: never = fn;
       throw new ExpressionEvaluationError(
@@ -604,6 +626,24 @@ function evaluateCall(
       );
     }
   }
+}
+
+/**
+ * Stabilize merchant / description text for alias matching: uppercase, strip
+ * digits and long hex-like tokens, collapse punctuation to spaces.
+ */
+export function normalizeMerchantText(value: ExpressionValue): string {
+  if (value == null) {
+    return "";
+  }
+  let text = String(value).toUpperCase();
+  // Drop long hex / opaque ids (8+ hex chars).
+  text = text.replace(/\b[0-9A-F]{8,}\b/g, " ");
+  // Drop digit runs (order numbers, amounts fragments, trip ids).
+  text = text.replace(/\d+/g, " ");
+  // Non-letters → space (keep letters only for token stability).
+  text = text.replace(/[^A-Z]+/g, " ");
+  return text.replace(/\s+/g, " ").trim();
 }
 
 function evaluateBinary(
@@ -1001,6 +1041,7 @@ export function evaluateExpression(
 export {
   isEmptyValue as isEmptyExpressionValue,
   looseEquals as expressionValuesEqual,
+  truthy as isTruthyExpressionValue,
 };
 
 export function isArrayLiteralNode(node: ExpressionNode): boolean {

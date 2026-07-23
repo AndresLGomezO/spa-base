@@ -29,9 +29,9 @@ describe("email trigger bindingIds", () => {
   });
 
   it("applies to any binding when bindingIds is omitted or empty", () => {
-    expect(
-      emailTriggerAppliesToBinding({ kind: "email" }, "binding-a"),
-    ).toBe(true);
+    expect(emailTriggerAppliesToBinding({ kind: "email" }, "binding-a")).toBe(
+      true,
+    );
     expect(
       emailTriggerAppliesToBinding(
         { kind: "email", bindingIds: [] },

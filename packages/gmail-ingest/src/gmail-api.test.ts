@@ -18,7 +18,7 @@ describe("gmailApiMessageToEnvelope", () => {
       snippet: "DAVIVIENDA: truncated…",
       payload: {
         headers: [
-          { name: "From", value: "BANCO_DAVIVIENDA@davivienda.com" },
+          { name: "From", value: "alerts@bank.example.com" },
           { name: "Subject", value: "DAVIVIENDA" },
         ],
         mimeType: "text/html",
@@ -44,7 +44,7 @@ describe("gmailApiMessageToEnvelope", () => {
       snippet: "Pago exitoso",
       payload: {
         headers: [
-          { name: "From", value: "notificador@bancocajasocial.com" },
+          { name: "From", value: "notify@bank.example.com" },
           { name: "Subject", value: "Pago exitoso" },
         ],
         mimeType: "text/plain",
@@ -61,7 +61,7 @@ describe("gmailApiMessageToEnvelope", () => {
       id: "msg_pdf",
       payload: {
         headers: [
-          { name: "From", value: "bancodavivienda@davivienda.com" },
+          { name: "From", value: "alerts@bank.example.com" },
           {
             name: "Subject",
             value: "Extracto tarjeta de Crédito Banco Davivienda 20260628",

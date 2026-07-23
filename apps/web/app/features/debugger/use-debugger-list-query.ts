@@ -27,8 +27,10 @@ import {
   HOOK_EXECUTION_TYPE_KEYS,
   hookExecutionTypeForEvent,
   hookExecutionTypeLabelKey,
+  isHookExecutionSkippedEvent,
   parseHookExecutionStatusFilters,
   parseHookExecutionTypes,
+  rawStatusIncludesSkipped,
   type HookExecutionStatusFilter,
   type HookExecutionTypeKey,
 } from "./hook-execution-live-metrics";
@@ -42,6 +44,7 @@ interface DebuggerListQuery {
   readonly minWrites: number;
   readonly minDurationMs: number;
   readonly sort: DebuggerListSort;
+  readonly showSkipped: boolean;
 }
 
 interface DebuggerListFilterBadge {
@@ -138,14 +141,17 @@ export function parsePositiveInt(raw: string | null): number {
 export function useDebuggerListQuery(
   sourceEvents: readonly DebugEvent[],
   activeSource: DebugEventSource,
+  timeBounds?: { readonly sinceIso: string; readonly untilIso: string } | null,
 ) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const query = useMemo((): DebuggerListQuery => {
     const rawSort = searchParams.get("sort") ?? DEFAULT_DEBUGGER_LIST_SORT;
+    const rawStatus = searchParams.get("status");
+    const showSkippedParam = searchParams.get("showSkipped") === "1";
     return {
       search: readListQuerySearch(searchParams),
-      statuses: parseStatuses(searchParams.get("status"), activeSource),
+      statuses: parseStatuses(rawStatus, activeSource),
       executionTypes:
         activeSource === "hookExecution"
           ? parseHookExecutionTypes(searchParams.get("executionType"))
@@ -159,6 +165,9 @@ export function useDebuggerListQuery(
           ? parsePositiveInt(searchParams.get("minDuration"))
           : 0,
       sort: isDebuggerListSort(rawSort) ? rawSort : DEFAULT_DEBUGGER_LIST_SORT,
+      showSkipped:
+        activeSource === "hookExecution" &&
+        (showSkippedParam || rawStatusIncludesSkipped(rawStatus)),
     };
   }, [activeSource, searchParams]);
 
@@ -211,6 +220,33 @@ export function useDebuggerListQuery(
     },
     [activeSource, updateSearchParams],
   );
+
+  const setShowSkipped = useCallback(
+    (showSkipped: boolean) => {
+      if (activeSource !== "hookExecution") {
+        return;
+      }
+      updateSearchParams((next) => {
+        if (showSkipped) {
+          next.set("showSkipped", "1");
+        } else {
+          next.delete("showSkipped");
+        }
+        // Drop legacy status=skipped once the dedicated toggle owns it.
+        const statuses = parseStatuses(next.get("status"), activeSource);
+        if (statuses.length === 0) {
+          next.delete("status");
+        } else {
+          next.set("status", statuses.join(","));
+        }
+      });
+    },
+    [activeSource, updateSearchParams],
+  );
+
+  const toggleShowSkipped = useCallback(() => {
+    setShowSkipped(!query.showSkipped);
+  }, [query.showSkipped, setShowSkipped]);
 
   const toggleExecutionType = useCallback(
     (executionType: HookExecutionTypeKey) => {
@@ -274,14 +310,38 @@ export function useDebuggerListQuery(
       next.delete("typology");
       next.delete("minWrites");
       next.delete("minDuration");
+      next.delete("showSkipped");
       next.delete("sort");
     });
   }, [updateSearchParams]);
 
   const filteredEvents = useMemo(() => {
     const searchNeedle = query.search.trim().toLowerCase();
+    const sinceMs = timeBounds ? Date.parse(timeBounds.sinceIso) : Number.NaN;
+    const untilMs = timeBounds ? Date.parse(timeBounds.untilIso) : Number.NaN;
 
     return sourceEvents.filter((event) => {
+      if (Number.isFinite(sinceMs) || Number.isFinite(untilMs)) {
+        const eventMs = Date.parse(event.timestamp);
+        if (!Number.isFinite(eventMs)) {
+          return false;
+        }
+        if (Number.isFinite(sinceMs) && eventMs < sinceMs) {
+          return false;
+        }
+        if (Number.isFinite(untilMs) && eventMs > untilMs) {
+          return false;
+        }
+      }
+
+      if (
+        activeSource === "hookExecution" &&
+        !query.showSkipped &&
+        isHookExecutionSkippedEvent(event)
+      ) {
+        return false;
+      }
+
       if (
         query.statuses.length > 0 &&
         !query.statuses.some((status) =>
@@ -329,8 +389,10 @@ export function useDebuggerListQuery(
     query.minDurationMs,
     query.minWrites,
     query.search,
+    query.showSkipped,
     query.statuses,
     sourceEvents,
+    timeBounds,
   ]);
 
   const listEvents = useMemo(
@@ -383,6 +445,7 @@ export function useDebuggerListQuery(
     query.executionTypes.length > 0 ||
     query.minWrites > 0 ||
     query.minDurationMs > 0 ||
+    query.showSkipped ||
     query.sort !== DEFAULT_DEBUGGER_LIST_SORT;
 
   const activeFilterBadges = useMemo((): DebuggerListFilterBadge[] => {
@@ -401,6 +464,14 @@ export function useDebuggerListQuery(
         id: `status:${status}`,
         label: status,
         onRemove: () => toggleStatus(status),
+      });
+    }
+
+    if (query.showSkipped) {
+      badges.push({
+        id: "showSkipped",
+        label: "showSkipped",
+        onRemove: () => setShowSkipped(false),
       });
     }
 
@@ -442,11 +513,13 @@ export function useDebuggerListQuery(
     query.minDurationMs,
     query.minWrites,
     query.search,
+    query.showSkipped,
     query.sort,
     query.statuses,
     setMinDurationMs,
     setMinWrites,
     setSearch,
+    setShowSkipped,
     setSort,
     toggleExecutionType,
     toggleStatus,
@@ -472,6 +545,8 @@ export function useDebuggerListQuery(
     setSearch,
     setSort,
     toggleStatus,
+    toggleShowSkipped,
+    setShowSkipped,
     toggleExecutionType,
     setMinWrites,
     setMinDurationMs,

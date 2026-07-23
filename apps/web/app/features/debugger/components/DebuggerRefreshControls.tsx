@@ -31,7 +31,7 @@ export function DebuggerLastUpdatedLabel({
   readonly className?: string;
 }) {
   const { t, i18n } = useTranslation("common");
-  const { lastUpdatedAt } = useDebugger();
+  const { lastUpdatedAt, refresh, isLoading, isRefreshing } = useDebugger();
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function DebuggerLastUpdatedLabel({
     }
     const intervalId = window.setInterval(() => {
       tick((current) => current + 1);
-    }, 30_000);
+    }, 5_000);
     return () => window.clearInterval(intervalId);
   }, [lastUpdatedAt]);
 
@@ -51,9 +51,29 @@ export function DebuggerLastUpdatedLabel({
   const relativeTime = formatRelativeTime(lastUpdatedAt, i18n.language);
 
   return (
-    <Text className={cn("text-muted-foreground text-xs", className)}>
-      {t("debugger.summary.lastUpdated", { time: relativeTime })}
-    </Text>
+    <button
+      type="button"
+      className={cn(
+        "text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs transition-colors",
+        className,
+      )}
+      onClick={() => void refresh()}
+      disabled={isLoading || isRefreshing}
+      aria-label={t("debugger.summary.updatedRefreshAria", {
+        time: relativeTime,
+      })}
+    >
+      <RefreshCw
+        aria-hidden
+        className={cn(
+          "size-3.5 shrink-0",
+          isRefreshing && "animate-spin motion-reduce:animate-none",
+        )}
+      />
+      <span>
+        {t("debugger.summary.updatedRefresh", { time: relativeTime })}
+      </span>
+    </button>
   );
 }
 

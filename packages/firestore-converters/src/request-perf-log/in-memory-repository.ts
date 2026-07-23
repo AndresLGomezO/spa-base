@@ -5,6 +5,7 @@ import {
 } from "@repo/debug-logs";
 import { nanoid } from "nanoid";
 
+import { isIsoWithinTimeRange } from "../list-recent-time-range.js";
 import type { RequestPerfLogRepository } from "./repository-contract.js";
 
 export function createInMemoryRequestPerfLogRepository(): RequestPerfLogRepository & {
@@ -32,6 +33,7 @@ export function createInMemoryRequestPerfLogRepository(): RequestPerfLogReposito
       const limit = options?.limit ?? 50;
       return [...store.values()]
         .filter((record) => record.tenantId === tenantId)
+        .filter((record) => isIsoWithinTimeRange(record.timestamp, options))
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
         .slice(0, limit);
     },

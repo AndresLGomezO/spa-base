@@ -10,6 +10,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { applyListRecentTimeRange } from "./apply-list-recent-time-range.js";
 
 function toRecord(data: unknown): AuditLogRecord {
   return auditLogRecordSchema.parse(data);
@@ -28,7 +29,12 @@ export function createFirestoreAdminAuditLogRepository(
   return {
     async listRecent(tenantId, options) {
       const limit = options?.limit ?? 50;
-      const snapshot = await collection(tenantId)
+      const query = applyListRecentTimeRange(
+        collection(tenantId),
+        "timestamp",
+        options,
+      );
+      const snapshot = await query
         .orderBy("timestamp", "desc")
         .limit(limit)
         .get();

@@ -53,6 +53,8 @@ describe("importGmailAttachmentsForBinding", () => {
         userId: "user-1",
         entityName: "financialItem",
         recordId: "fi-1",
+        name: null,
+        description: null,
         fromAddresses: ["bank@example.com"],
         subjectPatterns: [],
         bodyPatterns: [],

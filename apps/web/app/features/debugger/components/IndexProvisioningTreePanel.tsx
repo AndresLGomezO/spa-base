@@ -12,6 +12,7 @@ import {
   DEBUGGER_LIST_ROW_SELECTED_CLASS,
 } from "../debugger-status-styles";
 import { DebuggerStatusBadge } from "./DebuggerStatusBadge";
+import { DebuggerTimeRangeControl } from "./DebuggerTimeRangeControl";
 import {
   phaseToIndexProvisioningBadgeStatus,
   shortIndexSignature,
@@ -85,6 +86,7 @@ export function IndexProvisioningTreeScope() {
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
+      <DebuggerTimeRangeControl />
       <div className="space-y-1 text-left">
         <Text className="text-muted-foreground text-sm">
           {t("indexProvisioning.processList.summary", {

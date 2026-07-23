@@ -9,9 +9,9 @@ import {
 
 const sample = {
   entityName: "financialItem",
-  recordId: "0819cd3c-2926-4297-9845-f1edd9f8ea0d",
+  recordId: "00000000-0000-4000-8000-000000000001",
   enabled: true,
-  fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+  fromAddresses: ["alerts@bank.example.com"],
   subjectPatterns: ["DAVIVIENDA"],
   useAi: true,
   aiInstructions: "Extract amount and categoryName.",
@@ -24,9 +24,7 @@ describe("email-match-binding-json", () => {
     expect(parsed.ok).toBe(true);
     if (parsed.ok) {
       expect(parsed.data.entityName).toBe("financialItem");
-      expect(parsed.data.fromAddresses).toEqual([
-        "BANCO_DAVIVIENDA@davivienda.com",
-      ]);
+      expect(parsed.data.fromAddresses).toEqual(["alerts@bank.example.com"]);
     }
   });
 
@@ -43,9 +41,9 @@ describe("email-match-binding-json", () => {
   it("round-trips name and description", () => {
     const withLabels = {
       ...sample,
-      name: "Visa Davivienda ****7185 — approved purchases",
+      name: "Visa card ****4242 — approved purchases",
       description:
-        "Creates expenses/payments from Davivienda approval emails for card ****7185.",
+        "Creates expenses/payments from bank approval emails for card ****4242.",
     };
     const envelope = createEmailMatchBindingEnvelope(withLabels);
     const parsed = parseEmailMatchBindingJson(JSON.stringify(envelope));

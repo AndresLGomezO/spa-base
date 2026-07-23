@@ -84,4 +84,21 @@ describe("aliasesFromFieldValue", () => {
     expect(aliasesFromFieldValue(["a", "  b ", ""])).toEqual(["A", "B"]);
     expect(aliasesFromFieldValue(null)).toEqual([]);
   });
+
+  it("adds merchant-normalized form for free-text descriptions", () => {
+    const aliases = aliasesFromFieldValue("UBER *TRIP 12345 HELP");
+    expect(aliases.length).toBeGreaterThan(1);
+    expect(
+      pickBestAliasMatch({
+        haystack: aliases.find((alias) => !/\d/.test(alias)) ?? "",
+        aliasField: "description",
+        candidates: [
+          {
+            id: "t1",
+            description: "UBER *TRIP 99999 HELP",
+          },
+        ],
+      })?.id,
+    ).toBe("t1");
+  });
 });

@@ -7,7 +7,8 @@ export type ExtractorTransform =
   | "compactYmd"
   | "monthNameDate"
   | "valueMap"
-  | "literal";
+  | "literal"
+  | "collapseWhitespace";
 
 /** How the extractor finds a value in the email body (UI exclusivity). */
 export type ExtractorSourceMode = "label" | "pattern";
@@ -108,7 +109,7 @@ export function splitLines(value: string): string[] {
   return parts;
 }
 
-export function joinLines(values: readonly string[] | undefined): string {
+function joinLines(values: readonly string[] | undefined): string {
   return (values ?? []).join("\n");
 }
 
@@ -158,7 +159,7 @@ export function extractorToFormRow(
   };
 }
 
-export function extractorsFromRecord(
+function extractorsFromRecord(
   binding: EmailMatchBindingRecord,
 ): ExtractorFormRow[] {
   return (binding.bodyFieldExtractors ?? []).map(extractorToFormRow);
@@ -221,9 +222,7 @@ export function extractorsToPayload(
         ...(captureGroup !== undefined ? { captureGroup } : {}),
         transform: row.transform,
         ...(valueMap ? { valueMap } : {}),
-        ...(row.sufficientForRelevance
-          ? { sufficientForRelevance: true }
-          : {}),
+        ...(row.sufficientForRelevance ? { sufficientForRelevance: true } : {}),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row != null);

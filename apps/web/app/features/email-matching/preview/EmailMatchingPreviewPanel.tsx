@@ -126,13 +126,7 @@ export function EmailMatchingPreviewPanel() {
 
           <div className="flex shrink-0 flex-wrap gap-1 px-1">
             {(
-              [
-                "overview",
-                "details",
-                "advanced",
-                "hooks",
-                "preview",
-              ] as const
+              ["overview", "details", "advanced", "hooks", "preview"] as const
             ).map((entry) => (
               <Button
                 key={entry}
@@ -328,9 +322,7 @@ export function EmailMatchingPreviewPanel() {
                       {Object.keys(matchPreview.extracted.fields).length ===
                       0 ? (
                         <Text className="text-muted-foreground text-xs">
-                          {t(
-                            "emailMatchingWorkbench.preview.live.noExtracted",
-                          )}
+                          {t("emailMatchingWorkbench.preview.live.noExtracted")}
                         </Text>
                       ) : (
                         <ul className="space-y-1">

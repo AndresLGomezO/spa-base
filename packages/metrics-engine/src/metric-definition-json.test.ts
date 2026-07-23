@@ -1,7 +1,3 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
 
 import {
@@ -15,26 +11,6 @@ import {
   toPortableMetricDefinition,
 } from "./metric-definition-json.js";
 import type { MetricDefinitionRecord } from "./types.js";
-
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
 
 const baseRecord: MetricDefinitionRecord = {
   id: "metric_1",
@@ -158,17 +134,12 @@ describe("metric-definition-json", () => {
     expect(envelope.metricDefinitions[0]?.name).toBe("Total principal");
   });
 
-  it("parses rates metric definitions catalog", () => {
-    const catalogDir = join(
-      dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/metric-definitions",
-    );
-    const text = mergeCatalog(
-      catalogDir,
-      "metric-definitions-catalog",
-      "metricDefinitions",
-    );
-    const parsed = parseMetricDefinitionsCatalogJson(text);
+  it("parses a synthetic metric definitions catalog", () => {
+    const envelope = createMetricDefinitionsCatalogEnvelope([
+      baseRecord,
+      otherRecord,
+    ]);
+    const parsed = parseMetricDefinitionsCatalogJson(JSON.stringify(envelope));
 
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
@@ -179,16 +150,14 @@ describe("metric-definition-json", () => {
       );
     }
 
-    expect(parsed.data.metricDefinitions.length).toBe(19);
+    expect(parsed.data.metricDefinitions).toHaveLength(2);
     expect(
       parsed.data.metricDefinitions.some(
-        (metric) => metric.sourceModel === "transaction",
+        (metric) => metric.sourceModel === "loan",
       ),
     ).toBe(true);
     expect(
-      parsed.data.metricDefinitions.some(
-        (metric) => metric.sourceModel === "paymentSchedule",
-      ),
-    ).toBe(true);
+      parsed.data.metricDefinitions.map((metric) => metric.name).sort(),
+    ).toEqual(["Loan count", "Total principal"]);
   });
 });

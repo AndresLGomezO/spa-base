@@ -19,6 +19,7 @@ import {
 import {
   clearHookRegistry,
   executeHooks,
+  getHooksForEvent,
   registerDynamicHook,
   registerSystemHook,
 } from "./registry.js";
@@ -156,6 +157,81 @@ describe("executeHooks", () => {
     await executeHooks("loan.beforeCreate", context);
 
     expect(context.current.status).toBe("Pending");
+  });
+
+  it("registers a multi-operation CRUD hook on each event", async () => {
+    registerDynamicHook("tenant_a", {
+      ...sampleDefinition,
+      id: "hook_multi",
+      phase: "after",
+      trigger: {
+        kind: "crud",
+        operations: [
+          { operation: "create" },
+          { operation: "update", updateFields: ["amount"] },
+          { operation: "delete" },
+        ],
+      },
+      actions: [
+        {
+          type: "setField",
+          field: "touched",
+          value: { kind: "literal", value: true },
+        },
+      ],
+    });
+
+    expect(getHooksForEvent("loan.afterCreate", "tenant_a")).toHaveLength(1);
+    expect(getHooksForEvent("loan.afterUpdate", "tenant_a")).toHaveLength(1);
+    expect(getHooksForEvent("loan.afterDelete", "tenant_a")).toHaveLength(1);
+  });
+
+  it("skips multi-operation update when its updateFields did not change", async () => {
+    const recorder = {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        id: "hook_multi_fields",
+        phase: "after",
+        trigger: {
+          kind: "crud",
+          operations: [
+            { operation: "create" },
+            { operation: "update", updateFields: ["categoryId"] },
+          ],
+        },
+        actions: [
+          {
+            type: "sendNotification",
+            message: { kind: "literal", value: "x" },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterUpdate",
+        current: { id: "loan_1", categoryId: "cat_1", amount: 50 },
+        previous: { id: "loan_1", categoryId: "cat_1", amount: 100 },
+        services: {
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(recorder.createTerminal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "No configured update fields changed.",
+      }),
+    );
+    expect(recorder.beginRunning).not.toHaveBeenCalled();
   });
 });
 
@@ -589,6 +665,191 @@ describe("runDataHook", () => {
     });
     expect(update).toHaveBeenCalledTimes(2);
     expect(update.mock.calls[0]?.[2]).toEqual({ isActive: false });
+  });
+
+  it("skips the hook when updateMatching ifNoMatches is skip and nothing matches", async () => {
+    const recorder = {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+    const update = vi.fn(async () => ({ id: "x" }));
+    const list = vi.fn(async () => []);
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "updateMatching",
+            entity: "loanDetails",
+            ifNoMatches: "skip",
+            where: {
+              type: "condition",
+              field: "financialItemId",
+              operator: "==",
+              value: { kind: "field", source: "current", path: "id" },
+            },
+            set: {
+              planRevision: { kind: "literal", value: 1 },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterCreate",
+        current: { id: "loan_1" },
+        services: {
+          entities: {
+            create: vi.fn(),
+            update,
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
+          },
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(update).not.toHaveBeenCalled();
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "No matching records.",
+      }),
+    );
+  });
+
+  it("succeeds with empty updateMatching when ifNoMatches is omitted", async () => {
+    const recorder = {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+    const update = vi.fn(async () => ({ id: "x" }));
+    const list = vi.fn(async () => []);
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "updateMatching",
+            entity: "loanDetails",
+            where: {
+              type: "condition",
+              field: "financialItemId",
+              operator: "==",
+              value: { kind: "field", source: "current", path: "id" },
+            },
+            set: {
+              planRevision: { kind: "literal", value: 1 },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterCreate",
+        current: { id: "loan_1" },
+        services: {
+          entities: {
+            create: vi.fn(),
+            update,
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
+          },
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(update).not.toHaveBeenCalled();
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "success" }),
+    );
+  });
+
+  it("updates matching records when ifNoMatches is skip and rows match", async () => {
+    const recorder = {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+    const update = vi.fn(async () => ({ id: "ld_1" }));
+    const list = vi.fn(async () => [
+      {
+        id: "ld_1",
+        tenantId: "tenant_a",
+        financialItemId: "loan_1",
+        amortizationType: "FRENCH",
+      },
+    ]);
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "updateMatching",
+            entity: "loanDetails",
+            ifNoMatches: "skip",
+            where: {
+              type: "condition",
+              field: "financialItemId",
+              operator: "==",
+              value: { kind: "field", source: "current", path: "id" },
+            },
+            set: {
+              planRevision: { kind: "literal", value: 2 },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterCreate",
+        current: { id: "loan_1" },
+        services: {
+          entities: {
+            create: vi.fn(),
+            update,
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
+          },
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      "loanDetails",
+      "ld_1",
+      { planRevision: 2 },
+      undefined,
+    );
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "success" }),
+    );
   });
 
   it("updates matching records with compound where tree", async () => {
@@ -2241,6 +2502,236 @@ describe("callWebhook action", () => {
   });
 });
 
+describe("callAi action", () => {
+  it("delegates to callAi service and loads the result", async () => {
+    const callAi = vi.fn(async () => ({
+      categoryId: "cat_1",
+      confidence: 0.9,
+    }));
+    const loaded: Record<string, Record<string, unknown> | null> = {};
+    const context = createContext({
+      event: "loan.beforeCreate",
+      current: { id: "txn_1", description: "UBER TRIP" },
+      loaded,
+      services: {
+        callAi,
+        logger: { info: vi.fn(), error: vi.fn() },
+      },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "before",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "callAi",
+            prompt: {
+              kind: "call",
+              fn: "concat",
+              args: [
+                { kind: "literal", value: "Classify: " },
+                {
+                  kind: "field",
+                  source: "current",
+                  path: "description",
+                },
+              ],
+            },
+            includeEntities: ["category"],
+            as: "classification",
+          },
+          {
+            type: "setField",
+            field: "categoryId",
+            value: {
+              kind: "field",
+              source: "loaded",
+              alias: "classification",
+              path: "categoryId",
+            },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(callAi).toHaveBeenCalledWith({
+      prompt: "Classify: UBER TRIP",
+      tenantId: "tenant_a",
+      includeEntities: ["category"],
+    });
+    expect(context.current.categoryId).toBe("cat_1");
+    expect(loaded.classification).toEqual({
+      categoryId: "cat_1",
+      confidence: 0.9,
+    });
+  });
+
+  it("skips the model call when when is falsey and loads null", async () => {
+    const callAi = vi.fn(async () => ({ categoryId: "cat_1" }));
+    const loaded: Record<string, Record<string, unknown> | null> = {};
+    const context = createContext({
+      loaded,
+      services: {
+        callAi,
+        logger: { info: vi.fn(), error: vi.fn() },
+      },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        actions: [
+          {
+            type: "callAi",
+            prompt: { kind: "literal", value: "Classify" },
+            when: { kind: "literal", value: false },
+            as: "classification",
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(callAi).not.toHaveBeenCalled();
+    expect(loaded.classification).toBeNull();
+  });
+
+  it("throws when callAi service is missing", async () => {
+    await expect(
+      runDataHook(
+        {
+          ...sampleDefinition,
+          actions: [
+            {
+              type: "callAi",
+              prompt: { kind: "literal", value: "Classify" },
+              as: "classification",
+            },
+          ],
+        },
+        createContext(),
+      ),
+    ).rejects.toThrow(HookExecutionError);
+  });
+});
+
+describe("computeEmbedding and matchSimilarRecord", () => {
+  it("computeEmbedding loads values from the service", async () => {
+    const computeEmbedding = vi.fn(async () => [0.1, 0.2, 0.3] as const);
+    const loaded: Record<string, Record<string, unknown> | null> = {};
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        actions: [
+          {
+            type: "computeEmbedding",
+            text: { kind: "literal", value: "UBER TRIP" },
+            as: "embedding",
+          },
+        ],
+      },
+      createContext({
+        loaded,
+        services: {
+          computeEmbedding,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+    expect(computeEmbedding).toHaveBeenCalledWith({ text: "UBER TRIP" });
+    expect(loaded.embedding).toEqual({ values: [0.1, 0.2, 0.3] });
+  });
+
+  it("computeEmbedding skips when when is falsey", async () => {
+    const computeEmbedding = vi.fn(async () => [0.1, 0.2, 0.3] as const);
+    const loaded: Record<string, Record<string, unknown> | null> = {};
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        actions: [
+          {
+            type: "computeEmbedding",
+            text: { kind: "literal", value: "UBER TRIP" },
+            when: { kind: "literal", value: false },
+            as: "embedding",
+          },
+        ],
+      },
+      createContext({
+        loaded,
+        services: {
+          computeEmbedding,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+    expect(computeEmbedding).not.toHaveBeenCalled();
+    expect(loaded.embedding).toBeNull();
+  });
+
+  it("matchSimilarRecord picks the closest candidate above minScore", async () => {
+    const query = [1, 0, 0];
+    const computeEmbedding = vi.fn(async () => query);
+    const list = vi.fn(async () => [
+      {
+        id: "ex_rappi",
+        tenantId: "tenant_a",
+        enabled: true,
+        embedding: [0, 1, 0],
+      },
+      {
+        id: "ex_uber",
+        tenantId: "tenant_a",
+        enabled: true,
+        embedding: [0.99, 0.01, 0],
+      },
+    ]);
+    const loaded: Record<string, Record<string, unknown> | null> = {};
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        actions: [
+          {
+            type: "matchSimilarRecord",
+            entity: "categoryExample",
+            where: {
+              type: "condition",
+              field: "enabled",
+              operator: "==",
+              value: { kind: "literal", value: true },
+            },
+            haystack: { kind: "literal", value: "UBER TRIP HELP" },
+            embeddingField: "embedding",
+            minScore: 0.5,
+            as: "example",
+          },
+        ],
+      },
+      createContext({
+        loaded,
+        services: {
+          computeEmbedding,
+          entities: {
+            list,
+            get: vi.fn(),
+            create: vi.fn(),
+            createMany: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(loaded.example?.id).toBe("ex_uber");
+  });
+});
+
 describe("execution logging", () => {
   function createMockRecorder() {
     const recorder = {
@@ -2276,6 +2767,31 @@ describe("execution logging", () => {
         id: "exec_running",
         status: "success",
       }),
+    );
+  });
+
+  it("stamps emailLedgerId from current.__emailLedger.id", async () => {
+    const recorder = createMockRecorder();
+    await runDataHook(sampleDefinition, {
+      ...createContext({
+        current: {
+          id: "fi_1",
+          amount: 100,
+          __emailLedger: { id: "email_ledger_1" },
+        },
+      }),
+      services: {
+        dataHookExecutionRecorder: recorder,
+        logger: { info: vi.fn(), error: vi.fn() },
+      },
+    });
+
+    expect(recorder.beginRunning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recordId: "fi_1",
+        emailLedgerId: "email_ledger_1",
+      }),
+      undefined,
     );
   });
 
@@ -2471,6 +2987,340 @@ describe("execution logging", () => {
         executionId: "exec_pending",
       }),
     );
+  });
+
+  it("does not enqueue queued hook when condition is false", async () => {
+    const enqueue = vi.fn(async () => undefined);
+    const recorder = createMockRecorder();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      id: "hook_queued_cond",
+      phase: "after",
+      trigger: { operation: "create" },
+      execution: "queued",
+      condition: {
+        type: "condition",
+        field: "amount",
+        operator: "==",
+        value: { kind: "literal", value: 999 },
+      },
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "queued" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loan.afterCreate",
+        current: { id: "loan_1", amount: 100 },
+        services: {
+          enqueueDataHookJob: enqueue,
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(recorder.createPending).not.toHaveBeenCalled();
+    expect(recorder.createTerminal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "Condition evaluated to false.",
+        executionMode: "queued",
+      }),
+    );
+  });
+
+  it("does not enqueue queued hook when updateFields did not change", async () => {
+    const enqueue = vi.fn(async () => undefined);
+    const recorder = createMockRecorder();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      id: "hook_queued_fields",
+      phase: "after",
+      trigger: { operation: "update", updateFields: ["categoryId"] },
+      execution: "queued",
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "queued" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loan.afterUpdate",
+        current: { id: "loan_1", categoryId: "cat_1", amount: 50 },
+        previous: { id: "loan_1", categoryId: "cat_1", amount: 100 },
+        services: {
+          enqueueDataHookJob: enqueue,
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(recorder.createPending).not.toHaveBeenCalled();
+    expect(recorder.createTerminal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "No configured update fields changed.",
+        executionMode: "queued",
+      }),
+    );
+  });
+});
+
+describe("advance next due date payment gate", () => {
+  const paymentGateCondition = {
+    type: "group" as const,
+    combinator: "and" as const,
+    children: [
+      {
+        type: "condition" as const,
+        field: "type",
+        operator: "==" as const,
+        value: { kind: "literal" as const, value: "PAYMENT" },
+      },
+      {
+        type: "condition" as const,
+        field: "financialItemId",
+        operator: "isNotEmpty" as const,
+      },
+    ],
+  };
+
+  function createMockRecorder() {
+    return {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+  }
+
+  it("skips Advance next due date on EXPENSE with financialItemId (UBER path)", async () => {
+    const recorder = createMockRecorder();
+    const entities = mockHookEntityServices();
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        id: "hook_advance_due",
+        name: "Advance next due date",
+        entity: "transaction",
+        phase: "after",
+        trigger: { operation: "create" },
+        condition: paymentGateCondition,
+        actions: [
+          {
+            type: "updateMatching",
+            entity: "financialItem",
+            where: {
+              type: "condition",
+              field: "id",
+              operator: "==",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "financialItemId",
+              },
+            },
+            set: {
+              nextDueDate: { kind: "literal", value: "2099-01-01" },
+            },
+          },
+        ],
+      },
+      createContext({
+        entityName: "transaction",
+        event: "transaction.afterCreate",
+        current: {
+          id: "txn_uber",
+          type: "EXPENSE",
+          financialItemId: "fi_card",
+          amount: 25000,
+        },
+        services: {
+          entities,
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(recorder.createTerminal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "Condition evaluated to false.",
+      }),
+    );
+    expect(entities.update).not.toHaveBeenCalled();
+  });
+
+  it("runs Advance next due date on PAYMENT with financialItemId", async () => {
+    const recorder = createMockRecorder();
+    const entities = mockHookEntityServices({
+      list: vi.fn(async () => [
+        { id: "fi_loan", tenantId: "tenant_a", nextDueDate: "2026-01-01" },
+      ]),
+      update: vi.fn(async (_entity, id, data) => ({
+        id,
+        tenantId: "tenant_a",
+        ...data,
+      })),
+    });
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        id: "hook_advance_due",
+        name: "Advance next due date",
+        entity: "transaction",
+        phase: "after",
+        trigger: { operation: "create" },
+        condition: paymentGateCondition,
+        actions: [
+          {
+            type: "updateMatching",
+            entity: "financialItem",
+            where: {
+              type: "condition",
+              field: "id",
+              operator: "==",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "financialItemId",
+              },
+            },
+            set: {
+              nextDueDate: { kind: "literal", value: "2026-02-01" },
+            },
+          },
+        ],
+      },
+      createContext({
+        entityName: "transaction",
+        event: "transaction.afterCreate",
+        current: {
+          id: "txn_pay",
+          type: "PAYMENT",
+          financialItemId: "fi_loan",
+          amount: 500000,
+        },
+        services: {
+          entities,
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "success" }),
+    );
+    expect(entities.update).toHaveBeenCalledWith(
+      "financialItem",
+      "fi_loan",
+      expect.objectContaining({ nextDueDate: "2026-02-01" }),
+      undefined,
+    );
+  });
+});
+
+describe("mark schedule paid relatedFinancialItemId gate", () => {
+  function createMockRecorder() {
+    return {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+  }
+
+  const markSchedulePaidDefinition: DataHookDefinition = {
+    ...sampleDefinition,
+    id: "hook_mark_schedule_paid",
+    name: "Mark schedule PAID",
+    entity: "transaction",
+    phase: "after",
+    trigger: {
+      kind: "crud",
+      operations: [
+        { operation: "create" },
+        {
+          operation: "update",
+          updateFields: ["paymentScheduleId", "relatedFinancialItemId"],
+        },
+      ],
+    },
+    condition: {
+      type: "condition",
+      field: "paymentScheduleId",
+      operator: "isNotEmpty",
+    },
+    actions: [
+      {
+        type: "updateMatching",
+        entity: "paymentSchedule",
+        where: {
+          type: "condition",
+          field: "id",
+          operator: "==",
+          value: {
+            kind: "field",
+            source: "current",
+            path: "paymentScheduleId",
+          },
+        },
+        set: {
+          status: { kind: "literal", value: "PAID" },
+        },
+      },
+    ],
+  };
+
+  it("skips when relatedFinancialItemId changes without paymentScheduleId", async () => {
+    const recorder = createMockRecorder();
+    const entities = mockHookEntityServices();
+    await runDataHook(
+      markSchedulePaidDefinition,
+      createContext({
+        entityName: "transaction",
+        event: "transaction.afterUpdate",
+        current: {
+          id: "txn_1",
+          relatedFinancialItemId: "fi_card",
+          paymentScheduleId: null,
+        },
+        previous: {
+          id: "txn_1",
+          relatedFinancialItemId: null,
+          paymentScheduleId: null,
+        },
+        services: {
+          entities,
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(recorder.createTerminal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "Condition evaluated to false.",
+      }),
+    );
+    expect(entities.update).not.toHaveBeenCalled();
+    expect(entities.list).not.toHaveBeenCalled();
   });
 });
 

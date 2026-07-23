@@ -323,6 +323,39 @@ function buildActionStep(
       ];
       break;
     }
+    case "callAi": {
+      summary = context.t("dataHooks.preview.actions.callAi");
+      bullets = [
+        humanizeExpression(action.prompt, context, {
+          ...exprOptions,
+          preferStory: false,
+        }).text,
+      ];
+      break;
+    }
+    case "computeEmbedding": {
+      summary = context.t("dataHooks.preview.actions.computeEmbedding");
+      bullets = [
+        humanizeExpression(action.text, context, {
+          ...exprOptions,
+          preferStory: false,
+        }).text,
+      ];
+      break;
+    }
+    case "matchSimilarRecord": {
+      summary = context.t("dataHooks.preview.actions.matchSimilarRecord", {
+        entity: action.entity,
+        alias: action.as,
+      });
+      bullets = [
+        humanizeExpression(action.haystack, context, {
+          ...exprOptions,
+          preferStory: false,
+        }).text,
+      ];
+      break;
+    }
     default: {
       const exhaustive: never = action;
       return exhaustive;
@@ -333,10 +366,18 @@ function buildActionStep(
   if (
     action.type === "getRecord" ||
     action.type === "getOrCreateRecord" ||
-    action.type === "matchRelatedRecord"
+    action.type === "matchRelatedRecord" ||
+    action.type === "matchSimilarRecord" ||
+    action.type === "callAi" ||
+    action.type === "computeEmbedding"
   ) {
     const loaded = new Map(pipeline.loadedAliases);
-    loaded.set(action.as, action.entity);
+    loaded.set(
+      action.as,
+      action.type === "callAi" || action.type === "computeEmbedding"
+        ? "__ai__"
+        : action.entity,
+    );
     nextPipeline = { ...pipeline, loadedAliases: loaded };
   }
   if (action.type === "aggregateMatching") {

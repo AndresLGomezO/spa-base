@@ -366,6 +366,168 @@ describe("debug events integration", () => {
     }
   });
 
+  it("filters hook executions by entityName and recordId", async () => {
+    const { server, hookExecutionRepository } = await buildTestServer();
+    const now = Date.now();
+    const minutesAgo = (minutes: number) =>
+      new Date(now - minutes * 60 * 1000).toISOString();
+
+    await hookExecutionRepository.create(
+      "tenant_a",
+      {
+        hookId: "hook_deal_a",
+        hookName: "Deal A Hook",
+        entityName: "deal",
+        recordId: "deal_a",
+        event: "deal.afterUpdate",
+        phase: "after",
+        operation: "update",
+        executionMode: "sync",
+        status: "success",
+        triggeredBy: { uid: "user_123" },
+        startedAt: minutesAgo(2),
+        finishedAt: minutesAgo(1),
+        durationMs: 50,
+      },
+      { id: "hookexec_deal_a" },
+    );
+    await hookExecutionRepository.create(
+      "tenant_a",
+      {
+        hookId: "hook_deal_b",
+        hookName: "Deal B Hook",
+        entityName: "deal",
+        recordId: "deal_b",
+        event: "deal.afterUpdate",
+        phase: "after",
+        operation: "update",
+        executionMode: "sync",
+        status: "success",
+        triggeredBy: { uid: "user_123" },
+        startedAt: minutesAgo(3),
+        finishedAt: minutesAgo(2),
+        durationMs: 40,
+      },
+      { id: "hookexec_deal_b" },
+    );
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?sources=hooks&limit=50&entityName=deal&recordId=deal_a",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: {
+        items: Array<{
+          source: string;
+          id: string;
+          summary?: { recordId?: string; entityName?: string };
+        }>;
+      };
+    };
+    const hookItems = body.data.items.filter(
+      (item) => item.source === "hookExecution",
+    );
+    expect(hookItems.some((item) => item.id === "hookexec_deal_a")).toBe(true);
+    expect(hookItems.some((item) => item.id === "hookexec_deal_b")).toBe(false);
+    expect(
+      hookItems.every(
+        (item) =>
+          item.summary?.entityName === "deal" &&
+          item.summary?.recordId === "deal_a",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects entityName without recordId", async () => {
+    const { server } = await buildTestServer();
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?sources=hooks&entityName=deal",
+      headers: authHeaders,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("filters hook executions by emailLedgerId", async () => {
+    const { server, hookExecutionRepository } = await buildTestServer();
+    const now = Date.now();
+    const minutesAgo = (minutes: number) =>
+      new Date(now - minutes * 60 * 1000).toISOString();
+
+    await hookExecutionRepository.create(
+      "tenant_a",
+      {
+        hookId: "hook_email_a",
+        hookName: "Email A Hook",
+        entityName: "financialItem",
+        recordId: "fi_1",
+        emailLedgerId: "email_ledger_a",
+        event: "financialItem.afterEmail",
+        phase: "after",
+        operation: "email",
+        executionMode: "sync",
+        status: "success",
+        triggeredBy: { uid: "user_123" },
+        startedAt: minutesAgo(2),
+        finishedAt: minutesAgo(1),
+        durationMs: 50,
+      },
+      { id: "hookexec_email_a" },
+    );
+    await hookExecutionRepository.create(
+      "tenant_a",
+      {
+        hookId: "hook_email_b",
+        hookName: "Email B Hook",
+        entityName: "financialItem",
+        recordId: "fi_1",
+        emailLedgerId: "email_ledger_b",
+        event: "financialItem.afterEmail",
+        phase: "after",
+        operation: "email",
+        executionMode: "sync",
+        status: "success",
+        triggeredBy: { uid: "user_123" },
+        startedAt: minutesAgo(3),
+        finishedAt: minutesAgo(2),
+        durationMs: 40,
+      },
+      { id: "hookexec_email_b" },
+    );
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?sources=hooks&limit=50&emailLedgerId=email_ledger_a",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: {
+        items: Array<{
+          source: string;
+          id: string;
+          summary?: { emailLedgerId?: string };
+        }>;
+      };
+    };
+    const hookItems = body.data.items.filter(
+      (item) => item.source === "hookExecution",
+    );
+    expect(hookItems.some((item) => item.id === "hookexec_email_a")).toBe(true);
+    expect(hookItems.some((item) => item.id === "hookexec_email_b")).toBe(
+      false,
+    );
+    expect(
+      hookItems.every(
+        (item) => item.summary?.emailLedgerId === "email_ledger_a",
+      ),
+    ).toBe(true);
+  });
+
   it("returns hook execution summary aggregates", async () => {
     const { server } = await buildTestServer();
 
@@ -410,5 +572,74 @@ describe("debug events integration", () => {
     expect(
       body.data.items.some((item) => item.source === "indexProvision"),
     ).toBe(true);
+  });
+
+  it("filters debug events by since/until time range", async () => {
+    const { server } = await buildTestServer();
+    const until = new Date().toISOString();
+    const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/debug/events?sources=audit&limit=20&since=${encodeURIComponent(since)}&until=${encodeURIComponent(until)}`,
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: { items: Array<{ source: string; id: string }> };
+    };
+    // Seeded audit is 180 minutes old, so it should be outside the 5m window.
+    expect(body.data.items.some((item) => item.id === "audit_1")).toBe(false);
+
+    const wideResponse = await server.inject({
+      method: "GET",
+      url: `/api/debug/events?sources=audit&limit=20&since=${encodeURIComponent(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())}&until=${encodeURIComponent(until)}`,
+      headers: authHeaders,
+    });
+    expect(wideResponse.statusCode).toBe(200);
+    const wideBody = wideResponse.json() as {
+      data: { items: Array<{ source: string; id: string }> };
+    };
+    expect(wideBody.data.items.some((item) => item.id === "audit_1")).toBe(
+      true,
+    );
+  });
+
+  it("rejects invalid since/until query params", async () => {
+    const { server } = await buildTestServer();
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?since=not-a-date",
+      headers: authHeaders,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("returns window summary for the selected source", async () => {
+    const { server } = await buildTestServer();
+    const until = new Date().toISOString();
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/debug/events/summary?sources=audit&since=${encodeURIComponent(since)}&until=${encodeURIComponent(until)}`,
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: {
+        source: string;
+        total: number;
+        scannedCount: number;
+        truncated: boolean;
+        statusCounts: Record<string, number>;
+      };
+    };
+    expect(body.data.source).toBe("audit");
+    expect(body.data.total).toBeGreaterThanOrEqual(1);
+    expect(body.data.scannedCount).toBeGreaterThanOrEqual(1);
+    expect(body.data.truncated).toBe(false);
   });
 });

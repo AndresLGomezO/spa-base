@@ -66,6 +66,7 @@ vi.mock("@repo/gcp-firebase", () => ({
   })),
   createFirestoreAdminJoinCollectionRepository: vi.fn(),
   createFirestoreAdminEntityRepository: vi.fn(),
+  publishAggregationEventMessage: vi.fn(),
   createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
   buildInMemoryListSnapshotInvalidationPrefix,
   createInMemoryListSnapshotCache: mockCreateInMemoryListSnapshotCache,

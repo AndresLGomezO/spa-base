@@ -1,7 +1,4 @@
-import {
-  splitLines,
-  type ExtractorFormRow,
-} from "../email-matching-draft.js";
+import { splitLines, type ExtractorFormRow } from "../email-matching-draft.js";
 import type {
   EmailMatchingPreviewBuildContext,
   EmailMatchingPreviewInput,
@@ -210,13 +207,16 @@ function formatExtractorBullet(
   if (row.transform === "literal") {
     const literal = row.literal.trim() || "?";
     return advanced
-      ? context.t("emailMatchingWorkbench.preview.steps.extractorLiteralAdvanced", {
-          field,
-          literal,
-          sufficient: row.sufficientForRelevance
-            ? context.t("emailMatchingWorkbench.settings.yes")
-            : context.t("emailMatchingWorkbench.settings.no"),
-        })
+      ? context.t(
+          "emailMatchingWorkbench.preview.steps.extractorLiteralAdvanced",
+          {
+            field,
+            literal,
+            sufficient: row.sufficientForRelevance
+              ? context.t("emailMatchingWorkbench.settings.yes")
+              : context.t("emailMatchingWorkbench.settings.no"),
+          },
+        )
       : context.t("emailMatchingWorkbench.preview.steps.extractorLiteral", {
           field,
           literal,
@@ -227,33 +227,34 @@ function formatExtractorBullet(
     row.sourceMode === "pattern" && row.pattern.trim()
       ? humanizePattern(row.pattern, context)
       : row.label.trim()
-        ? context.t("emailMatchingWorkbench.preview.steps.extractorLabelSource", {
-            label: row.label.trim(),
-          })
+        ? context.t(
+            "emailMatchingWorkbench.preview.steps.extractorLabelSource",
+            {
+              label: row.label.trim(),
+            },
+          )
         : row.sourceMode === "pattern"
           ? context.t("emailMatchingWorkbench.preview.steps.patternContains", {
               pattern: "?",
             })
-          : context.t("emailMatchingWorkbench.preview.steps.extractorLabelSource", {
-              label: "?",
-            });
+          : context.t(
+              "emailMatchingWorkbench.preview.steps.extractorLabelSource",
+              {
+                label: "?",
+              },
+            );
 
   if (advanced) {
-    return context.t(
-      "emailMatchingWorkbench.preview.steps.extractorAdvanced",
-      {
-        field,
-        source,
-        transform: row.transform,
-        capture:
-          row.sourceMode === "pattern"
-            ? row.captureGroup.trim() || "1"
-            : "—",
-        sufficient: row.sufficientForRelevance
-          ? context.t("emailMatchingWorkbench.settings.yes")
-          : context.t("emailMatchingWorkbench.settings.no"),
-      },
-    );
+    return context.t("emailMatchingWorkbench.preview.steps.extractorAdvanced", {
+      field,
+      source,
+      transform: row.transform,
+      capture:
+        row.sourceMode === "pattern" ? row.captureGroup.trim() || "1" : "—",
+      sufficient: row.sufficientForRelevance
+        ? context.t("emailMatchingWorkbench.settings.yes")
+        : context.t("emailMatchingWorkbench.settings.no"),
+    });
   }
 
   return context.t("emailMatchingWorkbench.preview.steps.extractorBullet", {

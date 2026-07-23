@@ -52,9 +52,7 @@ function EmailMatchingWorkbench() {
   }
 
   if (editor.loadError) {
-    return (
-      <Text className="text-destructive text-sm">{editor.loadError}</Text>
-    );
+    return <Text className="text-destructive text-sm">{editor.loadError}</Text>;
   }
 
   return (

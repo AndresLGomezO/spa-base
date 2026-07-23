@@ -194,6 +194,10 @@ export { type IndexProvisionEventRepository } from "./index-provision-event/repo
 export { createInMemoryIndexProvisionEventRepository } from "./index-provision-event/in-memory-repository.js";
 export { type AuditLogRepository } from "./audit-log/repository-contract.js";
 export { createInMemoryAuditLogRepository } from "./audit-log/in-memory-repository.js";
+export {
+  isIsoWithinTimeRange,
+  type ListRecentTimeRangeOptions,
+} from "./list-recent-time-range.js";
 export { type PlatformRuntimeSettingsRepository } from "./platform-runtime-settings/repository-contract.js";
 export { createInMemoryPlatformRuntimeSettingsRepository } from "./platform-runtime-settings/in-memory-repository.js";
 export {

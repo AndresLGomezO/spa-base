@@ -102,6 +102,7 @@ function truncateToMinuteInTimezone(at: Date, timezone: string): Date {
 export function listDueScheduledHooks(
   definitions: readonly DataHookDefinition[],
   at: Date,
+  options?: { readonly force?: boolean },
 ): readonly DataHookDefinition[] {
   return definitions.filter((definition) => {
     if (!definition.enabled || !isScheduleTrigger(definition.trigger)) {
@@ -109,6 +110,10 @@ export function listDueScheduledHooks(
     }
     if (definition.phase !== "after") {
       return false;
+    }
+
+    if (options?.force) {
+      return true;
     }
 
     const trigger = definition.trigger;

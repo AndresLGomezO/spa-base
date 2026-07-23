@@ -11,8 +11,6 @@ import {
   parseDataHooksCatalogJson,
   toPortableDataHookDefinition,
 } from "./data-hook-definition-json.js";
-import { loadRatesDataHooksCatalogJson } from "./test/load-rates-data-hooks-catalog.js";
-
 const baseRecord: DataHookDefinition = {
   id: "hook_1",
   tenantId: "tenant_a",
@@ -164,305 +162,31 @@ describe("data-hook-definition-json", () => {
     }
   });
 
-  it("parses rates tenant data hooks catalog", () => {
-    const parsed = parseDataHooksCatalogJson(loadRatesDataHooksCatalogJson());
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      return;
-    }
-
-    const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(42);
-
-    const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(42);
-
-    const ratesEntities = new Set([
-      "actor",
-      "account",
-      "category",
-      "financialItem",
-      "loanDetails",
-      "loanMonthlyCost",
-      "loanUtilization",
-      "incomeDetails",
-      "investmentDetails",
-      "serviceDetails",
-      "transaction",
-      "paymentSchedule",
-      "balanceSnapshot",
-      "attachment",
-      "statement",
-      "email",
+  it("parses a tiny synthetic data hooks catalog", () => {
+    const envelope = createDataHooksCatalogEnvelope([
+      baseRecord,
+      {
+        ...baseRecord,
+        id: "hook_2",
+        name: "Notify on update",
+        entity: "payment",
+        trigger: { operation: "update", updateFields: ["status"] },
+        actions: [
+          {
+            type: "sendNotification",
+            message: { kind: "literal", value: "Payment updated" },
+          },
+        ],
+      },
     ]);
-    for (const hook of hooks) {
-      expect(ratesEntities.has(hook.entity), hook.entity).toBe(true);
-    }
-
-    const emailIngestAi = hooks.find(
-      (hook) => hook.name === "Email Ingest - AI",
-    );
-    expect(emailIngestAi).toBeUndefined();
-
-    const emailIngestManual = hooks.find(
-      (hook) => hook.name === "Create transaction from email",
-    );
-    expect(emailIngestManual?.entity).toBe("financialItem");
-    expect(emailIngestManual?.trigger).toMatchObject({
-      kind: "email",
-      bindingIds: [
-        "emb_0819cd3c_5",
-        "emb_7c2e9f11_0",
-        "emb_7c2e9f11_5",
-        "emb_7c2e9f11_6",
-      ],
-    });
-    expect(emailIngestManual?.chainHooks).toBe(true);
-    expect(
-      emailIngestManual?.actions.some(
-        (action) =>
-          action.type === "getOrCreateRecord" && action.entity === "category",
-      ),
-    ).toBe(false);
-    expect(
-      emailIngestManual?.actions.some(
-        (action) =>
-          action.type === "matchRelatedRecord" && action.as === "subscription",
-      ),
-    ).toBe(true);
-    expect(
-      emailIngestManual?.actions.some(
-        (action) =>
-          action.type === "getOrCreateRecord" &&
-          action.entity === "transaction" &&
-          action.data?.emailId != null,
-      ),
-    ).toBe(true);
-
-    const emailStatement = hooks.find(
-      (hook) => hook.name === "Visa statement from email",
-    );
-    expect(emailStatement?.entity).toBe("financialItem");
-    expect(emailStatement?.trigger).toMatchObject({
-      kind: "email",
-      bindingIds: ["emb_0819cd3c_0"],
-    });
-    expect(emailStatement?.chainHooks).toBe(false);
-    expect(emailStatement?.order).toBe(-1);
-    expect(emailStatement?.condition).toMatchObject({
-      type: "condition",
-      field: "__emailRelevant",
-      operator: "==",
-    });
-    expect(
-      emailStatement?.actions.some(
-        (action) =>
-          action.type === "getOrCreateRecord" &&
-          action.entity === "statement" &&
-          action.as === "periodStatement",
-      ),
-    ).toBe(true);
-    expect(
-      emailStatement?.actions.some(
-        (action) =>
-          action.type === "updateMatching" &&
-          action.entity === "paymentSchedule" &&
-          action.set?.emailId != null,
-      ),
-    ).toBe(true);
-    expect(
-      emailStatement?.actions.some(
-        (action) =>
-          action.type === "updateMatching" &&
-          action.entity === "financialItem" &&
-          action.set?.emailId != null &&
-          action.set?.nextDueDate != null,
-      ),
-    ).toBe(true);
-
-    const emailReversal = hooks.find(
-      (hook) => hook.name === "Reverse card purchase from email",
-    );
-    expect(emailReversal?.entity).toBe("financialItem");
-    expect(emailReversal?.trigger).toMatchObject({
-      kind: "email",
-      bindingIds: ["emb_0819cd3c_6"],
-    });
-    expect(emailReversal?.chainHooks).toBe(false);
-    expect(
-      emailReversal?.actions.some(
-        (action) =>
-          action.type === "getOrCreateRecord" && action.data?.emailId != null,
-      ),
-    ).toBe(true);
-    expect(
-      emailReversal?.actions.some(
-        (action) =>
-          action.type === "updateMatching" && action.set?.emailId != null,
-      ),
-    ).toBe(true);
-
-    const emailLink = hooks.find(
-      (hook) => hook.name === "Link PSE payment to schedule",
-    );
-    expect(emailLink?.trigger).toMatchObject({
-      kind: "email",
-      bindingIds: ["emb_06e5cb41_0", "emb_cf757971_10"],
-    });
-
-    const statementClosing = hooks.find(
-      (hook) => hook.name === "Visa statement closing balance",
-    );
-    expect(statementClosing?.trigger).toMatchObject({
-      kind: "email",
-      bindingIds: ["emb_0819cd3c_0"],
-    });
-    expect(statementClosing?.condition).toMatchObject({
-      type: "group",
-      combinator: "and",
-    });
-
-    const markPaid = hooks.find((hook) => hook.name === "Mark schedule PAID");
-    expect(markPaid?.entity).toBe("transaction");
-    expect(markPaid?.chainHooks).toBe(true);
-
-    const overdue = hooks.find(
-      (hook) => hook.name === "Mark overdue schedules",
-    );
-    expect(overdue?.trigger).toMatchObject({
-      kind: "schedule",
-      scope: "eachRecord",
-    });
-
-    const flatLoan = hooks.find(
-      (hook) => hook.name === "Generate loan payment plan",
-    );
-    expect(flatLoan?.enabled).toBe(true);
-    expect(
-      flatLoan?.actions.some((action) => action.type === "createRecords"),
-    ).toBe(true);
-    const paymentPlanCreate = flatLoan?.actions.find(
-      (action) => action.type === "createRecords",
-    );
-    expect(paymentPlanCreate?.type).toBe("createRecords");
-    if (paymentPlanCreate?.type === "createRecords") {
-      expect(paymentPlanCreate.data.__loopState).toBeDefined();
-      expect(paymentPlanCreate.data.additionalPortion).toBeDefined();
-    }
-
-    const paymentPlanAggregate = flatLoan?.actions.find(
-      (action) =>
-        action.type === "aggregateMatching" && action.as === "monthlyAddOns",
-    );
-    expect(paymentPlanAggregate?.type).toBe("aggregateMatching");
-    if (paymentPlanAggregate?.type === "aggregateMatching") {
-      expect(paymentPlanAggregate.entity).toBe("loanMonthlyCost");
-    }
-
-    const persistStart = hooks.find(
-      (hook) => hook.name === "Persist inferred loan origination date",
-    );
-    expect(persistStart?.entity).toBe("loanDetails");
-    expect(persistStart?.order).toBe(-1);
-
-    const regenerateLoan = hooks.find(
-      (hook) => hook.name === "Regenerate loan payment plan",
-    );
-    expect(regenerateLoan?.trigger).toMatchObject({
-      operation: "update",
-      updateFields: expect.arrayContaining([
-        "termMonths",
-        "originalPrincipal",
-        "originationDate",
-        "planRevision",
-      ]),
-    });
-
-    expect(
-      hooks.some((hook) => hook.name === "Replan loan on monthly cost create"),
-    ).toBe(true);
-    expect(
-      hooks.some(
-        (hook) => hook.name === "Apply utilization to balance and replan",
-      ),
-    ).toBe(true);
-    const replanAfterPayment = hooks.find(
-      (hook) => hook.name === "Replan loan after payment",
-    );
-    expect(replanAfterPayment).toBeDefined();
-    const replanUpdate = replanAfterPayment?.actions.find(
-      (action) => action.type === "updateMatching",
-    );
-    expect(replanUpdate?.type).toBe("updateMatching");
-    if (replanUpdate?.type === "updateMatching") {
-      expect(replanUpdate.where).toMatchObject({
-        type: "group",
-        combinator: "and",
-      });
-      expect(JSON.stringify(replanUpdate.where)).toContain("amortizationType");
-      expect(JSON.stringify(replanUpdate.where)).toContain("FRENCH");
-    }
-
-    expect(regenerateLoan?.condition).toMatchObject({
-      type: "condition",
-      field: "amortizationType",
-      operator: "in",
-    });
-
-    expect(
-      hooks.some((hook) => hook.name === "Derive balance sheet role on create"),
-    ).toBe(true);
-    expect(hooks.some((hook) => hook.name === "Extend schedule horizon")).toBe(
-      true,
-    );
-    expect(
-      hooks.some((hook) => hook.name === "Update accounts on transfer"),
-    ).toBe(true);
-    expect(
-      hooks.some(
-        (hook) =>
-          hook.name === "Sync card balance after installment child create",
-      ),
-    ).toBe(true);
-    expect(
-      hooks.some((hook) => hook.name === "Initialize card installment loan"),
-    ).toBe(true);
-    expect(
-      hooks.some(
-        (hook) =>
-          hook.name === "Exclude card installment loans from liability rollup",
-      ),
-    ).toBe(true);
-
-    const successNotificationHooks = [
-      "Create initial schedule row",
-      "Generate loan payment plan",
-      "Regenerate loan payment plan",
-    ] as const;
-
-    for (const hookName of successNotificationHooks) {
-      const hook = hooks.find((entry) => entry.name === hookName);
-      expect(hook, hookName).toBeDefined();
-      const createIndex = hook!.actions.findIndex(
-        (action) => action.type === "createRecords",
-      );
-      expect(createIndex, `${hookName} createRecords`).toBeGreaterThanOrEqual(
-        0,
-      );
-      const trailing = hook!.actions.slice(createIndex + 1);
-      expect(
-        trailing.some(
-          (action) =>
-            action.type === "aggregateMatching" &&
-            action.as === "scheduleRowCount" &&
-            action.op === "count",
-        ),
-        `${hookName} scheduleRowCount aggregate`,
-      ).toBe(true);
-      expect(
-        trailing.some((action) => action.type === "sendNotification"),
-        `${hookName} success sendNotification`,
-      ).toBe(true);
+    const parsed = parseDataHooksCatalogJson(JSON.stringify(envelope));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.data.dataHooks).toHaveLength(2);
+      expect(parsed.data.dataHooks.map((hook) => hook.name).sort()).toEqual([
+        "Notify on update",
+        "Set status",
+      ]);
     }
   });
 });

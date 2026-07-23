@@ -1,3 +1,8 @@
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+import { resolveTenantImportDir } from "./resolve-tenant-import-dir.js";
+
 /** Catalog slice keys for `pnpm seed:database -- --only …`. */
 export const SEED_CATALOG_COMPONENTS = [
   "entities",
@@ -9,28 +14,7 @@ export const SEED_CATALOG_COMPONENTS = [
   "custom-views",
 ] as const;
 
-/** Local import entity names (JSON under `.local/tenant-import`). */
-export const SEED_LOCAL_ENTITY_COMPONENTS = [
-  "category",
-  "actor",
-  "account",
-  "financialItem",
-  "loanDetails",
-  "loanMonthlyCost",
-  "loanUtilization",
-  "incomeDetails",
-  "investmentDetails",
-  "serviceDetails",
-] as const;
-
-/** Generated import entity names (under `.local/tenant-import/generated`). */
-export const SEED_GENERATED_ENTITY_COMPONENTS = [
-  "paymentSchedule",
-  "transaction",
-  "balanceSnapshot",
-] as const;
-
-export const SEED_OTHER_COMPONENTS = [
+const SEED_OTHER_COMPONENTS = [
   "platform",
   "generated",
   "emailMatchBindings",
@@ -40,23 +24,42 @@ export const SEED_OTHER_COMPONENTS = [
   "hook-cache",
 ] as const;
 
-export const SEED_COMPONENT_KEYS = [
-  ...SEED_OTHER_COMPONENTS,
-  ...SEED_CATALOG_COMPONENTS,
-  ...SEED_LOCAL_ENTITY_COMPONENTS,
-  ...SEED_GENERATED_ENTITY_COMPONENTS,
-] as const;
+function listSubdirNames(parentDir: string): string[] {
+  if (!existsSync(parentDir)) {
+    return [];
+  }
+  return readdirSync(parentDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => entry.name)
+    .sort();
+}
 
-export type SeedComponentKey = (typeof SEED_COMPONENT_KEYS)[number];
+/** Local import entity names (JSON under `.local/tenant-import/records`). */
+function listLocalEntityComponents(
+  startDir: string = process.cwd(),
+): readonly string[] {
+  return listSubdirNames(join(resolveTenantImportDir(startDir), "records"));
+}
 
-const SEED_COMPONENT_KEY_SET = new Set<string>(SEED_COMPONENT_KEYS);
+/** Generated import entity names (under `.local/tenant-import/generated`). */
+function listGeneratedEntityComponents(
+  startDir: string = process.cwd(),
+): readonly string[] {
+  return listSubdirNames(join(resolveTenantImportDir(startDir), "generated"));
+}
 
-/** Components that accept `--ids` filtering (record-level upserts). */
-export const SEED_RECORD_LEVEL_COMPONENTS = new Set<string>([
-  ...SEED_LOCAL_ENTITY_COMPONENTS,
-  ...SEED_GENERATED_ENTITY_COMPONENTS,
-  "emailMatchBindings",
-]);
+function listSeedComponentKeys(
+  startDir: string = process.cwd(),
+): readonly string[] {
+  return [
+    ...SEED_OTHER_COMPONENTS,
+    ...SEED_CATALOG_COMPONENTS,
+    ...listLocalEntityComponents(startDir),
+    ...listGeneratedEntityComponents(startDir),
+  ];
+}
+
+export type SeedComponentKey = string;
 
 export interface SeedSelection {
   /** `null` = full seed (all components). */
@@ -95,27 +98,27 @@ export function selectionIncludesAny(
 
 export function listSelectedLocalEntityNames(
   selection: SeedSelection,
+  startDir: string = process.cwd(),
 ): readonly string[] | undefined {
   if (selection.components === null) {
     return undefined;
   }
-  return SEED_LOCAL_ENTITY_COMPONENTS.filter((name) =>
-    selection.components!.has(name),
-  );
+  const local = listLocalEntityComponents(startDir);
+  return local.filter((name) => selection.components!.has(name));
 }
 
 export function listSelectedGeneratedEntityNames(
   selection: SeedSelection,
+  startDir: string = process.cwd(),
 ): readonly string[] | undefined {
   if (selection.components === null) {
     return undefined;
   }
+  const generated = listGeneratedEntityComponents(startDir);
   if (selection.components.has("generated")) {
-    return [...SEED_GENERATED_ENTITY_COMPONENTS];
+    return [...generated];
   }
-  return SEED_GENERATED_ENTITY_COMPONENTS.filter((name) =>
-    selection.components!.has(name),
-  );
+  return generated.filter((name) => selection.components!.has(name));
 }
 
 export function parseCommaSeparatedSet(value: string): Set<string> {
@@ -128,33 +131,39 @@ export function parseCommaSeparatedSet(value: string): Set<string> {
 
 export function assertValidSeedComponents(
   components: ReadonlySet<string>,
+  startDir: string = process.cwd(),
 ): asserts components is ReadonlySet<SeedComponentKey> {
-  const unknown = [...components].filter(
-    (key) => !SEED_COMPONENT_KEY_SET.has(key),
-  );
+  const allowed = new Set(listSeedComponentKeys(startDir));
+  const unknown = [...components].filter((key) => !allowed.has(key));
   if (unknown.length > 0) {
     throw new Error(
-      `Unknown --only component(s): ${unknown.join(", ")}. Allowed: ${SEED_COMPONENT_KEYS.join(", ")}.`,
+      `Unknown --only component(s): ${unknown.join(", ")}. Allowed: ${[...allowed].join(", ")}.`,
     );
   }
   if (components.size === 0) {
-    throw new Error("Missing value for --only (expected comma-separated components).");
+    throw new Error(
+      "Missing value for --only (expected comma-separated components).",
+    );
   }
 }
 
 export function assertIdsAllowedForSelection(
   components: ReadonlySet<SeedComponentKey>,
   ids: ReadonlySet<string> | null,
+  startDir: string = process.cwd(),
 ): void {
   if (!ids || ids.size === 0) {
     return;
   }
-  const recordLevel = [...components].filter((key) =>
-    SEED_RECORD_LEVEL_COMPONENTS.has(key),
-  );
-  if (recordLevel.length === 0) {
+  const recordLevel = new Set([
+    ...listLocalEntityComponents(startDir),
+    ...listGeneratedEntityComponents(startDir),
+    "emailMatchBindings",
+  ]);
+  const matched = [...components].filter((key) => recordLevel.has(key));
+  if (matched.length === 0) {
     throw new Error(
-      `--ids requires at least one record-level --only component (${[...SEED_RECORD_LEVEL_COMPONENTS].join(", ")}).`,
+      `--ids requires at least one record-level --only component (${[...recordLevel].join(", ")}).`,
     );
   }
 }
@@ -162,6 +171,7 @@ export function assertIdsAllowedForSelection(
 export function assertDropAllowedForSelection(
   components: ReadonlySet<SeedComponentKey> | null,
   drop: boolean,
+  startDir: string = process.cwd(),
 ): void {
   if (!drop) {
     return;
@@ -171,13 +181,17 @@ export function assertDropAllowedForSelection(
       "--drop requires --only (refusing to drop the entire tenant seed).",
     );
   }
+  const recordLevel = new Set([
+    ...listLocalEntityComponents(startDir),
+    ...listGeneratedEntityComponents(startDir),
+    "emailMatchBindings",
+  ]);
   const droppable = [...components].filter(
-    (key) =>
-      SEED_RECORD_LEVEL_COMPONENTS.has(key) || key === "generated",
+    (key) => recordLevel.has(key) || key === "generated",
   );
   if (droppable.length === 0) {
     throw new Error(
-      `--drop only supports record-level --only components (${[...SEED_RECORD_LEVEL_COMPONENTS].join(", ")}, generated). Catalog slices already replace in place.`,
+      `--drop only supports record-level --only components (${[...recordLevel].join(", ")}, generated). Catalog slices already replace in place.`,
     );
   }
 }

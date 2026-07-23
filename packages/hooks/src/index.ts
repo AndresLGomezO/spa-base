@@ -57,6 +57,8 @@ export {
   isScheduleTrigger,
   isEmailTrigger,
   isCrudTrigger,
+  listCrudOperations,
+  resolveCrudUpdateFields,
   emailTriggerAppliesToBinding,
   dataHookConditionSchema,
   dataHookUpdateMatchingWhereSchema,
@@ -69,6 +71,8 @@ export {
   patchDataHookInputSchema,
   actionTargetEntities,
   MAX_LOADED_RECORDS,
+  MAX_CALL_AI_INCLUDE_ENTITIES,
+  DEFAULT_MATCH_SIMILAR_MIN_SCORE,
   MAX_AGGREGATE_ACTIONS,
   MAX_CREATE_RECORDS,
   MAX_CREATE_RECORDS_QUEUED,
@@ -80,6 +84,11 @@ export {
   aliasesFromFieldValue,
   pickBestAliasMatch,
 } from "./match-related-record-utils.js";
+export {
+  cosineSimilarity,
+  pickBestEmbeddingMatch,
+  readNumericArrayField,
+} from "./match-similar-record-utils.js";
 export {
   MAX_SCHEDULED_RECORDS_PER_RUN,
   SCHEDULED_HOOK_SENTINEL_ID,
@@ -207,6 +216,8 @@ export {
   collectFormulaNames,
   expressionValuesEqual,
   isEmptyExpressionValue,
+  isTruthyExpressionValue,
+  normalizeMerchantText,
   isArrayLiteralNode,
   ExpressionEvaluationError,
 } from "./expression.js";
@@ -236,7 +247,12 @@ export type {
   FormulaResolver,
 } from "./expression.js";
 export { HOOK_PERMISSIONS } from "./permissions.js";
-export { HOOK_OPERATIONS, HOOK_PHASES, HookExecutionError } from "./types.js";
+export {
+  HOOK_OPERATIONS,
+  HOOK_PHASES,
+  HookExecutionError,
+  DataHookSkipError,
+} from "./types.js";
 export type {
   HookOperation,
   HookPhase,
@@ -251,6 +267,8 @@ export type {
   HookServices,
   HookContext,
   DataHookWebhookRequest,
+  DataHookAiRequest,
+  DataHookEmbeddingRequest,
   HookHandler,
   RegisteredSystemHook,
   RegisteredDynamicHook,

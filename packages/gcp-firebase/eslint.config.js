@@ -37,6 +37,7 @@ export default [
       "src/tenant-entity-path.ts",
       "src/replace-tenant-collection-documents.ts",
       "src/firestore-bulk-helpers.ts",
+      "src/apply-list-recent-time-range.ts",
       "src/tenant-deletion/document-tree.ts",
     ],
     rules: {

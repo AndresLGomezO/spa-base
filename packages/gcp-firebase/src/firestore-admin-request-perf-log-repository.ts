@@ -13,6 +13,7 @@ import {
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
+import { applyListRecentTimeRange } from "./apply-list-recent-time-range.js";
 
 function toRecord(data: unknown): RequestPerfLogRecord {
   return requestPerfLogRecordSchema.parse(data);
@@ -43,7 +44,12 @@ export function createFirestoreAdminRequestPerfLogRepository(
     },
     async listRecent(tenantId, options) {
       const limit = options?.limit ?? 50;
-      const snapshot = await collection(tenantId)
+      const query = applyListRecentTimeRange(
+        collection(tenantId),
+        "timestamp",
+        options,
+      );
+      const snapshot = await query
         .orderBy("timestamp", "desc")
         .limit(limit)
         .get();

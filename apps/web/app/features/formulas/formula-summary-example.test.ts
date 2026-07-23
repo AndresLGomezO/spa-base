@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,26 +17,6 @@ const repoRoot = join(
   "../../../../../",
 );
 
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
-
 function loadCatalogRecords(): FormulaDefinitionRecord[] {
   const platform = JSON.parse(
     readFileSync(
@@ -44,27 +24,15 @@ function loadCatalogRecords(): FormulaDefinitionRecord[] {
       "utf8",
     ),
   ) as { formulaDefinitions: Array<Omit<FormulaDefinitionRecord, "id">> };
-  const rates = JSON.parse(
-    mergeCatalog(
-      join(
-        repoRoot,
-        "apps/api/src/admin/rates-tenant/catalogs/formula-definitions",
-      ),
-      "formula-definitions-catalog",
-      "formulaDefinitions",
-    ),
-  ) as { formulaDefinitions: Array<Omit<FormulaDefinitionRecord, "id">> };
 
   const timestamp = "2026-01-01T00:00:00.000Z";
-  return [...platform.formulaDefinitions, ...rates.formulaDefinitions].map(
-    (entry, index) => ({
-      ...entry,
-      id: `formula_${index}`,
-      tenantId: "tenant_preview",
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }),
-  );
+  return platform.formulaDefinitions.map((entry, index) => ({
+    ...entry,
+    id: `formula_${index}`,
+    tenantId: "tenant_preview",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }));
 }
 
 describe("formula-summary-example", () => {
@@ -110,31 +78,23 @@ describe("formula-summary-example", () => {
     });
   });
 
-  it("evaluates composite rates formulas from the catalog", () => {
+  it("evaluates platform formulas from the catalog", () => {
     const catalog = loadCatalogRecords();
-    const monthlyRate = catalog.find(
-      (entry) => entry.name === "monthlyRateFromQuote",
+    const annuityPayment = catalog.find(
+      (entry) => entry.name === "annuityPayment",
     );
-    const loanMonthlyRate = catalog.find(
-      (entry) => entry.name === "loanMonthlyRate",
-    );
-    const scheduleExpectedAmount = catalog.find(
-      (entry) => entry.name === "scheduleExpectedAmount",
+    const simpleInterest = catalog.find(
+      (entry) => entry.name === "simpleInterest",
     );
 
-    expect(monthlyRate).toBeDefined();
+    expect(annuityPayment).toBeDefined();
     expect(
-      evaluateFormulaExampleOutput(monthlyRate!, catalog).output,
+      evaluateFormulaExampleOutput(annuityPayment!, catalog).output,
     ).toBeTruthy();
 
-    expect(loanMonthlyRate).toBeDefined();
+    expect(simpleInterest).toBeDefined();
     expect(
-      evaluateFormulaExampleOutput(loanMonthlyRate!, catalog).output,
-    ).toBeTruthy();
-
-    expect(scheduleExpectedAmount).toBeDefined();
-    expect(
-      evaluateFormulaExampleOutput(scheduleExpectedAmount!, catalog).output,
+      evaluateFormulaExampleOutput(simpleInterest!, catalog).output,
     ).toBeTruthy();
   });
 });

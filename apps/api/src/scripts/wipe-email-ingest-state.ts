@@ -1,5 +1,5 @@
 /**
- * One-shot: delete email ledger rows + ingest processed/fingerprints for rates.
+ * One-shot: delete email ledger rows + ingest processed/fingerprints for the local tenant.
  * Usage: pnpm exec tsx --env-file=apps/api/.env.dev apps/api/src/scripts/wipe-email-ingest-state.ts
  */
 import { existsSync } from "node:fs";
@@ -9,10 +9,12 @@ import {
   EMAIL_INGEST_FINGERPRINTS_COLLECTION,
   EMAIL_INGEST_PROCESSED_COLLECTION,
 } from "@repo/gmail-ingest";
-import type { Firestore, Query } from "firebase-admin/firestore";
 
-import { RATES_TENANT_ID } from "../admin/rates-tenant/constants.js";
+import { tryLoadLocalTenantConfig } from "../admin/local-tenant-seed/load-tenant-config.js";
 import { apiEnv } from "../config/env.js";
+
+type AdminFirestore = ReturnType<typeof getFirestoreAdmin>;
+type AdminQuery = ReturnType<AdminFirestore["collection"]>;
 
 function isInsideDocker(): boolean {
   return existsSync("/.dockerenv");
@@ -33,8 +35,8 @@ function normalizeEmulatorHost(
 }
 
 async function deleteQueryBatch(
-  db: Firestore,
-  query: Query,
+  db: AdminFirestore,
+  query: AdminQuery,
   label: string,
 ): Promise<number> {
   let deleted = 0;
@@ -55,6 +57,13 @@ async function deleteQueryBatch(
 }
 
 async function main(): Promise<void> {
+  const tenantConfig = tryLoadLocalTenantConfig();
+  if (!tenantConfig) {
+    throw new Error(
+      "Local tenant config not found. Create .local/tenant-import/tenant.json before wiping email ingest state.",
+    );
+  }
+
   const firestoreEmulatorHost = normalizeEmulatorHost(
     apiEnv.FIRESTORE_EMULATOR_HOST,
     "firebase-emulator",
@@ -64,7 +73,7 @@ async function main(): Promise<void> {
     firestoreEmulatorHost,
   });
 
-  const tenantRef = db.collection("tenants").doc(RATES_TENANT_ID);
+  const tenantRef = db.collection("tenants").doc(tenantConfig.id);
   await deleteQueryBatch(db, tenantRef.collection("emails"), "emails");
   await deleteQueryBatch(
     db,

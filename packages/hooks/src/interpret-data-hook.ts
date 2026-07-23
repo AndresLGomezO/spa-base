@@ -4,19 +4,29 @@ import type {
   DataHookConditionNode,
   DataHookDefinition,
   DataHookExecutionMode,
+  DataHookOperation,
 } from "./data-hook-definition.js";
-import { isEmailTrigger, isScheduleTrigger } from "./data-hook-definition.js";
+import {
+  isEmailTrigger,
+  isScheduleTrigger,
+  isCrudTrigger,
+  resolveCrudUpdateFields,
+} from "./data-hook-definition.js";
 import { computeAggregateMatching } from "./aggregate-matching-utils.js";
 import {
   assertCreateRecordsRuntimeCount,
   coerceNonNegativeInteger,
 } from "./create-records-utils.js";
 import { pickBestAliasMatch } from "./match-related-record-utils.js";
+import { pickBestEmbeddingMatch } from "./match-similar-record-utils.js";
 import type {
   CreateDataHookExecutionInput,
   DataHookExecutionRecorder,
 } from "./data-hook-execution.js";
-import { actionTargetEntities } from "./data-hook-definition.js";
+import {
+  actionTargetEntities,
+  DEFAULT_MATCH_SIMILAR_MIN_SCORE,
+} from "./data-hook-definition.js";
 import {
   appendActionTraceEntry,
   buildExecutionMetricsSnapshot,
@@ -34,6 +44,7 @@ import {
   evaluateExpression,
   expressionValuesEqual,
   isEmptyExpressionValue,
+  isTruthyExpressionValue,
   type ExpressionNode,
   type ExpressionScope,
   type ExpressionValue,
@@ -43,7 +54,7 @@ import type {
   HookEntityWriteOptions,
   HookPhase,
 } from "./types.js";
-import { HookExecutionError } from "./types.js";
+import { HookExecutionError, DataHookSkipError } from "./types.js";
 
 function requireAfterPhase(phase: HookPhase, actionType: string): void {
   if (isBeforePhase(phase)) {
@@ -292,7 +303,15 @@ function updateFieldsChanged(
     return true;
   }
 
-  const fields = definition.trigger.updateFields;
+  if (!isCrudTrigger(definition.trigger)) {
+    return true;
+  }
+
+  const parsed = parseHookEvent(context.event);
+  const fields = resolveCrudUpdateFields(
+    definition.trigger,
+    parsed.operation as DataHookOperation,
+  );
   if (!fields || fields.length === 0) {
     return true;
   }
@@ -473,6 +492,9 @@ async function runAction(
         scope,
         entities.list,
       );
+      if (matches.length === 0 && action.ifNoMatches === "skip") {
+        throw new DataHookSkipError("No matching records.");
+      }
       const triggerRecord = context.current;
       for (const match of matches) {
         const setScope: ExpressionScope = {
@@ -741,6 +763,145 @@ async function runAction(
       return;
     }
 
+    case "callAi": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const callAi = context.services.callAi;
+      if (!callAi) {
+        throw new HookExecutionError(
+          "callAi service is not available for this hook execution.",
+        );
+      }
+      const promptValue = evaluateExpression(action.prompt, scope);
+      if (typeof promptValue !== "string" || promptValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "callAi prompt must evaluate to a non-empty string.",
+        );
+      }
+      let systemInstruction: string | undefined;
+      if (action.systemInstruction) {
+        const systemValue = evaluateExpression(action.systemInstruction, scope);
+        if (typeof systemValue === "string" && systemValue.trim().length > 0) {
+          systemInstruction = systemValue.trim();
+        }
+      }
+      const result = await callAi({
+        prompt: promptValue.trim(),
+        tenantId: context.tenantId,
+        ...(systemInstruction ? { systemInstruction } : {}),
+        ...(action.includeEntities && action.includeEntities.length > 0
+          ? { includeEntities: action.includeEntities }
+          : {}),
+        ...(action.cacheKey
+          ? (() => {
+              const keyValue = evaluateExpression(action.cacheKey, scope);
+              const key =
+                keyValue == null
+                  ? ""
+                  : typeof keyValue === "string"
+                    ? keyValue.trim()
+                    : String(keyValue).trim();
+              return key.length > 0 ? { cacheKey: key } : {};
+            })()
+          : {}),
+      });
+      context.loaded[action.as] = result;
+      return;
+    }
+
+    case "computeEmbedding": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const computeEmbedding = context.services.computeEmbedding;
+      if (!computeEmbedding) {
+        throw new HookExecutionError(
+          "computeEmbedding service is not available for this hook execution.",
+        );
+      }
+      const textValue = evaluateExpression(action.text, scope);
+      const text =
+        textValue == null
+          ? ""
+          : typeof textValue === "string"
+            ? textValue.trim()
+            : String(textValue).trim();
+      if (text.length === 0) {
+        context.loaded[action.as] = null;
+        return;
+      }
+      const values = await computeEmbedding({ text });
+      context.loaded[action.as] = { values: [...values] };
+      return;
+    }
+
+    case "matchSimilarRecord": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const computeEmbedding = context.services.computeEmbedding;
+      if (!computeEmbedding) {
+        throw new HookExecutionError(
+          "computeEmbedding service is not available for this hook execution.",
+        );
+      }
+      const entities = requireEntities(context);
+      const haystackValue = evaluateExpression(action.haystack, scope);
+      const haystack =
+        haystackValue == null
+          ? ""
+          : typeof haystackValue === "string"
+            ? haystackValue.trim()
+            : String(haystackValue).trim();
+      if (haystack.length === 0) {
+        context.loaded[action.as] = null;
+        return;
+      }
+      const candidates = await listMatchingRecordsForWhere(
+        action.entity,
+        action.where,
+        context,
+        scope,
+        entities.list,
+      );
+      if (candidates.length === 0) {
+        context.loaded[action.as] = null;
+        return;
+      }
+      const query = await computeEmbedding({ text: haystack });
+      const minScore = action.minScore ?? DEFAULT_MATCH_SIMILAR_MIN_SCORE;
+      const best = pickBestEmbeddingMatch({
+        query,
+        candidates: candidates as readonly Record<string, unknown>[],
+        embeddingField: action.embeddingField,
+        minScore,
+      });
+      context.loaded[action.as] = best ? best.record : null;
+      return;
+    }
+
     default: {
       const exhaustive: never = action;
       throw new HookExecutionError(
@@ -748,6 +909,17 @@ async function runAction(
       );
     }
   }
+}
+
+function readEmailLedgerIdFromCurrent(
+  current: Record<string, unknown>,
+): string | undefined {
+  const ledger = current.__emailLedger;
+  if (!ledger || typeof ledger !== "object" || Array.isArray(ledger)) {
+    return undefined;
+  }
+  const id = (ledger as { readonly id?: unknown }).id;
+  return typeof id === "string" && id.trim().length > 0 ? id.trim() : undefined;
 }
 
 function buildExecutionBase(
@@ -758,6 +930,7 @@ function buildExecutionBase(
   CreateDataHookExecutionInput,
   "status" | "durationMs" | "startedAt" | "finishedAt" | "error"
 > {
+  const emailLedgerId = readEmailLedgerIdFromCurrent(context.current);
   return {
     hookId: definition.id,
     hookName: definition.name,
@@ -768,6 +941,7 @@ function buildExecutionBase(
     ...(typeof context.current.id === "string"
       ? { recordId: context.current.id }
       : {}),
+    ...(emailLedgerId ? { emailLedgerId } : {}),
     executionMode: definition.execution ?? "sync",
     chainDepth: context.depth ?? 0,
     triggeredBy: { uid: context.user.uid },
@@ -871,6 +1045,9 @@ async function runDataHookCore(
       );
       recordActionTrace(context, action, scope, Date.now() - startedAt);
     } catch (error) {
+      if (error instanceof DataHookSkipError) {
+        throw error;
+      }
       const message =
         error instanceof Error ? error.message : "Hook action failed.";
       recordActionTrace(
@@ -996,6 +1173,10 @@ export async function runDataHook(
       );
     }
   } catch (error) {
+    if (error instanceof DataHookSkipError) {
+      await finishSkipped(error.message);
+      return;
+    }
     const finishedAt = Date.now();
     const message =
       error instanceof Error ? error.message : "Data hook execution failed.";
@@ -1016,6 +1197,27 @@ export async function runDataHook(
   }
 }
 
+/** Skip reasons evaluated before queued enqueue (same strings as runDataHook). */
+function resolveQueuedPreEnqueueSkipReason(
+  definition: DataHookDefinition,
+  context: HookContext,
+): string | null {
+  const parsed = parseHookEvent(context.event);
+  if (
+    parsed.operation === "update" &&
+    !updateFieldsChanged(definition, context)
+  ) {
+    return "No configured update fields changed.";
+  }
+  if (definition.condition) {
+    const scope = buildScope(context);
+    if (!evaluateConditionNode(definition.condition, context, scope)) {
+      return "Condition evaluated to false.";
+    }
+  }
+  return null;
+}
+
 export function compileDataHook(
   definition: DataHookDefinition,
 ): (context: HookContext) => Promise<void> {
@@ -1025,8 +1227,31 @@ export function compileDataHook(
       if (enqueue) {
         const parsed = parseHookEvent(context.event);
         const base = buildExecutionBase(definition, context, parsed);
-        const startedAtIso = new Date().toISOString();
+        const startedAt = Date.now();
+        const startedAtIso = new Date(startedAt).toISOString();
         const recorder = getExecutionRecorder(context);
+
+        const skipReason = resolveQueuedPreEnqueueSkipReason(
+          definition,
+          context,
+        );
+        if (skipReason) {
+          if (recorder) {
+            const finishedAt = new Date().toISOString();
+            await safeRecorderCall(context, definition.id, () =>
+              recorder.createTerminal({
+                ...base,
+                startedAt: startedAtIso,
+                status: "skipped",
+                error: skipReason,
+                durationMs: Date.now() - startedAt,
+                finishedAt,
+              }),
+            );
+          }
+          return;
+        }
+
         let executionId: string | undefined;
         if (recorder) {
           const pending = await recorder

@@ -1,12 +1,10 @@
 /** @vitest-environment jsdom */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
+  ensureContainerRoot,
   type ComponentRowNode,
   type MotionPreset,
   type UiLayoutDocument,
-  uiLayoutDocumentSchema,
 } from "@repo/ui-builder-core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -15,26 +13,6 @@ import type { LayoutRenderContext } from "../context.js";
 import { EmbeddedLayoutRenderer } from "../layout/EmbeddedLayoutRenderer.js";
 import { resolveMotionPreset } from "./resolve-motion.js";
 
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
-
 const minimalContext: LayoutRenderContext = {
   mode: "listItem",
   data: {},
@@ -42,67 +20,164 @@ const minimalContext: LayoutRenderContext = {
   resolveField: () => undefined,
 };
 
-function findQueryViewerComponent(
-  rows: readonly ComponentRowNode[],
-): { readonly rows: readonly ComponentRowNode[] } | undefined {
-  for (const row of rows) {
-    if (row.component?.kind === "query-viewer") {
-      return row.component as { readonly rows: readonly ComponentRowNode[] };
-    }
-    if (row.component?.kind === "container" && row.component.rows) {
-      const nested = findQueryViewerComponent(row.component.rows);
-      if (nested) {
-        return nested;
-      }
-    }
+function rowsFromLayout(layout: UiLayoutDocument): ComponentRowNode[] {
+  const root = layout.root;
+  if (root.type !== "root") {
+    throw new Error("expected legacy root");
   }
-  return undefined;
+  const topRows = [...(root.columns[0]?.rows ?? [])] as ComponentRowNode[];
+  const only = topRows[0];
+  if (
+    only?.type === "component" &&
+    only.component.kind === "container" &&
+    only.component.rows.length === 1 &&
+    !only.motion
+  ) {
+    return [...only.component.rows] as ComponentRowNode[];
+  }
+  return topRows;
 }
 
-function findRowById(
-  rows: readonly ComponentRowNode[] | undefined,
-  rowId: string,
-): ComponentRowNode | undefined {
-  for (const row of rows ?? []) {
-    if (row.id === rowId) {
-      return row;
-    }
-    if (row.type === "component" && row.component?.kind === "container") {
-      const nested = findRowById(row.component.rows, rowId);
-      if (nested) {
-        return nested;
-      }
-    }
-  }
-  return undefined;
-}
+const paymentItemTemplateRows = rowsFromLayout(
+  ensureContainerRoot({
+    root: {
+      type: "root",
+      id: "tmp",
+      columnCount: 1,
+      columns: [
+        {
+          id: "col",
+          rows: [
+            {
+              type: "component",
+              id: "payment-item",
+              motion: {
+                hoverSurface: "glow-border",
+                hoverTransform: "none",
+                hoverDurationMs: 150,
+                transition: "all",
+              },
+              component: {
+                kind: "container",
+                stackDirection: "row",
+                styles: [],
+                rows: [
+                  {
+                    type: "component",
+                    id: "payment-label",
+                    component: {
+                      kind: "text",
+                      primary: { type: "static", value: "Payment" },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  }),
+);
+
+const miniActionRow = rowsFromLayout(
+  ensureContainerRoot({
+    root: {
+      type: "root",
+      id: "tmp",
+      columnCount: 1,
+      columns: [
+        {
+          id: "col",
+          rows: [
+            {
+              type: "component",
+              id: "row-due-today-snapshot-mini-action",
+              motion: {
+                hoverSurface: "destructive",
+                hoverTransform: "none",
+                hoverDurationMs: 150,
+                transition: "all",
+              },
+              component: {
+                kind: "container",
+                stackDirection: "row",
+                styles: [
+                  {
+                    property: "backgroundColor",
+                    value:
+                      "color-mix(in oklch, var(--color-destructive) 24%, transparent)",
+                  },
+                  { property: "borderRadius", value: "12" },
+                  { property: "paddingTop", value: "10" },
+                  { property: "paddingBottom", value: "10" },
+                  { property: "width", value: "100%" },
+                ],
+                rows: [
+                  {
+                    type: "component",
+                    id: "row-due-today-snapshot-mini-action-label",
+                    component: {
+                      kind: "text",
+                      primary: { type: "static", value: "Pay now" },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  }),
+)[0]!;
+
+const seeAllRow = rowsFromLayout(
+  ensureContainerRoot({
+    root: {
+      type: "root",
+      id: "tmp",
+      columnCount: 1,
+      columns: [
+        {
+          id: "col",
+          rows: [
+            {
+              type: "component",
+              id: "row-recent-activity-see-all",
+              motion: {
+                hoverSurface: "default",
+                hoverTransform: "none",
+                hoverDurationMs: 150,
+                transition: "all",
+              },
+              styles: [
+                { property: "paddingTop", value: "4" },
+                { property: "paddingBottom", value: "4" },
+                { property: "paddingLeft", value: "8" },
+                { property: "paddingRight", value: "8" },
+                { property: "borderRadius", value: "8" },
+              ],
+              component: {
+                kind: "text",
+                primary: { type: "static", value: "See all" },
+                styles: [
+                  { property: "color", value: "primary" },
+                  { property: "fontSize", value: "14" },
+                  { property: "fontWeight", value: "medium" },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  }),
+)[0]!;
 
 describe("query viewer item row hover", () => {
   it("preserves hoverSurface on the payment item template row and renders interactive hover", () => {
-    const json = readFileSync(
-      join(
-        process.cwd(),
-        "../../apps/api/src/admin/rates-tenant/__fixtures__/local-ui-slices/paymentSchedule-entity-ui-overrides.json",
-      ),
-      "utf8",
-    );
-    const catalog = JSON.parse(json) as {
-      overrides: Array<{
-        metricWidgets: Array<{ layout: unknown }>;
-      }>;
-    };
-    const widget = catalog.overrides[0]?.metricWidgets[0];
-    expect(widget).toBeDefined();
-
-    const parsed = uiLayoutDocumentSchema.parse(widget!.layout);
-    const rootRows =
-      parsed.root.type === "root"
-        ? ((parsed.root.columns[0]?.rows ?? []) as readonly ComponentRowNode[])
-        : [];
-    const queryViewer = findQueryViewerComponent(rootRows);
-    expect(queryViewer).toBeDefined();
-
-    const itemRow = queryViewer!.rows[0] as ComponentRowNode & {
+    const itemRow = paymentItemTemplateRows[0] as ComponentRowNode & {
       motion?: MotionPreset;
     };
     expect(itemRow.motion?.hoverSurface).toBe("glow-border");
@@ -119,7 +194,7 @@ describe("query viewer item row hover", () => {
         columns: [
           {
             id: "query-viewer-item-col",
-            rows: [...queryViewer!.rows],
+            rows: [...paymentItemTemplateRows],
           },
         ],
       },
@@ -134,33 +209,10 @@ describe("query viewer item row hover", () => {
   });
 
   it("renders tinted mini-widget action buttons with rest/hover background vars", () => {
-    const json = readFileSync(
-      join(
-        process.cwd(),
-        "../../apps/api/src/admin/rates-tenant/__fixtures__/local-ui-slices/paymentSchedule-entity-ui-overrides.json",
-      ),
-      "utf8",
-    );
-    const catalog = JSON.parse(json) as {
-      overrides: Array<{
-        metricWidgets: Array<{ id: string; layout: unknown }>;
-      }>;
-    };
-    const widget = catalog.overrides[0]?.metricWidgets.find(
-      (entry) => entry.id === "due-today-snapshot-mini",
-    );
-    expect(widget).toBeDefined();
-
-    const parsed = uiLayoutDocumentSchema.parse(widget!.layout);
-    const rootRows =
-      parsed.root.type === "root"
-        ? ((parsed.root.columns[0]?.rows ?? []) as readonly ComponentRowNode[])
-        : [];
-    const actionRow = findRowById(
-      rootRows,
-      "row-due-today-snapshot-mini-action",
-    ) as ComponentRowNode & { motion?: MotionPreset };
-    expect(actionRow?.motion?.hoverSurface).toBe("destructive");
+    expect(
+      (miniActionRow as ComponentRowNode & { motion?: MotionPreset }).motion
+        ?.hoverSurface,
+    ).toBe("destructive");
 
     const actionLayout: UiLayoutDocument = {
       root: {
@@ -170,7 +222,7 @@ describe("query viewer item row hover", () => {
         columns: [
           {
             id: "mini-action-col",
-            rows: [actionRow!],
+            rows: [miniActionRow],
           },
         ],
       },
@@ -187,40 +239,10 @@ describe("query viewer item row hover", () => {
   });
 
   it("renders See all text links with interactive hover on the row wrapper", () => {
-    const catalog = JSON.parse(
-      mergeCatalog(
-        join(
-          process.cwd(),
-          "../../apps/api/src/admin/rates-tenant/catalogs/entity-ui-overrides",
-        ),
-        "entity-ui-overrides-catalog",
-        "overrides",
-      ),
-    ) as {
-      overrides: Array<{
-        metricWidgets: Array<{ id: string; layout: unknown }>;
-      }>;
-    };
-    const transactionOverride = catalog.overrides.find((entry) =>
-      entry.metricWidgets?.some(
-        (widget) => widget.id === "recent-activity-transactions",
-      ),
-    );
-    const widget = transactionOverride?.metricWidgets.find(
-      (entry) => entry.id === "recent-activity-transactions",
-    );
-    expect(widget).toBeDefined();
-
-    const parsed = uiLayoutDocumentSchema.parse(widget!.layout);
-    const rootRows =
-      parsed.root.type === "root"
-        ? ((parsed.root.columns[0]?.rows ?? []) as readonly ComponentRowNode[])
-        : [];
-    const seeAllRow = findRowById(
-      rootRows,
-      "row-recent-activity-see-all",
-    ) as ComponentRowNode & { motion?: MotionPreset };
-    expect(seeAllRow?.motion?.hoverSurface).toBe("default");
+    expect(
+      (seeAllRow as ComponentRowNode & { motion?: MotionPreset }).motion
+        ?.hoverSurface,
+    ).toBe("default");
 
     const seeAllLayout: UiLayoutDocument = {
       root: {
@@ -230,7 +252,7 @@ describe("query viewer item row hover", () => {
         columns: [
           {
             id: "see-all-col",
-            rows: [seeAllRow!],
+            rows: [seeAllRow],
           },
         ],
       },

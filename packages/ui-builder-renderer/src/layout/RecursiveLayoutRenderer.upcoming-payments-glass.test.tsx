@@ -1,9 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
-  uiLayoutDocumentSchema,
+  ensureContainerRoot,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -30,33 +28,78 @@ const minimalContext: LayoutRenderContext = {
   resolveField: () => undefined,
 };
 
-function loadWidget(catalogPath: string, widgetId: string) {
-  const catalog = JSON.parse(readFileSync(catalogPath, "utf8")) as {
-    overrides: Array<{
-      metricWidgets?: Array<{ id: string; layout: unknown }>;
-    }>;
-  };
-  const widget = catalog.overrides
-    .flatMap((override) => override.metricWidgets ?? [])
-    .find((entry) => entry.id === widgetId);
-  if (!widget) {
-    throw new Error(`Widget ${widgetId} not found in ${catalogPath}`);
-  }
-  return uiLayoutDocumentSchema.parse(widget.layout) as UiLayoutDocument;
-}
+const glassCardLayout: UiLayoutDocument = ensureContainerRoot({
+  root: {
+    type: "root",
+    id: "root",
+    columnCount: 1,
+    columns: [
+      {
+        id: "col",
+        rows: [
+          {
+            type: "component",
+            id: "card",
+            component: {
+              kind: "container",
+              stackDirection: "column",
+              styles: [
+                {
+                  property: "backdropFilter",
+                  value: "var(--backdrop-filter-card)",
+                },
+                { property: "backgroundColor", value: "var(--color-card)" },
+                { property: "boxShadow", value: "var(--shadow-card)" },
+                { property: "position", value: "relative" },
+                { property: "overflowX", value: "hidden" },
+                { property: "overflowY", value: "hidden" },
+              ],
+              rows: [
+                {
+                  type: "component",
+                  id: "glow",
+                  component: {
+                    kind: "container",
+                    stackDirection: "column",
+                    styles: [
+                      { property: "position", value: "absolute" },
+                      { property: "top", value: "0" },
+                      { property: "right", value: "0" },
+                      { property: "bottom", value: "0" },
+                      { property: "left", value: "0" },
+                      {
+                        property: "backgroundColor",
+                        value: "var(--gradient-card-glow-neutral)",
+                      },
+                      { property: "pointerEvents", value: "none" },
+                    ],
+                    rows: [],
+                  },
+                },
+                {
+                  type: "component",
+                  id: "title",
+                  component: {
+                    kind: "text",
+                    primary: { type: "static", value: "Upcoming" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  },
+});
 
 describe("upcoming payments glass card", () => {
   it("renders glass surface styles on the card shell", () => {
-    const layout = loadWidget(
-      join(
-        process.cwd(),
-        "../../apps/api/src/admin/rates-tenant/__fixtures__/local-ui-slices/paymentSchedule-entity-ui-overrides.json",
-      ),
-      "upcoming-payments-dashboard",
-    );
-
     const html = renderToStaticMarkup(
-      <EmbeddedLayoutRenderer layout={layout} context={minimalContext} />,
+      <EmbeddedLayoutRenderer
+        layout={glassCardLayout}
+        context={minimalContext}
+      />,
     );
 
     expect(html).toContain("backdrop-filter:var(--backdrop-filter-card)");

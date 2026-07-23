@@ -679,3 +679,28 @@ describe("expressionNodeSchema array literal", () => {
     expect(evaluateExpression(nextDayGte, scope())).toBe(false);
   });
 });
+
+describe("normalizeMerchantText", () => {
+  it("strips digits, hex ids, and punctuation for stable aliases", () => {
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "normalizeMerchantText",
+      args: [
+        {
+          kind: "literal",
+          value: "UBER *TRIP help ABCDEF123456 12.50 COP",
+        },
+      ],
+    };
+    expect(evaluateExpression(node, scope())).toBe("UBER TRIP HELP COP");
+  });
+
+  it("returns empty string for null", () => {
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "normalizeMerchantText",
+      args: [{ kind: "literal", value: null }],
+    };
+    expect(evaluateExpression(node, scope())).toBe("");
+  });
+});

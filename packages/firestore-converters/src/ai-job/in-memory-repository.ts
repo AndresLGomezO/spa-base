@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 
 import { aiJobRecordSchema, type AiJobRecord } from "@repo/ai-engine/schemas";
 
+import { isIsoWithinTimeRange } from "../list-recent-time-range.js";
 import type { AiJobRepository } from "./repository-contract.js";
 
 export function createInMemoryAiJobRepository(): AiJobRepository & {
@@ -53,11 +54,12 @@ export function createInMemoryAiJobRepository(): AiJobRepository & {
       return next;
     },
     async listRecent(tenantId, options) {
-      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 50);
+      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 1000);
       const feature = options?.feature;
       return [...records.values()]
         .filter((record) => record.tenantId === tenantId)
         .filter((record) => (feature ? record.feature === feature : true))
+        .filter((record) => isIsoWithinTimeRange(record.updatedAt, options))
         .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
         .slice(0, limit);
     },

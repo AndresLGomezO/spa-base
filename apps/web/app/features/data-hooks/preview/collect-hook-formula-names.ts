@@ -85,6 +85,21 @@ export function collectFormulaNamesInAction(
         names.push(...collectFormulaNames(action.body));
       }
       break;
+    case "callAi":
+      names.push(...collectFormulaNames(action.prompt));
+      if (action.systemInstruction) {
+        names.push(...collectFormulaNames(action.systemInstruction));
+      }
+      if (action.when) {
+        names.push(...collectFormulaNames(action.when));
+      }
+      break;
+    case "computeEmbedding":
+      names.push(...collectFormulaNames(action.text));
+      break;
+    case "matchSimilarRecord":
+      names.push(...collectFormulaNames(action.haystack));
+      break;
     default:
       break;
   }

@@ -85,4 +85,42 @@ describe("generateModelAnswer rate limit retries", () => {
     await vi.runAllTimersAsync();
     await assertion;
   });
+
+  it("passes thinkingBudget when provided", async () => {
+    generateContentMock.mockResolvedValueOnce(successResponse("ok"));
+
+    await generateModelAnswer(
+      vertexConfig,
+      { systemInstruction: "test", userText: "question" },
+      { thinkingBudget: 512, maxOutputTokens: 8192 },
+    );
+
+    expect(generateContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generationConfig: expect.objectContaining({
+          maxOutputTokens: 8192,
+          thinkingConfig: { thinkingBudget: 512 },
+        }),
+      }),
+    );
+  });
+
+  it("attaches googleSearch tool and skips JSON mime when googleSearch is true", async () => {
+    generateContentMock.mockResolvedValueOnce(successResponse("{}"));
+
+    await generateModelAnswer(
+      vertexConfig,
+      { systemInstruction: "test", userText: "question" },
+      { googleSearch: true, responseMimeType: "application/json" },
+    );
+
+    expect(generateContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tools: [{ googleSearch: {} }],
+        generationConfig: expect.not.objectContaining({
+          responseMimeType: "application/json",
+        }),
+      }),
+    );
+  });
 });

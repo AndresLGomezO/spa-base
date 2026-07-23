@@ -265,7 +265,8 @@ Full semantic set (including success/warning/info) lives in [semantics.css](../p
 
 ### Glass-glow theme tokens (tenant appearance)
 
-Glassmorphism is **opt-in per tenant** via appearance JSON (import/export version `1.2`). Do not hardcode rates-branded effect defaults in global `tokens.css` — seed catalogs such as [rates-tenant-appearance.json](../apps/api/src/admin/rates-tenant/catalogs/rates-tenant-appearance.json) provide the reference values.
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 | JSON field | CSS variable | Usage |
 |------------|--------------|--------|
@@ -288,7 +289,8 @@ Glassmorphism is **opt-in per tenant** via appearance JSON (import/export versio
 
 **List row neon highlight** — set `motion.hoverSurface: "glow-border"` on query-viewer item rows. Uses tenant tokens `--gradient-glow-border` and `--shadow-glow-border`.
 
-Example catalog: [rates-tenant-appearance.json](../apps/api/src/admin/rates-tenant/catalogs/rates-tenant-appearance.json).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 ---
 

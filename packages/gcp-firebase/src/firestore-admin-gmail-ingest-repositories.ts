@@ -37,6 +37,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { applyListRecentTimeRange } from "./apply-list-recent-time-range.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 const RUN_METRICS_KEYS = [
@@ -55,9 +56,7 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-function emptyToNull(
-  value: string | null | undefined,
-): string | null {
+function emptyToNull(value: string | null | undefined): string | null {
   if (value === undefined || value === null) {
     return null;
   }
@@ -191,7 +190,11 @@ export interface EmailIngestJobRepository {
   ): Promise<EmailIngestJobRecord | null>;
   listRecent(
     tenantId: string,
-    options?: { readonly limit?: number },
+    options?: {
+      readonly limit?: number;
+      readonly since?: string;
+      readonly until?: string;
+    },
   ): Promise<readonly EmailIngestJobRecord[]>;
   get(tenantId: string, jobId: string): Promise<EmailIngestJobRecord | null>;
 }
@@ -454,9 +457,7 @@ export function createFirestoreAdminEmailMatchBindingRepository(
         ...existing,
         ...parsed,
         name:
-          parsed.name !== undefined
-            ? emptyToNull(parsed.name)
-            : existing.name,
+          parsed.name !== undefined ? emptyToNull(parsed.name) : existing.name,
         description:
           parsed.description !== undefined
             ? emptyToNull(parsed.description)
@@ -728,7 +729,12 @@ export function createFirestoreAdminEmailIngestJobRepository(
     },
     async listRecent(tenantId, options) {
       const limit = options?.limit ?? 50;
-      const snapshot = await collection(tenantId)
+      const query = applyListRecentTimeRange(
+        collection(tenantId),
+        "createdAt",
+        options,
+      );
+      const snapshot = await query
         .orderBy("createdAt", "desc")
         .limit(limit)
         .get();

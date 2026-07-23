@@ -165,7 +165,9 @@ export function createRelationDeleteHandler(deps: RelationServicesDeps) {
                 documentId: reference.id,
                 before,
                 after,
-                businessFieldNames: Object.keys(referencingEntity.metadata.fields),
+                businessFieldNames: Object.keys(
+                  referencingEntity.metadata.fields,
+                ),
               });
               continue;
             }
@@ -180,7 +182,9 @@ export function createRelationDeleteHandler(deps: RelationServicesDeps) {
                 documentId: reference.id,
                 before,
                 after: null,
-                businessFieldNames: Object.keys(referencingEntity.metadata.fields),
+                businessFieldNames: Object.keys(
+                  referencingEntity.metadata.fields,
+                ),
               });
             }
           }

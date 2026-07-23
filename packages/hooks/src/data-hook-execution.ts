@@ -50,6 +50,8 @@ const dataHookExecutionBaseFieldsSchema = z
       ],
     ),
     recordId: z.string().trim().min(1).optional(),
+    /** Email ledger row id when this execution was driven by email ingest. */
+    emailLedgerId: z.string().trim().min(1).optional(),
     executionMode: z.enum(DATA_HOOK_EXECUTION_MODES),
     chainDepth: z.number().int().nonnegative().optional(),
     triggeredBy: z.object({

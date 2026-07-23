@@ -70,16 +70,16 @@ describe("bindingMatchesMessage", () => {
       bindingMatchesMessage(
         {
           enabled: true,
-          fromAddresses: ["extractos@bancodebogota.com.co"],
+          fromAddresses: ["statements@bank.example.com"],
           subjectPatterns: ["Extracto Tarjeta de Crédito"],
-          bodyPatterns: ["3075"],
+          bodyPatterns: ["4242"],
         },
         {
-          from: "Extractos <extractos@bancodebogota.com.co>",
+          from: "Extractos <statements@bank.example.com>",
           subject: "Extracto Tarjeta de Crédito 15 Abril 2026",
-          snippet: "tarjeta de crédito terminada en 3075",
+          snippet: "tarjeta de crédito terminada en 4242",
           bodyText:
-            "tarjeta de crédito terminada en 3075, correspondiente al mes de Abril.",
+            "tarjeta de crédito terminada en 4242, correspondiente al mes de Abril.",
         },
       ),
     ).toBe(true);
@@ -90,12 +90,12 @@ describe("bindingMatchesMessage", () => {
       bindingMatchesMessage(
         {
           enabled: true,
-          fromAddresses: ["bancodavivienda@davivienda.com"],
+          fromAddresses: ["alerts@bank.example.com"],
           subjectPatterns: ["Extracto tarjeta de Crédito Banco Davivienda"],
           bodyPatterns: [],
         },
         {
-          from: "Banco Davivienda <bancodavivienda@davivienda.com>",
+          from: "Banco Davivienda <alerts@bank.example.com>",
           subject: "Extracto tarjeta de Crédito Banco Davivienda 20260628",
           snippet: "Adjunto encontrará el extracto",
           bodyText: null,
@@ -104,19 +104,19 @@ describe("bindingMatchesMessage", () => {
     ).toBe(true);
   });
 
-  it("rejects Davivienda statement when a Visa/7185 body pattern is required but missing", () => {
+  it("rejects Davivienda statement when a Visa/4242 body pattern is required but missing", () => {
     expect(
       bindingMatchesMessage(
         {
           enabled: true,
-          fromAddresses: ["bancodavivienda@davivienda.com"],
+          fromAddresses: ["alerts@bank.example.com"],
           subjectPatterns: ["Extracto tarjeta de Crédito Banco Davivienda"],
           bodyPatterns: [
-            "/Tarjeta de Cr[eé]dito Visa[\\s\\S]*7185|7185[\\s\\S]*Tarjeta de Cr[eé]dito Visa/i",
+            "/Tarjeta de Cr[eé]dito Visa[\\s\\S]*4242|4242[\\s\\S]*Tarjeta de Cr[eé]dito Visa/i",
           ],
         },
         {
-          from: "bancodavivienda@davivienda.com",
+          from: "alerts@bank.example.com",
           subject: "Extracto tarjeta de Crédito Banco Davivienda 20260628",
           snippet: "Su extracto está listo",
           bodyText: null,
@@ -153,6 +153,8 @@ function bindingFixture(
     tenantId: "t",
     userId: "u",
     entityName: "item",
+    name: null,
+    description: null,
     enabled: true,
     fromAddresses: ["@bank.com"],
     subjectPatterns: [],
@@ -164,7 +166,7 @@ function bindingFixture(
     order: 100,
     ingestMode: "create",
     ...overrides,
-  };
+  } as EmailMatchBinding;
 }
 
 describe("findAllMatchingBindings", () => {
@@ -172,36 +174,36 @@ describe("findAllMatchingBindings", () => {
     const card = bindingFixture({
       id: "card",
       recordId: "visa",
-      fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+      fromAddresses: ["alerts@bank.example.com"],
       subjectPatterns: ["DAVIVIENDA"],
       bodyPatterns: [
-        "/\\*{4}7185[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)|Respuesta:\\s*Aprobado\\(a\\)[\\s\\S]*\\*{4}7185/",
+        "/\\*{4}4242[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)|Respuesta:\\s*Aprobado\\(a\\)[\\s\\S]*\\*{4}4242/",
       ],
     });
     const netflix = bindingFixture({
       id: "netflix",
       recordId: "netflix",
-      fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+      fromAddresses: ["alerts@bank.example.com"],
       subjectPatterns: ["DAVIVIENDA"],
       bodyPatterns: [
-        "/\\*{4}7185[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)[\\s\\S]*NETFLIX|NETFLIX[\\s\\S]*\\*{4}7185[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)/i",
+        "/\\*{4}4242[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)[\\s\\S]*NETFLIX|NETFLIX[\\s\\S]*\\*{4}4242[\\s\\S]*Respuesta:\\s*Aprobado\\(a\\)/i",
       ],
     });
     const reversal = bindingFixture({
       id: "reversal",
       recordId: "visa",
-      fromAddresses: ["BANCO_DAVIVIENDA@davivienda.com"],
+      fromAddresses: ["alerts@bank.example.com"],
       subjectPatterns: ["DAVIVIENDA"],
       bodyPatterns: [
-        "/\\*{4}7185[\\s\\S]*Clase de Movimiento:\\s*Compra Reversada\\(o\\)|Clase de Movimiento:\\s*Compra Reversada\\(o\\)[\\s\\S]*\\*{4}7185/",
+        "/\\*{4}4242[\\s\\S]*Clase de Movimiento:\\s*Compra Reversada\\(o\\)|Clase de Movimiento:\\s*Compra Reversada\\(o\\)[\\s\\S]*\\*{4}4242/",
       ],
     });
     const message = {
-      from: "BANCO_DAVIVIENDA@davivienda.com",
+      from: "alerts@bank.example.com",
       subject: "DAVIVIENDA alerta",
       snippet: "",
       bodyText:
-        "****7185\nRespuesta: Aprobado(a)\nLugar de Transacción: NETFLIX.COM",
+        "****4242\nRespuesta: Aprobado(a)\nLugar de Transacción: NETFLIX.COM",
     };
     const all = findAllMatchingBindings([card, netflix, reversal], message);
     expect(all.map((binding) => binding.id)).toEqual(["card", "netflix"]);
@@ -367,11 +369,13 @@ describe("resolveMatchingBindings", () => {
       fromAddresses: ["@bank.com"],
       subjectPatterns: ["alert"],
     });
-    const sorted = [...resolveMatchingBindings([link, create], {
-      from: "alerts@bank.com",
-      subject: "alert",
-      snippet: "",
-    })].sort((a, b) => a.order - b.order);
+    const sorted = [
+      ...resolveMatchingBindings([link, create], {
+        from: "alerts@bank.com",
+        subject: "alert",
+        snippet: "",
+      }),
+    ].sort((a, b) => a.order - b.order);
     expect(sorted.map((b) => b.id)).toEqual(["create", "link"]);
   });
 });

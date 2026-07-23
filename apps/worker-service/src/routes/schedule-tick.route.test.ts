@@ -17,7 +17,7 @@ vi.mock("../config/env.js", () => ({
     allowLocalTaskBypass: true,
     serviceAccountEmail: "",
   },
-  workerEnv: {},
+  workerEnv: { IS_LOCAL: true },
   vertexAiConfig: {},
 }));
 
@@ -57,6 +57,41 @@ describe("schedule tick route", () => {
       expect.objectContaining({
         firebaseAdminConfig: deps.firebaseAdminConfig,
         scheduledHookUserUid: "scheduler_user",
+      }),
+    );
+
+    await app.close();
+  });
+
+  it("accepts forced local ticks with 202 and passes force to the processor", async () => {
+    const deps = {
+      hookRuntime: {} as never,
+      formulaRuntime: {} as never,
+      entityRuntime: {} as never,
+      permissionDeps: {} as never,
+      firebaseAdminConfig: { projectId: "demo" },
+      indexProjectId: "demo",
+    };
+
+    const app = fastify({ logger: false });
+    await app.register(scheduleTickRoute, deps);
+
+    const response = await app.inject({
+      method: "POST",
+      url: `${HOOK_TASK_ROUTES.SCHEDULE_TICK}?force=true&hook=Categorize`,
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toEqual({ success: true, accepted: true });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(processScheduleTick).toHaveBeenCalledWith(
+      deps,
+      expect.objectContaining({
+        scheduledHookUserUid: "scheduler_user",
+        force: true,
+        hookFilter: "Categorize",
       }),
     );
 

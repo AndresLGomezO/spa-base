@@ -37,7 +37,13 @@ const WORKSPACES: WorkspaceTarget[] = [
   },
 ];
 
-const IGNORE_SYMBOLS = new Set<string>([]);
+const IGNORE_SYMBOLS = new Set<string>([
+  // Server + client copies of debugger summary math (api summary endpoint / web UI).
+  "computeDebuggerSourceStats",
+  "totalHookExecutionWritesFromEvent",
+  "aggregateHookExecutionWrites",
+  "aggregateHookExecutionWritesByEntity",
+]);
 
 const IGNORE_PARAM_PATTERNS: string[] = [];
 
@@ -458,6 +464,7 @@ const bodyDuplicates: BodyDuplicate[] = [];
 
 for (const [hash, entries] of bodyHashes) {
   if (entries.length <= 1) continue;
+  if (entries.every((entry) => IGNORE_SYMBOLS.has(entry.name))) continue;
 
   const workspaces = new Set(entries.map((e) => e.workspace));
   if (workspaces.size <= 1) continue;

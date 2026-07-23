@@ -57,7 +57,8 @@ pnpm typecheck
 2. Open the tenant switcher → **Create tenant**, or use **Create tenant** on the home empty state when no tenants exist (legacy `/platform/create-tenant` also opens the modal)
 3. Create tenant: name e.g. `Validation Tenant`, note the generated `id` (e.g. `tenant_abc`)
 
-**Alternative (Firestore seed):** Dev tenant `rates` is **not** seeded on API startup. After the API and emulators are running, run `pnpm seed:database` (loads `apps/api/.env.dev`). Then sign in as `testuser1@rates.com` / `RatesTest1!` (Auth emulator) for a pre-provisioned `normalRatesUser`. Other users can get the same role via `"tenants": { "rates": ["normalRatesUser"] }` on `users/{uid}`. After `pnpm dev:docker:reset`, run `pnpm seed:database` again before validating.
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 ---
 

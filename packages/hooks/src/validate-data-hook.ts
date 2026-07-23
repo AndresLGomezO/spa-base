@@ -104,7 +104,7 @@ function validateLoadedAliases(
   for (const alias of aliases) {
     if (!available.has(alias)) {
       throw new HookExecutionError(
-        `Expression references unknown loaded alias "${alias}". Add a prior getRecord, getOrCreateRecord, or matchRelatedRecord action with as="${alias}".`,
+        `Expression references unknown loaded alias "${alias}". Add a prior getRecord, getOrCreateRecord, matchRelatedRecord, matchSimilarRecord, callAi, or computeEmbedding action with as="${alias}".`,
       );
     }
   }
@@ -287,6 +287,46 @@ function validateActionExpressions(
         );
       }
       return;
+    case "callAi":
+      validateExpressionReferences(
+        action.prompt,
+        availableLoaded,
+        availableAggregates,
+        availableFormulas,
+      );
+      if (action.systemInstruction) {
+        validateExpressionReferences(
+          action.systemInstruction,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.when) {
+        validateExpressionReferences(
+          action.when,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      return;
+    case "computeEmbedding":
+      validateExpressionReferences(
+        action.text,
+        availableLoaded,
+        availableAggregates,
+        availableFormulas,
+      );
+      return;
+    case "matchSimilarRecord":
+      validateExpressionReferences(
+        action.haystack,
+        availableLoaded,
+        availableAggregates,
+        availableFormulas,
+      );
+      return;
     case "deleteMatching":
     case "aggregateMatching":
       return;
@@ -300,7 +340,7 @@ function validateActionExpressions(
 function registerBindingAlias(alias: string, boundAliases: Set<string>): void {
   if (boundAliases.has(alias)) {
     throw new HookExecutionError(
-      `Duplicate binding alias "${alias}". Each getRecord, getOrCreateRecord, matchRelatedRecord, or aggregateMatching as value must be unique.`,
+      `Duplicate binding alias "${alias}". Each getRecord, getOrCreateRecord, matchRelatedRecord, matchSimilarRecord, callAi, computeEmbedding, or aggregateMatching as value must be unique.`,
     );
   }
   boundAliases.add(alias);
@@ -333,7 +373,8 @@ export function validateDataHookActions(
       action.type === "deleteMatching" ||
       action.type === "aggregateMatching" ||
       action.type === "getOrCreateRecord" ||
-      action.type === "matchRelatedRecord"
+      action.type === "matchRelatedRecord" ||
+      action.type === "matchSimilarRecord"
     ) {
       validateUpdateMatchingWhere(
         action.where,
@@ -361,12 +402,15 @@ export function validateDataHookActions(
     if (
       action.type === "getRecord" ||
       action.type === "getOrCreateRecord" ||
-      action.type === "matchRelatedRecord"
+      action.type === "matchRelatedRecord" ||
+      action.type === "matchSimilarRecord" ||
+      action.type === "callAi" ||
+      action.type === "computeEmbedding"
     ) {
       loadedRecordCount += 1;
       if (loadedRecordCount > MAX_LOADED_RECORDS) {
         throw new HookExecutionError(
-          `Hook exceeds the maximum of ${MAX_LOADED_RECORDS} getRecord / getOrCreateRecord / matchRelatedRecord actions.`,
+          `Hook exceeds the maximum of ${MAX_LOADED_RECORDS} getRecord / getOrCreateRecord / matchRelatedRecord / matchSimilarRecord / callAi / computeEmbedding actions.`,
         );
       }
       registerBindingAlias(action.as, boundAliases);

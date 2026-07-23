@@ -124,17 +124,12 @@ export function EmailMatchingSettingsPanel() {
       return null;
     }
     const definition = tryGetEntityDefinition(binding.entityName, catalog);
-    return formatRecordDisplayLabel(
-      recordQuery.data,
-      definition?.displayField,
-    );
+    return formatRecordDisplayLabel(recordQuery.data, definition?.displayField);
   }, [binding, catalog, recordQuery.data]);
 
   const entityDefinition = useMemo(
     () =>
-      binding
-        ? tryGetEntityDefinition(binding.entityName, catalog)
-        : undefined,
+      binding ? tryGetEntityDefinition(binding.entityName, catalog) : undefined,
     [binding, catalog],
   );
 
@@ -341,7 +336,9 @@ export function EmailMatchingSettingsPanel() {
                 />
               </div>
               <div className="space-y-1">
-                <FieldLabel>{t("emailMatchingWorkbench.settings.status")}</FieldLabel>
+                <FieldLabel>
+                  {t("emailMatchingWorkbench.settings.status")}
+                </FieldLabel>
                 <Select
                   className={controlClassName}
                   value={draft.enabled ? "enabled" : "disabled"}
@@ -789,9 +786,7 @@ export function EmailMatchingSettingsPanel() {
                                   onChange={(_field, value) =>
                                     updateExtractor(index, {
                                       literal:
-                                        typeof value === "string"
-                                          ? value
-                                          : "",
+                                        typeof value === "string" ? value : "",
                                     })
                                   }
                                 />
@@ -880,8 +875,7 @@ export function EmailMatchingSettingsPanel() {
                   editor.updateDraft({
                     attachmentImport: {
                       enabled: event.target.checked,
-                      documentType:
-                        draft.attachmentImport?.documentType ?? "",
+                      documentType: draft.attachmentImport?.documentType ?? "",
                       documentDateField:
                         draft.attachmentImport?.documentDateField ?? "",
                       recordIdField:
@@ -969,12 +963,20 @@ export function EmailMatchingSettingsPanel() {
         onClose={() => setJsonViewOpen(false)}
         title={t("platform.email.json.viewItemTitle")}
         footer={
-          <Button type="button" variant="outline" onClick={() => setJsonViewOpen(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setJsonViewOpen(false)}
+          >
             {t("platform.email.json.close")}
           </Button>
         }
       >
-        <Textarea className="min-h-[320px] font-mono text-xs" readOnly value={exportJson} />
+        <Textarea
+          className="min-h-[320px] font-mono text-xs"
+          readOnly
+          value={exportJson}
+        />
       </Modal>
 
       <Modal

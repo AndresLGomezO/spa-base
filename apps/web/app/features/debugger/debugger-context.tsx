@@ -7,15 +7,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import {
+  getDebugEventsSummary,
   listDebugEvents,
   type DebugEvent,
   type DebugEventSource,
+  type DebugEventsSummary,
   type HookExecutionLiveCounts,
 } from "../../lib/api-client";
 import {
@@ -24,17 +26,36 @@ import {
   getDismissedDebugRecordIds,
 } from "./dismissed-debug-records";
 import {
+  clearDebuggerDeepLinkSeed,
+  readDebuggerDeepLinkSeed,
+} from "./debugger-deep-link-seed";
+import {
   DEBUGGER_SOURCE_API_NAMES,
   DEBUGGER_SOURCE_ORDER,
 } from "./debugger-source-config";
 import {
-  mergeAccumulatedDebugEvents,
-  sortDebugEventsByTimestamp,
-} from "./merge-accumulated-debug-events";
-import { TENANT_INDEX_PROCESS_LIST_QUERY_KEY } from "./hooks/useIndexProvisioningJobs";
+  parseDebuggerPageSize,
+  writeDebuggerPageSize,
+  type DebuggerPageSize,
+} from "./debugger-page-size";
+import { TENANT_INDEX_PROCESS_LIST_QUERY_KEY } from "./index-provisioning-query-keys";
+import { sortDebugEventsByTimestamp } from "./merge-accumulated-debug-events";
+import { useDebuggerTimeRange } from "./use-debugger-time-range";
 
-const DEBUGGER_HOOK_EXECUTION_PAGE_LIMIT = 100;
-const MAX_AUTO_LOADED_HOOK_EXECUTIONS = 2000;
+function eventKey(event: DebugEvent): string {
+  return buildDebugRecordKey(event.source, event.id);
+}
+
+function mergeEventMap(
+  current: ReadonlyMap<string, DebugEvent>,
+  incoming: readonly DebugEvent[],
+): Map<string, DebugEvent> {
+  const next = new Map(current);
+  for (const event of incoming) {
+    next.set(eventKey(event), event);
+  }
+  return next;
+}
 
 interface DebuggerContextValue {
   readonly activeSource: DebugEventSource;
@@ -48,17 +69,27 @@ interface DebuggerContextValue {
   readonly selectedIndexSignature: string | null;
   readonly selectedEvent: DebugEvent | null;
   readonly hookExecutionLive: HookExecutionLiveCounts | null;
-  readonly hasMoreEvents: boolean;
-  readonly isLoadingMore: boolean;
-  readonly isLoadingAllExecutions: boolean;
-  readonly loadedExecutionCount: number;
-  readonly loadMore: () => void;
+  readonly windowSummary: DebugEventsSummary | null;
+  readonly isSummaryLoading: boolean;
+  readonly hasMoreOlder: boolean;
+  readonly hasMoreNewer: boolean;
+  readonly isLoadingOlder: boolean;
+  readonly isLoadingNewer: boolean;
+  readonly loadOlder: () => Promise<void>;
+  readonly loadNewer: () => Promise<void>;
+  readonly pageSize: DebuggerPageSize;
+  readonly setPageSize: (pageSize: DebuggerPageSize) => void;
   readonly isLoading: boolean;
   readonly isRefreshing: boolean;
   readonly isFetching: boolean;
   readonly lastUpdatedAt: number | null;
   readonly refreshGeneration: number;
   readonly loadError: string | null;
+  readonly timeRangeSelectionKey: string;
+  readonly timeRangeBounds: {
+    readonly sinceIso: string;
+    readonly untilIso: string;
+  };
   readonly selectRecord: (event: DebugEvent) => void;
   readonly selectIndexJob: (signature: string) => void;
   readonly clearSelectedRecord: () => void;
@@ -81,96 +112,186 @@ export function DebuggerProvider({
   const [searchParams, setSearchParams] = useSearchParams();
   const [dismissedRevision, setDismissedRevision] = useState(0);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [isLoadingNewer, setIsLoadingNewer] = useState(false);
   const [refreshGeneration, setRefreshGeneration] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [accumulatedEvents, setAccumulatedEvents] = useState<
     ReadonlyMap<string, DebugEvent>
   >(() => new Map());
+  const [olderCursor, setOlderCursor] = useState<string | null>(null);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [hasMoreNewer, setHasMoreNewer] = useState(false);
 
-  const eventsQuery = useInfiniteQuery({
-    queryKey: ["debugger-events", tenantId, activeSource],
-    queryFn: ({ pageParam }) =>
-      listDebugEvents({
-        limit: DEBUGGER_HOOK_EXECUTION_PAGE_LIMIT,
+  const { selectionKey: timeRangeSelectionKey, resolveBounds } =
+    useDebuggerTimeRange();
+
+  const pageSize = useMemo(
+    () => parseDebuggerPageSize(searchParams.get("pageSize")),
+    [searchParams],
+  );
+
+  const scopedEntityName = searchParams.get("entityName")?.trim() || undefined;
+  const scopedRecordId = searchParams.get("recordId")?.trim() || undefined;
+  const scopedEmailLedgerId =
+    searchParams.get("emailLedgerId")?.trim() || undefined;
+  const hasEmailLedgerScope = Boolean(scopedEmailLedgerId);
+  const hasEntityRecordScope =
+    !hasEmailLedgerScope && Boolean(scopedEntityName && scopedRecordId);
+  const listScopeParams = useMemo(
+    () =>
+      hasEmailLedgerScope
+        ? { emailLedgerId: scopedEmailLedgerId }
+        : hasEntityRecordScope
+          ? { entityName: scopedEntityName, recordId: scopedRecordId }
+          : {},
+    [
+      hasEmailLedgerScope,
+      hasEntityRecordScope,
+      scopedEmailLedgerId,
+      scopedEntityName,
+      scopedRecordId,
+    ],
+  );
+
+  const listQueryKey = useMemo(
+    () =>
+      [
+        "debugger-events",
+        tenantId,
+        activeSource,
+        timeRangeSelectionKey,
+        pageSize,
+        scopedEmailLedgerId ?? null,
+        scopedEntityName ?? null,
+        scopedRecordId ?? null,
+      ] as const,
+    [
+      activeSource,
+      pageSize,
+      scopedEmailLedgerId,
+      scopedEntityName,
+      scopedRecordId,
+      tenantId,
+      timeRangeSelectionKey,
+    ],
+  );
+
+  const summaryQueryKey = useMemo(
+    () =>
+      [
+        "debugger-events-summary",
+        tenantId,
+        activeSource,
+        timeRangeSelectionKey,
+        scopedEmailLedgerId ?? null,
+        scopedEntityName ?? null,
+        scopedRecordId ?? null,
+      ] as const,
+    [
+      activeSource,
+      scopedEmailLedgerId,
+      scopedEntityName,
+      scopedRecordId,
+      tenantId,
+      timeRangeSelectionKey,
+    ],
+  );
+
+  const eventsQuery = useQuery({
+    queryKey: listQueryKey,
+    queryFn: () => {
+      const bounds = resolveBounds(new Date());
+      return listDebugEvents({
+        limit: pageSize,
         sources: [DEBUGGER_SOURCE_API_NAMES[activeSource]],
-        ...(pageParam ? { cursor: pageParam } : {}),
-      }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: isReady && Boolean(tenantId),
-    refetchInterval: (query) => {
-      if (activeSource === "ai") {
-        const pages = query.state.data?.pages ?? [];
-        const hasRunningAi = pages.some((page) =>
-          page.items.some(
-            (item) =>
-              item.source === "ai" &&
-              (item.status === "running" || item.status === "pending"),
-          ),
-        );
-        return hasRunningAi ? 2000 : false;
-      }
-      if (activeSource === "hookExecution") {
-        const live = query.state.data?.pages[0]?.hookExecutionLive;
-        const hasLiveHooks =
-          (live?.pending ?? 0) > 0 || (live?.running ?? 0) > 0;
-        return hasLiveHooks ? 2000 : false;
-      }
-      return false;
+        since: bounds.sinceIso,
+        until: bounds.untilIso,
+        ...listScopeParams,
+      });
     },
+    enabled: isReady && Boolean(tenantId),
+  });
+
+  const summaryQuery = useQuery({
+    queryKey: summaryQueryKey,
+    queryFn: () => {
+      const bounds = resolveBounds(new Date());
+      return getDebugEventsSummary({
+        sources: [DEBUGGER_SOURCE_API_NAMES[activeSource]],
+        since: bounds.sinceIso,
+        until: bounds.untilIso,
+      });
+    },
+    enabled: isReady && Boolean(tenantId),
   });
 
   useEffect(() => {
     setAccumulatedEvents(new Map());
+    setOlderCursor(null);
+    setHasMoreOlder(false);
+    setHasMoreNewer(false);
     setLastUpdatedAt(null);
-  }, [activeSource, tenantId]);
+  }, [
+    activeSource,
+    scopedEmailLedgerId,
+    scopedEntityName,
+    scopedRecordId,
+    tenantId,
+    timeRangeSelectionKey,
+    pageSize,
+  ]);
+
+  const selectedRecordKey = searchParams.get("record");
+  const selectedIndexSignature = searchParams.get("index");
+
+  const deepLinkSeed = useMemo(
+    () => readDebuggerDeepLinkSeed(selectedRecordKey),
+    // Re-read when the URL record changes; seed is written before navigation.
+    [selectedRecordKey],
+  );
 
   useEffect(() => {
-    if (eventsQuery.isLoading || eventsQuery.dataUpdatedAt <= 0) {
+    const page = eventsQuery.data;
+    if (!page || eventsQuery.isFetching) {
       return;
     }
-    setLastUpdatedAt((current) => current ?? eventsQuery.dataUpdatedAt);
-  }, [eventsQuery.dataUpdatedAt, eventsQuery.isLoading]);
-
-  useEffect(() => {
-    const pages = eventsQuery.data?.pages;
-    if (!pages?.length) {
-      return;
-    }
-
-    setAccumulatedEvents((current) => {
-      const merged = mergeAccumulatedDebugEvents(current, pages);
-      if (merged.size === current.size) {
-        let unchanged = true;
-        for (const [key, event] of merged) {
-          if (current.get(key) !== event) {
-            unchanged = false;
-            break;
-          }
-        }
-        if (unchanged) {
-          return current;
-        }
+    setAccumulatedEvents(() => {
+      const next = new Map(
+        page.items.map((event) => [eventKey(event), event] as const),
+      );
+      if (deepLinkSeed) {
+        next.set(eventKey(deepLinkSeed), deepLinkSeed);
       }
-      return merged;
+      return next;
     });
-  }, [eventsQuery.data?.pages]);
+    setOlderCursor(page.nextCursor ?? null);
+    setHasMoreOlder(Boolean(page.nextCursor) || page.items.length >= pageSize);
+    setHasMoreNewer(false);
+    setLastUpdatedAt(eventsQuery.dataUpdatedAt);
+  }, [
+    deepLinkSeed,
+    eventsQuery.data,
+    eventsQuery.dataUpdatedAt,
+    eventsQuery.isFetching,
+    pageSize,
+  ]);
 
+  // Keep a deep-linked seed visible even before the first list page arrives.
   useEffect(() => {
-    if (activeSource !== "hookExecution") {
+    if (!deepLinkSeed) {
       return;
     }
-    if (!eventsQuery.hasNextPage) {
-      return;
-    }
-    if (eventsQuery.isFetchingNextPage || eventsQuery.isFetching) {
-      return;
-    }
-    if (accumulatedEvents.size >= MAX_AUTO_LOADED_HOOK_EXECUTIONS) {
-      return;
-    }
-    void eventsQuery.fetchNextPage();
-  }, [accumulatedEvents.size, activeSource, eventsQuery]);
+    setAccumulatedEvents((current) => {
+      const key = eventKey(deepLinkSeed);
+      if (current.get(key) === deepLinkSeed) {
+        return current;
+      }
+      const next = new Map(current);
+      next.set(key, deepLinkSeed);
+      return next;
+    });
+  }, [deepLinkSeed]);
 
   const allEvents = useMemo(
     () => sortDebugEventsByTimestamp(accumulatedEvents.values()),
@@ -193,6 +314,12 @@ export function DebuggerProvider({
     [activeSource, visibleEvents],
   );
 
+  const newestLoadedTimestamp = sourceEvents[0]?.timestamp ?? null;
+  const oldestLoadedTimestamp =
+    sourceEvents.length > 0
+      ? (sourceEvents[sourceEvents.length - 1]?.timestamp ?? null)
+      : null;
+
   const groupedEvents = useMemo(() => {
     const groups = Object.fromEntries(
       DEBUGGER_SOURCE_ORDER.map((source) => [source, [] as DebugEvent[]]),
@@ -205,21 +332,37 @@ export function DebuggerProvider({
     return groups;
   }, [visibleEvents]);
 
-  const selectedRecordKey = searchParams.get("record");
-  const selectedIndexSignature = searchParams.get("index");
+  const matchesSelectedRecord = useCallback(
+    (event: DebugEvent) => {
+      if (!selectedRecordKey) {
+        return false;
+      }
+      return (
+        buildDebugRecordKey(event.source, event.id) === selectedRecordKey ||
+        event.id === selectedRecordKey
+      );
+    },
+    [selectedRecordKey],
+  );
 
   const selectedEvent = useMemo(() => {
     if (!selectedRecordKey) {
       return null;
     }
     return (
-      sourceEvents.find(
-        (event) =>
-          buildDebugRecordKey(event.source, event.id) === selectedRecordKey ||
-          event.id === selectedRecordKey,
-      ) ?? null
+      sourceEvents.find(matchesSelectedRecord) ??
+      eventsQuery.data?.items.find(matchesSelectedRecord) ??
+      (deepLinkSeed && matchesSelectedRecord(deepLinkSeed)
+        ? deepLinkSeed
+        : null)
     );
-  }, [selectedRecordKey, sourceEvents]);
+  }, [
+    deepLinkSeed,
+    eventsQuery.data?.items,
+    matchesSelectedRecord,
+    selectedRecordKey,
+    sourceEvents,
+  ]);
 
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
@@ -233,10 +376,44 @@ export function DebuggerProvider({
     if (!selectedRecordKey || selectedEvent) {
       return;
     }
+    // Wait until the initial page has settled. Clearing during the empty
+    // pre-hydrate window drops deep links like ?record=hookExecution:….
+    if (
+      eventsQuery.isPending ||
+      eventsQuery.isFetching ||
+      !eventsQuery.isFetched
+    ) {
+      return;
+    }
+    // Seeded deep links (third-rail → new tab) may miss the first page; keep
+    // the URL until the seed expires or the user dismisses selection.
+    if (deepLinkSeed) {
+      return;
+    }
+    // Scoped lists can page; do not drop the deep link while older pages remain.
+    if (
+      (hasEntityRecordScope || hasEmailLedgerScope) &&
+      (hasMoreOlder || isLoadingOlder)
+    ) {
+      return;
+    }
     const next = new URLSearchParams(searchParams);
     next.delete("record");
     setSearchParams(next, { replace: true });
-  }, [searchParams, selectedEvent, selectedRecordKey, setSearchParams]);
+  }, [
+    deepLinkSeed,
+    eventsQuery.isFetched,
+    eventsQuery.isFetching,
+    eventsQuery.isPending,
+    hasEmailLedgerScope,
+    hasEntityRecordScope,
+    hasMoreOlder,
+    isLoadingOlder,
+    searchParams,
+    selectedEvent,
+    selectedRecordKey,
+    setSearchParams,
+  ]);
 
   const selectRecord = useCallback(
     (event: DebugEvent) => {
@@ -259,60 +436,187 @@ export function DebuggerProvider({
   );
 
   const clearSelectedRecord = useCallback(() => {
+    clearDebuggerDeepLinkSeed(selectedRecordKey);
     const next = new URLSearchParams(searchParams);
     next.delete("record");
     next.delete("index");
     setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, selectedRecordKey, setSearchParams]);
 
   const dismissRecord = useCallback((event: DebugEvent) => {
     dismissDebugRecord(buildDebugRecordKey(event.source, event.id));
     setDismissedRevision((current) => current + 1);
   }, []);
 
+  const setPageSize = useCallback(
+    (nextSize: DebuggerPageSize) => {
+      const next = new URLSearchParams(searchParams);
+      writeDebuggerPageSize(next, nextSize);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
   const refresh = useCallback(async () => {
     setIsManualRefreshing(true);
     try {
-      await eventsQuery.refetch();
-      if (activeSource === "indexProvision") {
-        await queryClient.invalidateQueries({
-          queryKey: [TENANT_INDEX_PROCESS_LIST_QUERY_KEY],
-        });
-      }
+      setAccumulatedEvents(new Map());
+      setOlderCursor(null);
+      setHasMoreOlder(false);
+      setHasMoreNewer(false);
+      await Promise.all([
+        queryClient.resetQueries({ queryKey: listQueryKey }),
+        queryClient.invalidateQueries({ queryKey: summaryQueryKey }),
+        activeSource === "indexProvision"
+          ? queryClient.invalidateQueries({
+              queryKey: [TENANT_INDEX_PROCESS_LIST_QUERY_KEY],
+            })
+          : Promise.resolve(),
+      ]);
       setRefreshGeneration((current) => current + 1);
       setLastUpdatedAt(Date.now());
     } finally {
       setIsManualRefreshing(false);
     }
-  }, [activeSource, eventsQuery, queryClient]);
+  }, [activeSource, listQueryKey, queryClient, summaryQueryKey]);
 
-  const isFetching = eventsQuery.isFetching && !eventsQuery.isFetchingNextPage;
+  const loadOlder = useCallback(async () => {
+    if (isLoadingOlder || !hasMoreOlder) {
+      return;
+    }
+    setIsLoadingOlder(true);
+    try {
+      const bounds = resolveBounds(new Date());
+      const page = await listDebugEvents({
+        limit: pageSize,
+        sources: [DEBUGGER_SOURCE_API_NAMES[activeSource]],
+        since: bounds.sinceIso,
+        until: bounds.untilIso,
+        ...listScopeParams,
+        ...(olderCursor
+          ? { cursor: olderCursor }
+          : oldestLoadedTimestamp
+            ? { before: oldestLoadedTimestamp }
+            : {}),
+      });
+      setAccumulatedEvents((current) => mergeEventMap(current, page.items));
+      setOlderCursor(page.nextCursor ?? null);
+      setHasMoreOlder(
+        Boolean(page.nextCursor) || page.items.length >= pageSize,
+      );
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }, [
+    activeSource,
+    hasMoreOlder,
+    isLoadingOlder,
+    listScopeParams,
+    olderCursor,
+    oldestLoadedTimestamp,
+    pageSize,
+    resolveBounds,
+  ]);
+
+  const loadNewer = useCallback(async () => {
+    if (isLoadingNewer || !newestLoadedTimestamp) {
+      return;
+    }
+    setIsLoadingNewer(true);
+    try {
+      const bounds = resolveBounds(new Date());
+      const page = await listDebugEvents({
+        limit: pageSize,
+        sources: [DEBUGGER_SOURCE_API_NAMES[activeSource]],
+        since: bounds.sinceIso,
+        until: bounds.untilIso,
+        after: newestLoadedTimestamp,
+        ...listScopeParams,
+      });
+      if (page.items.length === 0) {
+        setHasMoreNewer(false);
+        return;
+      }
+      setAccumulatedEvents((current) => mergeEventMap(current, page.items));
+      setHasMoreNewer(page.items.length >= pageSize);
+    } finally {
+      setIsLoadingNewer(false);
+    }
+  }, [
+    activeSource,
+    isLoadingNewer,
+    listScopeParams,
+    newestLoadedTimestamp,
+    pageSize,
+    resolveBounds,
+  ]);
+
+  // Deep-linked record missing from the first page: keep paging older while scoped.
+  useEffect(() => {
+    if (
+      !selectedRecordKey ||
+      selectedEvent ||
+      !(hasEntityRecordScope || hasEmailLedgerScope) ||
+      !hasMoreOlder ||
+      isLoadingOlder ||
+      eventsQuery.isFetching ||
+      !eventsQuery.isFetched
+    ) {
+      return;
+    }
+    void loadOlder();
+  }, [
+    eventsQuery.isFetched,
+    eventsQuery.isFetching,
+    hasEmailLedgerScope,
+    hasEntityRecordScope,
+    hasMoreOlder,
+    isLoadingOlder,
+    loadOlder,
+    selectedEvent,
+    selectedRecordKey,
+  ]);
+
+  // After initial load, allow trying newer if the window's until is after newest loaded.
+  useEffect(() => {
+    if (!newestLoadedTimestamp || eventsQuery.isFetching) {
+      return;
+    }
+    const bounds = resolveBounds(new Date(lastUpdatedAt ?? Date.now()));
+    const newestMs = Date.parse(newestLoadedTimestamp);
+    const untilMs = Date.parse(bounds.untilIso);
+    if (
+      Number.isFinite(newestMs) &&
+      Number.isFinite(untilMs) &&
+      newestMs < untilMs
+    ) {
+      setHasMoreNewer(true);
+    }
+  }, [
+    eventsQuery.isFetching,
+    lastUpdatedAt,
+    newestLoadedTimestamp,
+    resolveBounds,
+  ]);
 
   const hookExecutionLive = useMemo((): HookExecutionLiveCounts | null => {
     if (activeSource !== "hookExecution") {
       return null;
     }
-    return eventsQuery.data?.pages[0]?.hookExecutionLive ?? null;
-  }, [activeSource, eventsQuery.data?.pages]);
+    return (
+      summaryQuery.data?.hookExecutionLive ??
+      eventsQuery.data?.hookExecutionLive ??
+      null
+    );
+  }, [activeSource, eventsQuery.data?.hookExecutionLive, summaryQuery.data]);
 
-  const loadMore = useCallback(() => {
-    if (eventsQuery.hasNextPage && !eventsQuery.isFetchingNextPage) {
-      void eventsQuery.fetchNextPage();
-    }
-  }, [eventsQuery]);
+  const timeRangeBounds = useMemo(
+    () => resolveBounds(new Date(lastUpdatedAt ?? Date.now())),
+    [lastUpdatedAt, resolveBounds],
+  );
 
-  const loadedExecutionCount = useMemo(() => {
-    if (activeSource !== "hookExecution") {
-      return 0;
-    }
-    return sourceEvents.length;
-  }, [activeSource, sourceEvents.length]);
-
-  const isLoadingAllExecutions =
-    activeSource === "hookExecution" &&
-    (eventsQuery.isFetchingNextPage ||
-      (Boolean(eventsQuery.hasNextPage) &&
-        accumulatedEvents.size < MAX_AUTO_LOADED_HOOK_EXECUTIONS));
+  const isFetching =
+    (eventsQuery.isFetching || summaryQuery.isFetching) && !isManualRefreshing;
 
   const value = useMemo(
     (): DebuggerContextValue => ({
@@ -325,11 +629,16 @@ export function DebuggerProvider({
       selectedIndexSignature,
       selectedEvent,
       hookExecutionLive,
-      hasMoreEvents: Boolean(eventsQuery.hasNextPage),
-      isLoadingMore: eventsQuery.isFetchingNextPage,
-      isLoadingAllExecutions,
-      loadedExecutionCount,
-      loadMore,
+      windowSummary: summaryQuery.data ?? null,
+      isSummaryLoading: summaryQuery.isLoading,
+      hasMoreOlder,
+      hasMoreNewer,
+      isLoadingOlder,
+      isLoadingNewer,
+      loadOlder,
+      loadNewer,
+      pageSize,
+      setPageSize,
       isLoading: eventsQuery.isLoading,
       isRefreshing: isManualRefreshing,
       isFetching,
@@ -340,6 +649,8 @@ export function DebuggerProvider({
           ? eventsQuery.error.message
           : t("debugger.loadError")
         : null,
+      timeRangeSelectionKey,
+      timeRangeBounds,
       selectRecord,
       selectIndexJob,
       clearSelectedRecord,
@@ -351,27 +662,34 @@ export function DebuggerProvider({
       allEvents,
       clearSelectedRecord,
       dismissRecord,
-      eventsQuery.hasNextPage,
-      eventsQuery.isFetchingNextPage,
-      eventsQuery.isLoading,
       eventsQuery.error,
+      eventsQuery.isLoading,
+      groupedEvents,
+      hasMoreNewer,
+      hasMoreOlder,
+      hookExecutionLive,
       isFetching,
+      isLoadingNewer,
+      isLoadingOlder,
       isManualRefreshing,
       lastUpdatedAt,
-      refreshGeneration,
-      groupedEvents,
-      hookExecutionLive,
-      isLoadingAllExecutions,
-      loadedExecutionCount,
-      loadMore,
+      loadNewer,
+      loadOlder,
+      pageSize,
       refresh,
+      refreshGeneration,
       selectIndexJob,
       selectRecord,
       selectedEvent,
       selectedIndexSignature,
       selectedRecordKey,
+      setPageSize,
       sourceEvents,
+      summaryQuery.data,
+      summaryQuery.isLoading,
       t,
+      timeRangeBounds,
+      timeRangeSelectionKey,
       visibleEvents,
     ],
   );

@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
-import { Alert, Button, Heading, Text } from "@repo/ui";
+import { Alert, Button, Heading, Text, useThirdRail } from "@repo/ui";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Pencil } from "lucide-react";
+import { Pencil, Workflow } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthContext";
 import type { EntityName } from "../../entities/entity-catalog";
@@ -15,6 +15,7 @@ import {
 } from "../../entities/entity-catalog-context";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { RecordHookExecutionsThirdRailPanel } from "../../features/debugger/RecordHookExecutionsThirdRailPanel";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { EntityLayoutDetailView } from "./EntityLayoutDetailView";
 import { getEntity, getEntityRelationTargets } from "../../lib/api-client";
@@ -46,6 +47,7 @@ export function EntityRecordDetail({
   const { returnTo, buildEditPath } = useEntityReturnNavigation(entityName);
   const permissions = useEntityPermissions(entityName);
   const { isSuperAdmin } = useAuth();
+  const { open: openThirdRail } = useThirdRail();
   const queryClient = useQueryClient();
   const canConfigureLayout = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
@@ -168,6 +170,38 @@ export function EntityRecordDetail({
           {formatRecordDisplayLabel(record, definition.displayField)}
         </Heading>
         <div className="flex items-center gap-2">
+          {isSuperAdmin ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                openThirdRail({
+                  title: t("entity.recordHooks.title"),
+                  subtitle: t("entity.recordHooks.subtitle", {
+                    entity: entityName,
+                    id: recordId,
+                  }),
+                  body: (
+                    <RecordHookExecutionsThirdRailPanel
+                      entityName={entityName}
+                      recordId={recordId}
+                      relatedEmailLedgerId={
+                        typeof record.emailId === "string" &&
+                        record.emailId.trim().length > 0
+                          ? record.emailId.trim()
+                          : undefined
+                      }
+                    />
+                  ),
+                  widths: { base: "full", md: "1/2", lg: "1/3" },
+                })
+              }
+            >
+              <Workflow className="mr-1 size-4" />
+              {t("entity.recordHooks.button")}
+            </Button>
+          ) : null}
           {isSuperAdmin && exportEnvelope ? (
             <EntityRecordsJsonToolbar
               entityName={entityName}

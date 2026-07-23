@@ -9,14 +9,14 @@ describe("resolveHookUserContext", () => {
     const permissionDeps = {
       getUserAccessProfile: vi.fn(async () => ({
         platformRole: null,
-        tenants: { rates: ["normalRatesUser"] },
+        tenants: { tenant_test: ["normalUser"] },
       })),
       getRoleCatalog: vi.fn(async () =>
         buildTenantRoleCatalog([
           {
             id: "role_normal",
-            tenantId: "rates",
-            name: "normalRatesUser",
+            tenantId: "tenant_test",
+            name: "normalUser",
             grants: ["paymentSchedule.create", "paymentSchedule.read"],
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
@@ -27,8 +27,8 @@ describe("resolveHookUserContext", () => {
     };
 
     const user = await resolveHookUserContext(
-      "rates",
-      "rates_testuser1",
+      "tenant_test",
+      "test_user_1",
       permissionDeps,
       {
         getKnownPermissions: () => [

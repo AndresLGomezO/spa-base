@@ -130,6 +130,9 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "aggregateMatching",
   "sendNotification",
   "callWebhook",
+  "callAi",
+  "computeEmbedding",
+  "matchSimilarRecord",
 ];
 
 function literal(): ExpressionNode {
@@ -154,10 +157,19 @@ function collectLoadedBindingsBefore(
     if (
       (action?.type === "getRecord" ||
         action?.type === "getOrCreateRecord" ||
-        action?.type === "matchRelatedRecord") &&
+        action?.type === "matchRelatedRecord" ||
+        action?.type === "matchSimilarRecord" ||
+        action?.type === "callAi" ||
+        action?.type === "computeEmbedding") &&
       action.as.trim()
     ) {
-      bindings.push({ alias: action.as, entity: action.entity });
+      bindings.push({
+        alias: action.as,
+        entity:
+          action.type === "callAi" || action.type === "computeEmbedding"
+            ? ""
+            : action.entity,
+      });
     }
   }
   return bindings;
@@ -410,6 +422,175 @@ function ActionEditor({
           />
           <Text className="text-muted-foreground text-xs">
             {t("dataHooks.actions.webhookBodyHint")}
+          </Text>
+        </div>
+      );
+
+    case "callAi":
+      return (
+        <div className="space-y-3">
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiPrompt")}
+            defaultOpen
+            value={action.prompt}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(prompt) => onChange({ ...action, prompt })}
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiSystemInstruction")}
+            value={
+              action.systemInstruction ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(systemInstruction) =>
+              onChange({
+                ...action,
+                systemInstruction:
+                  systemInstruction.kind === "literal" &&
+                  systemInstruction.value === null
+                    ? undefined
+                    : systemInstruction,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiWhen")}
+            value={
+              action.when ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(when) =>
+              onChange({
+                ...action,
+                when:
+                  when.kind === "literal" && when.value === null
+                    ? undefined
+                    : when,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+          <Text className="text-muted-foreground text-xs">
+            {t("dataHooks.actions.aiHint")}
+          </Text>
+        </div>
+      );
+
+    case "computeEmbedding":
+      return (
+        <div className="space-y-3">
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.embeddingText")}
+            defaultOpen
+            value={action.text}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(text) => onChange({ ...action, text })}
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiWhen")}
+            value={
+              action.when ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(when) =>
+              onChange({
+                ...action,
+                when:
+                  when.kind === "literal" && when.value === null
+                    ? undefined
+                    : when,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+        </div>
+      );
+
+    case "matchSimilarRecord":
+      return (
+        <div className="space-y-3">
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.haystack")}
+            defaultOpen
+            value={action.haystack}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(haystack) => onChange({ ...action, haystack })}
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.embeddingField")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.embeddingField}
+              onChange={(event) =>
+                onChange({ ...action, embeddingField: event.target.value })
+              }
+            />
+          </label>
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+          <Text className="text-muted-foreground text-xs">
+            {t("dataHooks.actions.matchSimilarHint")}
           </Text>
         </div>
       );
@@ -882,6 +1063,27 @@ export function emptyActionOfType(
       return { type, message: literal() };
     case "callWebhook":
       return { type, url: literal() };
+    case "callAi":
+      return {
+        type,
+        prompt: literal(),
+        as: "aiResult",
+      };
+    case "computeEmbedding":
+      return {
+        type,
+        text: literal(),
+        as: "embedding",
+      };
+    case "matchSimilarRecord":
+      return {
+        type,
+        entity: "",
+        where: createDefaultConditionRoot(),
+        haystack: literal(),
+        embeddingField: "embedding",
+        as: "similar",
+      };
   }
 }
 

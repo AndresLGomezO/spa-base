@@ -310,6 +310,78 @@ function extractExpressionDynamicKeys(corpus) {
   return keys;
 }
 
+/** debugger.timeRange.{preset|duration}.* via template keys */
+function extractDebuggerTimeRangeDynamicKeys(corpus) {
+  if (
+    !corpus.includes("debugger.timeRange.preset.${") &&
+    !corpus.includes("debugger.timeRange.duration.${")
+  ) {
+    return [];
+  }
+
+  const refTimeRange = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).debugger?.timeRange;
+
+  if (!refTimeRange || typeof refTimeRange !== "object") return [];
+
+  const keys = [];
+  if (corpus.includes("debugger.timeRange.preset.${")) {
+    for (const key of Object.keys(refTimeRange.preset ?? {})) {
+      keys.push(`${DEFAULT_NAMESPACE}:debugger.timeRange.preset.${key}`);
+    }
+  }
+  if (corpus.includes("debugger.timeRange.duration.${")) {
+    for (const key of Object.keys(refTimeRange.duration ?? {})) {
+      keys.push(`${DEFAULT_NAMESPACE}:debugger.timeRange.duration.${key}`);
+    }
+  }
+  return keys;
+}
+
+/** emailMatchingWorkbench.preview.tabs.* via template keys */
+function extractEmailMatchingPreviewDynamicKeys(corpus) {
+  if (!corpus.includes("emailMatchingWorkbench.preview.tabs.${")) {
+    return [];
+  }
+
+  const refTabs = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).emailMatchingWorkbench?.preview?.tabs;
+
+  if (!refTabs || typeof refTabs !== "object") return [];
+
+  return Object.keys(refTabs).map(
+    (key) => `${DEFAULT_NAMESPACE}:emailMatchingWorkbench.preview.tabs.${key}`,
+  );
+}
+
+/** platform.email.extractorFieldHelp.{label|pattern|captureGroup}.* via template keys */
+function extractEmailExtractorFieldHelpDynamicKeys(corpus) {
+  if (!corpus.includes("platform.email.extractorFieldHelp.${")) {
+    return [];
+  }
+
+  const refHelp = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).platform?.email?.extractorFieldHelp;
+
+  if (!refHelp || typeof refHelp !== "object") return [];
+
+  const keys = [];
+  for (const [fieldKey, bucket] of Object.entries(refHelp)) {
+    if (!bucket || typeof bucket !== "object" || Array.isArray(bucket)) {
+      continue;
+    }
+    for (const leaf of Object.keys(bucket)) {
+      keys.push(
+        `${DEFAULT_NAMESPACE}:platform.email.extractorFieldHelp.${fieldKey}.${leaf}`,
+      );
+    }
+  }
+  return keys;
+}
+
 /** dataHooks.preview.* dynamic template keys in hook preview UI */
 function extractDataHookPreviewDynamicKeys(corpus) {
   if (!corpus.includes("dataHooks.preview.")) return [];
@@ -1308,6 +1380,27 @@ mergeUsedKeys(
   usedKeys,
   extractDataHookPreviewDynamicKeys(corpus),
   path.join(SRC_DIR, "features/data-hooks/preview/DataHookPreviewPanel.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractDebuggerTimeRangeDynamicKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "features/debugger/components/DebuggerTimeRangeControl.tsx",
+  ),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractEmailMatchingPreviewDynamicKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "features/email-matching/preview/EmailMatchingPreviewPanel.tsx",
+  ),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractEmailExtractorFieldHelpDynamicKeys(corpus),
+  path.join(SRC_DIR, "features/email-matching/EmailExtractorFieldHelp.tsx"),
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

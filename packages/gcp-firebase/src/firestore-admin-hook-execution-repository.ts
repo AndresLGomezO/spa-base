@@ -18,6 +18,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { applyListRecentTimeRange } from "./apply-list-recent-time-range.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 function toRecord(data: unknown): DataHookExecutionRecord {
@@ -96,8 +97,54 @@ export function createFirestoreAdminDataHookExecutionRepository(
       };
     },
     async listRecent(tenantId, options) {
-      const limit = options?.limit ?? 50;
-      let query = collection(tenantId)
+      const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+      let query = applyListRecentTimeRange(
+        collection(tenantId),
+        "startedAt",
+        options,
+      )
+        .orderBy("startedAt", "desc")
+        .orderBy("id", "desc")
+        .limit(limit);
+      query = applyCursorToQuery(query, options?.cursor);
+      const snapshot = await query.get();
+      const items = snapshot.docs.map((doc) =>
+        toRecord({ id: doc.id, ...doc.data() }),
+      );
+      return {
+        items,
+        nextCursor: buildHookExecutionNextCursor(items, limit),
+      };
+    },
+    async listByEntityRecord(tenantId, entityName, recordId, options) {
+      const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+      let query = applyListRecentTimeRange(
+        collection(tenantId)
+          .where("entityName", "==", entityName)
+          .where("recordId", "==", recordId),
+        "startedAt",
+        options,
+      )
+        .orderBy("startedAt", "desc")
+        .orderBy("id", "desc")
+        .limit(limit);
+      query = applyCursorToQuery(query, options?.cursor);
+      const snapshot = await query.get();
+      const items = snapshot.docs.map((doc) =>
+        toRecord({ id: doc.id, ...doc.data() }),
+      );
+      return {
+        items,
+        nextCursor: buildHookExecutionNextCursor(items, limit),
+      };
+    },
+    async listByEmailLedgerId(tenantId, emailLedgerId, options) {
+      const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+      let query = applyListRecentTimeRange(
+        collection(tenantId).where("emailLedgerId", "==", emailLedgerId),
+        "startedAt",
+        options,
+      )
         .orderBy("startedAt", "desc")
         .orderBy("id", "desc")
         .limit(limit);

@@ -142,6 +142,22 @@ export interface DataHookWebhookRequest {
   readonly body: Record<string, unknown>;
 }
 
+export interface DataHookAiRequest {
+  readonly prompt: string;
+  readonly systemInstruction?: string;
+  readonly includeEntities?: readonly string[];
+  readonly tenantId: string;
+  /**
+   * Optional memo/batch key (e.g. normalized merchant text). Identical keys
+   * within a schedule tick share one model call.
+   */
+  readonly cacheKey?: string;
+}
+
+export interface DataHookEmbeddingRequest {
+  readonly text: string;
+}
+
 export interface HookServices {
   readonly logger?: HookLogger;
   readonly entities?: HookEntityServices;
@@ -151,6 +167,20 @@ export interface HookServices {
   ) => Promise<void>;
   readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  /**
+   * Invoke a structured AI completion and return parsed JSON as a record.
+   * Used by the `callAi` action; typically wired only on worker-service.
+   */
+  readonly callAi?: (
+    request: DataHookAiRequest,
+  ) => Promise<Record<string, unknown>>;
+  /**
+   * Embed text into a numeric vector. Used by `computeEmbedding` and
+   * `matchSimilarRecord`.
+   */
+  readonly computeEmbedding?: (
+    request: DataHookEmbeddingRequest,
+  ) => Promise<readonly number[]>;
   readonly sendUserNotification?: (
     input: CreateUserNotificationInput,
   ) => Promise<void>;
@@ -176,8 +206,8 @@ export interface HookContext {
   readonly visitedHookIds?: ReadonlySet<string>;
   /**
    * Records loaded by `getRecord` / `getOrCreateRecord` / `matchRelatedRecord`
-   * during this hook run, keyed by alias. `null` means the action resolved
-   * without a record (e.g. empty lookup for get-or-create, or no alias match).
+   * / `callAi` during this hook run, keyed by alias. `null` means the action
+   * resolved without a record (e.g. empty lookup, no alias match, or skipped AI).
    */
   loaded?: Record<string, Record<string, unknown> | null>;
   /**
@@ -221,5 +251,13 @@ export class HookExecutionError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "HookExecutionError";
+  }
+}
+
+/** Internal signal: end the hook run as skipped (not an error). */
+export class DataHookSkipError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DataHookSkipError";
   }
 }

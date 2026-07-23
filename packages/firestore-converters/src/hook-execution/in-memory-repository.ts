@@ -11,6 +11,7 @@ import {
   type HookExecutionListCursor,
 } from "./pagination.js";
 import { summarizeActiveExecutions } from "./summarize-active-executions.js";
+import { isIsoWithinTimeRange } from "../list-recent-time-range.js";
 
 const ACTIVE_STATUSES = new Set(["pending", "running"]);
 
@@ -45,12 +46,17 @@ function paginateExecutions(
   options?: {
     readonly limit?: number;
     readonly cursor?: HookExecutionListCursor | null;
+    readonly since?: string;
+    readonly until?: string;
   },
 ) {
   const limit = options?.limit ?? 50;
+  const timeFiltered = records.filter((record) =>
+    isIsoWithinTimeRange(record.startedAt, options),
+  );
   const filtered = options?.cursor
-    ? records.filter((record) => isBeforeCursor(record, options.cursor!))
-    : [...records];
+    ? timeFiltered.filter((record) => isBeforeCursor(record, options.cursor!))
+    : timeFiltered;
   const items = sortExecutionsByStartedAtDesc(filtered).slice(0, limit);
   return {
     items,
@@ -103,6 +109,23 @@ export function createInMemoryDataHookExecutionRepository(): DataHookExecutionRe
     },
     async listRecent(tenantId, options) {
       return paginateExecutions(tenantRecords(tenantId), options);
+    },
+    async listByEntityRecord(tenantId, entityName, recordId, options) {
+      return paginateExecutions(
+        tenantRecords(tenantId).filter(
+          (record) =>
+            record.entityName === entityName && record.recordId === recordId,
+        ),
+        options,
+      );
+    },
+    async listByEmailLedgerId(tenantId, emailLedgerId, options) {
+      return paginateExecutions(
+        tenantRecords(tenantId).filter(
+          (record) => record.emailLedgerId === emailLedgerId,
+        ),
+        options,
+      );
     },
     async listActive(tenantId) {
       return tenantRecords(tenantId)

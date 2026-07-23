@@ -32,7 +32,9 @@ import {
 } from "./components/IndexProvisioningTreePanel";
 import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
 import { DebuggerStatusSummary } from "./components/DebuggerStatusSummary";
+import { DebuggerTimeRangeControl } from "./components/DebuggerTimeRangeControl";
 import { useDebugger } from "./debugger-context";
+import { DEBUGGER_PAGE_SIZE_OPTIONS } from "./debugger-page-size";
 import { debuggerSourceLabelKey } from "./debugger-source-config";
 import {
   DEBUGGER_LIST_ROW_HOVER_CLASS,
@@ -145,9 +147,15 @@ export function DebuggerListTreePanel() {
     selectedIndexSignature,
     clearSelectedRecord,
     hookExecutionLive,
-    hasMoreEvents,
-    isLoadingMore,
-    loadMore,
+    hasMoreOlder,
+    hasMoreNewer,
+    isLoadingOlder,
+    isLoadingNewer,
+    loadOlder,
+    loadNewer,
+    pageSize,
+    setPageSize,
+    timeRangeBounds,
   } = useDebugger();
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -164,13 +172,14 @@ export function DebuggerListTreePanel() {
     setSearch,
     setSort,
     toggleStatus,
+    toggleShowSkipped,
     toggleExecutionType,
     setMinWrites,
     setMinDurationMs,
     clearFilters,
     debuggerStatusLabelKey,
     hookExecutionTypeLabelKey,
-  } = useDebuggerListQuery(sourceEvents, activeSource);
+  } = useDebuggerListQuery(sourceEvents, activeSource, timeRangeBounds);
 
   useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
 
@@ -184,6 +193,12 @@ export function DebuggerListTreePanel() {
           return {
             ...badge,
             label: t(sortLabelKey(query.sort)),
+          };
+        }
+        if (badge.id === "showSkipped") {
+          return {
+            ...badge,
+            label: t("debugger.list.showSkipped"),
           };
         }
         if (badge.id.startsWith("status:")) {
@@ -272,6 +287,14 @@ export function DebuggerListTreePanel() {
               }
             />
           ))}
+          {activeSource === "hookExecution" ? (
+            <Checkbox
+              id="debugger-show-skipped"
+              checked={query.showSkipped}
+              onChange={toggleShowSkipped}
+              label={t("debugger.list.showSkipped")}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -350,6 +373,33 @@ export function DebuggerListTreePanel() {
           clearAriaLabel={t("debugger.list.searchClear")}
           className="max-w-none min-w-0 w-full"
         />
+      </div>
+
+      <DebuggerTimeRangeControl />
+
+      <div className="w-full min-w-0">
+        <label className="flex flex-col gap-1">
+          <span className="text-muted-foreground text-xs font-medium">
+            {t("debugger.list.pageSize")}
+          </span>
+          <Select
+            selectSize="sm"
+            className="w-full"
+            value={String(pageSize)}
+            onChange={(event) =>
+              setPageSize(
+                Number.parseInt(event.target.value, 10) as typeof pageSize,
+              )
+            }
+            aria-label={t("debugger.list.pageSize")}
+          >
+            {DEBUGGER_PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </Select>
+        </label>
       </div>
 
       <div
@@ -451,6 +501,21 @@ export function DebuggerListTreePanel() {
       <DebuggerRefreshingOverlay />
       {overviewRow}
       {refreshRow}
+      {hasMoreNewer ? (
+        <div className="px-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => void loadNewer()}
+            disabled={isLoadingNewer}
+          >
+            {isLoadingNewer
+              ? t("debugger.list.loadingNewer")
+              : t("debugger.list.loadNewer")}
+          </Button>
+        </div>
+      ) : null}
       {listEvents.length === 0 && !isLoading ? (
         <Text className="text-muted-foreground px-2 py-3 text-sm">
           {emptyMessage}
@@ -464,16 +529,18 @@ export function DebuggerListTreePanel() {
           ))}
         </ul>
       )}
-      {hasMoreEvents ? (
+      {hasMoreOlder ? (
         <div className="px-2 pb-2">
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            onClick={loadMore}
-            disabled={isLoadingMore}
+            onClick={() => void loadOlder()}
+            disabled={isLoadingOlder}
           >
-            {t("debugger.list.loadMore")}
+            {isLoadingOlder
+              ? t("debugger.list.loadingOlder")
+              : t("debugger.list.loadOlder")}
           </Button>
         </div>
       ) : null}

@@ -88,6 +88,7 @@ function toHookExecutionDebugEvent(
       durationMs: record.durationMs,
       error: record.error,
       recordId: record.recordId,
+      emailLedgerId: record.emailLedgerId,
       chainDepth: record.chainDepth,
       writesCreated: record.writesCreated,
       writesUpdated: record.writesUpdated,

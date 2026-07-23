@@ -52,19 +52,58 @@ export const DATA_HOOK_JOB_OPERATIONS = [
 ] as const;
 export type DataHookJobOperation = (typeof DATA_HOOK_JOB_OPERATIONS)[number];
 
-export const dataHookCrudTriggerSchema = z.object({
-  kind: z.literal("crud"),
+export const dataHookCrudOperationEntrySchema = z.object({
   operation: z.enum(DATA_HOOK_OPERATIONS),
   /**
-   * For update triggers, the hook only runs when at least one of these fields
+   * For update entries, the hook only runs when at least one of these fields
    * changed. Empty/omitted means "any field change".
    */
   updateFields: z.array(z.string().trim().min(1)).optional(),
 });
-export type DataHookCrudTrigger = {
-  readonly kind?: "crud";
+export type DataHookCrudOperationEntry = {
   readonly operation: DataHookOperation;
   readonly updateFields?: readonly string[];
+};
+
+/**
+ * CRUD trigger: either a single `operation` (legacy) or `operations[]` for
+ * one definition registered on multiple create/update/delete events.
+ */
+export const dataHookCrudTriggerSchema = z
+  .object({
+    kind: z.literal("crud"),
+    operation: z.enum(DATA_HOOK_OPERATIONS).optional(),
+    /**
+     * Legacy single-operation updateFields. Only valid with `operation`.
+     */
+    updateFields: z.array(z.string().trim().min(1)).optional(),
+    operations: z.array(dataHookCrudOperationEntrySchema).min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasOperation = value.operation != null;
+    const hasOperations = (value.operations?.length ?? 0) > 0;
+    if (hasOperation === hasOperations) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "CRUD trigger requires exactly one of `operation` or `operations`.",
+        path: hasOperations ? ["operations"] : ["operation"],
+      });
+    }
+    if (hasOperations && value.updateFields != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "`updateFields` on the trigger root is only valid with a single `operation`. Put updateFields on each operations[] entry instead.",
+        path: ["updateFields"],
+      });
+    }
+  });
+export type DataHookCrudTrigger = {
+  readonly kind?: "crud";
+  readonly operation?: DataHookOperation;
+  readonly updateFields?: readonly string[];
+  readonly operations?: readonly DataHookCrudOperationEntry[];
 };
 
 export type DataHookScheduleTrigger = {
@@ -73,6 +112,11 @@ export type DataHookScheduleTrigger = {
   readonly timezone?: string;
   readonly scope?: DataHookScheduleScope;
   readonly eachRecordWhere?: DataHookConditionNode;
+  /**
+   * When set on an eachRecord schedule hook, `callAi` invocations are batched
+   * (and memoized by cacheKey) up to this many distinct keys per Vertex call.
+   */
+  readonly aiBatchSize?: number;
 };
 
 export type DataHookEmailTrigger = {
@@ -104,7 +148,10 @@ function coerceTriggerKind(value: unknown): unknown {
   if (typeof record.cron === "string") {
     return { kind: "schedule", ...record };
   }
-  if (typeof record.operation === "string") {
+  if (
+    typeof record.operation === "string" ||
+    Array.isArray(record.operations)
+  ) {
     return { kind: "crud", ...record };
   }
   return { kind: "crud", ...record };
@@ -187,6 +234,7 @@ export const dataHookScheduleTriggerSchema = z.object({
       dataHookConditionNodeSchema.optional(),
     )
     .optional(),
+  aiBatchSize: z.number().int().min(1).max(50).optional(),
 });
 
 export const dataHookEmailTriggerSchema = z.object({
@@ -196,7 +244,7 @@ export const dataHookEmailTriggerSchema = z.object({
 
 export const dataHookTriggerSchema = z.preprocess(
   coerceTriggerKind,
-  z.discriminatedUnion("kind", [
+  z.union([
     dataHookCrudTriggerSchema,
     dataHookScheduleTriggerSchema,
     dataHookEmailTriggerSchema,
@@ -219,6 +267,35 @@ export function isCrudTrigger(
   trigger: DataHookTrigger,
 ): trigger is DataHookCrudTrigger {
   return trigger.kind !== "schedule" && trigger.kind !== "email";
+}
+
+/** Normalized CRUD operation entries for registration and updateFields gates. */
+export function listCrudOperations(
+  trigger: DataHookCrudTrigger,
+): readonly DataHookCrudOperationEntry[] {
+  if (trigger.operations && trigger.operations.length > 0) {
+    return trigger.operations;
+  }
+  if (trigger.operation) {
+    return [
+      {
+        operation: trigger.operation,
+        ...(trigger.updateFields ? { updateFields: trigger.updateFields } : {}),
+      },
+    ];
+  }
+  return [];
+}
+
+/** updateFields for the operation that is currently firing, if any. */
+export function resolveCrudUpdateFields(
+  trigger: DataHookCrudTrigger,
+  operation: DataHookOperation,
+): readonly string[] | undefined {
+  const entry = listCrudOperations(trigger).find(
+    (item) => item.operation === operation,
+  );
+  return entry?.updateFields;
 }
 
 /**
@@ -247,11 +324,17 @@ export type DataHookUpdateMatchingWhereInput =
 
 const expressionRecordSchema = z.record(z.string(), expressionNodeSchema);
 
-/** Max `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` actions per hook definition. */
+/** Max `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` / `callAi` / `computeEmbedding` / `matchSimilarRecord` actions per hook definition. */
 export const MAX_LOADED_RECORDS = 8;
 
-/** Alias pattern for loaded field references (`getRecord` / `getOrCreateRecord` / `matchRelatedRecord`). */
+/** Alias pattern for loaded field references. */
 export const DATA_HOOK_LOADED_ALIAS_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]{0,31}$/;
+
+/** Max entity names that `callAi.includeEntities` may request for prompt context. */
+export const MAX_CALL_AI_INCLUDE_ENTITIES = 3;
+
+/** Default cosine threshold for `matchSimilarRecord` when `minScore` is omitted. */
+export const DEFAULT_MATCH_SIMILAR_MIN_SCORE = 0.82;
 
 export const DATA_HOOK_AGGREGATE_OPERATORS = [
   "count",
@@ -295,6 +378,11 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     entity: z.string().trim().min(1),
     where: dataHookUpdateMatchingWhereSchema,
     set: expressionRecordSchema,
+    /**
+     * When no rows match `where`: `continue` (default) finishes the action as a
+     * no-op; `skip` ends the whole hook run as skipped.
+     */
+    ifNoMatches: z.enum(["continue", "skip"]).optional(),
   }),
   z.object({
     type: z.literal("deleteMatching"),
@@ -371,6 +459,69 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     type: z.literal("callWebhook"),
     url: expressionNodeSchema,
     body: expressionNodeSchema.optional(),
+  }),
+  z.object({
+    type: z.literal("callAi"),
+    /**
+     * User prompt expression (must evaluate to a non-empty string).
+     * Include transaction context and instructions; category catalog may also
+     * be injected via `includeEntities`.
+     */
+    prompt: expressionNodeSchema,
+    /** Optional system instruction; defaults in the Vertex caller when omitted. */
+    systemInstruction: expressionNodeSchema.optional(),
+    /**
+     * When set and evaluates to falsey, skip the model call and load `null`
+     * at `as` (useful after a prior `matchRelatedRecord` hit).
+     */
+    when: expressionNodeSchema.optional(),
+    /**
+     * Load up to 500 records per entity into the model context (compact
+     * `{id,name,parentId,kind}`-style fields when present).
+     */
+    includeEntities: z
+      .array(z.string().trim().min(1))
+      .max(MAX_CALL_AI_INCLUDE_ENTITIES)
+      .optional(),
+    /**
+     * Optional expression → string used to memoize/batch identical callAi
+     * requests within a schedule tick (e.g. normalizeMerchantText(description)).
+     */
+    cacheKey: expressionNodeSchema.optional(),
+    /** Alias for the parsed JSON object result (or `null` when skipped). */
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
+    type: z.literal("computeEmbedding"),
+    /** Text expression to embed. */
+    text: expressionNodeSchema,
+    /**
+     * When set and evaluates to falsey, skip embedding and load `null` at `as`
+     * (e.g. after a prior `matchSimilarRecord` hit).
+     */
+    when: expressionNodeSchema.optional(),
+    /** Alias for `{ values: number[] }` (or `null` when text is empty). */
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
+    type: z.literal("matchSimilarRecord"),
+    entity: z.string().trim().min(1),
+    where: dataHookUpdateMatchingWhereSchema,
+    /** Text expression embedded and compared to candidates. */
+    haystack: expressionNodeSchema,
+    /** Field on candidates holding `number[]` embedding vectors. */
+    embeddingField: z.string().trim().min(1),
+    /**
+     * Minimum cosine similarity (0..1). Defaults to
+     * {@link DEFAULT_MATCH_SIMILAR_MIN_SCORE}.
+     */
+    minScore: z.number().min(0).max(1).optional(),
+    /**
+     * When set and evaluates to falsey, skip similarity search and load `null`
+     * at `as` (e.g. after a prior transaction match).
+     */
+    when: expressionNodeSchema.optional(),
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
   }),
 ]);
 export type DataHookAction = z.infer<typeof dataHookActionSchema>;
@@ -456,12 +607,16 @@ export function actionTargetEntities(
     case "getRecord":
     case "getOrCreateRecord":
     case "matchRelatedRecord":
+    case "matchSimilarRecord":
     case "aggregateMatching":
       return [action.entity];
     case "setField":
     case "sendNotification":
     case "callWebhook":
+    case "computeEmbedding":
       return [];
+    case "callAi":
+      return action.includeEntities ?? [];
     default: {
       const exhaustive: never = action;
       return exhaustive;

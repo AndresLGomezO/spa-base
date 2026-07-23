@@ -11,7 +11,8 @@ export type EmailMatchingIngestModeFilter = "create" | "link";
 
 export type EmailMatchingUseAiFilter = "ai" | "rules";
 
-export const DEFAULT_EMAIL_MATCHING_LIST_SORT: EmailMatchingListSort = "nameAsc";
+export const DEFAULT_EMAIL_MATCHING_LIST_SORT: EmailMatchingListSort =
+  "nameAsc";
 
 export const EMAIL_MATCHING_STATUS_FILTERS: readonly EmailMatchingStatusFilter[] =
   ["enabled", "disabled"];

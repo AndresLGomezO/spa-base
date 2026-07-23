@@ -23,8 +23,8 @@ Auth response includes RBAC fields when tenant is active:
   "email": "...",
   "permissions": ["loan.read", "loan.create"],
   "isSuperAdmin": false,
-  "tenantId": "rates",
-  "availableTenants": ["rates"]
+  "tenantId": "demo",
+  "availableTenants": ["demo"]
 }
 ```
 
@@ -140,7 +140,7 @@ Set claim in development:
 
 ```js
 import { getAuth } from "firebase-admin/auth";
-await getAuth().setCustomUserClaims(uid, { tenantId: "rates" });
+await getAuth().setCustomUserClaims(uid, { tenantId: "demo" });
 ```
 
 ---
@@ -178,7 +178,7 @@ Seed user roles on Firestore `users/{uid}`:
 ```json
 {
   "platformRole": null,
-  "tenants": { "rates": ["admin"] }
+  "tenants": { "demo": ["admin"] }
 }
 ```
 
@@ -212,11 +212,11 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 Cloud Run does not seed Firestore on startup. Seed once locally against the target GCP project with `pnpm seed:database` if needed.
 ```
 
-Promotes email to superadmin on **first** user document creation. The **`rates`** tenant is **not** seeded on API startup — run **`pnpm seed:database`** after the API and emulators are up (see below).
+Promotes email to superadmin on **first** user document creation. The local tenant (from [`.local/tenant-import/tenant.json`](../../.local/tenant-import/tenant.json)) is **not** seeded on API startup — run **`pnpm seed:database`** after the API and emulators are up (see below).
 
 ### Database seed (manual)
 
-Platform roles, the `rates` tenant (11 entities, 20 metrics, 35 queries), demo records, and metric backfill are applied only when you run:
+Platform roles plus the local tenant (catalogs, records, UI, metric backfill from `.local/tenant-import/`) are applied only when you run:
 
 ```bash
 pnpm seed:database
@@ -252,7 +252,7 @@ Component keys: `platform`, `entities`, `metrics`, `queries`, `hooks`, `formulas
 
 #### GCP seed (real Firestore / Auth)
 
-To seed the same `rates` tenant against a deployed GCP project using your local gcloud credentials:
+To seed the local tenant (from `.local/tenant-import/tenant.json`) against a deployed GCP project using your local gcloud credentials:
 
 ```bash
 gcloud auth login
@@ -270,45 +270,41 @@ Preflight checks (fail fast):
 
 GCP mode:
 
-- Uses tenant **`rates`** (same as emulator)
-- Seeds catalogs, UI overrides, and metric backfill
-- Imports **only** [`.local/tenant-import/`](../../.local/tenant-import/) data for **andreslgomezo@gmail.com**
-- Does **not** create `testuser1@rates.com` or fictional demo business records
-- Verifies Firebase Auth UID for `andreslgomezo@gmail.com` matches `RATES_GCP_DEMO_OWNER_UID` in [`constants.ts`](src/admin/rates-tenant/constants.ts)
+- Uses tenant id/name from [`.local/tenant-import/tenant.json`](../../.local/tenant-import/tenant.json)
+- Seeds catalogs from `.local/tenant-import/catalogs/`, UI overrides, and metric backfill
+- Imports **only** [`.local/tenant-import/`](../../.local/tenant-import/) records for the configured import owner
+- Does **not** create the emulator test user
+- Verifies Firebase Auth UID for the import owner matches `gcpDemoOwnerUid` in `tenant.json`
 - Skips local hook-cache reload (no local API required)
+- Skips entirely if `tenant.json` is missing
 
-### Rates demo user (emulator / Docker)
+### Local tenant test user (emulator / Docker)
 
-| Field    | Value                                                                                                                                   |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Email    | `testuser1@rates.com`                                                                                                                   |
-| Password | `RatesTest1!` (see `RATES_TEST_USER_PASSWORD` in [`apps/api/src/admin/rates-tenant/constants.ts`](src/admin/rates-tenant/constants.ts)) |
-| Tenant   | `rates` (set on JWT after `pnpm seed:database`)                                                                                         |
-| Role     | `normalRatesUser` (pre-assigned on `users/{uid}`)                                                                                       |
+Credentials and role live in [`.local/tenant-import/tenant.json`](../../.local/tenant-import/tenant.json) (`testUser`, `normalUserRole`). Sign in through the web app with the Auth emulator enabled after `pnpm seed:database`.
 
-Sign in through the web app with the Auth emulator enabled. No manual Firestore edits are required for this account.
+### Local tenant import
 
-### Local tenant import (optional)
-
-If record directories exist under [`.local/tenant-import/`](../../.local/tenant-import/) at the repo root, `pnpm seed:database` imports them **in addition to** the demo mock data above (emulator mode only). In `--gcp` mode, personal import is the only business-record seed. Missing dirs are skipped individually in emulator mode; GCP mode fails if no import JSON is present.
+Requires [`.local/tenant-import/tenant.json`](../../.local/tenant-import/tenant.json). `pnpm seed:database` loads catalogs from `catalogs/`, then imports records / generated data / email bindings / UI overlays under the same root. Missing record dirs are skipped individually in emulator mode; GCP mode fails if no import JSON is present.
 
 Granular layout (one JSON object per hand-maintained record; generated rows grouped by `financialItemId`):
 
-| Path | Contents |
-| ---- | -------- |
-| `sources/tenant-data.yaml` | YAML SSOT for generators |
-| `records/{entity}/{id}.json` | Structural records (`category`, `actor`, `account`, `financialItem`, loan/income/investment/service details, …) |
-| `email-match-bindings/{recordId}--{order}.json` | Singular email-match-binding envelopes |
-| `history/transaction-history.json` | Payment history SSOT for the schedule generator |
-| `generated/{entity}/{financialItemId}.json` | Arrays of schedules / transactions / snapshots per financial item |
-| `ui/query-definitions/`, `ui/entity-ui-overrides/` | Optional UI overlays |
+| Path                                               | Contents                                                                            |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `tenant.json`                                      | Tenant id, name, owner email, test user, GCP demo uid                               |
+| `catalogs/`                                        | Entity/hook/formula/metric/query/chart/custom-view/UI catalogs (singular envelopes) |
+| `sources/tenant-data.yaml`                         | YAML SSOT for generators                                                            |
+| `records/{entity}/{id}.json`                       | Structural records                                                                  |
+| `email-match-bindings/{recordId}--{order}.json`    | Singular email-match-binding envelopes                                              |
+| `history/transaction-history.json`                 | Payment history SSOT for the schedule generator                                     |
+| `generated/{entity}/{financialItemId}.json`        | Arrays of schedules / transactions / snapshots per financial item                   |
+| `ui/query-definitions/`, `ui/entity-ui-overrides/` | Optional UI overlays                                                                |
 
-| Field       | Value                                                                                     |
-| ----------- | ----------------------------------------------------------------------------------------- |
-| Owner       | First email in `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (default `andreslgomezo@gmail.com`) |
-| Tenant role | `admin`                                                                                   |
+| Field       | Value                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
+| Owner       | First email in `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`, else `localImportOwnerEmail` in `tenant.json` |
+| Tenant role | `localImportTenantRole` in `tenant.json` (typically `admin`)                                         |
 
-The Auth user must already exist in the emulator (sign in once). If the user is missing, personal import is skipped and only the test-user mock data is seeded.
+The Auth user must already exist in the emulator (sign in once). If the user is missing, personal import is skipped.
 
 During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../../.local/tenant-import/generate-schedule-payment-mocks.ts) exists, the seed runs it to build historical **payment schedules**, **transactions**, and **balance snapshots** from your imported definitions (2022 default start, or loan `originationDate`). Real payments come from optional [`.local/tenant-import/history/transaction-history.json`](../../.local/tenant-import/history/transaction-history.json):
 
@@ -317,9 +313,9 @@ During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../.
 
 Only months/entries you include produce transactions. Output is written under [`.local/tenant-import/generated/`](../../.local/tenant-import/generated/) (one array file per financial item) and imported automatically.
 
-Past due rows without a matching history entry stay **OVERDUE**. Rows with a real payment are **PAID** on the schedule due date. Current-day and future rows stay **UPCOMING**. Default payment account: **Ahorros**.
+Past due rows without a matching history entry stay **OVERDUE**. Rows with a real payment are **PAID** on the schedule due date. Current-day and future rows stay **UPCOMING**.
 
-Rates platform catalogs are also granular under [`src/admin/rates-tenant/catalogs/`](src/admin/rates-tenant/catalogs/) (`entity-definitions/`, `data-hooks/`, …) — one singular envelope JSON per definition. See that folder's README.
+Catalog components are granular under [`.local/tenant-import/catalogs/`](../../.local/tenant-import/catalogs/) (`entity-definitions/`, `data-hooks/`, …) — one singular envelope JSON per definition. See that folder's README.
 
 Run the generator manually (from repo root):
 
@@ -341,7 +337,7 @@ python3 .local/tenant-import/generate-import-json.py
 
 **Actor and category logos (optional):** place normalized image files under [`.local/tenant-import/logos/`](../../.local/tenant-import/logos/). File names must match the `fileName` in `records/actor/{id}.json` (`logo`) and `records/category/{id}.json` (`image`). See [`logos/manifest.json`](../../.local/tenant-import/logos/manifest.json) for the actor/category mapping. On `pnpm seed:database` (emulator or `--gcp`), matching files are uploaded to tenant storage and wired on the imported records.
 
-**Total Balance chart asset (optional):** place `total-balance-chart.png` under [`.local/tenant-import/assets/`](../../.local/tenant-import/assets/). On `pnpm seed:database`, the Rates seed uploads it to tenant storage and wires the Accounts metrics widget chart overlay. If the file is missing, the seed uses the bundled SVG fallback at `apps/web/public/images/total-balance-area-chart.svg`.
+**Total Balance chart asset (optional):** place `total-balance-chart.png` under [`.local/tenant-import/assets/`](../../.local/tenant-import/assets/). On `pnpm seed:database`, the local-tenant seed uploads it to tenant storage and wires the Accounts metrics widget chart overlay. If the file is missing, the seed uses the bundled SVG fallback at `apps/web/public/images/total-balance-area-chart.svg`.
 
 **Income metric chart asset (optional):** place `income-metric-chart.png` in the same assets folder for the Income by Month widget; fallback SVG is `apps/web/public/images/income-metric-chart.svg`.
 
@@ -349,13 +345,17 @@ python3 .local/tenant-import/generate-import-json.py
 
 **Savings metric chart asset (optional):** place `savings-metric-chart.png` in the same assets folder for the Savings by Month widget; fallback SVG is `apps/web/public/images/savings-metric-chart.svg`.
 
-To test a different user with the same role, assign manually:
+To test a different user with the same role, assign the role from `tenant.json` (`normalUserRole`) on `users/{uid}`:
 
 ```json
-{ "tenants": { "rates": ["normalRatesUser"] } }
+{
+  "tenants": {
+    "<tenantId from tenant.json>": ["<normalUserRole from tenant.json>"]
+  }
+}
 ```
 
-The **rates** tenant is emulator/Docker mock data only. Runtime Firestore composite index provisioning is skipped for that tenant (`indexProvisioningExcludedTenants`). After changing the entity model, reset emulator data with `pnpm dev:docker:reset`, then run `pnpm seed:database`.
+When `tenant.json` sets `indexProvisioningExcluded: true`, runtime Firestore composite index provisioning is skipped for that tenant id. After changing the entity model, reset emulator data with `pnpm dev:docker:reset`, then run `pnpm seed:database`.
 
 ---
 

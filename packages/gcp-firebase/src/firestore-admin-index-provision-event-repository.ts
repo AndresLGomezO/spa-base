@@ -12,6 +12,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { applyListRecentTimeRange } from "./apply-list-recent-time-range.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 function toRecord(data: unknown): IndexProvisionEventRecord {
@@ -45,7 +46,12 @@ export function createFirestoreAdminIndexProvisionEventRepository(
     async listRecentForTenant(tenantId, tenantCollections, options) {
       const limit = options?.limit ?? 50;
       const collectionSet = new Set(tenantCollections);
-      const snapshot = await collection(tenantId)
+      const query = applyListRecentTimeRange(
+        collection(tenantId),
+        "timestamp",
+        options,
+      );
+      const snapshot = await query
         .orderBy("timestamp", "desc")
         .limit(limit * 3)
         .get();

@@ -26,7 +26,6 @@ Index of all platform documentation. Start with the [Phase 2 handoff](./phase-2-
 | [data-hook-definition-json.md](./data-hook-definition-json.md) | **Data Hooks JSON** — full automation hook specification and catalog envelopes for Settings → Automation import |
 | [custom-view-definition-json.md](./custom-view-definition-json.md) | **Custom Views JSON** — whole-view and catalog envelopes plus design-layout slice handoff |
 | [ui-design-manual/README.md](./ui-design-manual/README.md) | **UI Design Manual** — self-contained JSON handoff for the UI design team (layouts, components, surfaces, presets) |
-| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain spec; catalogs in [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/) (entities, metrics, queries, custom views, data hooks) |
 | [data-hooks-platform-gaps.md](./data-hooks-platform-gaps.md) | Open generic data hooks platform gaps (expression, limits, notifications) |
 | [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md) | Rates tenant automation backlog (example domain) |
 

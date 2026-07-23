@@ -14,12 +14,12 @@ export const HOOK_EXECUTION_TYPE_KEYS = ["sync", "deferred", "queued"] as const;
 
 export type HookExecutionTypeKey = (typeof HOOK_EXECUTION_TYPE_KEYS)[number];
 
+/** Status chips in the filter panel (skipped is a separate “show skipped” toggle). */
 export const HOOK_EXECUTION_STATUS_FILTERS = [
   "running",
   "queued",
   "success",
   "error",
-  "skipped",
 ] as const;
 
 export type HookExecutionStatusFilter =
@@ -123,6 +123,21 @@ export function parseHookExecutionStatusFilters(
     .split(",")
     .map((entry) => entry.trim())
     .filter(isHookExecutionStatusFilter);
+}
+
+/** Legacy URLs may include `skipped` in `status=`; treat that as show-skipped opt-in. */
+export function rawStatusIncludesSkipped(raw: string | null): boolean {
+  if (!raw?.trim()) {
+    return false;
+  }
+  return raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .includes("skipped");
+}
+
+export function isHookExecutionSkippedEvent(event: DebugEvent): boolean {
+  return event.source === "hookExecution" && event.status === "skipped";
 }
 
 export function hasHookExecutionLiveActivity(

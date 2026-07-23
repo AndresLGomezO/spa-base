@@ -1,9 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
-  uiLayoutDocumentSchema,
+  ensureContainerRoot,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -23,26 +21,6 @@ vi.mock("@visx/responsive", () => ({
   }) => children({ width: 320, height: 160 }),
 }));
 
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
-
 const minimalContext: LayoutRenderContext = {
   mode: "listItem",
   data: {},
@@ -50,33 +28,73 @@ const minimalContext: LayoutRenderContext = {
   resolveField: () => undefined,
 };
 
+const glowOverlayLayout: UiLayoutDocument = ensureContainerRoot({
+  root: {
+    type: "root",
+    id: "root",
+    columnCount: 1,
+    columns: [
+      {
+        id: "col",
+        rows: [
+          {
+            type: "component",
+            id: "card",
+            component: {
+              kind: "container",
+              stackDirection: "column",
+              styles: [
+                { property: "position", value: "relative" },
+                { property: "overflowX", value: "hidden" },
+                { property: "overflowY", value: "hidden" },
+              ],
+              rows: [
+                {
+                  type: "component",
+                  id: "row-income-card-glow",
+                  component: {
+                    kind: "container",
+                    stackDirection: "column",
+                    styles: [
+                      { property: "position", value: "absolute" },
+                      { property: "top", value: "0" },
+                      { property: "right", value: "0" },
+                      { property: "bottom", value: "0" },
+                      { property: "left", value: "0" },
+                      {
+                        property: "backgroundColor",
+                        value: "var(--gradient-card-glow-success)",
+                      },
+                      { property: "pointerEvents", value: "none" },
+                      { property: "zIndex", value: "0" },
+                    ],
+                    rows: [],
+                  },
+                },
+                {
+                  type: "component",
+                  id: "row-title",
+                  component: {
+                    kind: "text",
+                    primary: { type: "static", value: "Income" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  },
+});
+
 describe("card glow overlay rows", () => {
   it("renders glow overlay out of document flow without flex stretch shell", () => {
-    const catalog = JSON.parse(
-      mergeCatalog(
-        join(
-          process.cwd(),
-          "../../apps/api/src/admin/rates-tenant/catalogs/entity-ui-overrides",
-        ),
-        "entity-ui-overrides-catalog",
-        "overrides",
-      ),
-    ) as {
-      overrides: Array<{
-        metricWidgets: Array<{ id: string; layout: unknown }>;
-      }>;
-    };
-
-    const widget = catalog.overrides[0]?.metricWidgets.find(
-      (entry) => entry.id === "income-by-month",
-    );
-    expect(widget).toBeDefined();
-
-    const layout = uiLayoutDocumentSchema.parse(
-      widget!.layout,
-    ) as UiLayoutDocument;
     const html = renderToStaticMarkup(
-      <EmbeddedLayoutRenderer layout={layout} context={minimalContext} />,
+      <EmbeddedLayoutRenderer
+        layout={glowOverlayLayout}
+        context={minimalContext}
+      />,
     );
 
     expect(html).toContain('aria-hidden="true"');

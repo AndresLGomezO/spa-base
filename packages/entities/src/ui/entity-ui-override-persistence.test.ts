@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-
 import { createDefaultUiLayout } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
@@ -107,12 +104,25 @@ describe("entity UI override persistence", () => {
     expect(restored).toEqual(record);
   });
 
-  it("round-trips the contract wizard payload with shallow persisted depth", () => {
-    const wizardPath = path.resolve(
-      import.meta.dirname,
-      "../../../../data/emulator/tenants/rates/entity_ui_overrides/Wizard Contract Form.json",
-    );
-    const payload = JSON.parse(fs.readFileSync(wizardPath, "utf8"));
+  it("round-trips a nested wizard-style override with shallow persisted depth", () => {
+    const nestedLayout = createDefaultUiLayout(["name", "amount", "status"]);
+    const payload = {
+      views: [
+        {
+          type: "table",
+          name: "default",
+          fields: ["name", "amount", "status"],
+        },
+      ],
+      formDesigns: Array.from({ length: 8 }, (_, index) => ({
+        id: `wizard-step-${index}`,
+        label: `Wizard step ${index}`,
+        presentation: "wizard" as const,
+        layout: nestedLayout,
+      })),
+      entityPageCreateFormDesignId: "wizard-step-0",
+    };
+
     const parsedInput = putEntityUiOverrideInputSchema.parse(payload);
     const record = parseEntityUiOverrideRecord("contract", {
       ...parsedInput,
@@ -126,7 +136,7 @@ describe("entity UI override persistence", () => {
     expect(restored).toEqual(record);
     expect(measureDepth(persisted)).toBeLessThanOrEqual(10);
     expect(persistedBytes).toBeLessThan(1_000_000);
-    expect(persisted.formsJson).toBeTruthy();
+    expect(persisted.formDesignsJson).toBeTruthy();
     expect(persisted.viewsJson).toBeTruthy();
   });
 });

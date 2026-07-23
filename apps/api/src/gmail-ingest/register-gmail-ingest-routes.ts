@@ -429,9 +429,7 @@ export async function registerGmailIngestRoutes(
         tenantId,
         userId: uid,
         jobId: job.id,
-        ...(body.data.bindingId
-          ? { bindingId: body.data.bindingId }
-          : {}),
+        ...(body.data.bindingId ? { bindingId: body.data.bindingId } : {}),
       });
 
       return reply.send(successEnvelope({ jobId: job.id }));

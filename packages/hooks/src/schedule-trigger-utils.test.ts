@@ -66,6 +66,38 @@ describe("schedule-trigger-utils", () => {
     ]);
   });
 
+  it("force lists all enabled schedule hooks ignoring cron", () => {
+    const at = new Date("2026-07-01T06:30:00.000Z");
+    const dueHook: DataHookDefinition = {
+      id: "h1",
+      tenantId: "t1",
+      name: "Due",
+      entity: "task",
+      phase: "after",
+      trigger: { kind: "schedule", cron: "0 6 * * *", timezone: "UTC" },
+      condition: null,
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "tick" },
+        },
+      ],
+      enabled: true,
+      order: 0,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const disabledHook: DataHookDefinition = {
+      ...dueHook,
+      id: "h2",
+      enabled: false,
+    };
+
+    expect(
+      listDueScheduledHooks([dueHook, disabledHook], at, { force: true }),
+    ).toEqual([dueHook]);
+  });
+
   it("builds synthetic scheduled record", () => {
     const at = new Date("2026-07-01T06:00:00.000Z");
     expect(buildSyntheticScheduledRecord("tenant_a", at)).toEqual({

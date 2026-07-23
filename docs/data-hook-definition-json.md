@@ -149,7 +149,7 @@ When `chainHooks: true`, entity writes and deletes from this hook's actions (`cr
 | Max `createRecords` (queued) | 5,000 (`MAX_CREATE_RECORDS_QUEUED`) | `after` + `execution: "queued"` only |
 | Max matching records | 500 | `updateMatching` / `deleteMatching` / scheduled `eachRecord` fan-out |
 | Max scheduled records per tick | 500 | `eachRecord` scope per hook per tick |
-| Max loaded records | 8 | `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` actions per hook |
+| Max loaded records | 8 | `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` / `callAi` actions per hook |
 | Max aggregate actions | 8 | `aggregateMatching` actions per hook |
 | Max hook depth | 5 | Chained dispatch |
 | Max call arguments | 16 | Expression `call` nodes |
@@ -259,6 +259,20 @@ Time-based hooks run on a cron schedule via worker-service (`POST /tasks/schedul
 - `execution: "queued"` is recommended for long-running scheduled hooks; the tick runner invokes `runDataHook` directly on worker-service (no re-enqueue loop).
 
 **Infrastructure:** set `SCHEDULED_HOOK_USER_UID` on worker-service to a user with tenant admin (or equivalent) permissions for hook actions. Cloud Scheduler should POST to `{WORKER_SERVICE_URL}/tasks/schedule-tick` every minute with OIDC from `TASKS_SA_EMAIL`.
+
+**Local force run:** when `IS_LOCAL=true`, you can bypass cron due-ness with:
+
+```bash
+# All enabled schedule hooks (continues if one fails)
+curl -X POST 'http://localhost:3001/tasks/schedule-tick?force=true'
+
+# Only the categorizer
+curl -X POST 'http://localhost:3001/tasks/schedule-tick?force=true&hook=Categorize'
+```
+
+Force ticks wait for completion (so missing `SCHEDULED_HOOK_USER_UID` returns an error body instead of a silent 202). Optional `hook` matches hook name or id substring.
+
+**AI batching:** schedule triggers may set `aiBatchSize` (1–50). When set, the schedule tick runs `eachRecord` in small parallel chunks (hard-capped at **1** concurrent record when `IS_LOCAL`, otherwise **2**). The effective Vertex batch size is capped to that same concurrency so `callAi` auto-flushes inside each chunk (a larger `aiBatchSize` than concurrency would deadlock). Identical `callAi.cacheKey` values are memoized within the tick.
 
 ### Email trigger (`kind: "email"`)
 
@@ -538,6 +552,7 @@ Find records on another entity and apply field updates.
 |----------|-------------|
 | `where` | AND/OR condition tree (or legacy typeless leaf). Value expressions use **trigger** scope; field names refer to the **target** entity. Requires at least one `==` leaf with a `value` expression for indexed lookup. |
 | `set` | Field map; expressions see **matched record** as `current`, **trigger** as `previous` |
+| `ifNoMatches` | Optional. `continue` (default): empty match set is a no-op and the hook can still finish **success**. `skip`: end the whole hook run as **skipped** with reason `No matching records.` (use when the update is the hook’s real purpose, e.g. complete one-time item / replan loan). |
 
 The runtime uses the first `==` leaf (depth-first) for `findByField`, then post-filters up to 500 candidates with the full `where` tree.
 
@@ -845,6 +860,104 @@ POST JSON to an external HTTPS URL.
 - Method is always **POST**; non-2xx responses fail the action
 - HTTPS required in production; SSRF guards block private/local hosts
 
+### `callAi`
+
+Invoke Vertex AI (worker-service) with a prompt, parse the JSON object response, and load it at `as` (counts toward `MAX_LOADED_RECORDS` with `getRecord` / `getOrCreateRecord` / `matchRelatedRecord`).
+
+```json
+{
+  "type": "callAi",
+  "prompt": {
+    "kind": "call",
+    "fn": "concat",
+    "args": [
+      { "kind": "literal", "value": "Classify this transaction: " },
+      { "kind": "field", "source": "current", "path": "description" }
+    ]
+  },
+  "systemInstruction": {
+    "kind": "literal",
+    "value": "Reply with JSON only."
+  },
+  "when": {
+    "kind": "call",
+    "fn": "isEmpty",
+    "args": [
+      { "kind": "field", "source": "loaded", "alias": "rule", "path": "id" }
+    ]
+  },
+  "includeEntities": ["category"],
+  "as": "classification"
+}
+```
+
+- `prompt` (required): expression → non-empty string
+- `systemInstruction` (optional): expression → string; defaults in the worker caller
+- `when` (optional): expression; when falsey, skips the model call and loads `null` at `as`
+- `includeEntities` (optional): up to 3 entity names; worker loads up to 500 compact records each into the prompt
+- `as` (required): loaded alias for the parsed JSON object (or `null` when skipped)
+- Requires the `callAi` service (wired on worker-service). Sync API runs without Vertex will throw if this action executes.
+
+### `computeEmbedding`
+
+Embed text via Vertex (worker-service) and load `{ values: number[] }` at `as`.
+
+```json
+{
+  "type": "computeEmbedding",
+  "text": {
+    "kind": "call",
+    "fn": "normalizeMerchantText",
+    "args": [
+      { "kind": "field", "source": "current", "path": "description" }
+    ]
+  },
+  "when": {
+    "kind": "call",
+    "fn": "isEmpty",
+    "args": [
+      { "kind": "field", "source": "loaded", "alias": "example", "path": "id" }
+    ]
+  },
+  "as": "descEmbedding"
+}
+```
+
+- `text` (required): expression → string (empty → loads `null`)
+- `when` (optional): skip embedding and load `null` when falsey
+- `as` (required): loaded alias for `{ values: number[] }`
+- Requires `computeEmbedding` service (worker-service)
+
+### `matchSimilarRecord`
+
+List candidates with a compound `where` tree, embed `haystack`, pick the closest candidate by cosine similarity on `embeddingField`. Loads `null` when below `minScore` (default **0.82**).
+
+```json
+{
+  "type": "matchSimilarRecord",
+  "entity": "categoryExample",
+  "where": {
+    "type": "condition",
+    "field": "enabled",
+    "operator": "==",
+    "value": { "kind": "literal", "value": true }
+  },
+  "haystack": {
+    "kind": "call",
+    "fn": "normalizeMerchantText",
+    "args": [
+      { "kind": "field", "source": "current", "path": "description" }
+    ]
+  },
+  "embeddingField": "embedding",
+  "minScore": 0.82,
+  "as": "example"
+}
+```
+
+- Counts toward `MAX_LOADED_RECORDS`
+- Requires `computeEmbedding` service + entity `list`
+
 ### Execution logs
 
 When the runtime provides a log recorder, each hook run writes a document to tenant collection `__data_hook_executions` with status `success`, `error`, or `skipped`. List recent entries via `GET /api/data-hooks/:id/executions` (cursor-paginated with `nextCursor`).
@@ -1060,6 +1173,9 @@ Outer hook scope (`current`, `loaded.*`, `loopState`, etc.) remains visible insi
 | `trim` | text | string | Trim whitespace |
 | `upper` | text | string | Uppercase |
 | `lower` | text | string | Lowercase |
+| `normalizeMerchantText` | text | string | Uppercase; strip digits, long hex tokens, and punctuation for stable merchant alias matching |
+| `arrayOf` | v… | array | Build a flat array from 1–8 expression arguments (null entries kept as null) |
+| `lower` | text | string | Lowercase |
 | `startsWith` | text, prefix | boolean | Prefix test |
 | `endsWith` | text, suffix | boolean | Suffix test |
 | `includes` | text, search | boolean | Substring test |
@@ -1147,7 +1263,8 @@ Duplicate `entity` + `name` pairs within a catalog are rejected.
 
 Requires `hook.create`, `hook.update`, and `hook.delete` permissions.
 
-Seed catalog: [`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json). Platform gaps: [data-hooks-platform-gaps.md](./data-hooks-platform-gaps.md). Rates backlog: [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 ---
 

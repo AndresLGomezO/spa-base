@@ -14,6 +14,53 @@ function extractJsonCandidate(answer: string): string {
 }
 
 /**
+ * Slice the first complete `{...}` value, ignoring braces inside strings.
+ * Avoids `first {` … `last }` which breaks when the model appends a second object.
+ */
+function sliceFirstJsonObject(text: string): string | null {
+  const start = text.indexOf("{");
+  if (start === -1) {
+    return null;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaping = false;
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i]!;
+    if (inString) {
+      if (escaping) {
+        escaping = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escaping = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{") {
+      depth += 1;
+      continue;
+    }
+    if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return text.slice(start, i + 1);
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Extract a JSON object from a model answer that may include markdown fences or prose.
  */
 export function extractJsonFromModelAnswer(answer: string): unknown {
@@ -23,18 +70,16 @@ export function extractJsonFromModelAnswer(answer: string): unknown {
   }
 
   const candidate = extractJsonCandidate(trimmed);
-  const jsonStart = candidate.indexOf("{");
-  const jsonEnd = candidate.lastIndexOf("}");
-  if (jsonStart === -1) {
+  const jsonText = sliceFirstJsonObject(candidate);
+  if (!jsonText) {
+    if (candidate.includes("{") && !candidate.includes("}")) {
+      throw new Error(
+        "Model response appears truncated (incomplete JSON object).",
+      );
+    }
     throw new Error("No JSON object found in model answer.");
   }
-  if (jsonEnd === -1 || jsonEnd <= jsonStart) {
-    throw new Error(
-      "Model response appears truncated (incomplete JSON object).",
-    );
-  }
 
-  const jsonText = candidate.slice(jsonStart, jsonEnd + 1);
   return parseJsonObjectText(jsonText);
 }
 

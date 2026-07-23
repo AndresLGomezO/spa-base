@@ -115,7 +115,9 @@ export function parseSeedDatabaseArgs(
   if (idsRaw !== undefined) {
     const parsedIds = parseCommaSeparatedSet(idsRaw);
     if (parsedIds.size === 0) {
-      throw new Error("Missing value for --ids (expected comma-separated ids).");
+      throw new Error(
+        "Missing value for --ids (expected comma-separated ids).",
+      );
     }
     ids = parsedIds;
     if (components) {

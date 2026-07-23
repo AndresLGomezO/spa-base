@@ -6,7 +6,7 @@ describe("parseMetricValueFirestoreDoc", () => {
   it("defaults missing values to an empty record", () => {
     const record = parseMetricValueFirestoreDoc("doc_1", {
       id: "doc_1",
-      tenantId: "rates",
+      tenantId: "tenant_test",
       metricName: "metric_SdFTCjYYA1FQ",
       userId: "user_1",
       group: {},
@@ -25,7 +25,7 @@ describe("parseMetricValueFirestoreDoc", () => {
       "doc_1",
       {
         id: "doc_1",
-        tenantId: "rates",
+        tenantId: "tenant_test",
         metricName: "metric_SdFTCjYYA1FQ",
         userId: "user_1",
         group: {},
@@ -41,9 +41,9 @@ describe("parseMetricValueFirestoreDoc", () => {
   it("reads values from dotted Firestore increment fields", () => {
     const record = parseMetricValueFirestoreDoc("doc_1", {
       id: "doc_1",
-      tenantId: "rates",
+      tenantId: "tenant_test",
       metricName: "metric_AJ8ymnSHdxBv",
-      userId: "rates_testuser1",
+      userId: "test_user_1",
       group: {},
       dimensions: {},
       "values.sum_amount": 100_408_800,
@@ -58,7 +58,7 @@ describe("parseMetricValueFirestoreDoc", () => {
   it("parses numeric values from Firestore", () => {
     const record = parseMetricValueFirestoreDoc("doc_1", {
       id: "doc_1",
-      tenantId: "rates",
+      tenantId: "tenant_test",
       metricName: "metric_SdFTCjYYA1FQ",
       userId: "user_1",
       group: { month: "2026-06" },

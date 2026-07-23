@@ -144,7 +144,7 @@ Platform tenants are first-class Firestore documents (not env vars):
 
 - Collection constant: `TENANTS_COLLECTION` in `@repo/shared-types`.
 - Repository: `createFirestoreAdminTenantRepository` in `@repo/gcp-firebase`.
-- Dev seed on API startup: **none** — run `pnpm seed:database` manually for the `rates` tenant (11 entities, 20 metrics, 35 queries, demo data, `normalRatesUser` role).
+- Dev seed on API startup: **none** — run `pnpm seed:database` manually when [`.local/tenant-import/tenant.json`](../.local/tenant-import/tenant.json) is present (catalogs + records under that folder; see `apps/api` README).
 - Business entity data remains under `tenants/{tenantId}/{collection}/{documentId}`.
 
 ---

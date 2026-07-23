@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/formulas/formula-admin-entry.ts"],
+  "entry": ["src/formulas/formula-admin-entry.ts", "src/scripts/**/*.ts"],
   "ignoreUnresolved": ["./formula-admin.js"],
   "ignoreDependencies": [
     "@google-cloud/firestore",

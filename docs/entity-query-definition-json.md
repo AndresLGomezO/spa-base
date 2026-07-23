@@ -333,13 +333,13 @@ Response:
 
 ## 12. Rates tenant example catalog
 
-For the **Rates dev tenant** (monthly payment control, cashflow, net worth), use [rates-data-model.md](./rates-data-model.md) as the domain blueprint. A ready-to-import catalog is available at [`apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json) (35 saved queries across `paymentSchedule`, `financialItem`, `transaction`, `account`, and `balanceSnapshot`).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 **Import order for a new tenant (or manual re-import):**
 
-1. [`rates-entity-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json) — Settings → Model Builder → Import JSON
-2. [`rates-metric-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json) — Settings → Metrics → Import JSON
-3. [`rates-query-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json) — Settings → Query Builder → Import JSON
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 On local dev, run **`pnpm seed:database`** after the API and emulators are up to import catalogs into the `rates` tenant (not automatic on API startup).
 

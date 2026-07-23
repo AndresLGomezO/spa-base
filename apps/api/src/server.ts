@@ -127,7 +127,7 @@ import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { platformApp } from "@app/platform/app.config.js";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
-import { RATES_TENANT_ID } from "./admin/rates-tenant/constants.js";
+import { tryLoadLocalTenantConfig } from "./admin/local-tenant-seed/load-tenant-config.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { createRuntimeSettingsCache } from "@repo/debug-logs";
@@ -615,6 +615,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     }, 10_000);
   }
 
+  const localTenant = tryLoadLocalTenantConfig();
   const entityRuntime = createEntityRuntimeContext({
     firebaseAdminConfig,
     entityDefinitionRepository,
@@ -622,7 +623,9 @@ export async function buildServer(options: BuildServerOptions = {}) {
     cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
     clientFallbackMaxDocs: apiEnv.CLIENT_QUERY_FALLBACK_MAX_DOCS,
     ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
-    indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
+    indexProvisioningExcludedTenants: new Set(
+      localTenant?.indexProvisioningExcluded ? [localTenant.id] : [],
+    ),
     indexStatusStore,
     indexProvisioningConcurrency: apiEnv.INDEX_PROVISIONING_CONCURRENCY,
     indexProvisioningBatchDelayMs: apiEnv.INDEX_PROVISIONING_BATCH_DELAY_MS,

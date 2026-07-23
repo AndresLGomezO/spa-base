@@ -19,9 +19,9 @@ export function useEmailMatchingEditor() {
   const [searchParams, setSearchParams] = useSearchParams();
   const bindingIdParam = searchParams.get("bindingId") ?? "";
 
-  const [bindings, setBindings] = useState<
-    readonly EmailMatchBindingRecord[]
-  >([]);
+  const [bindings, setBindings] = useState<readonly EmailMatchBindingRecord[]>(
+    [],
+  );
   const [selectedId, setSelectedIdState] = useState<string>("");
   const [draft, setDraft] = useState<EmailMatchingDraft | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -261,12 +261,9 @@ export function useEmailMatchingEditor() {
     [selectedId, setSelectedId],
   );
 
-  const applyImportedDraft = useCallback(
-    (imported: EmailMatchingDraft) => {
-      setDraft(imported);
-    },
-    [],
-  );
+  const applyImportedDraft = useCallback((imported: EmailMatchingDraft) => {
+    setDraft(imported);
+  }, []);
 
   return {
     bindings,

@@ -40,7 +40,9 @@ export async function dispatchHookTaskAsync(
       if (error instanceof PermanentTaskError) {
         return reply.status(200).send({ success: false, error: error.code });
       }
-      return reply.status(500).send({ success: false });
+      const message =
+        error instanceof Error ? error.message : "Unknown schedule tick error";
+      return reply.status(500).send({ success: false, error: message });
     }
   }
 

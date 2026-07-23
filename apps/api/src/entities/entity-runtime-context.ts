@@ -307,9 +307,7 @@ export class EntityRuntimeContext {
 
   createRelationContext(
     joinRepository?: JoinCollectionRepository,
-    onChildRecordMutated?: Parameters<
-      typeof createRelationRuntimeContext
-    >[3],
+    onChildRecordMutated?: Parameters<typeof createRelationRuntimeContext>[3],
   ): ReturnType<typeof createRelationRuntimeContext> {
     const repositories: Record<
       string,

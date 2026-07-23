@@ -49,6 +49,29 @@ export interface DataHookExecutionRepository {
     options?: {
       readonly limit?: number;
       readonly cursor?: HookExecutionListCursor | null;
+      readonly since?: string;
+      readonly until?: string;
+    },
+  ): Promise<HookExecutionListPage>;
+  listByEntityRecord(
+    tenantId: string,
+    entityName: string,
+    recordId: string,
+    options?: {
+      readonly limit?: number;
+      readonly cursor?: HookExecutionListCursor | null;
+      readonly since?: string;
+      readonly until?: string;
+    },
+  ): Promise<HookExecutionListPage>;
+  listByEmailLedgerId(
+    tenantId: string,
+    emailLedgerId: string,
+    options?: {
+      readonly limit?: number;
+      readonly cursor?: HookExecutionListCursor | null;
+      readonly since?: string;
+      readonly until?: string;
     },
   ): Promise<HookExecutionListPage>;
   listActive(tenantId: string): Promise<readonly DataHookExecutionRecord[]>;

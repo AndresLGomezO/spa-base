@@ -11,7 +11,8 @@ This document is the **authoritative reference for Metrics JSON** used by Settin
 
 | Document | Purpose |
 |----------|---------|
-| [rates-metrics-guide.md](./rates-metrics-guide.md) | Domain examples, KPI wiring, progressive metric catalog |
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 | [metrics-consumption.md](./metrics-consumption.md) | Reading pre-aggregated metric rows at runtime |
 | [aggregations.md](./aggregations.md) | Event pipeline, contributions, backfill internals |
 | [entity-definition-json.md](./entity-definition-json.md) | Entity catalog JSON — metrics reference `sourceModel` entity names |
@@ -41,7 +42,8 @@ This document is the **authoritative reference for Metrics JSON** used by Settin
 2. Author a **`metric-definitions-catalog`** JSON file with all metrics for the tenant.
 3. In the app: **Settings → Metrics → Import JSON** → paste or upload → confirm replace.
 4. Backfill runs automatically for created and materially updated metrics.
-5. Wire KPI widgets separately in Design layout ([rates-metrics-guide.md](./rates-metrics-guide.md) §5).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 **Do not include in portable JSON** (server-managed):
 
@@ -310,4 +312,5 @@ Response:
 
 ## 11. Rates tenant example catalog
 
-For the **Rates dev tenant**, use [rates-data-model.md](./rates-data-model.md) as the domain blueprint. The metric catalog is at [`apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json) (20 metrics). It is seeded automatically on API startup together with entity and query catalogs. See [rates-metrics-guide.md](./rates-metrics-guide.md) for wiring KPI and Series widgets.
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+

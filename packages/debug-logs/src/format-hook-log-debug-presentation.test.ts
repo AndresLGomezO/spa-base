@@ -8,7 +8,7 @@ function hookLogRecord(
 ): HookLogMessageRecord {
   return {
     id: "hooklog_1",
-    tenantId: "rates",
+    tenantId: "tenant_test",
     level: "info",
     message: "Data hook notification",
     entityName: "loanDetails",
@@ -17,7 +17,7 @@ function hookLogRecord(
       message: "",
       entityName: "loanDetails",
       event: "loanDetails.afterCreate",
-      tenantId: "rates",
+      tenantId: "tenant_test",
     },
     ...overrides,
   };

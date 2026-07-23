@@ -11,28 +11,26 @@ import {
 describe("bootstrap platform role", () => {
   it("parses comma-separated bootstrap emails", () => {
     expect(
-      parseBootstrapSuperAdminEmails(
-        " Admin@Example.com,andreslgomezo@gmail.com ",
-      ),
-    ).toEqual(new Set(["admin@example.com", "andreslgomezo@gmail.com"]));
+      parseBootstrapSuperAdminEmails(" Admin@Example.com,owner@example.com "),
+    ).toEqual(new Set(["admin@example.com", "owner@example.com"]));
   });
 
   it("bootstraps only for newly created allowlisted users", () => {
     expect(
       shouldBootstrapSuperAdmin({
-        email: "andreslgomezo@gmail.com",
+        email: "owner@example.com",
         created: true,
         platformRole: null,
-        allowlist: new Set(["andreslgomezo@gmail.com"]),
+        allowlist: new Set(["owner@example.com"]),
       }),
     ).toBe(true);
 
     expect(
       shouldBootstrapSuperAdmin({
-        email: "andreslgomezo@gmail.com",
+        email: "owner@example.com",
         created: false,
         platformRole: null,
-        allowlist: new Set(["andreslgomezo@gmail.com"]),
+        allowlist: new Set(["owner@example.com"]),
       }),
     ).toBe(false);
   });
@@ -40,7 +38,7 @@ describe("bootstrap platform role", () => {
   it("assigns canonical platform superadmin role", () => {
     const bootstrapped = withBootstrapPlatformRole({
       uid: "user_1",
-      email: "andreslgomezo@gmail.com",
+      email: "owner@example.com",
       emailVerified: true,
       displayName: null,
       photoURL: null,

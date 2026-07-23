@@ -41,6 +41,7 @@ import { DebuggerHorizontalBarChart } from "./components/charts/DebuggerHorizont
 import { DebuggerTimelineChart } from "./components/charts/DebuggerTimelineChart";
 import { useDebugger } from "./debugger-context";
 import { debuggerSourceLabelKey } from "./debugger-source-config";
+import { mapWindowSummaryToSourceStats } from "./map-window-summary-to-source-stats";
 import {
   DEBUGGER_LIST_ROW_HOVER_CLASS,
   DEBUGGER_STATUS_ACCENT_CLASS,
@@ -414,19 +415,17 @@ export function DebuggerSummaryPanel() {
     refreshGeneration,
     selectRecord,
     hookExecutionLive,
-    hasMoreEvents,
-    isLoadingAllExecutions,
-    loadedExecutionCount,
+    windowSummary,
+    isSummaryLoading,
   } = useDebugger();
-  const { listEvents, hasActiveFilters } = useDebuggerListQuery(
-    sourceEvents,
-    activeSource,
-  );
+  const { hasActiveFilters } = useDebuggerListQuery(sourceEvents, activeSource);
 
-  const stats = useMemo(
-    () => computeDebuggerSourceStats(listEvents, activeSource),
-    [activeSource, listEvents],
-  );
+  const stats = useMemo((): DebuggerSourceStats => {
+    if (windowSummary) {
+      return mapWindowSummaryToSourceStats(windowSummary);
+    }
+    return computeDebuggerSourceStats([], activeSource);
+  }, [activeSource, windowSummary]);
 
   const kpiItems = useMemo(
     () => buildKpiItems(stats, activeSource, t, hookExecutionLive),
@@ -462,8 +461,9 @@ export function DebuggerSummaryPanel() {
     hookExecutionLive != null &&
     (hookExecutionLive.pending > 0 || hookExecutionLive.running > 0);
 
-  const hasData = sourceEvents.length > 0;
-  const showInitialSkeleton = isLoading && !hasData;
+  const hasData = (windowSummary?.total ?? 0) > 0;
+  const showInitialSkeleton =
+    (isLoading || isSummaryLoading) && !hasData && !windowSummary;
   const [pulseActive, setPulseActive] = useState(false);
 
   useEffect(() => {
@@ -475,10 +475,18 @@ export function DebuggerSummaryPanel() {
     return () => window.clearTimeout(timeoutId);
   }, [refreshGeneration]);
 
-  const emptyMessage =
-    sourceEvents.length === 0
-      ? t("debugger.list.emptySource")
-      : t("debugger.list.emptyFiltered");
+  const emptyMessage = t("debugger.list.emptySource");
+
+  const attentionEvents = useMemo((): DebugEvent[] => {
+    return stats.attentionItems.map((item) => ({
+      id: item.id,
+      source: item.source,
+      title: item.title,
+      timestamp: item.timestamp,
+      ...(item.status ? { status: item.status } : {}),
+      ...(item.subtitle ? { subtitle: item.subtitle } : {}),
+    }));
+  }, [stats.attentionItems]);
 
   return (
     <section
@@ -504,7 +512,7 @@ export function DebuggerSummaryPanel() {
         <DebuggerRefreshingOverlay />
         {showInitialSkeleton ? (
           <SummarySkeleton />
-        ) : listEvents.length === 0 ? (
+        ) : !hasData ? (
           <Text className="text-muted-foreground text-sm">{emptyMessage}</Text>
         ) : (
           <div className="space-y-4">
@@ -527,17 +535,6 @@ export function DebuggerSummaryPanel() {
                     count: stats.writeExecutionCount,
                   })}
                 </Text>
-                {isLoadingAllExecutions ? (
-                  <Text className="text-muted-foreground text-xs">
-                    {t("debugger.summary.loadingExecutionHistory")}
-                  </Text>
-                ) : hasMoreEvents ? (
-                  <Text className="text-muted-foreground text-xs">
-                    {t("debugger.summary.partialExecutionHistory", {
-                      count: loadedExecutionCount,
-                    })}
-                  </Text>
-                ) : null}
               </div>
             ) : null}
 
@@ -623,19 +620,20 @@ export function DebuggerSummaryPanel() {
               <DebuggerSectionHeading icon={AlertTriangle}>
                 {t("debugger.summary.needsAttention")}
               </DebuggerSectionHeading>
-              <AttentionList
-                items={stats.attentionItems}
-                onSelect={selectRecord}
-              />
+              <AttentionList items={attentionEvents} onSelect={selectRecord} />
             </Card>
 
             <div className="space-y-1">
               <Text className="text-muted-foreground text-xs">
-                {t("debugger.summary.sampleLimit")}
+                {windowSummary?.truncated
+                  ? t("debugger.summary.windowSummaryTruncated", {
+                      count: windowSummary.scannedCount,
+                    })
+                  : t("debugger.summary.windowSummary")}
               </Text>
               {hasActiveFilters ? (
                 <Text className="text-muted-foreground text-xs">
-                  {t("debugger.summary.filteredNote")}
+                  {t("debugger.summary.overviewIgnoresListFilters")}
                 </Text>
               ) : null}
             </div>

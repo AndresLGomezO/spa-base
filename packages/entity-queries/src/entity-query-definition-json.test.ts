@@ -1,7 +1,3 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
 
 import {
@@ -13,26 +9,6 @@ import {
   toPortableEntityQueryDefinition,
 } from "./entity-query-definition-json.js";
 import type { EntityQueryDefinitionRecord } from "./types.js";
-
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
 
 const baseRecord: EntityQueryDefinitionRecord = {
   id: "entity_query_1",
@@ -187,17 +163,20 @@ describe("entity-query-definition-json", () => {
     ]);
   });
 
-  it("parses rates query definitions catalog", () => {
-    const catalogDir = join(
-      dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/query-definitions",
+  it("parses a synthetic query definitions catalog", () => {
+    const otherRecord: EntityQueryDefinitionRecord = {
+      ...baseRecord,
+      id: "entity_query_2",
+      queryId: "due_this_month",
+      name: "Due this month",
+    };
+    const envelope = createEntityQueryDefinitionsCatalogEnvelope([
+      baseRecord,
+      otherRecord,
+    ]);
+    const parsed = parseEntityQueryDefinitionsCatalogJson(
+      JSON.stringify(envelope),
     );
-    const text = mergeCatalog(
-      catalogDir,
-      "entity-query-definitions-catalog",
-      "entityQueryDefinitions",
-    );
-    const parsed = parseEntityQueryDefinitionsCatalogJson(text);
 
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
@@ -208,19 +187,9 @@ describe("entity-query-definition-json", () => {
       );
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(8);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(2);
     const names = parsed.data.entityQueryDefinitions.map((query) => query.name);
-    expect(names).toContain("Transactions this month");
     expect(names).toContain("Upcoming payments");
-    expect(names).toContain("Upcoming payments (dashboard)");
     expect(names).toContain("Due this month");
-    expect(names).toContain("Due today (metrics)");
-    expect(names).toContain("Transaction trend");
-    expect(names).toContain("Overdue payments (metrics)");
-    expect(names).toContain("Upcoming this week (metrics)");
-    expect(names).not.toContain("Due today");
-    expect(names).not.toContain("Top outflow category (period)");
-    expect(names).not.toContain("Category outflows (period to date)");
-    expect(names).not.toContain("Category transaction trend");
   });
 });

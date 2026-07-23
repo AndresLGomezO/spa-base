@@ -362,7 +362,7 @@ export function GmailSettingsPanel() {
           ) : (
             <>
               <Button
-                onClick={() => syncMutation.mutate()}
+                onClick={() => syncMutation.mutate({})}
                 disabled={syncMutation.isPending}
               >
                 {t("platform.email.syncNow")}

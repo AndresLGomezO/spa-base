@@ -43,6 +43,12 @@ export interface WorkerCrudHookDeps {
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly userNotificationRepository?: UserNotificationRepository;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  readonly callAi?: (
+    request: import("@repo/hooks").DataHookAiRequest,
+  ) => Promise<Record<string, unknown>>;
+  readonly computeEmbedding?: (
+    request: import("@repo/hooks").DataHookEmbeddingRequest,
+  ) => Promise<readonly number[]>;
   readonly aggregation?: AggregationEmitterDeps;
 }
 
@@ -125,6 +131,12 @@ async function dispatchChainedEntityHooks(options: {
   readonly callWebhook?: (
     request: import("@repo/hooks").DataHookWebhookRequest,
   ) => Promise<void>;
+  readonly callAi?: (
+    request: import("@repo/hooks").DataHookAiRequest,
+  ) => Promise<Record<string, unknown>>;
+  readonly computeEmbedding?: (
+    request: import("@repo/hooks").DataHookEmbeddingRequest,
+  ) => Promise<readonly number[]>;
   readonly sendUserNotification?: (
     input: import("@repo/firestore-converters").CreateUserNotificationInput,
   ) => Promise<void>;
@@ -159,6 +171,10 @@ async function dispatchChainedEntityHooks(options: {
         ? { dataHookExecutionRecorder: options.dataHookExecutionRecorder }
         : {}),
       ...(options.callWebhook ? { callWebhook: options.callWebhook } : {}),
+      ...(options.callAi ? { callAi: options.callAi } : {}),
+      ...(options.computeEmbedding
+        ? { computeEmbedding: options.computeEmbedding }
+        : {}),
       ...(options.sendUserNotification
         ? { sendUserNotification: options.sendUserNotification }
         : {}),
@@ -217,13 +233,16 @@ export function buildHookEntityServices(options: {
                 businessFieldNames: input.businessFieldNames,
               });
             } catch (error) {
-              logger.error("Failed to emit aggregation event after hook write", {
-                err: error,
-                entityName: input.entityName,
-                tenantId: input.tenantId,
-                operation: input.operation,
-                documentId: input.documentId,
-              });
+              logger.error(
+                "Failed to emit aggregation event after hook write",
+                {
+                  err: error,
+                  entityName: input.entityName,
+                  tenantId: input.tenantId,
+                  operation: input.operation,
+                  documentId: input.documentId,
+                },
+              );
             }
           },
         }
@@ -244,6 +263,10 @@ export function buildHookEntityServices(options: {
         ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
         ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+        ...(deps.callAi ? { callAi: deps.callAi } : {}),
+        ...(deps.computeEmbedding
+          ? { computeEmbedding: deps.computeEmbedding }
+          : {}),
         ...(deps.userNotificationRepository
           ? {
               sendUserNotification: createSendUserNotification(

@@ -7,6 +7,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { applyListRecentTimeRange } from "./apply-list-recent-time-range.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 export function createFirestoreAdminAiJobRepository(
@@ -65,8 +66,13 @@ export function createFirestoreAdminAiJobRepository(
       return next;
     },
     async listRecent(tenantId, options) {
-      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 50);
-      const snapshot = await collection(tenantId)
+      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 1000);
+      const query = applyListRecentTimeRange(
+        collection(tenantId),
+        "updatedAt",
+        options,
+      );
+      const snapshot = await query
         .orderBy("updatedAt", "desc")
         .limit(limit * 3)
         .get();

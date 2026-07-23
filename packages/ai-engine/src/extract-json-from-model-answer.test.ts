@@ -36,16 +36,19 @@ describe("extractJsonFromModelAnswer", () => {
     ).toThrow("truncated");
   });
 
-  it("repairs trailing commas in arrays and objects", () => {
+  it("parses the first object when the model appends a second JSON object", () => {
     const result = extractJsonFromModelAnswer(
-      '{"component":{"kind":"form-field","fieldPath":"name","label":{"show":true,},},}',
+      '{\n  "action": "useExisting",\n  "categoryId": "abc"\n}\n{\n  "action": "createChild"\n}',
+    );
+    expect(result).toEqual({ action: "useExisting", categoryId: "abc" });
+  });
+
+  it("parses nested objects without stopping at the first closing brace", () => {
+    const result = extractJsonFromModelAnswer(
+      '{"results":[{"action":"useExisting","meta":{"ok":true}}]} trailing prose',
     );
     expect(result).toEqual({
-      component: {
-        kind: "form-field",
-        fieldPath: "name",
-        label: { show: true },
-      },
+      results: [{ action: "useExisting", meta: { ok: true } }],
     });
   });
 });

@@ -8,7 +8,7 @@ import {
 
 import { seedPlatformRoles } from "../admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "../admin/seed-platform-tenants.js";
-import { RATES_TENANT_ID } from "../admin/rates-tenant/constants.js";
+import { tryLoadLocalTenantConfig } from "../admin/local-tenant-seed/load-tenant-config.js";
 import { apiEnv } from "../config/env.js";
 import { createEntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { isDevHookCacheReloadEnabled } from "../dev/reload-hook-cache.route.js";
@@ -230,6 +230,10 @@ export async function runDatabaseSeed(
     );
   }
 
+  const localTenant = tryLoadLocalTenantConfig();
+  const excludedTenants = new Set<string>(
+    localTenant?.indexProvisioningExcluded ? [localTenant.id] : [],
+  );
   const entityDefinitionRepository =
     createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
   const entityRuntime = createEntityRuntimeContext({
@@ -239,7 +243,7 @@ export async function runDatabaseSeed(
     cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
     clientFallbackMaxDocs: apiEnv.CLIENT_QUERY_FALLBACK_MAX_DOCS,
     ensureFirestoreIndexes: false,
-    indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
+    indexProvisioningExcludedTenants: excludedTenants,
   });
 
   if (full || selectionIncludes(selection, "platform")) {
@@ -249,16 +253,20 @@ export async function runDatabaseSeed(
 
   console.log(
     options.gcp
-      ? "[seed] Seeding rates tenant on GCP (andreslgomezo@gmail.com import only)..."
-      : "[seed] Seeding platform tenants (rates catalog + per-user dev data)...",
+      ? "[seed] Seeding local tenant on GCP (tenant-import owner only)..."
+      : "[seed] Seeding platform tenants (local catalogs + per-user import)...",
   );
   await seedPlatformTenants(firebaseAdminConfig, entityRuntime, {
     gcp: options.gcp,
     selection,
   });
 
-  if (!options.gcp && (full || selectionIncludes(selection, "hook-cache"))) {
-    await reloadHookCachesForTenants([RATES_TENANT_ID]);
+  if (
+    !options.gcp &&
+    localTenant &&
+    (full || selectionIncludes(selection, "hook-cache"))
+  ) {
+    await reloadHookCachesForTenants([localTenant.id]);
   }
 
   console.log("[seed] Database seed complete.");

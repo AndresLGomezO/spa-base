@@ -62,13 +62,16 @@ export function buildHookEntityServices(options: {
                 businessFieldNames: input.businessFieldNames,
               });
             } catch (error) {
-              logger.error("Failed to emit aggregation event after hook write", {
-                err: error,
-                entityName: input.entityName,
-                tenantId: input.tenantId,
-                operation: input.operation,
-                documentId: input.documentId,
-              });
+              logger.error(
+                "Failed to emit aggregation event after hook write",
+                {
+                  err: error,
+                  entityName: input.entityName,
+                  tenantId: input.tenantId,
+                  operation: input.operation,
+                  documentId: input.documentId,
+                },
+              );
             }
           },
         }

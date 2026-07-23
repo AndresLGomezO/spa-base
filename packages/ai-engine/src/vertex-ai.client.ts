@@ -73,13 +73,24 @@ export interface GenerateModelAnswerInput {
 
 export interface GenerateModelAnswerOptions {
   readonly maxOutputTokens?: number;
+  /**
+   * Soft ceiling on Gemini 2.5+ thinking tokens. Thinking counts toward
+   * `maxOutputTokens`; leave room for the visible answer (Pro minimum is 128).
+   */
+  readonly thinkingBudget?: number;
   readonly responseMimeType?: "text/plain" | "application/json";
+  /** When true, enable Vertex Google Search grounding (incompatible with JSON mime). */
+  readonly googleSearch?: boolean;
   readonly stepId?: string;
 }
 
 const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
 /** List/card layouts can be large; allow headroom above chat defaults. */
 export const UI_BUILDER_MAX_OUTPUT_TOKENS = 16_384;
+/** Compact JSON classification — keep thinking small so MAX_TOKENS still has answer room. */
+export const DATA_HOOK_AI_THINKING_BUDGET = 512;
+export const DATA_HOOK_AI_MAX_OUTPUT_TOKENS = 8192;
+export const DATA_HOOK_AI_BATCH_MAX_OUTPUT_TOKENS = 16_384;
 
 export async function generateModelAnswer(
   config: VertexAiConfig,
@@ -132,18 +143,29 @@ export async function generateModelAnswer(
         });
       }
 
+      const generationConfig: Record<string, unknown> = {
+        temperature: options?.stepId ? getStepTemperature(options.stepId) : 0.2,
+        maxOutputTokens: options?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+      };
+      // JSON mime + Google Search tools are often incompatible on Gemini.
+      if (options?.responseMimeType && !options.googleSearch) {
+        generationConfig.responseMimeType = options.responseMimeType;
+      }
+      if (typeof options?.thinkingBudget === "number") {
+        // Not yet on GenerationConfig typings in @google-cloud/vertexai@1.12;
+        // the Vertex REST API accepts thinkingConfig for Gemini 2.5+.
+        generationConfig.thinkingConfig = {
+          thinkingBudget: options.thinkingBudget,
+        };
+      }
+
       const result = await model.generateContent({
         contents: [{ role: "user", parts: userParts }],
-        generationConfig: {
-          temperature: options?.stepId
-            ? getStepTemperature(options.stepId)
-            : 0.2,
-          maxOutputTokens:
-            options?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-          ...(options?.responseMimeType
-            ? { responseMimeType: options.responseMimeType }
-            : {}),
-        },
+        generationConfig,
+        ...(options?.googleSearch
+          ? // Gemini 2.x+: use googleSearch (googleSearchRetrieval is legacy 1.5-only).
+            { tools: [{ googleSearch: {} } as never] }
+          : {}),
       });
 
       const response = result.response;

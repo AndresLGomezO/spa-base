@@ -47,8 +47,7 @@ export function EmailMatchingPreviewStepCard({
   const detailSections =
     mode === "details"
       ? step.details?.filter(
-          (_section, index) =>
-            step.kind !== "extractors" || index === 0,
+          (_section, index) => step.kind !== "extractors" || index === 0,
         )
       : mode === "advanced" && step.kind === "extractors"
         ? step.details?.slice(1)

@@ -8,6 +8,7 @@ import {
   hookExecutionTypeForEvent,
   parseHookExecutionStatusFilters,
   parseHookExecutionTypes,
+  rawStatusIncludesSkipped,
 } from "./hook-execution-live-metrics";
 
 function hookEvent(
@@ -97,5 +98,19 @@ describe("parseHookExecutionStatusFilters", () => {
       "queued",
       "success",
     ]);
+  });
+
+  it("drops skipped from status filters (use showSkipped instead)", () => {
+    expect(parseHookExecutionStatusFilters("success,skipped,error")).toEqual([
+      "success",
+      "error",
+    ]);
+  });
+});
+
+describe("rawStatusIncludesSkipped", () => {
+  it("detects legacy skipped in status query", () => {
+    expect(rawStatusIncludesSkipped("success,skipped")).toBe(true);
+    expect(rawStatusIncludesSkipped("success,error")).toBe(false);
   });
 });

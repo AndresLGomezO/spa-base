@@ -8,7 +8,10 @@ import {
   tryGetEntityDefinition,
 } from "../../../entities/entity-catalog";
 import { useEntityCatalog } from "../../../entities/entity-catalog-context";
-import { getEntity, type EmailMatchBindingRecord } from "../../../lib/api-client";
+import {
+  getEntity,
+  type EmailMatchBindingRecord,
+} from "../../../lib/api-client";
 import {
   bindingDisplayName,
   type EmailMatchingDraft,

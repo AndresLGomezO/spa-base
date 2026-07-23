@@ -6,6 +6,7 @@ import {
   isScheduleTrigger,
   type DataHookDefinition,
 } from "./data-hook-definition.js";
+import { parseHookEvent } from "./event.js";
 import type { HookContext, HookUser } from "./types.js";
 
 export const dataHookJobPayloadSchema = z.object({
@@ -38,11 +39,12 @@ export function buildDataHookJobPayload(
   context: HookContext,
   executionId?: string,
 ): DataHookJobPayload {
+  const parsed = parseHookEvent(context.event);
   const operation = isScheduleTrigger(definition.trigger)
     ? "schedule"
     : isEmailTrigger(definition.trigger)
       ? "email"
-      : definition.trigger.operation;
+      : parsed.operation;
 
   return {
     hookId: definition.id,

@@ -39,6 +39,8 @@ export interface AiJobRepository {
     options?: {
       readonly feature?: AiJobFeature;
       readonly limit?: number;
+      readonly since?: string;
+      readonly until?: string;
     },
   ): Promise<readonly AiJobRecord[]>;
 }

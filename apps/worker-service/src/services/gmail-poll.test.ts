@@ -90,12 +90,12 @@ describe("processGmailPoll", () => {
           listConnected: vi.fn().mockResolvedValue([
             {
               userId: "u1",
-              tenantId: "rates",
+              tenantId: "tenant_test",
               status: "connected",
             },
             {
               userId: "u2",
-              tenantId: "rates",
+              tenantId: "tenant_test",
               status: "connected",
             },
           ]),
@@ -112,12 +112,12 @@ describe("processGmailPoll", () => {
       expect.objectContaining({ kind: "windowSync" }),
     );
     expect(enqueueWindowSync).toHaveBeenCalledWith({
-      tenantId: "rates",
+      tenantId: "tenant_test",
       userId: "u1",
       jobId: "job-1",
     });
     expect(enqueueWindowSync).toHaveBeenCalledWith({
-      tenantId: "rates",
+      tenantId: "tenant_test",
       userId: "u2",
       jobId: "job-2",
     });

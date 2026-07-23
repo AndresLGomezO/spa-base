@@ -1,17 +1,18 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 export function resolveRepoRoot(startDir: string = process.cwd()): string {
-  if (existsSync(join(startDir, "pnpm-workspace.yaml"))) {
-    return startDir;
+  let current = startDir;
+  for (;;) {
+    if (existsSync(join(current, "pnpm-workspace.yaml"))) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) {
+      return startDir;
+    }
+    current = parent;
   }
-
-  const parent = join(startDir, "..");
-  if (existsSync(join(parent, "pnpm-workspace.yaml"))) {
-    return parent;
-  }
-
-  return startDir;
 }
 
 export function resolveTenantImportDir(

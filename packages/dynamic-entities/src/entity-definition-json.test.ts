@@ -1,9 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
-import { validateEntityUIConfig } from "@repo/entities";
 
 import { defineEntityFromRecord } from "./define-entity-from-record.js";
 import {
@@ -21,35 +16,6 @@ import {
   validateCatalogDeleteSafety,
 } from "./entity-definition-json.js";
 import type { EntityDefinitionRecord } from "./types.js";
-
-function mergeEntityDefinitionsCatalog(dir: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  const categoriesPath = join(dir, "_categories.json");
-  const entityCategories = existsSync(categoriesPath)
-    ? (
-        JSON.parse(readFileSync(categoriesPath, "utf8")) as {
-          entityCategories?: unknown[];
-        }
-      ).entityCategories
-    : undefined;
-  return JSON.stringify({
-    kind: "entity-definitions-catalog",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    ...(entityCategories ? { entityCategories } : {}),
-    entityDefinitions: items,
-  });
-}
 
 const loanRecord: EntityDefinitionRecord = {
   id: "def_loan",
@@ -282,13 +248,17 @@ describe("entity-definition-json", () => {
     expect(errors[0]?.message).toContain("cat_finance");
   });
 
-  it("parses rates entity definitions catalog", () => {
-    const catalogDir = join(
-      dirname(fileURLToPath(import.meta.url)),
-      "../../../apps/api/src/admin/rates-tenant/catalogs/entity-definitions",
+  it("parses a synthetic entity definitions catalog", () => {
+    const envelope = createEntityDefinitionsCatalogEnvelope(
+      [loanRecord, customerRecord],
+      {
+        categories: [
+          { id: "cat_finance", name: "Finance", icon: "Wallet", order: 0 },
+          { id: "cat_crm", name: "CRM", icon: "Users", order: 1 },
+        ],
+      },
     );
-    const text = mergeEntityDefinitionsCatalog(catalogDir);
-    const parsed = parseEntityDefinitionsCatalogJson(text);
+    const parsed = parseEntityDefinitionsCatalogJson(JSON.stringify(envelope));
 
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
@@ -299,25 +269,11 @@ describe("entity-definition-json", () => {
       );
     }
 
-    expect(parsed.data.entityCategories).toHaveLength(5);
-    expect(parsed.data.entityDefinitions).toHaveLength(16);
+    expect(parsed.data.entityCategories).toHaveLength(2);
+    expect(parsed.data.entityDefinitions).toHaveLength(2);
     expect(parsed.data.entityDefinitions.map((entity) => entity.name)).toEqual([
-      "account",
-      "actor",
-      "attachment",
-      "balanceSnapshot",
-      "category",
-      "email",
-      "financialItem",
-      "incomeDetails",
-      "investmentDetails",
-      "loanDetails",
-      "loanMonthlyCost",
-      "loanUtilization",
-      "paymentSchedule",
-      "serviceDetails",
-      "statement",
-      "transaction",
+      "loan",
+      "customer",
     ]);
 
     for (const definition of parsed.data.entityDefinitions) {
@@ -327,36 +283,11 @@ describe("entity-definition-json", () => {
         name: definition.name,
         label: definition.label,
         fields: definition.fields,
-        ...(definition.ui ? { ui: definition.ui } : {}),
         version: 1,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
       };
-      const entity = defineEntityFromRecord(record);
-      if (definition.ui) {
-        validateEntityUIConfig(entity, definition.ui);
-      }
-      expect(definition.ui?.nav?.label).toBe(definition.label);
-      expect(definition.ui?.views?.length).toBeGreaterThan(0);
-      expect(definition.ui?.forms?.create).toBeDefined();
+      expect(defineEntityFromRecord(record).name).toBe(definition.name);
     }
-
-    const fieldNames = (name: string) =>
-      parsed.data.entityDefinitions
-        .find((entity) => entity.name === name)!
-        .fields.map((field) => field.name);
-
-    expect(fieldNames("loanDetails")).not.toContain("paymentAmount");
-    expect(fieldNames("loanDetails")).toContain("originalPrincipal");
-    expect(fieldNames("loanDetails")).toContain("creditLimit");
-    expect(fieldNames("investmentDetails")).not.toContain("contributionAmount");
-    expect(fieldNames("serviceDetails")).not.toContain("billingDay");
-    expect(fieldNames("incomeDetails")).toEqual([
-      "financialItemId",
-      "amountBasis",
-      "leaseReference",
-      "annualEscalationRate",
-    ]);
-    expect(fieldNames("financialItem")).toContain("amount");
   });
 });

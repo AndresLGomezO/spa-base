@@ -17,7 +17,7 @@ import {
 type GenericRecord = { readonly id: string; readonly tenantId: string };
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
-export type RelationChildMutatedHandler = NonNullable<
+type RelationChildMutatedHandler = NonNullable<
   RelationServicesDeps["onChildRecordMutated"]
 >;
 

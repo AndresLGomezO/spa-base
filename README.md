@@ -56,16 +56,16 @@ docs/         Guides and handoff documentation
 
 ## Commands
 
-| Command              | Description                                                       |
-| -------------------- | ----------------------------------------------------------------- |
-| `pnpm dev`           | Start all apps (turbo)                                            |
-| `pnpm test`          | Run all test suites                                               |
-| `pnpm typecheck`     | TypeScript check all packages                                     |
-| `pnpm lint`          | Lint all packages                                                 |
-| `pnpm emulators`     | Firebase emulators (auth, firestore)                              |
+| Command              | Description                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`           | Start all apps (turbo)                                                                                              |
+| `pnpm test`          | Run all test suites                                                                                                 |
+| `pnpm typecheck`     | TypeScript check all packages                                                                                       |
+| `pnpm lint`          | Lint all packages                                                                                                   |
+| `pnpm emulators`     | Firebase emulators (auth, firestore)                                                                                |
 | `pnpm seed:database` | Seed platform roles + `rates` tenant (manual; not on API startup). Partial: `-- --only <components> [--ids <id,…>]` |
-| `pnpm storybook`     | UI component docs (`@repo/ui`)                                    |
-| `pnpm i18n:validate` | Validate translation keys                                         |
+| `pnpm storybook`     | UI component docs (`@repo/ui`)                                                                                      |
+| `pnpm i18n:validate` | Validate translation keys                                                                                           |
 
 ---
 

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,48 +12,15 @@ import {
 const testDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(testDir, "../../../../../../");
 
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
-
-function loadFormulaNames(): readonly string[] {
+function loadPlatformFormulaNames(): readonly string[] {
   const platform = JSON.parse(
     readFileSync(
       join(repoRoot, "packages/formula-definitions/src/platform-formulas.json"),
       "utf8",
     ),
   ) as { formulaDefinitions: Array<{ name: string }> };
-  const rates = JSON.parse(
-    mergeCatalog(
-      join(
-        repoRoot,
-        "apps/api/src/admin/rates-tenant/catalogs/formula-definitions",
-      ),
-      "formula-definitions-catalog",
-      "formulaDefinitions",
-    ),
-  ) as { formulaDefinitions: Array<{ name: string }> };
 
-  return [
-    ...platform.formulaDefinitions.map((entry) => entry.name),
-    ...rates.formulaDefinitions.map((entry) => entry.name),
-  ];
+  return platform.formulaDefinitions.map((entry) => entry.name);
 }
 
 function loadEnglishFormulaPreviewStrings(): Record<string, string> {
@@ -69,11 +36,10 @@ function loadEnglishFormulaPreviewStrings(): Record<string, string> {
 }
 
 describe("hook-preview-formula-catalog", () => {
-  it("documents every platform and rates formula", () => {
+  it("documents every platform formula", () => {
     const catalogNames = new Set(listFormulaPreviewCatalogNames());
-    const formulaNames = loadFormulaNames();
+    const formulaNames = loadPlatformFormulaNames();
 
-    expect(catalogNames.size).toBe(formulaNames.length);
     for (const name of formulaNames) {
       expect(catalogNames.has(name), `missing descriptor for ${name}`).toBe(
         true,

@@ -1,6 +1,8 @@
 import {
   isEmailTrigger,
   isScheduleTrigger,
+  isCrudTrigger,
+  listCrudOperations,
   type DataHookDefinition,
 } from "./data-hook-definition.js";
 import { formatHookEvent, isBeforePhase, parseHookEvent } from "./event.js";
@@ -46,36 +48,47 @@ export function registerSystemHook(entry: {
   systemHookRegistry.set(entry.event, existing);
 }
 
-function dataHookEvent(definition: DataHookDefinition): string {
+function dataHookEvents(definition: DataHookDefinition): string[] {
   if (isScheduleTrigger(definition.trigger)) {
-    return formatHookEvent({
-      entity: definition.entity,
-      phase: definition.phase,
-      operation: "schedule",
-    });
+    return [
+      formatHookEvent({
+        entity: definition.entity,
+        phase: definition.phase,
+        operation: "schedule",
+      }),
+    ];
   }
 
   if (isEmailTrigger(definition.trigger)) {
-    return formatHookEvent({
-      entity: definition.entity,
-      phase: definition.phase,
-      operation: "email",
-    });
+    return [
+      formatHookEvent({
+        entity: definition.entity,
+        phase: definition.phase,
+        operation: "email",
+      }),
+    ];
   }
 
-  return formatHookEvent({
-    entity: definition.entity,
-    phase: definition.phase,
-    operation: definition.trigger.operation,
-  });
+  if (!isCrudTrigger(definition.trigger)) {
+    return [];
+  }
+
+  return listCrudOperations(definition.trigger).map((entry) =>
+    formatHookEvent({
+      entity: definition.entity,
+      phase: definition.phase,
+      operation: entry.operation,
+    }),
+  );
 }
 
 export function registerDynamicHook(
   tenantId: string,
   definition: DataHookDefinition,
 ): void {
+  unregisterDynamicHook(tenantId, definition.id);
+
   if (!definition.enabled) {
-    unregisterDynamicHook(tenantId, definition.id);
     return;
   }
 
@@ -89,12 +102,12 @@ export function registerDynamicHook(
     order: definition.order,
   };
 
-  const key = dynamicKey(tenantId, dataHookEvent(definition));
-  const existing = (dynamicHookRegistry.get(key) ?? []).filter(
-    (entry) => entry.definition.id !== definition.id,
-  );
-  existing.push(hook);
-  dynamicHookRegistry.set(key, existing);
+  for (const event of dataHookEvents(definition)) {
+    const key = dynamicKey(tenantId, event);
+    const existing = dynamicHookRegistry.get(key) ?? [];
+    existing.push(hook);
+    dynamicHookRegistry.set(key, existing);
+  }
 }
 
 export function unregisterDynamicHook(tenantId: string, hookId: string): void {

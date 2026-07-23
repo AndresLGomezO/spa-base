@@ -14,7 +14,8 @@ A hand-written JSON file that satisfies this spec should import successfully in 
 | Document | Purpose |
 |----------|---------|
 | [dynamic-entity-builder-guide.md](./dynamic-entity-builder-guide.md) | Model Builder UI, permissions, evolution rules overview |
-| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain model (business semantics, not JSON envelopes) |
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 | [UIBuilderOutputJSON.md](./UIBuilderOutputJSON.md) | **UI layout** overrides per entity — not entity definitions |
 | [relational-data-system-guide.md](./relational-data-system-guide.md) | How relation fields behave at runtime |
 
@@ -44,7 +45,8 @@ A hand-written JSON file that satisfies this spec should import successfully in 
 
 **Recommended workflow for a new tenant model:**
 
-1. Design entities and relations on paper or in [rates-data-model.md](./rates-data-model.md) (domain spec).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 2. Author a single **`entity-definitions-catalog`** JSON file containing **all** entities for the tenant (see [§15](#15-complete-catalog-example)).
 3. Ensure every `relation.target` names another entity in the same `entityDefinitions` array.
 4. Use **camelCase** entity names (`loan`, `financialItem`, `paymentSchedule`).
@@ -462,7 +464,8 @@ Export the current catalog with **View JSON** on the list page before a destruct
 ```mermaid
 flowchart LR
   subgraph design [Design]
-    DomainDoc[Domain spec e.g. rates-data-model]
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
     CatalogJson[entity-definitions-catalog.json]
   end
   subgraph validate [Validate]
@@ -581,7 +584,8 @@ Minimal two-entity catalog suitable for testing import:
 }
 ```
 
-For the **Rates dev tenant** (accounts, transactions, loan details, etc.), use [rates-data-model.md](./rates-data-model.md) as the domain blueprint. The catalog is at [`apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json) (11 entities, seeded on API startup).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 **Important:** Do not import a partial `ui` object (e.g. only `ui.nav.icon`). Stored UI must include `nav.label`, `views`, and `forms`, or be omitted entirely so the platform builds defaults at runtime. To regenerate full UI for the Rates catalog after field edits, run:
 

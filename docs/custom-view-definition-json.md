@@ -196,14 +196,13 @@ Response:
 
 ## 9. Rates tenant example catalog
 
-For the **Rates dev tenant**, use [rates-data-model.md](./rates-data-model.md) for nav strategy (which entities are hidden and which queries become sidebar views). The catalog is at [`apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json) (21 views).
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 **Import order for a new tenant:**
 
-1. [`rates-entity-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json) — entities (includes `hiddenFromNav` on extension and query-driven entities)
-2. [`rates-metric-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json) — metrics
-3. [`rates-query-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json) — saved queries
-4. [`rates-custom-views.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json) — custom views
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
+
 
 On local dev, run **`pnpm seed:database`** after the API and emulators are up to import all four catalogs into the `rates` tenant.
 

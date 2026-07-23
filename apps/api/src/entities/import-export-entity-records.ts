@@ -40,6 +40,22 @@ interface ImportExportEntityRecordsDeps {
   readonly aggregation?: AggregationEmitterDeps;
 }
 
+async function tryEmitAggregationEvent(
+  aggregation: AggregationEmitterDeps | undefined,
+  input: Parameters<typeof emitAggregationEventIfNeeded>[1],
+  logError: (error: unknown) => void,
+): Promise<void> {
+  if (!aggregation) {
+    return;
+  }
+
+  try {
+    await emitAggregationEventIfNeeded(aggregation, input);
+  } catch (error) {
+    logError(error);
+  }
+}
+
 const EXPORT_PAGE_SIZE = 100;
 
 interface ImportEntityRecordsResult {
@@ -738,8 +754,9 @@ export async function importEntityRecordsJson(
         });
       }
 
-      if (deps.aggregation) {
-        await emitAggregationEventIfNeeded(deps.aggregation, {
+      await tryEmitAggregationEvent(
+        deps.aggregation,
+        {
           tenantId,
           entityName: entity.name,
           operation: "CREATE",
@@ -747,8 +764,14 @@ export async function importEntityRecordsJson(
           before: null,
           after: createdRecord as unknown as Record<string, unknown>,
           businessFieldNames: Object.keys(entity.metadata.fields),
-        });
-      }
+        },
+        (error) => {
+          app.log.error(
+            { err: error, entityName: entity.name, tenantId },
+            "Failed to emit aggregation event after import create",
+          );
+        },
+      );
 
       created += 1;
       items.push({ id: createdRecord.id, operation: "created" });
@@ -821,8 +844,9 @@ export async function importEntityRecordsJson(
       });
     }
 
-    if (deps.aggregation) {
-      await emitAggregationEventIfNeeded(deps.aggregation, {
+    await tryEmitAggregationEvent(
+      deps.aggregation,
+      {
         tenantId,
         entityName: entity.name,
         operation: "UPDATE",
@@ -830,8 +854,14 @@ export async function importEntityRecordsJson(
         before: existingRecord,
         after: validatedRecord as Record<string, unknown>,
         businessFieldNames: Object.keys(entity.metadata.fields),
-      });
-    }
+      },
+      (error) => {
+        app.log.error(
+          { err: error, entityName: entity.name, tenantId },
+          "Failed to emit aggregation event after import update",
+        );
+      },
+    );
 
     updated += 1;
     items.push({ id: recordId, operation: "updated" });

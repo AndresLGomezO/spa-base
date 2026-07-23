@@ -21,6 +21,8 @@ export async function runQueuedDataHookJob(
     readonly recordDataHookExecution?: HookServices["recordDataHookExecution"];
     readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
     readonly callWebhook?: HookServices["callWebhook"];
+    readonly callAi?: HookServices["callAi"];
+    readonly computeEmbedding?: HookServices["computeEmbedding"];
     readonly sendUserNotification?: HookServices["sendUserNotification"];
     readonly formulaResolver?: FormulaResolver;
   },
@@ -53,6 +55,10 @@ export async function runQueuedDataHookJob(
         ? { dataHookExecutionRecorder: services.dataHookExecutionRecorder }
         : {}),
       ...(services.callWebhook ? { callWebhook: services.callWebhook } : {}),
+      ...(services.callAi ? { callAi: services.callAi } : {}),
+      ...(services.computeEmbedding
+        ? { computeEmbedding: services.computeEmbedding }
+        : {}),
       ...(services.sendUserNotification
         ? { sendUserNotification: services.sendUserNotification }
         : {}),

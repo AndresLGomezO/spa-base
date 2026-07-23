@@ -345,8 +345,7 @@ describe("createRelationDeleteHandler", () => {
         ([Customer, Note] as AnyDefinedEntity[]).find(
           (entity) => entity.name === name,
         ),
-      getAllEntityDefinitions: () =>
-        [Customer, Note] as AnyDefinedEntity[],
+      getAllEntityDefinitions: () => [Customer, Note] as AnyDefinedEntity[],
       findById: async (entityName, id, tenantId) => {
         const record = await repositories[
           entityName as keyof typeof repositories

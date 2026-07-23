@@ -33,7 +33,7 @@ describe("createWorkerGmailTaskEnqueuer", () => {
     });
 
     await enqueuer.enqueueProcessMessage({
-      tenantId: "rates",
+      tenantId: "tenant_test",
       userId: "u1",
       jobId: "j1",
       gmailMessageId: "m1",
@@ -50,7 +50,7 @@ describe("createWorkerGmailTaskEnqueuer", () => {
     expect(arg.task.httpRequest.body).toBe(
       Buffer.from(
         JSON.stringify({
-          tenantId: "rates",
+          tenantId: "tenant_test",
           userId: "u1",
           jobId: "j1",
           gmailMessageId: "m1",
@@ -77,7 +77,7 @@ describe("createWorkerGmailTaskEnqueuer", () => {
     });
 
     await enqueuer.enqueueProcessMessage({
-      tenantId: "rates",
+      tenantId: "tenant_test",
       userId: "u1",
       jobId: "j1",
       gmailMessageId: "m1",
@@ -120,19 +120,19 @@ describe("createWorkerGmailTaskEnqueuer", () => {
 
     await Promise.all([
       enqueuer.enqueueProcessMessage({
-        tenantId: "rates",
+        tenantId: "tenant_test",
         userId: "u1",
         jobId: "j1",
         gmailMessageId: "m1",
       }),
       enqueuer.enqueueProcessMessage({
-        tenantId: "rates",
+        tenantId: "tenant_test",
         userId: "u1",
         jobId: "j1",
         gmailMessageId: "m2",
       }),
       enqueuer.enqueueProcessMessage({
-        tenantId: "rates",
+        tenantId: "tenant_test",
         userId: "u1",
         jobId: "j1",
         gmailMessageId: "m3",
@@ -159,7 +159,7 @@ describe("createWorkerGmailTaskEnqueuer", () => {
     });
 
     await enqueuer.enqueueWindowSync({
-      tenantId: "rates",
+      tenantId: "tenant_test",
       userId: "u1",
       jobId: "j1",
     });

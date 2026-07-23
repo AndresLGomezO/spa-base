@@ -115,9 +115,9 @@ describe("parseSeedDatabaseArgs", () => {
   });
 
   it("rejects --drop with only catalog components", () => {
-    expect(() =>
-      parseSeedDatabaseArgs(["--only", "hooks", "--drop"]),
-    ).toThrow(/--drop only supports record-level/);
+    expect(() => parseSeedDatabaseArgs(["--only", "hooks", "--drop"])).toThrow(
+      /--drop only supports record-level/,
+    );
   });
 
   it("rejects unknown --only components", () => {

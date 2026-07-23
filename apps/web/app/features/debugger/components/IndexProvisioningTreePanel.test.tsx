@@ -14,6 +14,10 @@ vi.mock("../debugger-context", () => ({
   useDebugger: () => ({
     selectedIndexSignature: null,
     selectIndexJob: mockSelectIndexJob,
+    timeRangeBounds: {
+      sinceIso: "1970-01-01T00:00:00.000Z",
+      untilIso: "2100-01-01T00:00:00.000Z",
+    },
   }),
 }));
 
@@ -35,7 +39,14 @@ vi.mock("../../../lib/api-client", () => ({
         collection: "accounts",
         phase: "ready",
         requiresManualAction: false,
-        log: [],
+        log: [
+          {
+            timestamp: "2026-01-01T00:00:00.000Z",
+            level: "success",
+            event: "ready",
+            message: "Index ready",
+          },
+        ],
       },
       {
         signature: "sig_error",

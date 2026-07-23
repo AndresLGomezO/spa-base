@@ -92,6 +92,13 @@ export const EXPRESSION_FUNCTION_SPECS: Record<
   includes: fixedArgs(2),
   pow: fixedArgs(2),
   ln: fixedArgs(1),
+  normalizeMerchantText: fixedArgs(1),
+  arrayOf: {
+    minArgs: 1,
+    maxArgs: 8,
+    args: [{ kind: "expression" }],
+    variadic: true,
+  },
 };
 
 export function getExpressionFunctionSpec(

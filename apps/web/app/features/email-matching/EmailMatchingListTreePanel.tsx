@@ -283,9 +283,7 @@ export function EmailMatchingListTreePanel() {
               <SearchField
                 value={query.search}
                 onChange={setSearch}
-                placeholder={t(
-                  "emailMatchingWorkbench.list.searchPlaceholder",
-                )}
+                placeholder={t("emailMatchingWorkbench.list.searchPlaceholder")}
                 ariaLabel={t("emailMatchingWorkbench.list.searchPlaceholder")}
                 clearAriaLabel={t("emailMatchingWorkbench.list.searchClear")}
                 className="max-w-none min-w-0 w-full"
@@ -303,7 +301,9 @@ export function EmailMatchingListTreePanel() {
                     onOpenChange={setFiltersOpen}
                     activeBadges={displayBadges}
                     triggerLabel={t("emailMatchingWorkbench.list.filter")}
-                    clearAllLabel={t("emailMatchingWorkbench.list.clearFilters")}
+                    clearAllLabel={t(
+                      "emailMatchingWorkbench.list.clearFilters",
+                    )}
                     removeAriaLabel={(label) =>
                       t("emailMatchingWorkbench.list.removeBadge", { label })
                     }
@@ -340,9 +340,7 @@ export function EmailMatchingListTreePanel() {
                               {t("emailMatchingWorkbench.list.sortEntity")}
                             </option>
                             <option value="updatedDesc">
-                              {t(
-                                "emailMatchingWorkbench.list.sortUpdatedDesc",
-                              )}
+                              {t("emailMatchingWorkbench.list.sortUpdatedDesc")}
                             </option>
                             <option value="orderAsc">
                               {t("emailMatchingWorkbench.list.sortOrderAsc")}

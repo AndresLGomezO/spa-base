@@ -2,10 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import {
-  emailTriggerAppliesToBinding,
-  isEmailTrigger,
-} from "@repo/hooks";
+import { emailTriggerAppliesToBinding, isEmailTrigger } from "@repo/hooks";
 import { Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 import { Workflow } from "lucide-react";

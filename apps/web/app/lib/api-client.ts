@@ -1546,6 +1546,13 @@ export async function listDebugEvents(options?: {
   readonly limit?: number;
   readonly sources?: readonly string[];
   readonly cursor?: string;
+  readonly since?: string;
+  readonly until?: string;
+  readonly before?: string;
+  readonly after?: string;
+  readonly entityName?: string;
+  readonly recordId?: string;
+  readonly emailLedgerId?: string;
 }): Promise<{
   readonly items: readonly DebugEvent[];
   readonly hookExecutionLive?: HookExecutionLiveCounts;
@@ -1561,8 +1568,95 @@ export async function listDebugEvents(options?: {
   if (options?.cursor) {
     params.set("cursor", options.cursor);
   }
+  if (options?.since) {
+    params.set("since", options.since);
+  }
+  if (options?.until) {
+    params.set("until", options.until);
+  }
+  if (options?.before) {
+    params.set("before", options.before);
+  }
+  if (options?.after) {
+    params.set("after", options.after);
+  }
+  if (options?.entityName) {
+    params.set("entityName", options.entityName);
+  }
+  if (options?.recordId) {
+    params.set("recordId", options.recordId);
+  }
+  if (options?.emailLedgerId) {
+    params.set("emailLedgerId", options.emailLedgerId);
+  }
   const query = params.toString();
   return apiRequest(`/api/debug/events${query ? `?${query}` : ""}`);
+}
+
+export interface DebugEventsSummaryAttentionItem {
+  readonly id: string;
+  readonly source: DebugEventSource;
+  readonly title: string;
+  readonly timestamp: string;
+  readonly status?: DebugEventStatus;
+  readonly subtitle?: string;
+}
+
+export interface DebugEventsSummary {
+  readonly source: DebugEventSource;
+  readonly total: number;
+  readonly scannedCount: number;
+  readonly truncated: boolean;
+  readonly statusCounts: Partial<Record<DebugEventStatus, number>>;
+  readonly errorRate: number | null;
+  readonly inProgressCount: number;
+  readonly avgDurationMs: number | null;
+  readonly totalWrites: number | null;
+  readonly writesCreated: number | null;
+  readonly writesUpdated: number | null;
+  readonly writesDeleted: number | null;
+  readonly writeExecutionCount: number | null;
+  readonly avgTotalMs: number | null;
+  readonly avgHooksMs: number | null;
+  readonly avgQueryMs: number | null;
+  readonly uniqueActors: number | null;
+  readonly emailIngestFetched: number | null;
+  readonly emailIngestQueued: number | null;
+  readonly emailIngestProcessing: number | null;
+  readonly emailIngestFinished: number | null;
+  readonly emailIngestProcessed: number | null;
+  readonly emailIngestFailedMessages: number | null;
+  readonly barCharts: readonly {
+    readonly id: string;
+    readonly titleKey: string;
+    readonly groups: readonly {
+      readonly key: string;
+      readonly label: string;
+      readonly count: number;
+      readonly errorCount?: number;
+    }[];
+  }[];
+  readonly timelineBuckets: readonly {
+    readonly label: string;
+    readonly startMs: number;
+    readonly endMs: number;
+    readonly total: number;
+    readonly errors: number;
+  }[];
+  readonly attentionItems: readonly DebugEventsSummaryAttentionItem[];
+  readonly hookExecutionLive?: HookExecutionLiveCounts;
+}
+
+export async function getDebugEventsSummary(options: {
+  readonly sources: readonly string[];
+  readonly since: string;
+  readonly until: string;
+}): Promise<DebugEventsSummary> {
+  const params = new URLSearchParams();
+  params.set("sources", options.sources.join(","));
+  params.set("since", options.since);
+  params.set("until", options.until);
+  return apiRequest(`/api/debug/events/summary?${params.toString()}`);
 }
 
 export interface UserNotificationRecord {
@@ -1894,7 +1988,8 @@ export interface EmailMatchBindingRecord {
       | "compactYmd"
       | "monthNameDate"
       | "valueMap"
-      | "literal";
+      | "literal"
+      | "collapseWhitespace";
     readonly valueMap?: Readonly<Record<string, string>>;
     readonly literal?: string;
     readonly sufficientForRelevance?: boolean;

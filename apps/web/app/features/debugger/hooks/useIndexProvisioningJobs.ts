@@ -6,9 +6,9 @@ import {
   getTenantIndexProvisioningStatus,
   type IndexProvisioningJob,
 } from "../../../lib/api-client";
-
-export const TENANT_INDEX_PROCESS_LIST_QUERY_KEY =
-  "tenant-index-process-list" as const;
+import { useDebugger } from "../debugger-context";
+import { TENANT_INDEX_PROCESS_LIST_QUERY_KEY } from "../index-provisioning-query-keys";
+import { indexJobMatchesTimeBounds } from "../index-provisioning-time-filter";
 
 type IndexProvisioningProcessListFilter =
   | "all"
@@ -62,6 +62,7 @@ function matchesFilter(
 export function useIndexProvisioningJobs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = parseFilterParam(searchParams.get("filter"));
+  const { timeRangeBounds } = useDebugger();
 
   const setFilter = useCallback(
     (next: IndexProvisioningProcessListFilter) => {
@@ -90,8 +91,13 @@ export function useIndexProvisioningJobs() {
   const indexes = useMemo(() => summary?.indexes ?? [], [summary?.indexes]);
 
   const filteredIndexes = useMemo(
-    () => indexes.filter((job) => matchesFilter(job, filter)),
-    [filter, indexes],
+    () =>
+      indexes.filter(
+        (job) =>
+          matchesFilter(job, filter) &&
+          indexJobMatchesTimeBounds(job, timeRangeBounds),
+      ),
+    [filter, indexes, timeRangeBounds],
   );
 
   const selectedJob = useMemo(() => {

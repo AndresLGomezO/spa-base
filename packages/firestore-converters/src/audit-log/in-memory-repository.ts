@@ -1,5 +1,6 @@
 import { auditLogRecordSchema, type AuditLogRecord } from "@repo/debug-logs";
 
+import { isIsoWithinTimeRange } from "../list-recent-time-range.js";
 import type { AuditLogRepository } from "./repository-contract.js";
 
 export function createInMemoryAuditLogRepository(): AuditLogRepository & {
@@ -18,6 +19,7 @@ export function createInMemoryAuditLogRepository(): AuditLogRepository & {
       const limit = options?.limit ?? 50;
       return [...store.values()]
         .filter((record) => record.tenantId === tenantId)
+        .filter((record) => isIsoWithinTimeRange(record.timestamp, options))
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
         .slice(0, limit);
     },

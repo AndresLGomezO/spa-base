@@ -4,7 +4,12 @@
  *
  * Prefer case-insensitive exact alias equality; otherwise pick the longest
  * alias that is a substring of the haystack (stable candidate order on ties).
+ *
+ * Alias values are compared both as uppercase trim and as
+ * {@link normalizeMerchantText} so raw descriptions match normalized haystacks.
  */
+
+import { normalizeMerchantText } from "./expression.js";
 
 function normalizeText(value: unknown): string {
   return typeof value === "string" ? value.trim().toUpperCase() : "";
@@ -13,14 +18,22 @@ function normalizeText(value: unknown): string {
 export function aliasesFromFieldValue(value: unknown): readonly string[] {
   if (typeof value === "string") {
     const normalized = normalizeText(value);
-    return normalized.length > 0 ? [normalized] : [];
+    if (normalized.length === 0) {
+      return [];
+    }
+    const merchant = normalizeMerchantText(value);
+    return merchant && merchant !== normalized
+      ? [normalized, merchant]
+      : [normalized];
   }
   if (!Array.isArray(value)) {
     return [];
   }
-  return value
-    .map((entry) => normalizeText(entry))
-    .filter((entry) => entry.length > 0);
+  const aliases: string[] = [];
+  for (const entry of value) {
+    aliases.push(...aliasesFromFieldValue(entry));
+  }
+  return [...new Set(aliases)];
 }
 
 export function pickBestAliasMatch<T extends Record<string, unknown>>(options: {

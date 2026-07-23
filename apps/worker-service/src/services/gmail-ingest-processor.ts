@@ -149,7 +149,6 @@ async function appendJobStep(
   await deps.emailIngestJobRepository.appendStep(tenantId, jobId, entry);
 }
 
-
 /** Per-message path: skip chatty info steps; metrics already track progress. */
 async function appendMessageJobStep(
   deps: GmailIngestProcessorDeps,
@@ -162,7 +161,6 @@ async function appendMessageJobStep(
   }
   await appendJobStep(deps, tenantId, jobId, entry);
 }
-
 
 async function resolveAccessToken(
   deps: GmailIngestProcessorDeps,
@@ -342,11 +340,7 @@ export async function processGmailProcessMessage(
       userId,
       gmailMessageId,
     );
-    if (
-      !reprocessBinding &&
-      existing &&
-      existing.status === "processed"
-    ) {
+    if (!reprocessBinding && existing && existing.status === "processed") {
       outcome = "skippedDedup";
       outcomeMeta = {
         gmailMessageId,
@@ -443,11 +437,9 @@ export async function processGmailProcessMessage(
       return entity?.metadata.emailMatchingEnabled === true;
     });
 
-    let matchedBindings = [...resolveMatchingBindings(
-      enabledBindings,
-      email,
-      payload.bindingId,
-    )].sort((left, right) => {
+    let matchedBindings = [
+      ...resolveMatchingBindings(enabledBindings, email, payload.bindingId),
+    ].sort((left, right) => {
       const orderDelta = (left.order ?? 100) - (right.order ?? 100);
       if (orderDelta !== 0) return orderDelta;
       return left.id.localeCompare(right.id);
@@ -568,7 +560,12 @@ export async function processGmailProcessMessage(
           deps,
           tenantId,
           jobId,
-          step("load-record", "error", "Entity repository unavailable", passMeta),
+          step(
+            "load-record",
+            "error",
+            "Entity repository unavailable",
+            passMeta,
+          ),
         );
         continue;
       }
@@ -586,7 +583,12 @@ export async function processGmailProcessMessage(
           deps,
           tenantId,
           jobId,
-          step("load-record", "error", "Matched entity record missing", passMeta),
+          step(
+            "load-record",
+            "error",
+            "Matched entity record missing",
+            passMeta,
+          ),
         );
         continue;
       }
@@ -698,7 +700,8 @@ export async function processGmailProcessMessage(
           jobId,
           step("email-ledger", "info", "Upserting email ledger row", passMeta),
         );
-        const relatedFinancialItemId = extracted?.fields?.relatedFinancialItemId;
+        const relatedFinancialItemId =
+          extracted?.fields?.relatedFinancialItemId;
         const matchRecordId =
           typeof relatedFinancialItemId === "string" &&
           relatedFinancialItemId.trim().length > 0
@@ -858,10 +861,12 @@ export async function processGmailProcessMessage(
             logger,
             entities,
             ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
-            ...(dataHookExecutionRecorder
-              ? { dataHookExecutionRecorder }
-              : {}),
+            ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
             ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+            ...(deps.callAi ? { callAi: deps.callAi } : {}),
+            ...(deps.computeEmbedding
+              ? { computeEmbedding: deps.computeEmbedding }
+              : {}),
             ...(deps.userNotificationRepository
               ? {
                   sendUserNotification: createSendUserNotification(
@@ -900,11 +905,13 @@ export async function processGmailProcessMessage(
         contentFingerprint,
         bindingId: primaryFailed.bindingId,
         entityName:
-          matchedBindings.find((binding) => binding.id === primaryFailed.bindingId)
-            ?.entityName ?? null,
+          matchedBindings.find(
+            (binding) => binding.id === primaryFailed.bindingId,
+          )?.entityName ?? null,
         recordId:
-          matchedBindings.find((binding) => binding.id === primaryFailed.bindingId)
-            ?.recordId ?? null,
+          matchedBindings.find(
+            (binding) => binding.id === primaryFailed.bindingId,
+          )?.recordId ?? null,
         status: "failed",
         errorMessage:
           primaryFailed.result.kind === "failed"
@@ -957,7 +964,12 @@ export async function processGmailProcessMessage(
         deps,
         tenantId,
         jobId,
-        step("done", "skipped", "All matching bindings irrelevant", outcomeMeta),
+        step(
+          "done",
+          "skipped",
+          "All matching bindings irrelevant",
+          outcomeMeta,
+        ),
       );
       return;
     }
@@ -1188,12 +1200,9 @@ export async function processGmailWindowSync(
         deps,
         tenantId,
         jobId,
-        step(
-          "binding-sync",
-          "error",
-          "Scoped binding missing or disabled",
-          { bindingId: scopedBindingId },
-        ),
+        step("binding-sync", "error", "Scoped binding missing or disabled", {
+          bindingId: scopedBindingId,
+        }),
       );
       await deps.emailIngestJobRepository.complete(
         tenantId,
@@ -1280,9 +1289,14 @@ export async function processGmailWindowSync(
         deps,
         tenantId,
         jobId,
-        step("window-query", "skipped", "No enabled bindings for window query", {
-          enabledBindingCount: enabledBindings.length,
-        }),
+        step(
+          "window-query",
+          "skipped",
+          "No enabled bindings for window query",
+          {
+            enabledBindingCount: enabledBindings.length,
+          },
+        ),
       );
     }
 

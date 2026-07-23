@@ -1,4 +1,5 @@
 import { AI_JOBS_COLLECTION, aiJobRecordSchema } from "@repo/ai-engine/schemas";
+import type { Query } from "firebase-admin/firestore";
 import { nanoid } from "nanoid";
 
 import type { AiJobRepository } from "./ai-job-repository-contract.js";
@@ -64,8 +65,15 @@ export function createFirestoreAdminAiJobRepository(
       return next;
     },
     async listRecent(tenantId, options) {
-      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 50);
-      const snapshot = await collection(tenantId)
+      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 1000);
+      let query: Query = collection(tenantId);
+      if (options?.since) {
+        query = query.where("updatedAt", ">=", options.since);
+      }
+      if (options?.until) {
+        query = query.where("updatedAt", "<=", options.until);
+      }
+      const snapshot = await query
         .orderBy("updatedAt", "desc")
         .limit(limit * 3)
         .get();

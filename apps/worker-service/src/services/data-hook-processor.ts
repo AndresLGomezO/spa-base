@@ -34,6 +34,8 @@ import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { PermanentTaskError } from "./ai-chat-processor.js";
 import { callDataHookWebhook } from "../hooks/call-data-hook-webhook.js";
+import { createCallDataHookAi } from "../hooks/call-data-hook-ai.js";
+import { createComputeDataHookEmbedding } from "../hooks/compute-data-hook-embedding.js";
 import {
   createRecordDataHookExecution,
   createDataHookExecutionRecorderForTenant,
@@ -47,7 +49,7 @@ import {
   type WorkerCrudHookDeps,
 } from "../hooks/worker-hook-entity-services.js";
 import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
-import { workerEnv } from "../config/env.js";
+import { vertexAiConfig, workerEnv } from "../config/env.js";
 
 export { dataHookJobPayloadSchema };
 
@@ -112,7 +114,8 @@ export function createDataHookProcessorDeps(
     // Publishing to Pub/Sub is optional and must never be the only path —
     // the local emulator subscription is unreliable and drops events.
     publishToPubSub: false,
-    aggregationTopic: workerEnv.AGGREGATION_EVENTS_TOPIC || AGGREGATION_EVENTS_TOPIC,
+    aggregationTopic:
+      workerEnv.AGGREGATION_EVENTS_TOPIC || AGGREGATION_EVENTS_TOPIC,
     projectId: workerEnv.GCP_PROJECT_ID,
     getSchemaVersion: () => 1,
     publishAggregationEvent: publishAggregationEventMessage,
@@ -121,20 +124,28 @@ export function createDataHookProcessorDeps(
     },
   };
 
+  const entityRuntime = new WorkerHookEntityRuntime(
+    firebaseAdminConfig,
+    entityDefinitionRepository,
+  );
+
   return {
     hookRuntime: new HookRuntimeContext(hookRepository),
     formulaRuntime: createFormulaRuntimeContext(
       createFirestoreAdminFormulaDefinitionRepository(firebaseAdminConfig),
     ),
-    entityRuntime: new WorkerHookEntityRuntime(
-      firebaseAdminConfig,
-      entityDefinitionRepository,
-    ),
+    entityRuntime,
     permissionDeps,
     hookExecutionRepository,
     hookLogMessageRepository,
     userNotificationRepository,
     callWebhook: callDataHookWebhook,
+    callAi: createCallDataHookAi({
+      vertexAiConfig,
+      getRepository: (tenantId, entityName) =>
+        entityRuntime.getRepository(tenantId, entityName),
+    }),
+    computeEmbedding: createComputeDataHookEmbedding({ vertexAiConfig }),
     aggregation,
   };
 }
@@ -251,6 +262,10 @@ export async function processDataHookJob(
         }
       : {}),
     ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+    ...(deps.callAi ? { callAi: deps.callAi } : {}),
+    ...(deps.computeEmbedding
+      ? { computeEmbedding: deps.computeEmbedding }
+      : {}),
     ...(deps.userNotificationRepository
       ? {
           sendUserNotification: createSendUserNotification(

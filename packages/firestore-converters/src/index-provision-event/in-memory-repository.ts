@@ -6,6 +6,7 @@ import {
 } from "@repo/debug-logs";
 import { nanoid } from "nanoid";
 
+import { isIsoWithinTimeRange } from "../list-recent-time-range.js";
 import type { IndexProvisionEventRepository } from "./repository-contract.js";
 
 const GLOBAL_TENANT_KEY = "__global__";
@@ -41,6 +42,7 @@ export function createInMemoryIndexProvisionEventRepository(): IndexProvisionEve
           }
           return false;
         })
+        .filter((record) => isIsoWithinTimeRange(record.timestamp, options))
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
         .slice(0, limit);
     },

@@ -1,33 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-
-import { parseDataHooksCatalogJson } from "@repo/hooks";
+import type { DataHookDefinition } from "@repo/hooks";
 
 import {
   deserializeDataHookFromFirestore,
   serializeDataHookForFirestore,
 } from "./data-hook-firestore-serialization.js";
-
-function mergeCatalog(dir: string, kind: string, itemsKey: string): string {
-  if (!existsSync(dir)) {
-    throw new Error(`Catalog directory not found: ${dir}`);
-  }
-  const items = readdirSync(dir)
-    .filter((n) => n.endsWith(".json") && !n.startsWith("_"))
-    .sort()
-    .map(
-      (n) =>
-        (JSON.parse(readFileSync(join(dir, n), "utf8")) as { data: unknown })
-          .data,
-    );
-  return JSON.stringify({
-    kind,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    [itemsKey]: items,
-  });
-}
 
 function maxFirestoreDepth(value: unknown, depth = 0): number {
   if (value === null || typeof value !== "object") {
@@ -73,41 +50,103 @@ describe("data hook firestore serialization", () => {
     );
   });
 
-  it("keeps serialized loan hooks within Firestore nesting limits", () => {
-    const catalogDir = resolve(
-      import.meta.dirname,
-      "../../../apps/api/src/admin/rates-tenant/catalogs/data-hooks",
-    );
-    const parsed = parseDataHooksCatalogJson(
-      mergeCatalog(catalogDir, "data-hooks-catalog", "dataHooks"),
-    );
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      return;
-    }
-
-    const loanHook = parsed.data.dataHooks.find(
-      (hook) => hook.name === "Generate loan payment plan",
-    );
-    expect(loanHook).toBeDefined();
-    if (!loanHook) {
-      return;
-    }
-
+  it("keeps serialized nested hook actions within Firestore nesting limits", () => {
     const record = {
       id: "hook_test",
       tenantId: "tenant_test",
+      name: "Generate payment schedule",
+      entity: "loan",
+      phase: "after" as const,
+      trigger: { operation: "create" as const },
+      condition: {
+        type: "group" as const,
+        combinator: "and" as const,
+        children: [
+          {
+            type: "condition" as const,
+            field: "status",
+            operator: "==" as const,
+            value: { kind: "literal" as const, value: "ACTIVE" },
+          },
+        ],
+      },
+      actions: [
+        {
+          type: "createRecords" as const,
+          entity: "paymentSchedule",
+          count: {
+            kind: "field" as const,
+            source: "current" as const,
+            path: "periods",
+          },
+          data: {
+            sequence: { kind: "var" as const, name: "loopIndex" as const },
+            dueDate: {
+              kind: "call" as const,
+              fn: "dateAdd" as const,
+              args: [
+                {
+                  kind: "field" as const,
+                  source: "current" as const,
+                  path: "startDate",
+                },
+                {
+                  kind: "binary" as const,
+                  op: "*" as const,
+                  left: { kind: "var" as const, name: "loopIndex" as const },
+                  right: { kind: "literal" as const, value: 30 },
+                },
+                { kind: "literal" as const, value: "DAY" },
+              ],
+            },
+            amount: {
+              kind: "call" as const,
+              fn: "round" as const,
+              args: [
+                {
+                  kind: "field" as const,
+                  source: "current" as const,
+                  path: "principal",
+                },
+              ],
+            },
+          },
+        },
+        {
+          type: "aggregateMatching" as const,
+          entity: "paymentSchedule",
+          as: "scheduleRowCount",
+          op: "count" as const,
+          where: {
+            type: "condition" as const,
+            field: "loanId",
+            operator: "==" as const,
+            value: {
+              kind: "field" as const,
+              source: "current" as const,
+              path: "id",
+            },
+          },
+        },
+        {
+          type: "sendNotification" as const,
+          message: {
+            kind: "binary" as const,
+            op: "+" as const,
+            left: { kind: "literal" as const, value: "Created " },
+            right: {
+              kind: "field" as const,
+              source: "aggregate" as const,
+              alias: "scheduleRowCount",
+            },
+          },
+        },
+      ],
+      enabled: true,
+      order: 0,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
-      phase: loanHook.phase ?? "after",
-      trigger: loanHook.trigger,
-      condition: loanHook.condition ?? null,
-      actions: loanHook.actions,
-      enabled: loanHook.enabled ?? true,
-      order: loanHook.order ?? 0,
-      name: loanHook.name,
-      entity: loanHook.entity,
-    };
+    } satisfies DataHookDefinition;
 
     const serialized = serializeDataHookForFirestore(record);
     expect(maxFirestoreDepth(serialized)).toBeLessThanOrEqual(20);

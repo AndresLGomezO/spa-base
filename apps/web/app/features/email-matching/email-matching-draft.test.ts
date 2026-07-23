@@ -17,9 +17,9 @@ describe("splitLines", () => {
   });
 
   it("keeps commas inside /regex/flags patterns", () => {
-    expect(
-      splitLines("/producto\\s*2518|cuenta\\s+\\*{1,2}2518/i"),
-    ).toEqual(["/producto\\s*2518|cuenta\\s+\\*{1,2}2518/i"]);
+    expect(splitLines("/producto\\s*2518|cuenta\\s+\\*{1,2}2518/i")).toEqual([
+      "/producto\\s*2518|cuenta\\s+\\*{1,2}2518/i",
+    ]);
   });
 
   it("still splits multiple patterns when one is a regex with commas", () => {

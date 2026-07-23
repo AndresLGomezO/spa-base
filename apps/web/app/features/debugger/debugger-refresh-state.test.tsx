@@ -6,9 +6,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DebugEventSource } from "../../lib/api-client";
 import { DebuggerProvider, useDebugger } from "./debugger-context";
-import { TENANT_INDEX_PROCESS_LIST_QUERY_KEY } from "./hooks/useIndexProvisioningJobs";
+import { TENANT_INDEX_PROCESS_LIST_QUERY_KEY } from "./index-provisioning-query-keys";
 
 const mockListDebugEvents = vi.fn();
+const mockGetDebugEventsSummary = vi.fn();
 
 vi.mock("../../auth/AuthContext", () => ({
   useAuth: () => ({
@@ -25,11 +26,42 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("../../lib/api-client", () => ({
   listDebugEvents: (...args: unknown[]) => mockListDebugEvents(...args),
+  getDebugEventsSummary: (...args: unknown[]) =>
+    mockGetDebugEventsSummary(...args),
 }));
 
 const emptyPage = {
   items: [],
   nextCursor: undefined,
+};
+
+const emptySummary = {
+  source: "hookExecution" as const,
+  total: 0,
+  scannedCount: 0,
+  truncated: false,
+  statusCounts: {},
+  errorRate: null,
+  inProgressCount: 0,
+  avgDurationMs: null,
+  totalWrites: null,
+  writesCreated: null,
+  writesUpdated: null,
+  writesDeleted: null,
+  writeExecutionCount: null,
+  avgTotalMs: null,
+  avgHooksMs: null,
+  avgQueryMs: null,
+  uniqueActors: null,
+  emailIngestFetched: null,
+  emailIngestQueued: null,
+  emailIngestProcessing: null,
+  emailIngestFinished: null,
+  emailIngestProcessed: null,
+  emailIngestFailedMessages: null,
+  barCharts: [],
+  timelineBuckets: [],
+  attentionItems: [],
 };
 
 function createWrapper(activeSource: DebugEventSource = "hookExecution") {
@@ -56,7 +88,9 @@ function createWrapper(activeSource: DebugEventSource = "hookExecution") {
 describe("debugger refresh state", () => {
   beforeEach(() => {
     mockListDebugEvents.mockReset();
+    mockGetDebugEventsSummary.mockReset();
     mockListDebugEvents.mockResolvedValue(emptyPage);
+    mockGetDebugEventsSummary.mockResolvedValue(emptySummary);
   });
 
   it("sets isRefreshing while manual refresh is in flight", async () => {

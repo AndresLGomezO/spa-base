@@ -1,10 +1,15 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { hasPermission } from "@repo/rbac";
 
-import { PermissionGuard, RequireAuth, RequireTenant } from "./RouteGuards";
+import {
+  PermissionGuard,
+  RedirectIfAuthenticated,
+  RequireAuth,
+  RequireTenant,
+} from "./RouteGuards";
 
 const mockUseAuth = vi.fn();
 
@@ -35,19 +40,29 @@ vi.mock("../components/platform/create-tenant-modal-context", () => ({
   }),
 }));
 
+function LoginLocationProbe() {
+  const location = useLocation();
+  return (
+    <div>
+      Login page
+      <span data-testid="login-search">{location.search}</span>
+    </div>
+  );
+}
+
 afterEach(() => {
   cleanup();
 });
 
 describe("RequireAuth", () => {
-  it("redirects unauthenticated users to login", () => {
+  it("redirects unauthenticated users to login with next param", () => {
     mockUseAuth.mockReturnValue({
       isReady: true,
       isAuthenticated: false,
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/widget"]}>
+      <MemoryRouter initialEntries={["/app/widget?q=1"]}>
         <Routes>
           <Route
             path="/app/widget"
@@ -57,13 +72,16 @@ describe("RequireAuth", () => {
               </RequireAuth>
             }
           />
-          <Route path="/login" element={<div>Login page</div>} />
+          <Route path="/login" element={<LoginLocationProbe />} />
         </Routes>
       </MemoryRouter>,
     );
 
     expect(screen.getByText("Login page")).toBeInTheDocument();
     expect(screen.queryByText("Protected")).not.toBeInTheDocument();
+    expect(screen.getByTestId("login-search")).toHaveTextContent(
+      `?next=${encodeURIComponent("/app/widget?q=1")}`,
+    );
   });
 
   it("renders children when authenticated", () => {
@@ -88,6 +106,118 @@ describe("RequireAuth", () => {
     );
 
     expect(screen.getByText("Protected")).toBeInTheDocument();
+  });
+});
+
+describe("RedirectIfAuthenticated", () => {
+  it("renders children when unauthenticated", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      isAuthenticated: false,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <RedirectIfAuthenticated>
+                <div>Login page</div>
+              </RedirectIfAuthenticated>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Login page")).toBeInTheDocument();
+  });
+
+  it("redirects authenticated users to the next path", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          `/login?next=${encodeURIComponent("/app/widget?q=1")}`,
+        ]}
+      >
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <RedirectIfAuthenticated>
+                <div>Login page</div>
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route path="/app/widget" element={<div>Widget page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Widget page")).toBeInTheDocument();
+    expect(screen.queryByText("Login page")).not.toBeInTheDocument();
+  });
+
+  it("redirects authenticated users to root when next is missing", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <RedirectIfAuthenticated>
+                <div>Login page</div>
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route path="/" element={<div>Home page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Home page")).toBeInTheDocument();
+    expect(screen.queryByText("Login page")).not.toBeInTheDocument();
+  });
+
+  it("redirects authenticated users to root when next is unsafe", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          `/login?next=${encodeURIComponent("https://evil.example/app")}`,
+        ]}
+      >
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <RedirectIfAuthenticated>
+                <div>Login page</div>
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route path="/" element={<div>Home page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Home page")).toBeInTheDocument();
+    expect(screen.queryByText("Login page")).not.toBeInTheDocument();
   });
 });
 

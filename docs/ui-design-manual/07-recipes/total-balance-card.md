@@ -43,12 +43,9 @@ metricWidget.root
 
 Prefer **rgba on `color` / `backgroundColor`** for semi-transparent text and pills. Do not use `opacity` on a row when children must stay visible — `opacity` applies to the entire row subtree.
 
-## Reference (Rates seed catalog)
+## Reference (local tenant catalog)
 
-Canonical widget JSON lives in the tenant seed catalog only — not under `apps/web`:
-
-- [`rates-entity-ui-overrides.json`](../../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-ui-overrides.json) — `metricWidgets[]` entry `id: "total-balance-by-month"`, chart row `id: "row-total-balance-chart"`
-- [`rates-ui-builder-presets.json`](../../../apps/api/src/admin/rates-tenant/catalogs/rates-ui-builder-presets.json) — compact Income / Expenses / Invest card presets
+Local tenant catalogs (optional, outside the monorepo) live under `.local/tenant-import/catalogs/` when present — see that folder's README.
 
 Reload with `pnpm seed:database` after editing catalog JSON.
 
