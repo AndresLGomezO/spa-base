@@ -121,6 +121,35 @@ function formatRawDisplayValue(
   });
 }
 
+function renderDocumentFieldDisplay(rawValue: unknown): ReactNode {
+  if (typeof rawValue !== "object" || rawValue === null || !("fileName" in rawValue)) {
+    return "—";
+  }
+  const fileName = (rawValue as { fileName: unknown }).fileName;
+  if (typeof fileName !== "string" || fileName.trim().length === 0) {
+    return "—";
+  }
+  const downloadUrl =
+    "downloadUrl" in rawValue &&
+    typeof (rawValue as { downloadUrl: unknown }).downloadUrl === "string" &&
+    (rawValue as { downloadUrl: string }).downloadUrl.length > 0
+      ? (rawValue as { downloadUrl: string }).downloadUrl
+      : undefined;
+  if (downloadUrl) {
+    return (
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary underline"
+      >
+        {fileName}
+      </a>
+    );
+  }
+  return fileName;
+}
+
 function fieldPathRoot(fieldPath: string): string {
   return fieldPath.includes(".")
     ? (fieldPath.split(".")[0] ?? fieldPath)
@@ -816,13 +845,17 @@ export function renderUiComponent(
     context,
   );
   const matched = resolveFieldConditionalStyles(fieldPath);
+  const textValue =
+    meta.fieldType === "document" && !isSample
+      ? renderDocumentFieldDisplay(rawValue)
+      : displayValue;
 
   return wrapListItemRelationLink(
     fieldPath,
     withResponsiveCss(
       <CardFieldValue
         label={label}
-        value={displayValue}
+        value={textValue}
         allowEmpty={isSample}
         className={containerClassName}
         style={containerStyle}

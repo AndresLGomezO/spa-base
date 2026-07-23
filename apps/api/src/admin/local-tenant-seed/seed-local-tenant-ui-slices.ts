@@ -254,6 +254,7 @@ async function seedLocalEntityUiOverrideSlice(
       views: override.views,
       ...(override.listViewType ? { listViewType: override.listViewType } : {}),
       ...(override.listItem ? { listItem: override.listItem } : {}),
+      ...(override.recordDetail ? { recordDetail: override.recordDetail } : {}),
       ...(override.metricRowLayout
         ? { metricRowLayout: override.metricRowLayout }
         : {}),

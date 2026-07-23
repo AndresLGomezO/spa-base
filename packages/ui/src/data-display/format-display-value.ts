@@ -248,17 +248,31 @@ export function formatDisplayValue(
   }
 
   if (Array.isArray(value)) {
-    return value.map((entry) => String(entry)).join(", ");
+    return value
+      .map((entry) =>
+        formatDisplayValue(entry, {
+          fieldType,
+          displayFormat: options.displayFormat,
+          dateDisplayFormat: options.dateDisplayFormat,
+          fieldName: options.fieldName,
+          locale,
+          timeZone,
+        }),
+      )
+      .join(", ");
   }
 
   if (
-    (fieldType === "image" || fieldType === "document") &&
     typeof value === "object" &&
     value !== null &&
     "fileName" in value &&
     typeof (value as { fileName: unknown }).fileName === "string"
   ) {
     return (value as { fileName: string }).fileName;
+  }
+
+  if (typeof value === "object") {
+    return "—";
   }
 
   return String(value);

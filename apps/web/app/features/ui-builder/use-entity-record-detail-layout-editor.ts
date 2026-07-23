@@ -4,7 +4,10 @@ import type {
   RecordDetailSliceData,
   UiLayoutDocument,
 } from "@repo/entities";
-import { createDefaultUiLayout, normalizeEntityViews } from "@repo/entities";
+import {
+  createDefaultRecordDetailLayout,
+  normalizeEntityViews,
+} from "@repo/entities";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { EntityName } from "../../entities/entity-catalog";
@@ -13,11 +16,14 @@ import { putEntityUiOverride } from "../../lib/api-client";
 import { ensureStandardRoot } from "@repo/ui-builder-core";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
-function getDefaultFieldPaths(
+function fieldMetaForDefaultLayout(
   definition: ReturnType<typeof useEntityDefinition>,
 ) {
-  return Object.keys(definition.fields).filter(
-    (field) => definition.fields[field]?.type !== "document",
+  return Object.fromEntries(
+    Object.entries(definition.fields).map(([name, meta]) => [
+      name,
+      { type: meta.type },
+    ]),
   );
 }
 
@@ -25,16 +31,17 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
   const definition = useEntityDefinition(entityName);
   const queryClient = useQueryClient();
   const uiViews = definition.ui.views;
-  const fieldPaths = useMemo(
-    () => getDefaultFieldPaths(definition),
+  const fieldMeta = useMemo(
+    () => fieldMetaForDefaultLayout(definition),
     [definition],
   );
+  const fieldPaths = useMemo(() => Object.keys(definition.fields), [definition]);
   const defaultFieldPath = fieldPaths[0] ?? "name";
 
   const [layout, setLayout] = useState<UiLayoutDocument>(() => {
     const existing =
       definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
-    const source = existing ?? createDefaultUiLayout(fieldPaths);
+    const source = existing ?? createDefaultRecordDetailLayout(fieldMeta);
     return ensureStandardRoot("screen", source);
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -43,13 +50,13 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
   useEffect(() => {
     const existing =
       definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
-    const source = existing ?? createDefaultUiLayout(fieldPaths);
+    const source = existing ?? createDefaultRecordDetailLayout(fieldMeta);
     setLayout(ensureStandardRoot("screen", source));
     setLayoutSyncGeneration((current) => current + 1);
   }, [
     definition.ui.detailLayout,
     definition.ui.recordDetailLayout,
-    fieldPaths,
+    fieldMeta,
   ]);
 
   const setLayoutNormalized = useCallback((next: UiLayoutDocument) => {

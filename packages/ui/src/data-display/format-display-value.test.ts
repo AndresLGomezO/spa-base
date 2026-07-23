@@ -129,6 +129,19 @@ describe("formatDisplayValue", () => {
       }),
     ).toBe("2024-06-01T15:45:00.000Z");
   });
+
+  it("formats file references by fileName without requiring fieldType", () => {
+    expect(
+      formatDisplayValue({
+        fileName: "invoice.pdf",
+        downloadUrl: "https://example.com/invoice.pdf",
+      }),
+    ).toBe("invoice.pdf");
+  });
+
+  it("does not stringify plain objects as [object Object]", () => {
+    expect(formatDisplayValue({ foo: "bar" })).toBe("—");
+  });
 });
 
 describe("isCurrencyField", () => {

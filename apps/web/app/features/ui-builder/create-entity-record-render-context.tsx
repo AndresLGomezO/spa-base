@@ -21,6 +21,7 @@ export function createEntityRecordRenderContext(options: {
   const base = createEntityLayoutRenderContext({
     ...options,
     usePreviewSamples: options.usePreviewSamples,
+    usePreviewPlaceholder: true,
   });
 
   const resolveField = base.resolveField;

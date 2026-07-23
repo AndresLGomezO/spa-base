@@ -282,10 +282,6 @@ export function collectNestedRelationLayoutFieldPaths(
   }
 
   for (const [fieldName, meta] of Object.entries(definition.fields)) {
-    if (meta.type === "document") {
-      continue;
-    }
-
     if (
       meta.relation &&
       (meta.relation.type === "many-to-one" ||

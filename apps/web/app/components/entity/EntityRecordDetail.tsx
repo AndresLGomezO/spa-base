@@ -1,7 +1,16 @@
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
-import { Alert, Button, Heading, Text, useThirdRail } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  CardFieldImage,
+  Heading,
+  SchemaCell,
+  Text,
+  useThirdRail,
+  type DisplayFieldType,
+} from "@repo/ui";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Pencil, Workflow } from "lucide-react";
@@ -30,6 +39,12 @@ import {
   listManyToManyFieldNames,
   useEntityRecordExportEnvelope,
 } from "./json/build-entity-record-export-envelope";
+import {
+  readEntityFileDisplayValue,
+  renderEntityDocumentLink,
+  resolveEntityDetailImagePlaceholderSrc,
+} from "./entity-file-display.js";
+import { readEntityFileDownloadUrl } from "./resolve-entity-layout-image-src.js";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -282,14 +297,33 @@ export function EntityRecordDetail({
                           {rawValue}
                         </span>
                       )
+                    ) : fieldMeta?.type === "document" ? (
+                      renderEntityDocumentLink(rawValue)
+                    ) : fieldMeta?.type === "image" ? (
+                      <CardFieldImage
+                        src={
+                          readEntityFileDownloadUrl(rawValue) ??
+                          readEntityFileDisplayValue(rawValue)?.downloadUrl ??
+                          resolveEntityDetailImagePlaceholderSrc()
+                        }
+                        alt={
+                          readEntityFileDisplayValue(rawValue)?.fileName ??
+                          formatFieldLabel(field, definition)
+                        }
+                        sizePx={64}
+                      />
                     ) : (
-                      <span>
-                        {rawValue != null ? (
-                          String(rawValue)
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </span>
+                      <SchemaCell
+                        value={rawValue}
+                        fieldType={fieldMeta?.type as DisplayFieldType | undefined}
+                        displayFormat={
+                          definition.ui.fields?.[field]?.displayFormat
+                        }
+                        dateDisplayFormat={
+                          definition.ui.fields?.[field]?.dateDisplayFormat
+                        }
+                        fieldName={field}
+                      />
                     )}
                   </dd>
                 </div>

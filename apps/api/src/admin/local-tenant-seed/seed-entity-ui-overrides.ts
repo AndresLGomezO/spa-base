@@ -44,6 +44,7 @@ const entityUiOverridesCatalogSchema = z
               .enum(["card", "expandableTable", "compact"])
               .optional(),
             listItem: z.unknown().optional(),
+            recordDetail: z.unknown().optional(),
             metricWidgets: z.array(metricWidgetCatalogSchema).optional(),
             metricRowLayout: z.unknown().optional(),
           })
@@ -109,6 +110,12 @@ export function parseLocalEntityUiOverridesCatalog(
     if (override.metricRowLayout) {
       uiLayoutDocumentSchema.parse(override.metricRowLayout);
     }
+    if (override.listItem) {
+      uiLayoutDocumentSchema.parse(override.listItem);
+    }
+    if (override.recordDetail) {
+      uiLayoutDocumentSchema.parse(override.recordDetail);
+    }
     if (override.metricWidgets) {
       for (const widget of override.metricWidgets) {
         uiLayoutDocumentSchema.parse(widget.layout);
@@ -156,6 +163,11 @@ export async function seedLocalEntityUiOverrides(
         input.metricWidgets as PutEntityUiOverrideInput["metricWidgets"],
         chartRefsByRowId,
       ),
+      ...(override.recordDetail
+        ? {
+            recordDetail: uiLayoutDocumentSchema.parse(override.recordDetail),
+          }
+        : {}),
     } as PutEntityUiOverrideInput;
 
     validateEntityUIConfig(entity, {

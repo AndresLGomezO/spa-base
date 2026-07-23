@@ -200,6 +200,7 @@ export type {
 export {
   uiLayoutDocumentSchema,
   createDefaultUiLayout,
+  createDefaultRecordDetailLayout,
   createDefaultTableCellLayout,
   createDefaultMainPageLayout,
   createDefaultFormLayout,

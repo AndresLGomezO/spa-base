@@ -751,7 +751,9 @@ export {
 
 export {
   createDefaultUiLayout,
+  createDefaultRecordDetailLayout,
   createAccountCardSeedLayout,
+  type DefaultRecordDetailFieldMeta,
 } from "./builder/defaults.js";
 export {
   createDefaultTableCellLayout,
