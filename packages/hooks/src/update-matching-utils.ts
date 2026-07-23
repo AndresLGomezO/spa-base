@@ -75,9 +75,19 @@ export async function listMatchingRecordsForWhere(
   const lookupValue = lookupLeaf.value
     ? evaluateExpression(lookupLeaf.value, scope)
     : null;
+  // Preserve number/boolean — Firestore equality is typed, so String(726300)
+  // does not match a numeric amount field (breaks email ingest link lookups).
+  const queryValue =
+    lookupValue == null
+      ? ""
+      : typeof lookupValue === "string" ||
+          typeof lookupValue === "number" ||
+          typeof lookupValue === "boolean"
+        ? lookupValue
+        : String(lookupValue);
   const query: HookEntityListQuery = {
     field: lookupLeaf.field,
-    value: lookupValue == null ? "" : String(lookupValue),
+    value: queryValue,
     limit: MAX_MATCHING_RECORDS,
   };
   const candidates = await list(entity, query);

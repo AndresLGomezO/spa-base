@@ -35,4 +35,17 @@ export interface RelationServicesDeps {
     tenantId: string,
   ) => Promise<boolean>;
   readonly joinRepository?: JoinCollectionRepository;
+  /**
+   * Optional callback after cascade delete / nullify child writes.
+   * Used to emit aggregation events for metric source models.
+   */
+  readonly onChildRecordMutated?: (input: {
+    readonly tenantId: string;
+    readonly entityName: string;
+    readonly operation: "UPDATE" | "DELETE";
+    readonly documentId: string;
+    readonly before: Record<string, unknown>;
+    readonly after: Record<string, unknown> | null;
+    readonly businessFieldNames: readonly string[];
+  }) => Promise<void>;
 }

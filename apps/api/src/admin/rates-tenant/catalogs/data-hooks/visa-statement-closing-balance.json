@@ -2,12 +2,15 @@
   "kind": "data-hook-definition",
   "version": 1,
   "data": {
-    "name": "Apply statement closing balance",
-    "description": "When a period statement is applied with closingBalance, upsert balanceSnapshot for periodEnd and sync financialItem.currentBalance. Runs from email extract when closingBalance is present.",
+    "name": "Visa statement closing balance",
+    "description": "Davivienda monthly extracto email: when closingBalance is extracted, upsert a balanceSnapshot for periodEnd and sync the card currentBalance.",
     "entity": "financialItem",
     "phase": "after",
     "trigger": {
-      "kind": "email"
+      "kind": "email",
+      "bindingIds": [
+        "emb_0819cd3c_0"
+      ]
     },
     "condition": {
       "type": "group",
@@ -20,15 +23,6 @@
           "value": {
             "kind": "literal",
             "value": true
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.emailKind",
-          "operator": "==",
-          "value": {
-            "kind": "literal",
-            "value": "creditCardStatement"
           }
         },
         {

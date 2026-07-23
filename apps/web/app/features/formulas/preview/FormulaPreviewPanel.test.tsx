@@ -69,11 +69,10 @@ describe("FormulaPreviewPanel", () => {
     );
 
     expect(
-      screen.getByText("formulas.summaryModal.sections.inputs"),
+      screen.getByText("formulas.preview.steps.inputs"),
     ).toBeInTheDocument();
-    expect(screen.getByText("rate")).toBeInTheDocument();
     expect(
-      screen.getByText("formulas.summaryModal.sections.output"),
+      screen.getByText("formulas.preview.steps.output"),
     ).toBeInTheDocument();
   });
 

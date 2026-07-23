@@ -74,8 +74,11 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `GMAIL_PUBSUB_TOPIC` | optional locally | `projects/{project}/topics/gmail-push` | Renew Gmail watch subscriptions when mode=`push` |
 | `GMAIL_INGEST_DELIVERY_MODE` | `poll` (default) | `poll` (Terraform) | Same env default as API; runtime override via **Platform → Observability** applies to worker too |
 | `GMAIL_TASKS_QUEUE_NAME` | `gmail-jobs` | Terraform queue name | Queue used when self-scheduling watch renewals |
-| `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (local default) | `false` | When `true`, fan out process-message via HTTP; when `false`, use Cloud Tasks + OIDC (required on Cloud Run — unauthenticated self-calls get 404) |
+| `GMAIL_TASKS_LOCAL_DISPATCH` | `true` (local default) | `false` | When `true`, process-message is dispatched over HTTP with a concurrency-1 queue that **awaits completion** (backpressure). When `false`, use Cloud Tasks + OIDC (required on Cloud Run — unauthenticated self-calls get 404); Terraform caps the queue at 2 concurrent dispatches |
 | `WORKER_SERVICE_URL` | `http://127.0.0.1:3001` / compose hostname | Cloud Run worker URL | Target URL for Gmail Cloud Tasks / local dispatch |
+| `PUBSUB_EMULATOR_HOST` | `firebase-emulator:8085` (Docker) | **unset** | Required when `AGGREGATION_EVENTS_PUBSUB=true` locally |
+| `AGGREGATION_EVENTS_PUBSUB` | `false` (host); `true` in Docker compose and Cloud Run | `true` when aggregation enabled | Publish aggregation events from hook writes (email ingest, data hooks, schedule) instead of inline processing |
+| `AGGREGATION_EVENTS_TOPIC` | `aggregation-events` | `aggregation-events` | Pub/Sub topic for aggregation events |
 
 Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).
 
@@ -83,11 +86,11 @@ Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env
 
 - **`poll`** (default): Cloud Scheduler hits `POST /tasks/gmail-poll` every 5 minutes; worker enqueues a **window sync** per connected mailbox. Pub/Sub watch is not started (and watch renew no-ops); `/api/gmail/pubsub` no-ops.
 - **`push`**: OAuth starts `users.watch`; Pub/Sub triggers the same **window sync** path; poll handler no-ops. Switching to push from Observability also enqueues watch renew for connected mailboxes (requires `GMAIL_PUBSUB_TOPIC`).
-- **Window sync** (replaces backfill + history.list): lists Gmail messages matching enabled bindings between the connection watermark (null = bootstrap / full match history) and now, fans out process-message tasks, then advances `ingestWatermarkAt` + `ingestBatchHash`. New/enabled bindings get a one-shot unbounded catch-up via `catchupNeeded`.
+- **Window sync** (replaces backfill + history.list): lists Gmail messages matching enabled bindings between the connection watermark (null = bootstrap / full match history) and now, queues process-message tasks (local: serial HTTP queue with backpressure; prod: Cloud Tasks rate limits), then advances `ingestWatermarkAt` + `ingestBatchHash`. New/enabled bindings get a one-shot unbounded catch-up via `catchupNeeded`.
 - **Change mode without redeploy:** Platform → Settings → Observability → **Gmail ingest delivery**. That writes `platform/runtimeSettings.gmailIngestDeliveryMode` and overrides `GMAIL_INGEST_DELIVERY_MODE` on API + worker within ~5 seconds.
 - Env remains the fallback when the runtime field is `null`. Keep API/worker Terraform env aligned as the default; topic infra can stay provisioned in poll mode (unused).
 - Scheduler still ticks every 5m in push mode, but the poll handler returns without fan-out (negligible cost). In poll mode, leftover Gmail pushes (until watches expire) hit Pub/Sub but the API no-ops—no duplicate ingest.
-- Manual **Sync now** runs the same window sync. There is no separate backfill UI.
+- Manual **Sync now** runs the same window sync. There is no separate backfill UI. Per-binding **Sync now** (email matching list) runs a catch-up query for that binding only, **reprocesses already-ingested matching mail for that rule only** (skips sibling create/link hooks), and does **not** advance the mailbox watermark.
 - Dedup: processed markers by Gmail message id + content fingerprint; rates `transaction.sourceGmailMessageId` uses getOrCreate so hooks never double-create money rows.
 
 Local poll: when `IS_LOCAL=true` and Gmail ingest is configured, the worker starts a **5-minute** interval that POSTs `/tasks/gmail-poll` (same as Cloud Scheduler). Manual trigger still works:

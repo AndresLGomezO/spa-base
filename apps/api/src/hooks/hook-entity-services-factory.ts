@@ -1,6 +1,7 @@
 import type { HookEntityServices, HookLogger } from "@repo/hooks";
 import type { FormulaResolver } from "@repo/hooks";
 
+import { emitAggregationEventIfNeeded } from "../aggregation/emit-aggregation-event.js";
 import {
   createHookEntityAccessControl,
   createHookEntityServices,
@@ -47,6 +48,31 @@ export function buildHookEntityServices(options: {
     }),
     tenantId: user.tenantId,
     ownerUserId: user.uid,
+    ...(deps.aggregation
+      ? {
+          onRecordMutated: async (input) => {
+            try {
+              await emitAggregationEventIfNeeded(deps.aggregation!, {
+                tenantId: input.tenantId,
+                entityName: input.entityName,
+                operation: input.operation,
+                documentId: input.documentId,
+                before: input.before,
+                after: input.after,
+                businessFieldNames: input.businessFieldNames,
+              });
+            } catch (error) {
+              logger.error("Failed to emit aggregation event after hook write", {
+                err: error,
+                entityName: input.entityName,
+                tenantId: input.tenantId,
+                operation: input.operation,
+                documentId: input.documentId,
+              });
+            }
+          },
+        }
+      : {}),
     dispatchChainedHooks: (params) =>
       dispatchChainedEntityHooks({
         tenantId: user.tenantId,

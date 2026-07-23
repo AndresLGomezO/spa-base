@@ -9,14 +9,40 @@ interface DispatchHookTaskAsyncOptions {
   readonly hookId: string;
   readonly logLabel: string;
   readonly process: () => Promise<unknown>;
+  /**
+   * When true, wait for `process` before responding (local HTTP dispatch
+   * backpressure). Cloud Tasks should keep the default 202 accept path.
+   */
+  readonly awaitCompletion?: boolean;
 }
 
-export function dispatchHookTaskAsync(
+export async function dispatchHookTaskAsync(
   options: DispatchHookTaskAsyncOptions,
-): FastifyReply {
-  const { request, reply, tenantId, hookId, logLabel, process } = options;
+): Promise<FastifyReply> {
+  const {
+    request,
+    reply,
+    tenantId,
+    hookId,
+    logLabel,
+    process,
+    awaitCompletion = false,
+  } = options;
 
   request.log.info({ hookId, tenantId }, logLabel);
+
+  if (awaitCompletion) {
+    try {
+      await process();
+      return reply.status(200).send({ success: true });
+    } catch (error: unknown) {
+      logHookTaskFailure(request.log, error, { hookId, tenantId }, logLabel);
+      if (error instanceof PermanentTaskError) {
+        return reply.status(200).send({ success: false, error: error.code });
+      }
+      return reply.status(500).send({ success: false });
+    }
+  }
 
   void process().catch((error: unknown) => {
     logHookTaskFailure(request.log, error, { hookId, tenantId }, logLabel);

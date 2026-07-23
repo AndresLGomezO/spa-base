@@ -30,6 +30,7 @@ import {
   SETTINGS_CHARTS_NAV_ITEM,
   SETTINGS_FORMULAS_NAV_ITEM,
   SETTINGS_AUTOMATION_NAV_ITEM,
+  SETTINGS_EMAIL_MATCHING_NAV_ITEM,
   SETTINGS_QUERY_BUILDER_NAV_ITEM,
   SETTINGS_CUSTOM_VIEWS_NAV_ITEM,
   SETTINGS_GROUP_ICON,
@@ -66,7 +67,12 @@ function compareNavItems(
 }
 
 export function useAccessibleNavItems(): readonly NavItemConfig[] {
-  const { permissions, isSuperAdmin, availableTenants = [] } = useAuth();
+  const {
+    permissions,
+    isSuperAdmin,
+    availableTenants = [],
+    tenantId,
+  } = useAuth();
   const { items: catalogItems } = useEntityCatalog();
   const entityNavItems = useEntityNavItems();
   const customViewNavItems = useCustomViewNavItems();
@@ -238,6 +244,10 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       analyticsChildren.push(SETTINGS_AUTOMATION_NAV_ITEM);
     }
 
+    if (tenantId) {
+      analyticsChildren.push(SETTINGS_EMAIL_MATCHING_NAV_ITEM);
+    }
+
     if (analyticsChildren.length > 0) {
       items.push({
         id: "analytics",
@@ -298,5 +308,6 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     entityNavItems,
     isSuperAdmin,
     permissions,
+    tenantId,
   ]);
 }

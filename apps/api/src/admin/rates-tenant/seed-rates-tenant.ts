@@ -111,6 +111,7 @@ function buildLocalImportOptionsFromSelection(
     includeEntityImages:
       (localEntities?.includes("actor") ?? false) ||
       (localEntities?.includes("category") ?? false),
+    dropExisting: selection.drop,
   };
 }
 
@@ -126,6 +127,7 @@ async function seedRatesTenant(
   const selection: SeedSelection = options.selection ?? {
     components: null,
     ids: null,
+    drop: false,
   };
   const full = isFullSeed(selection);
   const backfillMetrics =

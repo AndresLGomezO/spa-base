@@ -132,6 +132,7 @@ describe("seedRatesTenantGcp", () => {
     await seedRatesTenantGcp(firebaseAdminConfig, entityRuntime, {
       components: new Set(["hooks"]),
       ids: null,
+      drop: false,
     });
 
     expect(seedRatesCatalogs).toHaveBeenCalledWith(
@@ -197,6 +198,7 @@ describe("seedRatesTenantMock", () => {
     await seedRatesTenantMock(firebaseAdminConfig, entityRuntime, {
       components: new Set(["financialItem", "emailMatchBindings"]),
       ids: new Set([hubId]),
+      drop: false,
     });
 
     expect(seedLocalTenantImportIfPresent).toHaveBeenCalledWith(
@@ -211,9 +213,36 @@ describe("seedRatesTenantMock", () => {
         skipOrphanDelete: true,
         runMockGenerator: false,
         includeEmailMatchBindings: true,
+        dropExisting: false,
       }),
     );
     expect(seedRatesBusinessRecords).not.toHaveBeenCalled();
     expect(activateAndBackfillRatesMetrics).not.toHaveBeenCalled();
+  });
+
+  it("passes dropExisting when selection.drop is set", async () => {
+    seedLocalTenantImportIfPresent.mockResolvedValue({
+      seeded: true,
+      ownerEmail: "andreslgomezo@gmail.com",
+    });
+
+    await seedRatesTenantMock(firebaseAdminConfig, entityRuntime, {
+      components: new Set(["emailMatchBindings"]),
+      ids: null,
+      drop: true,
+    });
+
+    expect(seedLocalTenantImportIfPresent).toHaveBeenCalledWith(
+      "rates",
+      firebaseAdminConfig,
+      [],
+      undefined,
+      expect.objectContaining({
+        entityNames: [],
+        generatedEntityNames: [],
+        includeEmailMatchBindings: true,
+        dropExisting: true,
+      }),
+    );
   });
 });

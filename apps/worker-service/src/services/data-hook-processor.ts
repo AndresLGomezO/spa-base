@@ -4,16 +4,27 @@ import {
   type DataHookJobPayload,
   type HookLogger,
 } from "@repo/hooks";
+import {
+  createMetricRuntimeContext,
+  type AggregationEmitterDeps,
+} from "@repo/aggregation-engine";
 import { getAllKnownPermissions, buildTenantRoleCatalog } from "@repo/rbac";
 import {
+  AGGREGATION_EVENTS_TOPIC,
+  createFirestoreAdminAggregationEventRepository,
+  createFirestoreAdminBackfillJobRepository,
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminHookLogMessageRepository,
+  createFirestoreAdminMetricContributionRepository,
+  createFirestoreAdminMetricDefinitionRepository,
+  createFirestoreAdminMetricValueRepository,
   createFirestoreAdminUserNotificationRepository,
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminTenantRoleRepository,
+  publishAggregationEventMessage,
 } from "@repo/gcp-firebase";
 import { createFirestoreAdminEntityDefinitionRepository } from "@repo/gcp-firebase";
 import { createFormulaRuntimeContext } from "@repo/formula-definitions/runtime";
@@ -36,6 +47,7 @@ import {
   type WorkerCrudHookDeps,
 } from "../hooks/worker-hook-entity-services.js";
 import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
+import { workerEnv } from "../config/env.js";
 
 export { dataHookJobPayloadSchema };
 
@@ -81,6 +93,34 @@ export function createDataHookProcessorDeps(
     },
   );
 
+  const metricRuntime = createMetricRuntimeContext({
+    metricDefinitionRepository:
+      createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig),
+    aggregationEventRepository:
+      createFirestoreAdminAggregationEventRepository(firebaseAdminConfig),
+    metricValueRepository:
+      createFirestoreAdminMetricValueRepository(firebaseAdminConfig),
+    backfillJobRepository:
+      createFirestoreAdminBackfillJobRepository(firebaseAdminConfig),
+    metricContributionRepository:
+      createFirestoreAdminMetricContributionRepository(firebaseAdminConfig),
+  });
+
+  const aggregation: AggregationEmitterDeps = {
+    metricRuntime,
+    // Email ingest / data hooks must update KPI metrics in-process.
+    // Publishing to Pub/Sub is optional and must never be the only path —
+    // the local emulator subscription is unreliable and drops events.
+    publishToPubSub: false,
+    aggregationTopic: workerEnv.AGGREGATION_EVENTS_TOPIC || AGGREGATION_EVENTS_TOPIC,
+    projectId: workerEnv.GCP_PROJECT_ID,
+    getSchemaVersion: () => 1,
+    publishAggregationEvent: publishAggregationEventMessage,
+    log: (message, meta) => {
+      console.log(JSON.stringify({ message, ...meta }));
+    },
+  };
+
   return {
     hookRuntime: new HookRuntimeContext(hookRepository),
     formulaRuntime: createFormulaRuntimeContext(
@@ -95,6 +135,7 @@ export function createDataHookProcessorDeps(
     hookLogMessageRepository,
     userNotificationRepository,
     callWebhook: callDataHookWebhook,
+    aggregation,
   };
 }
 

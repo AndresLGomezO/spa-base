@@ -132,6 +132,45 @@ export async function processAggregationEventTransaction(
   }
 }
 
+export async function processPendingAggregationEventsForModel(
+  deps: {
+    readonly aggregationEventRepository: AggregationEventRepository;
+    readonly metricDefinitionRepository: MetricDefinitionRepository;
+    readonly metricValueRepository: MetricValueRepository;
+    readonly metricContributionRepository: MetricContributionRepository;
+    readonly resolveQueryMembership?: MetricQueryMembershipResolver;
+  },
+  tenantId: string,
+  model: string,
+  log?: (message: string, meta: Record<string, unknown>) => void,
+): Promise<number> {
+  const events = await deps.aggregationEventRepository.listByModel(
+    tenantId,
+    model,
+  );
+  let processed = 0;
+  for (const event of events) {
+    if (event.status !== "PENDING") {
+      continue;
+    }
+    await processAggregationEventTransaction(
+      deps,
+      tenantId,
+      event.eventId,
+      log,
+    );
+    processed += 1;
+  }
+  if (processed > 0) {
+    log?.("aggregation_pending_events_drained", {
+      tenantId,
+      model,
+      processed,
+    });
+  }
+  return processed;
+}
+
 export async function replayAggregationEvent(
   deps: MetricProcessingRepositories,
   event: AggregationEvent,

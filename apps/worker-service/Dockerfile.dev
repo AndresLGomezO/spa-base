@@ -15,6 +15,7 @@ COPY apps/worker-service/package.json ./apps/worker-service/
 COPY apps/platform/package.json ./apps/platform/
 COPY packages/ai-engine/package.json ./packages/ai-engine/
 COPY packages/ai-context/package.json ./packages/ai-context/
+COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
@@ -52,6 +53,7 @@ COPY packages/dynamic-entities ./packages/dynamic-entities
 COPY packages/entities ./packages/entities
 COPY packages/entity-categories ./packages/entity-categories
 COPY packages/event-engine ./packages/event-engine
+COPY packages/aggregation-engine ./packages/aggregation-engine
 COPY packages/hooks ./packages/hooks
 COPY packages/formula-definitions ./packages/formula-definitions
 COPY packages/firestore-converters ./packages/firestore-converters

@@ -134,8 +134,11 @@ export function parseEmailMatchBindingsJson(
 }
 
 export function toPortableEmailMatchBinding(binding: {
+  readonly id?: string;
   readonly entityName: string;
   readonly recordId: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
   readonly enabled?: boolean;
   readonly order?: number;
   readonly ingestMode?: "create" | "link";
@@ -156,6 +159,7 @@ export function toPortableEmailMatchBinding(binding: {
       | "slashDate"
       | "compactYmd"
       | "monthNameDate"
+      | "collapseWhitespace"
       | "valueMap"
       | "literal";
     readonly valueMap?: Readonly<Record<string, string>>;
@@ -170,8 +174,13 @@ export function toPortableEmailMatchBinding(binding: {
   } | null;
 }): PortableEmailMatchBinding {
   return portableEmailMatchBindingSchema.parse({
+    ...(binding.id ? { id: binding.id } : {}),
     entityName: binding.entityName,
     recordId: binding.recordId,
+    ...(binding.name !== undefined ? { name: binding.name } : {}),
+    ...(binding.description !== undefined
+      ? { description: binding.description }
+      : {}),
     ...(binding.enabled !== undefined ? { enabled: binding.enabled } : {}),
     ...(binding.order !== undefined ? { order: binding.order } : {}),
     ...(binding.ingestMode !== undefined

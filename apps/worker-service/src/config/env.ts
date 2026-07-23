@@ -44,6 +44,15 @@ const workerEnvSchema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((value) => value === "true"),
+  AGGREGATION_EVENTS_PUBSUB: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  AGGREGATION_EVENTS_TOPIC: z
+    .string()
+    .trim()
+    .min(1)
+    .default("aggregation-events"),
 });
 
 const parsed = workerEnvSchema.safeParse(process.env);

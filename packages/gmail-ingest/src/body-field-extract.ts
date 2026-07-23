@@ -1,21 +1,28 @@
 import type { EmailAiExtractResult, EmailBodyFieldExtractor } from "./types.js";
+import { decodeHtmlEntities } from "./html-entities.js";
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function extractLabeledValue(bodyText: string, label: string): string | null {
-  const pattern = new RegExp(
-    `^\\s*${escapeRegExp(label)}:\\s*(.+?)\\s*$`,
+  const escaped = escapeRegExp(label);
+  // Same-line: `Valor: $ 100`
+  const sameLine = new RegExp(`^\\s*${escaped}:\\s*(.+?)\\s*$`, "im");
+  const sameMatch = sameLine.exec(bodyText);
+  const sameValue = sameMatch?.[1]?.trim();
+  if (sameValue) {
+    return sameValue;
+  }
+  // Next non-empty line (ACH PSE HTML→text often splits label/value):
+  // `Valor:\n $ 692.500,00`
+  const nextLine = new RegExp(
+    `^\\s*${escaped}:\\s*[\\t ]*[\\r\\n]+[\\t ]*(.+?)\\s*$`,
     "im",
   );
-  const match = pattern.exec(bodyText);
-  const value = match?.[1];
-  if (value == null) {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+  const nextMatch = nextLine.exec(bodyText);
+  const nextValue = nextMatch?.[1]?.trim();
+  return nextValue && nextValue.length > 0 ? nextValue : null;
 }
 
 /**
@@ -100,9 +107,9 @@ function transformAmount(raw: string): number | null {
 function transformSlashDate(raw: string): string | null {
   const trimmed = raw.trim();
 
-  // DD/MM/YY[YY] [a las HH:mm[:ss]]
+  // DD/MM/YY[YY] [a las HH:mm[:ss] | HH:mm[:ss]]
   const dmyTime =
-    /^(\d{2})[/-](\d{2})[/-](\d{2}|\d{4})(?:\s+a las\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/i.exec(
+    /^(\d{2})[/-](\d{2})[/-](\d{2}|\d{4})(?:\s+(?:a las\s+)?(\d{2}):(\d{2})(?::(\d{2}))?)?$/i.exec(
       trimmed,
     );
   if (dmyTime) {
@@ -202,18 +209,13 @@ const MONTH_NAME_TO_NUMBER: Readonly<Record<string, string>> = {
   diciembre: "12",
 };
 
-/** Parses `15/Jul/2026`, `15-Jul-2026`, `15 Jul 2026` (EN/ES month names). */
-function transformMonthNameDate(raw: string): string | null {
-  const match =
-    /^(\d{1,2})[/\-\s]+([A-Za-zÁÉÍÓÚáéíóúüñÑ.]{3,})[/\-\s]+(\d{4})$/u.exec(
-      raw.trim(),
-    );
-  if (!match) {
-    return null;
-  }
-  const day = match[1]!.padStart(2, "0");
-  const monthKey = match[2]!.replace(/\./g, "").toLowerCase();
-  const year = match[3]!;
+function resolveMonthNameDateParts(
+  dayRaw: string,
+  monthRaw: string,
+  year: string,
+): { day: string; month: string; year: string } | null {
+  const day = dayRaw.padStart(2, "0");
+  const monthKey = monthRaw.replace(/\./g, "").toLowerCase();
   const month = MONTH_NAME_TO_NUMBER[monthKey];
   if (!month) {
     return null;
@@ -222,7 +224,55 @@ function transformMonthNameDate(raw: string): string | null {
   if (!Number.isFinite(d) || d < 1 || d > 31) {
     return null;
   }
-  return `${year}-${month}-${day}`;
+  return { day, month, year };
+}
+
+/**
+ * Parses month-name dates:
+ * - `15/Jul/2026`, `15-Jul-2026`, `15 Jul 2026`
+ * - Spanish long form `9 de julio de 2026` with optional `-15:17hrs.`
+ */
+function transformMonthNameDate(raw: string): string | null {
+  const trimmed = raw.trim();
+
+  const spanishLong =
+    /^(\d{1,2})\s+de\s+([A-Za-zÁÉÍÓÚáéíóúüñÑ.]{3,})\s+de\s+(\d{4})(?:\s*[-–]?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(?:hrs?\.?)?)?\.?$/iu.exec(
+      trimmed,
+    );
+  if (spanishLong) {
+    const parts = resolveMonthNameDateParts(
+      spanishLong[1]!,
+      spanishLong[2]!,
+      spanishLong[3]!,
+    );
+    if (!parts) {
+      return null;
+    }
+    const hour = spanishLong[4];
+    const minute = spanishLong[5];
+    const second = spanishLong[6] ?? "00";
+    if (hour != null && minute != null) {
+      return `${parts.year}-${parts.month}-${parts.day}T${hour.padStart(2, "0")}:${minute}:${second}`;
+    }
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
+  const match =
+    /^(\d{1,2})[/\-\s]+([A-Za-zÁÉÍÓÚáéíóúüñÑ.]{3,})[/\-\s]+(\d{4})$/u.exec(
+      trimmed,
+    );
+  if (!match) {
+    return null;
+  }
+  const parts = resolveMonthNameDateParts(match[1]!, match[2]!, match[3]!);
+  if (!parts) {
+    return null;
+  }
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function transformCollapseWhitespace(raw: string): string {
+  return raw.replace(/\s+/g, " ").trim();
 }
 
 function transformValueMap(
@@ -269,6 +319,8 @@ function applyTransform(
       return transformCompactYmd(raw);
     case "monthNameDate":
       return transformMonthNameDate(raw);
+    case "collapseWhitespace":
+      return transformCollapseWhitespace(raw);
     case "valueMap":
       return transformValueMap(raw, extractor.valueMap);
     case "literal":
@@ -289,7 +341,7 @@ export function extractBodyFields(
   bodyText: string | null | undefined,
   extractors: readonly EmailBodyFieldExtractor[],
 ): EmailAiExtractResult {
-  const text = bodyText ?? "";
+  const text = decodeHtmlEntities(bodyText ?? "");
   const fields: Record<string, unknown> = {};
 
   for (const extractor of extractors) {
@@ -324,6 +376,17 @@ export function extractBodyFields(
 
   if (fields.isReversal === undefined) {
     fields.isReversal = false;
+  } else if (typeof fields.isReversal === "string") {
+    const normalized = fields.isReversal.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1" || normalized === "yes") {
+      fields.isReversal = true;
+    } else if (
+      normalized === "false" ||
+      normalized === "0" ||
+      normalized === "no"
+    ) {
+      fields.isReversal = false;
+    }
   }
   fields.extractSource = "manual";
 

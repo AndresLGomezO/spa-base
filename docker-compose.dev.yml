@@ -22,6 +22,9 @@ services:
     image: andreysenov/firebase-tools
     container_name: project-base_firebase_emulator
     restart: unless-stopped
+    environment:
+      # Default JVM heap is too small for email-ingest job traces + seed data.
+      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx4g"
     ports:
       - "8080:8080"
       - "8085:8085"
@@ -174,12 +177,19 @@ services:
       - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
       - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=127.0.0.1:9199
+      - PUBSUB_EMULATOR_HOST=firebase-emulator:8085
       - TASKS_SA_EMAIL=local-tasks-sa@demo-project-base.iam.gserviceaccount.com
       - WORKER_SERVICE_URL=http://worker-service:3001
       - GMAIL_TASKS_LOCAL_DISPATCH=true
+      # Hook/email writes process metrics in-process. Do not rely on the flaky
+      # Pub/Sub emulator + worker-aggregation path for ingest KPIs.
+      - AGGREGATION_EVENTS_PUBSUB=false
+      - AGGREGATION_EVENTS_TOPIC=aggregation-events
     depends_on:
       firebase-emulator:
         condition: service_healthy
+      pubsub-init:
+        condition: service_completed_successfully
 
   web:
     build:

@@ -480,7 +480,7 @@ export function GmailSettingsPanel() {
                                 </div>
                               </button>
                               <Link
-                                to={`/app/${encodeURIComponent(group.entityName)}/${encodeURIComponent(recordGroup.recordId)}`}
+                                to={`/settings/email-matching?bindingId=${encodeURIComponent(recordGroup.bindings[0]?.id ?? "")}`}
                                 className="text-primary hover:bg-muted/40 border-border inline-flex shrink-0 items-center border-l px-3 text-xs font-medium"
                               >
                                 {t("platform.email.openRecord")}
@@ -513,10 +513,22 @@ export function GmailSettingsPanel() {
                                           </span>
                                         ) : null}
                                       </div>
-                                      <Text className="text-muted-foreground text-sm">
-                                        {binding.fromAddresses.join(", ") ||
+                                      <Text className="text-sm font-medium">
+                                        {binding.name?.trim() ||
+                                          binding.fromAddresses.join(", ") ||
                                           t("platform.email.noSenders")}
                                       </Text>
+                                      {binding.description?.trim() ? (
+                                        <Text className="text-muted-foreground text-xs">
+                                          {binding.description}
+                                        </Text>
+                                      ) : null}
+                                      {binding.name?.trim() ? (
+                                        <Text className="text-muted-foreground text-sm">
+                                          {binding.fromAddresses.join(", ") ||
+                                            t("platform.email.noSenders")}
+                                        </Text>
+                                      ) : null}
                                       {binding.subjectPatterns.length > 0 ? (
                                         <Text className="text-muted-foreground text-xs">
                                           {t("platform.email.subjectPatterns")}:{" "}
@@ -537,16 +549,28 @@ export function GmailSettingsPanel() {
                                         </Text>
                                       ) : null}
                                     </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        deleteBindingMutation.mutate(binding.id)
-                                      }
-                                      disabled={deleteBindingMutation.isPending}
-                                    >
-                                      {t("platform.email.deleteBinding")}
-                                    </Button>
+                                    <div className="flex shrink-0 items-center gap-2">
+                                      <Link
+                                        to={`/settings/email-matching?bindingId=${encodeURIComponent(binding.id)}`}
+                                        className="text-primary text-xs font-medium"
+                                      >
+                                        {t("platform.email.openRecord")}
+                                      </Link>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          deleteBindingMutation.mutate(
+                                            binding.id,
+                                          )
+                                        }
+                                        disabled={
+                                          deleteBindingMutation.isPending
+                                        }
+                                      >
+                                        {t("platform.email.deleteBinding")}
+                                      </Button>
+                                    </div>
                                   </li>
                                 ))}
                               </ul>

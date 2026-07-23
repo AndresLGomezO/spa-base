@@ -37,12 +37,22 @@ function buildTriggerStep(
   }
 
   if (isEmailTrigger(hook.trigger)) {
+    const bindingCount = hook.trigger.bindingIds?.length ?? 0;
+    const bullets =
+      bindingCount > 0
+        ? [
+            context.t("dataHooks.preview.trigger.emailBindingsSelected", {
+              count: bindingCount,
+            }),
+          ]
+        : [context.t("dataHooks.preview.trigger.emailBindingsAny")];
     return {
       id: "trigger",
       kind: "trigger",
       icon: "trigger",
       title: context.t("dataHooks.preview.steps.trigger"),
       summary: context.t("dataHooks.preview.trigger.email", { entity }),
+      bullets,
     };
   }
 

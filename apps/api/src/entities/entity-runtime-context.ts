@@ -307,12 +307,20 @@ export class EntityRuntimeContext {
 
   createRelationContext(
     joinRepository?: JoinCollectionRepository,
+    onChildRecordMutated?: Parameters<
+      typeof createRelationRuntimeContext
+    >[3],
   ): ReturnType<typeof createRelationRuntimeContext> {
     const repositories: Record<
       string,
       TenantScopedEntityRepository<GenericRecord, unknown>
     > = { ...(this.options.repositories ?? {}) };
-    return createRelationRuntimeContext(this, repositories, joinRepository);
+    return createRelationRuntimeContext(
+      this,
+      repositories,
+      joinRepository,
+      onChildRecordMutated,
+    );
   }
 
   getEntityDefinition(

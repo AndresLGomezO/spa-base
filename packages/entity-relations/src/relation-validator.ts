@@ -150,17 +150,38 @@ export function createRelationDeleteHandler(deps: RelationServicesDeps) {
 
           for (const reference of ownedRefs) {
             if (onDelete === "nullify") {
+              const before = { ...(reference as Record<string, unknown>) };
               await deps.update(
                 referencingEntity.name,
                 reference.id,
                 tenantId,
                 { [fieldName]: undefined },
               );
+              const after = { ...before, [fieldName]: undefined };
+              await deps.onChildRecordMutated?.({
+                tenantId,
+                entityName: referencingEntity.name,
+                operation: "UPDATE",
+                documentId: reference.id,
+                before,
+                after,
+                businessFieldNames: Object.keys(referencingEntity.metadata.fields),
+              });
               continue;
             }
 
             if (onDelete === "cascade") {
+              const before = { ...(reference as Record<string, unknown>) };
               await deps.delete(referencingEntity.name, reference.id, tenantId);
+              await deps.onChildRecordMutated?.({
+                tenantId,
+                entityName: referencingEntity.name,
+                operation: "DELETE",
+                documentId: reference.id,
+                before,
+                after: null,
+                businessFieldNames: Object.keys(referencingEntity.metadata.fields),
+              });
             }
           }
         }

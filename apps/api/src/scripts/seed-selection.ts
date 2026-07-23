@@ -63,6 +63,11 @@ export interface SeedSelection {
   readonly components: ReadonlySet<SeedComponentKey> | null;
   /** `null` = no id filter. */
   readonly ids: ReadonlySet<string> | null;
+  /**
+   * When true, delete existing seeded rows for the selected components (and
+   * optional `--ids`) before upserting from disk.
+   */
+  readonly drop: boolean;
 }
 
 export function isFullSeed(selection: SeedSelection): boolean {
@@ -150,6 +155,29 @@ export function assertIdsAllowedForSelection(
   if (recordLevel.length === 0) {
     throw new Error(
       `--ids requires at least one record-level --only component (${[...SEED_RECORD_LEVEL_COMPONENTS].join(", ")}).`,
+    );
+  }
+}
+
+export function assertDropAllowedForSelection(
+  components: ReadonlySet<SeedComponentKey> | null,
+  drop: boolean,
+): void {
+  if (!drop) {
+    return;
+  }
+  if (components === null) {
+    throw new Error(
+      "--drop requires --only (refusing to drop the entire tenant seed).",
+    );
+  }
+  const droppable = [...components].filter(
+    (key) =>
+      SEED_RECORD_LEVEL_COMPONENTS.has(key) || key === "generated",
+  );
+  if (droppable.length === 0) {
+    throw new Error(
+      `--drop only supports record-level --only components (${[...SEED_RECORD_LEVEL_COMPONENTS].join(", ")}, generated). Catalog slices already replace in place.`,
     );
   }
 }

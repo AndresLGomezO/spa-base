@@ -28,6 +28,7 @@ function isInsideDocker(): boolean {
  * To seed the database on the emulator, run: pnpm seed:database
  * To seed the database on GCP, run: pnpm seed:database -- --gcp --project entitysystem-development
  * Partial: pnpm seed:database -- --only financialItem,emailMatchBindings --ids <uuid>
+ * Drop+reseed: pnpm seed:database -- --only emailMatchBindings --drop
  */
 
 /** Map Compose service names to localhost when seeding from the host machine. */
@@ -176,12 +177,14 @@ export async function runDatabaseSeed(
     gcp: false,
     components: null,
     ids: null,
+    drop: false,
   },
 ): Promise<void> {
   let firebaseAdminConfig: FirebaseAdminConfig;
   const selection = {
     components: options.components,
     ids: options.ids,
+    drop: options.drop,
   };
   const full = isFullSeed(selection);
 
@@ -222,7 +225,8 @@ export async function runDatabaseSeed(
   if (!full) {
     console.log(
       `[seed] Partial mode: ${[...(selection.components ?? [])].join(", ")}` +
-        (selection.ids ? ` (ids: ${[...selection.ids].join(", ")})` : ""),
+        (selection.ids ? ` (ids: ${[...selection.ids].join(", ")})` : "") +
+        (selection.drop ? " [--drop]" : ""),
     );
   }
 

@@ -234,6 +234,53 @@ export async function importRatesRecordsBatch(
 }
 
 /**
+ * Deletes tenant records. When `ids` is set, only those ids are removed;
+ * otherwise every record of the entity is deleted.
+ */
+export async function deleteRatesRecordsMatching(
+  context: RatesRecordSeedContext,
+  entityName: string,
+  ids?: ReadonlySet<string>,
+): Promise<number> {
+  const entity = context.entities.get(entityName);
+  if (!entity) {
+    throw new Error(
+      `Entity "${entityName}" is not registered for rates seed on tenant "${context.tenantId}".`,
+    );
+  }
+
+  const repository = getSeedEntityRepository(context, entity);
+  const targetIds: string[] = [];
+
+  if (ids && ids.size > 0) {
+    targetIds.push(...ids);
+  } else {
+    let cursor: string | undefined;
+    do {
+      const page = await repository.findAll({
+        tenantId: context.tenantId,
+        limit: 200,
+        cursor,
+      });
+      for (const item of page.items) {
+        targetIds.push(item.id);
+      }
+      cursor = page.nextCursor ?? undefined;
+    } while (cursor);
+  }
+
+  let deleted = 0;
+  for (const id of targetIds) {
+    const didDelete = await repository.delete(id, context.tenantId);
+    if (didDelete) {
+      deleted += 1;
+    }
+  }
+
+  return deleted;
+}
+
+/**
  * Deletes tenant records whose ids are not in `keepIds` (e.g. orphan UUID
  * schedules left after Create initial / Roll forward before a deterministic reseed).
  */

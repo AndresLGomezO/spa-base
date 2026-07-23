@@ -237,6 +237,10 @@ pnpm seed:database -- --only emailMatchBindings
 # One financialItem + its email bindings (same --ids filter)
 pnpm seed:database -- --only financialItem,emailMatchBindings --ids 7c2e9f11-2518-4b3a-9d4e-030cd8568c15
 
+# Drop existing rows for the selection, then reseed from disk
+pnpm seed:database -- --only emailMatchBindings --drop
+pnpm seed:database -- --only financialItem --ids 7c2e9f11-2518-4b3a-9d4e-030cd8568c15 --drop
+
 # Data hooks catalog only (then optionally refresh worker/API caches)
 pnpm seed:database -- --only hooks
 pnpm seed:database -- --only hooks,hook-cache
@@ -244,7 +248,7 @@ pnpm seed:database -- --only hooks,hook-cache
 
 Component keys: `platform`, `entities`, `metrics`, `queries`, `hooks`, `formulas`, `charts`, `custom-views`, local entities (`category`, `actor`, `account`, `financialItem`, …), generated entities (`paymentSchedule`, `transaction`, `balanceSnapshot`), `generated` (run mock generator + import all three), `emailMatchBindings`, `ui`, `demo`, `metrics-backfill`, `hook-cache`.
 
-`--ids` only applies to record-level components (local/generated entities + `emailMatchBindings`). Partial mode always skips orphan schedule/transaction deletes.
+`--ids` only applies to record-level components (local/generated entities + `emailMatchBindings`). `--drop` deletes matching existing rows before upsert (requires `--only` with a record-level component; refuses a full-tenant drop). Partial mode always skips orphan schedule/transaction deletes.
 
 #### GCP seed (real Firestore / Auth)
 

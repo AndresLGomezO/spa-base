@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import type { CloudTasksClient as CloudTasksClientType } from "@google-cloud/tasks";
 
+import { createAsyncSemaphore } from "../lib/async-semaphore.js";
+
 export interface WorkerGmailTasksConfig {
   readonly projectId: string;
   readonly region: string;
@@ -17,13 +19,25 @@ export type GmailProcessMessageEnqueuePayload = {
   readonly jobId: string;
   readonly gmailMessageId: string;
   readonly bindingId?: string;
+  readonly reprocess?: boolean;
 };
 
 export type GmailWindowSyncEnqueuePayload = {
   readonly tenantId: string;
   readonly userId: string;
   readonly jobId: string;
+  readonly bindingId?: string;
 };
+
+/** Local process-message can run hooks + aggregations; allow a long wait. */
+const LOCAL_PROCESS_MESSAGE_TIMEOUT_MS = 10 * 60 * 1000;
+const LOCAL_DEFAULT_TIMEOUT_MS = 10_000;
+
+/**
+ * Cap in-flight local process-message HTTP calls. Combined with the route
+ * awaiting completion, window-sync gets a real FIFO queue instead of 202 fan-out.
+ */
+const localProcessMessageGate = createAsyncSemaphore(1);
 
 let tasksClient: CloudTasksClientType | null = null;
 
@@ -58,6 +72,7 @@ async function enqueueLocal(
   config: WorkerGmailTasksConfig,
   path: string,
   payload: object,
+  timeoutMs: number = LOCAL_DEFAULT_TIMEOUT_MS,
 ): Promise<void> {
   const response = await fetch(`${config.workerBaseUrl}${path}`, {
     method: "POST",
@@ -66,7 +81,7 @@ async function enqueueLocal(
       "X-Local-Task-Dispatcher": "true",
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     const body = await response.text();
@@ -134,6 +149,9 @@ async function enqueueCloudTask(
  * Enqueue Gmail follow-up tasks from the worker.
  * Production must use Cloud Tasks + OIDC — Cloud Run rejects unauthenticated
  * self-fetches with a 404.
+ *
+ * Local process-message uses a concurrency-1 HTTP queue and awaits worker
+ * completion so window sync cannot stampede the Firestore emulator.
  */
 export function createWorkerGmailTaskEnqueuer(config: WorkerGmailTasksConfig) {
   return {
@@ -142,7 +160,27 @@ export function createWorkerGmailTaskEnqueuer(config: WorkerGmailTasksConfig) {
     ): Promise<void> {
       const path = "/tasks/gmail-process-message";
       if (config.localDispatch) {
-        await enqueueLocal(config, path, payload);
+        // Schedule onto the paced queue and return immediately so window-sync
+        // can finish. The gate + route awaitCompletion keep drain serial.
+        void localProcessMessageGate
+          .run(() =>
+            enqueueLocal(
+              config,
+              path,
+              payload,
+              LOCAL_PROCESS_MESSAGE_TIMEOUT_MS,
+            ),
+          )
+          .catch((error: unknown) => {
+            console.error(
+              JSON.stringify({
+                message: "Local Gmail process-message queue failed",
+                gmailMessageId: payload.gmailMessageId,
+                jobId: payload.jobId,
+                error: error instanceof Error ? error.message : String(error),
+              }),
+            );
+          });
         return;
       }
       await enqueueCloudTask(config, {

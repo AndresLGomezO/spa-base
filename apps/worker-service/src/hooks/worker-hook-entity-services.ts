@@ -8,6 +8,10 @@ import {
   type HookPhase,
 } from "@repo/hooks";
 import {
+  emitAggregationEventIfNeeded,
+  type AggregationEmitterDeps,
+} from "@repo/aggregation-engine";
+import {
   createHookEntityAccessControl,
   getAllKnownPermissions,
   isPlatformSuperAdmin,
@@ -39,6 +43,7 @@ export interface WorkerCrudHookDeps {
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly userNotificationRepository?: UserNotificationRepository;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  readonly aggregation?: AggregationEmitterDeps;
 }
 
 export interface ResolvedHookUserContext {
@@ -198,6 +203,31 @@ export function buildHookEntityServices(options: {
     }),
     tenantId: user.tenantId,
     ownerUserId: user.uid,
+    ...(deps.aggregation
+      ? {
+          onRecordMutated: async (input) => {
+            try {
+              await emitAggregationEventIfNeeded(deps.aggregation!, {
+                tenantId: input.tenantId,
+                entityName: input.entityName,
+                operation: input.operation,
+                documentId: input.documentId,
+                before: input.before,
+                after: input.after,
+                businessFieldNames: input.businessFieldNames,
+              });
+            } catch (error) {
+              logger.error("Failed to emit aggregation event after hook write", {
+                err: error,
+                entityName: input.entityName,
+                tenantId: input.tenantId,
+                operation: input.operation,
+                documentId: input.documentId,
+              });
+            }
+          },
+        }
+      : {}),
     dispatchChainedHooks: (params) =>
       dispatchChainedEntityHooks({
         tenantId: user.tenantId,

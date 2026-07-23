@@ -10,6 +10,8 @@ export {
   type DispatchChainedHooksParams,
   type HookEntityAccessControl,
   type HookFieldAccessLevel,
+  type HookRecordMutatedInput,
+  type HookRecordMutatedOperation,
 } from "./create-hook-entity-services.js";
 export { runQueuedDataHookJob } from "./run-queued-data-hook-job.js";
 export {
@@ -55,6 +57,7 @@ export {
   isScheduleTrigger,
   isEmailTrigger,
   isCrudTrigger,
+  emailTriggerAppliesToBinding,
   dataHookConditionSchema,
   dataHookUpdateMatchingWhereSchema,
   dataHookConditionLeafSchema,

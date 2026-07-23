@@ -39,6 +39,18 @@ export interface DispatchChainedHooksParams {
   readonly visitedHookIds: ReadonlySet<string>;
 }
 
+export type HookRecordMutatedOperation = "CREATE" | "UPDATE" | "DELETE";
+
+export interface HookRecordMutatedInput {
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly operation: HookRecordMutatedOperation;
+  readonly documentId: string;
+  readonly before: Record<string, unknown> | null;
+  readonly after: Record<string, unknown> | null;
+  readonly businessFieldNames: readonly string[];
+}
+
 export function createHookEntityServices(options: {
   readonly entityRuntime: HookEntityRuntime;
   readonly accessControl: HookEntityAccessControl;
@@ -47,8 +59,26 @@ export function createHookEntityServices(options: {
   readonly dispatchChainedHooks?: (
     params: DispatchChainedHooksParams,
   ) => Promise<Record<string, unknown>>;
+  /**
+   * Optional post-write callback (e.g. aggregation emit). Failures are logged
+   * by the caller; this helper never fails the write if the callback throws
+   * unless the callback itself rethrows — callers should swallow errors.
+   */
+  readonly onRecordMutated?: (input: HookRecordMutatedInput) => Promise<void>;
 }): HookEntityServices {
   const { accessControl } = options;
+
+  async function notifyMutated(
+    input: Omit<HookRecordMutatedInput, "tenantId">,
+  ): Promise<void> {
+    if (!options.onRecordMutated) {
+      return;
+    }
+    await options.onRecordMutated({
+      ...input,
+      tenantId: options.tenantId,
+    });
+  }
 
   function withOwnershipDefaults(
     record: Record<string, unknown>,
@@ -162,6 +192,15 @@ export function createHookEntityServices(options: {
           { skipExistsCheck: true },
         );
 
+        await notifyMutated({
+          entityName,
+          operation: "CREATE",
+          documentId: String(created.id),
+          before: null,
+          after: created as Record<string, unknown>,
+          businessFieldNames,
+        });
+
         await options.dispatchChainedHooks(
           chainedDispatchParams(
             entityName,
@@ -187,6 +226,14 @@ export function createHookEntityServices(options: {
         record as { readonly id: string; readonly tenantId: string },
         { skipExistsCheck: true },
       );
+      await notifyMutated({
+        entityName,
+        operation: "CREATE",
+        documentId: String(created.id),
+        before: null,
+        after: created as Record<string, unknown>,
+        businessFieldNames,
+      });
       invalidateInMemoryListSnapshot(entityName);
       return filterReadResult(
         accessControl,
@@ -262,6 +309,17 @@ export function createHookEntityServices(options: {
         options.tenantId,
         prepared as Array<{ readonly id: string; readonly tenantId: string }>,
       );
+
+      for (const record of created) {
+        await notifyMutated({
+          entityName,
+          operation: "CREATE",
+          documentId: String(record.id),
+          before: null,
+          after: record as Record<string, unknown>,
+          businessFieldNames,
+        });
+      }
 
       invalidateInMemoryListSnapshot(entityName);
 
@@ -353,6 +411,15 @@ export function createHookEntityServices(options: {
           unknown
         >;
 
+        await notifyMutated({
+          entityName,
+          operation: "UPDATE",
+          documentId: id,
+          before: previous,
+          after: validatedUpdated,
+          businessFieldNames,
+        });
+
         await options.dispatchChainedHooks(
           chainedDispatchParams(
             entityName,
@@ -384,6 +451,14 @@ export function createHookEntityServices(options: {
       }
 
       const validated = entity.schema.parse(updated) as Record<string, unknown>;
+      await notifyMutated({
+        entityName,
+        operation: "UPDATE",
+        documentId: id,
+        before: previous,
+        after: validated,
+        businessFieldNames,
+      });
       invalidateInMemoryListSnapshot(entityName);
       return filterReadResult(
         accessControl,
@@ -507,6 +582,8 @@ export function createHookEntityServices(options: {
         throw new Error(`Entity "${entityName}" is not registered.`);
       }
 
+      const businessFieldNames = Object.keys(entity.metadata.fields);
+
       const repository = options.entityRuntime.getRepository(
         options.tenantId,
         entityName,
@@ -538,6 +615,15 @@ export function createHookEntityServices(options: {
           throw new Error(`Failed to delete ${entityName} record "${id}".`);
         }
 
+        await notifyMutated({
+          entityName,
+          operation: "DELETE",
+          documentId: id,
+          before: record,
+          after: null,
+          businessFieldNames,
+        });
+
         await options.dispatchChainedHooks(
           chainedDispatchParams(
             entityName,
@@ -556,6 +642,14 @@ export function createHookEntityServices(options: {
 
       const deleted = await repository.delete(id, options.tenantId);
       if (deleted) {
+        await notifyMutated({
+          entityName,
+          operation: "DELETE",
+          documentId: id,
+          before: record,
+          after: null,
+          businessFieldNames,
+        });
         invalidateInMemoryListSnapshot(entityName);
       }
       return deleted;

@@ -2,45 +2,24 @@
   "kind": "data-hook-definition",
   "version": 1,
   "data": {
-    "name": "Email Credit Card Statement",
-    "description": "Upsert period statement (SoT) for emailKind=creditCardStatement, link STATEMENT PDF, patch matching paymentSchedule min payment/due when amount/nextDueDate extract, set financialItem.nextDueDate only when the matched schedule is the earliest open bill. Does not require amount to create the statement row. PDF files are imported by the Gmail worker.",
+    "name": "Visa statement from email",
+    "description": "Davivienda monthly extracto email: upsert the period statement, link the imported STATEMENT PDF, and when min payment / due date are extracted patch the matching open payment schedule (and card nextDueDate only if that schedule is the earliest open bill).",
     "entity": "financialItem",
     "phase": "after",
     "trigger": {
-      "kind": "email"
+      "kind": "email",
+      "bindingIds": [
+        "emb_0819cd3c_0"
+      ]
     },
     "condition": {
-      "type": "group",
-      "combinator": "and",
-      "children": [
-        {
-          "type": "condition",
-          "field": "__emailRelevant",
-          "operator": "==",
-          "value": {
-            "kind": "literal",
-            "value": true
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.emailKind",
-          "operator": "==",
-          "value": {
-            "kind": "literal",
-            "value": "creditCardStatement"
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.isReversal",
-          "operator": "!=",
-          "value": {
-            "kind": "literal",
-            "value": true
-          }
-        }
-      ]
+      "type": "condition",
+      "field": "__emailRelevant",
+      "operator": "==",
+      "value": {
+        "kind": "literal",
+        "value": true
+      }
     },
     "actions": [
       {

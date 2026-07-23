@@ -1,7 +1,8 @@
 export interface FindByFieldParams {
   readonly tenantId: string;
   readonly field: string;
-  readonly value: string;
+  /** Firestore equality is typed; pass number/boolean for those fields. */
+  readonly value: string | number | boolean;
   readonly limit?: number;
   readonly cursor?: string;
 }

@@ -1,6 +1,7 @@
-import { processAggregationEventTransaction as processTransaction } from "@repo/aggregation-engine";
-
-import type { MetricRuntimeContext } from "./metric-runtime-context.js";
+import {
+  processAggregationEventTransaction as processTransaction,
+  type MetricRuntimeContext,
+} from "@repo/aggregation-engine";
 
 export async function processAggregationEventTransaction(
   metricRuntime: MetricRuntimeContext,

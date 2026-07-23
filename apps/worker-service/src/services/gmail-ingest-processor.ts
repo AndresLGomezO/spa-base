@@ -43,6 +43,7 @@ import {
   type EmailLedgerEntities,
 } from "./email-ledger-upsert.js";
 import {
+  emailTriggerAppliesToBinding,
   formatHookEvent,
   isEmailTrigger,
   runDataHook,
@@ -65,11 +66,13 @@ import {
   createRecordDataHookExecution,
 } from "../hooks/record-data-hook-execution.js";
 import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
+import { processPendingAggregationEventsForModel } from "@repo/aggregation-engine";
 
 export const gmailWindowSyncTaskPayloadSchema = z.object({
   tenantId: z.string().trim().min(1),
   userId: z.string().trim().min(1),
   jobId: z.string().trim().min(1),
+  bindingId: z.string().trim().min(1).optional(),
 });
 
 export const gmailWatchRenewTaskPayloadSchema = z.object({
@@ -84,6 +87,7 @@ export const gmailProcessMessageTaskPayloadSchema = z.object({
   jobId: z.string().trim().min(1),
   gmailMessageId: z.string().trim().min(1),
   bindingId: z.string().trim().min(1).optional(),
+  reprocess: z.boolean().optional(),
 });
 
 export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
@@ -105,11 +109,13 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
     readonly jobId: string;
     readonly gmailMessageId: string;
     readonly bindingId?: string;
+    readonly reprocess?: boolean;
   }) => Promise<void>;
   readonly enqueueWindowSync?: (payload: {
     readonly tenantId: string;
     readonly userId: string;
     readonly jobId: string;
+    readonly bindingId?: string;
   }) => Promise<void>;
   /** Schedule the next watch renew before expiration (Cloud Tasks or local delay). */
   readonly scheduleWatchRenew?: (payload: {
@@ -142,6 +148,21 @@ async function appendJobStep(
 ): Promise<void> {
   await deps.emailIngestJobRepository.appendStep(tenantId, jobId, entry);
 }
+
+
+/** Per-message path: skip chatty info steps; metrics already track progress. */
+async function appendMessageJobStep(
+  deps: GmailIngestProcessorDeps,
+  tenantId: string,
+  jobId: string,
+  entry: EmailIngestStepTraceEntry,
+): Promise<void> {
+  if (entry.status === "info") {
+    return;
+  }
+  await appendJobStep(deps, tenantId, jobId, entry);
+}
+
 
 async function resolveAccessToken(
   deps: GmailIngestProcessorDeps,
@@ -293,14 +314,12 @@ export async function processGmailProcessMessage(
   logger: HookLogger,
 ): Promise<void> {
   const { tenantId, userId, jobId, gmailMessageId } = payload;
+  const reprocessBinding =
+    payload.reprocess === true && Boolean(payload.bindingId);
 
   await deps.emailIngestJobRepository.applyRunProgress(tenantId, jobId, {
     increments: { processing: 1 },
     status: "running",
-    step: step("message-start", "info", "Started processing message", {
-      gmailMessageId,
-      preferredBindingId: payload.bindingId ?? null,
-    }),
   });
 
   let outcome: EmailIngestMessageOutcome = "failed";
@@ -309,7 +328,7 @@ export async function processGmailProcessMessage(
   let emailLedgerEntities: EmailLedgerEntities | null = null;
 
   try {
-    await appendJobStep(
+    await appendMessageJobStep(
       deps,
       tenantId,
       jobId,
@@ -323,14 +342,18 @@ export async function processGmailProcessMessage(
       userId,
       gmailMessageId,
     );
-    if (existing && existing.status === "processed") {
+    if (
+      !reprocessBinding &&
+      existing &&
+      existing.status === "processed"
+    ) {
       outcome = "skippedDedup";
       outcomeMeta = {
         gmailMessageId,
         reason: "already_processed",
         priorStatus: existing.status,
       };
-      await appendJobStep(
+      await appendMessageJobStep(
         deps,
         tenantId,
         jobId,
@@ -350,6 +373,7 @@ export async function processGmailProcessMessage(
       threadId: email.threadId,
       date: email.date,
       contentFingerprint,
+      reprocessBindingId: reprocessBinding ? payload.bindingId : null,
     };
 
     const priorFingerprint = await deps.emailIngestFingerprintRepository.get(
@@ -358,6 +382,7 @@ export async function processGmailProcessMessage(
       contentFingerprint,
     );
     if (
+      !reprocessBinding &&
       priorFingerprint &&
       priorFingerprint.gmailMessageId !== gmailMessageId
     ) {
@@ -379,7 +404,7 @@ export async function processGmailProcessMessage(
         reason: "content_fingerprint",
         priorGmailMessageId: priorFingerprint.gmailMessageId,
       };
-      await appendJobStep(
+      await appendMessageJobStep(
         deps,
         tenantId,
         jobId,
@@ -393,7 +418,7 @@ export async function processGmailProcessMessage(
       return;
     }
 
-    await appendJobStep(
+    await appendMessageJobStep(
       deps,
       tenantId,
       jobId,
@@ -401,6 +426,7 @@ export async function processGmailProcessMessage(
         from: email.from,
         subject: email.subject,
         preferredBindingId: payload.bindingId ?? null,
+        reprocess: reprocessBinding,
       }),
     );
 
@@ -417,7 +443,7 @@ export async function processGmailProcessMessage(
       return entity?.metadata.emailMatchingEnabled === true;
     });
 
-    const matchedBindings = [...resolveMatchingBindings(
+    let matchedBindings = [...resolveMatchingBindings(
       enabledBindings,
       email,
       payload.bindingId,
@@ -426,6 +452,14 @@ export async function processGmailProcessMessage(
       if (orderDelta !== 0) return orderDelta;
       return left.id.localeCompare(right.id);
     });
+
+    // Binding Sync Now: only run the requested rule (do not re-fire create
+    // hooks from sibling bindings that already ingested this mail).
+    if (reprocessBinding && payload.bindingId) {
+      matchedBindings = matchedBindings.filter(
+        (binding) => binding.id === payload.bindingId,
+      );
+    }
     if (matchedBindings.length === 0) {
       await deps.emailIngestProcessedRepository.upsert(tenantId, {
         userId,
@@ -444,7 +478,7 @@ export async function processGmailProcessMessage(
         preferredBindingId: payload.bindingId ?? null,
         enabledBindingCount: enabledBindings.length,
       };
-      await appendJobStep(
+      await appendMessageJobStep(
         deps,
         tenantId,
         jobId,
@@ -463,7 +497,7 @@ export async function processGmailProcessMessage(
       matchedBindingCount: matchedBindings.length,
     };
 
-    await appendJobStep(
+    await appendMessageJobStep(
       deps,
       tenantId,
       jobId,
@@ -530,7 +564,7 @@ export async function processGmailProcessMessage(
             error: "Entity repository unavailable",
           },
         });
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -548,7 +582,7 @@ export async function processGmailProcessMessage(
             error: "Matched record not found",
           },
         });
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -560,7 +594,7 @@ export async function processGmailProcessMessage(
       let extracted: EmailAiExtractResult | null = null;
       let relevant = true;
       if (binding.useAi) {
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -585,7 +619,7 @@ export async function processGmailProcessMessage(
           };
         }
         relevant = extracted?.relevant ?? false;
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -605,7 +639,7 @@ export async function processGmailProcessMessage(
           ),
         );
       } else if ((binding.bodyFieldExtractors?.length ?? 0) > 0) {
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -622,7 +656,7 @@ export async function processGmailProcessMessage(
           binding.bodyFieldExtractors ?? [],
         );
         relevant = extracted.relevant;
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -643,7 +677,7 @@ export async function processGmailProcessMessage(
             reason: extracted?.reason ?? "not_relevant",
           },
         });
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -658,26 +692,32 @@ export async function processGmailProcessMessage(
       if (!primaryBinding) {
         primaryBinding = binding;
         primaryExtracted = extracted;
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
           step("email-ledger", "info", "Upserting email ledger row", passMeta),
         );
+        const relatedFinancialItemId = extracted?.fields?.relatedFinancialItemId;
+        const matchRecordId =
+          typeof relatedFinancialItemId === "string" &&
+          relatedFinancialItemId.trim().length > 0
+            ? relatedFinancialItemId.trim()
+            : binding.recordId;
         const ledger = await upsertProcessedEmailLedger({
           entities,
           email,
           userId,
           bindingId: binding.id,
           matchEntityName: binding.entityName,
-          matchRecordId: binding.recordId,
+          matchRecordId,
           extracted,
           relevant,
           contentFingerprint,
           status: "processed",
         });
         emailLedgerId = ledger.id;
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -701,7 +741,7 @@ export async function processGmailProcessMessage(
       }
 
       if (binding.attachmentImport?.enabled) {
-        await appendJobStep(
+        await appendMessageJobStep(
           deps,
           tenantId,
           jobId,
@@ -721,7 +761,7 @@ export async function processGmailProcessMessage(
             uploadedBy: userId,
             emailId: emailLedgerId,
           });
-          await appendJobStep(
+          await appendMessageJobStep(
             deps,
             tenantId,
             jobId,
@@ -735,7 +775,7 @@ export async function processGmailProcessMessage(
         } catch (error) {
           const message =
             error instanceof Error ? error.message : String(error);
-          await appendJobStep(
+          await appendMessageJobStep(
             deps,
             tenantId,
             jobId,
@@ -772,11 +812,12 @@ export async function processGmailProcessMessage(
             definition.enabled &&
             definition.entity === binding.entityName &&
             isEmailTrigger(definition.trigger) &&
-            definition.phase === "after",
+            definition.phase === "after" &&
+            emailTriggerAppliesToBinding(definition.trigger, binding.id),
         )
         .sort((left, right) => left.order - right.order);
 
-      await appendJobStep(
+      await appendMessageJobStep(
         deps,
         tenantId,
         jobId,
@@ -881,7 +922,7 @@ export async function processGmailProcessMessage(
             : "Binding processing failed",
         bindingResults,
       };
-      await appendJobStep(
+      await appendMessageJobStep(
         deps,
         tenantId,
         jobId,
@@ -912,7 +953,7 @@ export async function processGmailProcessMessage(
             : "not_relevant",
         bindingResults,
       };
-      await appendJobStep(
+      await appendMessageJobStep(
         deps,
         tenantId,
         jobId,
@@ -950,7 +991,7 @@ export async function processGmailProcessMessage(
       bindingResults,
       primaryExtractedFields: primaryExtracted?.fields ?? null,
     };
-    await appendJobStep(
+    await appendMessageJobStep(
       deps,
       tenantId,
       jobId,
@@ -993,7 +1034,7 @@ export async function processGmailProcessMessage(
         });
       }
     }
-    await appendJobStep(
+    await appendMessageJobStep(
       deps,
       tenantId,
       jobId,
@@ -1029,6 +1070,7 @@ export async function processGmailWindowSync(
   logger: HookLogger,
 ): Promise<void> {
   const { tenantId, userId, jobId } = payload;
+  const scopedBindingId = payload.bindingId ?? null;
   const windowEnd = new Date();
   const connection = await deps.gmailConnectionRepository.get(userId);
 
@@ -1039,25 +1081,72 @@ export async function processGmailWindowSync(
     step("window-sync-start", "info", "Starting Gmail window sync", {
       ingestWatermarkAt: connection?.ingestWatermarkAt ?? null,
       windowEnd: windowEnd.toISOString(),
+      bindingId: scopedBindingId,
     }),
   );
+
+  if (deps.aggregation) {
+    try {
+      const drained = await processPendingAggregationEventsForModel(
+        {
+          aggregationEventRepository:
+            deps.aggregation.metricRuntime.aggregationEventRepository,
+          metricDefinitionRepository:
+            deps.aggregation.metricRuntime.metricDefinitionRepository,
+          metricValueRepository:
+            deps.aggregation.metricRuntime.metricValueRepository,
+          metricContributionRepository:
+            deps.aggregation.metricRuntime.metricContributionRepository,
+          resolveQueryMembership:
+            deps.aggregation.metricRuntime.resolveQueryMembership,
+        },
+        tenantId,
+        "transaction",
+        (message, meta) => {
+          logger.info(message, meta);
+        },
+      );
+      if (drained > 0) {
+        await appendJobStep(
+          deps,
+          tenantId,
+          jobId,
+          step(
+            "aggregation-pending-drain",
+            "success",
+            `Processed ${drained} pending aggregation event(s)`,
+            { drained },
+          ),
+        );
+      }
+    } catch (error) {
+      logger.error("Failed to drain pending aggregation events", {
+        meta: {
+          tenantId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
+  }
 
   const { accessToken } = await resolveAccessToken(deps, userId);
   const gmail = new GmailApiClient(accessToken);
 
-  try {
-    await renewGmailWatchAndSchedule(
-      deps,
-      { userId, accessToken, tenantId },
-      logger,
-    );
-  } catch (error) {
-    logger.error("Gmail watch renew during window sync failed", {
-      meta: {
-        userId,
-        error: error instanceof Error ? error.message : String(error),
-      },
-    });
+  if (!scopedBindingId) {
+    try {
+      await renewGmailWatchAndSchedule(
+        deps,
+        { userId, accessToken, tenantId },
+        logger,
+      );
+    } catch (error) {
+      logger.error("Gmail watch renew during window sync failed", {
+        meta: {
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
   }
 
   const bindings = await deps.emailMatchBindingRepository.listForUser(
@@ -1065,21 +1154,14 @@ export async function processGmailWindowSync(
     userId,
   );
   const enabledBindings = bindings.filter((binding) => binding.enabled);
-  const afterDate = resolveWindowAfterDate(
-    connection?.ingestWatermarkAt,
-    windowEnd,
-  );
   const beforeDate = resolveWindowBeforeDate(windowEnd);
-
-  const windowQuery = buildGmailSearchQuery(enabledBindings, {
-    ...(afterDate ? { afterDate } : {}),
-    beforeDate,
-  });
 
   const messageIds = new Set<string>();
   // Preferred binding is informational for catch-up tracing only; process
   // message resolves *all* matching bindings in one pass.
   const preferredBindingIdsByMessage = new Map<string, string>();
+  let windowQuery: string | null = null;
+  let catchupBindingCount = 0;
 
   async function listAllMessageIds(query: string): Promise<readonly string[]> {
     const ids: string[] = [];
@@ -1097,96 +1179,202 @@ export async function processGmailWindowSync(
     return ids;
   }
 
-  if (windowQuery) {
-    const listed = await listAllMessageIds(windowQuery);
-    for (const messageId of listed) {
-      messageIds.add(messageId);
+  if (scopedBindingId) {
+    const scopedBinding = enabledBindings.find(
+      (binding) => binding.id === scopedBindingId,
+    );
+    if (!scopedBinding) {
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step(
+          "binding-sync",
+          "error",
+          "Scoped binding missing or disabled",
+          { bindingId: scopedBindingId },
+        ),
+      );
+      await deps.emailIngestJobRepository.complete(
+        tenantId,
+        jobId,
+        "failed",
+        "Scoped binding missing or disabled",
+      );
+      return;
     }
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("window-query", "info", "Built window Gmail query", {
-        query: windowQuery,
-        bootstrap: !connection?.ingestWatermarkAt,
-        listedCount: listed.length,
-        enabledBindingCount: enabledBindings.length,
-      }),
-    );
-  } else {
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("window-query", "skipped", "No enabled bindings for window query", {
-        enabledBindingCount: enabledBindings.length,
-      }),
-    );
-  }
 
-  const catchupBindings = enabledBindings.filter(
-    (binding) => binding.catchupNeeded === true,
-  );
-  for (const binding of catchupBindings) {
-    const catchupQuery = buildGmailSearchQuery([binding], { beforeDate });
-    if (!catchupQuery) continue;
-    const listed = await listAllMessageIds(catchupQuery);
-    await appendJobStep(
-      deps,
-      tenantId,
-      jobId,
-      step("catchup-query", "info", "Binding catch-up query", {
-        bindingId: binding.id,
-        query: catchupQuery,
-        listedCount: listed.length,
-        entityName: binding.entityName,
-        recordId: binding.recordId,
-      }),
-    );
-    for (const messageId of listed) {
-      messageIds.add(messageId);
-      if (!preferredBindingIdsByMessage.has(messageId)) {
-        preferredBindingIdsByMessage.set(messageId, binding.id);
+    // Binding Sync Now: catch-up style for this rule only (no after: watermark).
+    // Does not advance the mailbox watermark so other bindings stay unaffected.
+    windowQuery = buildGmailSearchQuery([scopedBinding], { beforeDate });
+    if (windowQuery) {
+      const listed = await listAllMessageIds(windowQuery);
+      for (const messageId of listed) {
+        messageIds.add(messageId);
+        preferredBindingIdsByMessage.set(messageId, scopedBinding.id);
       }
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("binding-sync-query", "info", "Built binding-scoped Gmail query", {
+          bindingId: scopedBinding.id,
+          query: windowQuery,
+          listedCount: listed.length,
+          entityName: scopedBinding.entityName,
+          recordId: scopedBinding.recordId,
+        }),
+      );
+    } else {
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step(
+          "binding-sync-query",
+          "skipped",
+          "Scoped binding has no searchable query",
+          { bindingId: scopedBinding.id },
+        ),
+      );
     }
-    await deps.emailMatchBindingRepository.patch(tenantId, binding.id, userId, {
-      catchupNeeded: false,
-    });
-  }
 
-  let enqueued = 0;
-  for (const messageId of messageIds) {
-    const bindingId = preferredBindingIdsByMessage.get(messageId);
-    await deps.enqueueProcessMessage({
-      tenantId,
-      userId,
-      jobId,
-      gmailMessageId: messageId,
-      ...(bindingId ? { bindingId } : {}),
+    if (scopedBinding.catchupNeeded === true) {
+      await deps.emailMatchBindingRepository.patch(
+        tenantId,
+        scopedBinding.id,
+        userId,
+        { catchupNeeded: false },
+      );
+      catchupBindingCount = 1;
+    }
+  } else {
+    const afterDate = resolveWindowAfterDate(
+      connection?.ingestWatermarkAt,
+      windowEnd,
+    );
+
+    windowQuery = buildGmailSearchQuery(enabledBindings, {
+      ...(afterDate ? { afterDate } : {}),
+      beforeDate,
     });
-    enqueued += 1;
+
+    if (windowQuery) {
+      const listed = await listAllMessageIds(windowQuery);
+      for (const messageId of listed) {
+        messageIds.add(messageId);
+      }
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("window-query", "info", "Built window Gmail query", {
+          query: windowQuery,
+          bootstrap: !connection?.ingestWatermarkAt,
+          listedCount: listed.length,
+          enabledBindingCount: enabledBindings.length,
+        }),
+      );
+    } else {
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("window-query", "skipped", "No enabled bindings for window query", {
+          enabledBindingCount: enabledBindings.length,
+        }),
+      );
+    }
+
+    const catchupBindings = enabledBindings.filter(
+      (binding) => binding.catchupNeeded === true,
+    );
+    catchupBindingCount = catchupBindings.length;
+    for (const binding of catchupBindings) {
+      const catchupQuery = buildGmailSearchQuery([binding], { beforeDate });
+      if (!catchupQuery) continue;
+      const listed = await listAllMessageIds(catchupQuery);
+      await appendJobStep(
+        deps,
+        tenantId,
+        jobId,
+        step("catchup-query", "info", "Binding catch-up query", {
+          bindingId: binding.id,
+          query: catchupQuery,
+          listedCount: listed.length,
+          entityName: binding.entityName,
+          recordId: binding.recordId,
+        }),
+      );
+      for (const messageId of listed) {
+        messageIds.add(messageId);
+        if (!preferredBindingIdsByMessage.has(messageId)) {
+          preferredBindingIdsByMessage.set(messageId, binding.id);
+        }
+      }
+      await deps.emailMatchBindingRepository.patch(
+        tenantId,
+        binding.id,
+        userId,
+        {
+          catchupNeeded: false,
+        },
+      );
+    }
   }
 
   const sortedIds = [...messageIds].sort();
   const ingestBatchHash = buildIngestBatchHash(sortedIds);
   const ingestWatermarkAt = windowEnd.toISOString();
 
-  let profileHistoryId: string | undefined;
-  try {
-    const profile = await gmail.getProfile();
-    if (profile.historyId) profileHistoryId = String(profile.historyId);
-  } catch {
-    // Watch continuity only; window sync does not require historyId.
+  // Full mailbox sync skips already-processed mail. Binding Sync Now must
+  // re-queue them so a new rule can run against previously ingested messages.
+  let toEnqueue = sortedIds;
+  let skippedDedupUpfront = 0;
+  if (!scopedBindingId) {
+    const alreadyProcessed =
+      await deps.emailIngestProcessedRepository.listProcessedMessageIds(
+        tenantId,
+        userId,
+        sortedIds,
+      );
+    toEnqueue = sortedIds.filter(
+      (messageId) => !alreadyProcessed.has(messageId),
+    );
+    skippedDedupUpfront = sortedIds.length - toEnqueue.length;
+  }
+  const enqueued = toEnqueue.length;
+
+  if (!scopedBindingId) {
+    let profileHistoryId: string | undefined;
+    try {
+      const profile = await gmail.getProfile();
+      if (profile.historyId) profileHistoryId = String(profile.historyId);
+    } catch {
+      // Watch continuity only; window sync does not require historyId.
+    }
+
+    await deps.gmailConnectionRepository.upsert(userId, {
+      status: "connected",
+      ingestWatermarkAt,
+      ingestBatchHash,
+      lastSyncAt: ingestWatermarkAt,
+      ...(profileHistoryId ? { historyId: profileHistoryId } : {}),
+    });
+  } else {
+    // Binding-scoped sync: refresh lastSyncAt only; keep mailbox watermark.
+    await deps.gmailConnectionRepository.upsert(userId, {
+      status: "connected",
+      lastSyncAt: ingestWatermarkAt,
+    });
   }
 
-  await deps.gmailConnectionRepository.upsert(userId, {
-    status: "connected",
-    ingestWatermarkAt,
-    ingestBatchHash,
-    lastSyncAt: ingestWatermarkAt,
-    ...(profileHistoryId ? { historyId: profileHistoryId } : {}),
-  });
+  const watermarkNote = scopedBindingId
+    ? "mailbox watermark unchanged"
+    : "watermark advanced";
 
+  // Initialize metrics before fan-out. Local dispatch schedules onto a paced
+  // queue without blocking this loop on full message processing.
   await deps.emailIngestJobRepository.applyRunProgress(tenantId, jobId, {
     setMetrics: {
       fetched: messageIds.size,
@@ -1194,7 +1382,7 @@ export async function processGmailWindowSync(
       processing: 0,
       finished: 0,
       processed: 0,
-      skippedDedup: 0,
+      skippedDedup: skippedDedupUpfront,
       skippedNoMatch: 0,
       skippedIrrelevant: 0,
       failed: 0,
@@ -1205,28 +1393,61 @@ export async function processGmailWindowSync(
       "window-sync-done",
       "success",
       enqueued > 0
-        ? `Enqueued ${enqueued} message(s); watermark advanced — processing in progress`
-        : `No messages to enqueue; watermark advanced`,
+        ? `Queued ${enqueued} message(s) (${skippedDedupUpfront} already processed); ${watermarkNote}`
+        : skippedDedupUpfront > 0
+          ? `All ${skippedDedupUpfront} listed message(s) already processed; ${watermarkNote}`
+          : `No messages to enqueue; ${watermarkNote}`,
       {
         fetched: messageIds.size,
         enqueued,
-        ingestWatermarkAt,
-        ingestBatchHash,
-        catchupBindingCount: catchupBindings.length,
-        messageIdsPreview: sortedIds.slice(0, 25),
+        skippedDedupUpfront,
+        bindingId: scopedBindingId,
+        ingestWatermarkAt: scopedBindingId
+          ? (connection?.ingestWatermarkAt ?? null)
+          : ingestWatermarkAt,
+        ingestBatchHash: scopedBindingId ? null : ingestBatchHash,
+        catchupBindingCount,
+        messageIdsPreview: toEnqueue.slice(0, 25),
       },
     ),
     finalizeIfIdle: enqueued === 0,
   });
 
-  if (enqueued === 0) {
-    await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
-  }
-
   logger.info("Gmail window sync listing completed", {
     tenantId,
-    meta: { fetched: messageIds.size, enqueued, jobId, ingestWatermarkAt },
+    meta: {
+      fetched: messageIds.size,
+      enqueued,
+      skippedDedupUpfront,
+      jobId,
+      bindingId: scopedBindingId,
+      ingestWatermarkAt: scopedBindingId
+        ? (connection?.ingestWatermarkAt ?? null)
+        : ingestWatermarkAt,
+    },
   });
+
+  if (enqueued === 0) {
+    await deps.emailIngestJobRepository.complete(tenantId, jobId, "completed");
+    return;
+  }
+
+  // Local: paced FIFO (enqueuer schedules; route awaits each). Cloud Tasks:
+  // create tasks quickly; queue rate limits drain them.
+  for (const messageId of toEnqueue) {
+    const bindingId =
+      preferredBindingIdsByMessage.get(messageId) ??
+      scopedBindingId ??
+      undefined;
+    await deps.enqueueProcessMessage({
+      tenantId,
+      userId,
+      jobId,
+      gmailMessageId: messageId,
+      ...(bindingId ? { bindingId } : {}),
+      ...(scopedBindingId ? { reprocess: true } : {}),
+    });
+  }
 }
 
 export async function processGmailWatchRenew(

@@ -37,9 +37,12 @@ export interface HookEntityRecord {
   readonly [key: string]: unknown;
 }
 
+/** Equality lookup value; keep number/boolean so Firestore typed fields match. */
+export type HookEntityListQueryValue = string | number | boolean;
+
 export interface HookEntityListQuery {
   readonly field: string;
-  readonly value: string;
+  readonly value: HookEntityListQueryValue;
   readonly limit?: number;
 }
 
@@ -80,7 +83,7 @@ export interface HookEntityRepository {
   findByField(query: {
     tenantId: string;
     field: string;
-    value: string;
+    value: HookEntityListQueryValue;
     limit?: number;
   }): Promise<{ readonly items: readonly HookEntityRepositoryRecord[] }>;
 }

@@ -20,6 +20,7 @@ export async function publishAggregationEventMessage(
   topicName: string,
   message: AggregationEventMessage,
 ): Promise<void> {
+  await ensureAggregationEventsTopic(projectId, topicName);
   const pubsub = new PubSub({ projectId });
   const topic = pubsub.topic(topicName);
   await topic.publishMessage({ json: message });

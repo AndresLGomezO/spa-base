@@ -122,6 +122,7 @@ import { registerEntityQueryDefinitionRoutes } from "./entity-queries/register-e
 import { registerChartDefinitionRoutes } from "./chart-definitions/register-chart-definition-routes.js";
 import { registerCustomViewRoutes } from "./custom-views/register-custom-view-routes.js";
 import type { AggregationEmitterDeps } from "./aggregation/emit-aggregation-event.js";
+import { emitAggregationEventIfNeeded } from "./aggregation/emit-aggregation-event.js";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { platformApp } from "@app/platform/app.config.js";
@@ -764,7 +765,25 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const joinRepository =
     options.joinRepository ??
     createFirestoreAdminJoinCollectionRepository(firebaseAdminConfig);
-  const relationContext = entityRuntime.createRelationContext(joinRepository);
+  const relationContext = entityRuntime.createRelationContext(
+    joinRepository,
+    async (input) => {
+      try {
+        await emitAggregationEventIfNeeded(aggregationEmitter, input);
+      } catch (error) {
+        server.log.error(
+          {
+            err: error,
+            entityName: input.entityName,
+            tenantId: input.tenantId,
+            operation: input.operation,
+            documentId: input.documentId,
+          },
+          "Failed to emit aggregation event after relation cascade",
+        );
+      }
+    },
+  );
   const ownershipQueryInjector = createOwnershipQueryInjector(
     (entityName, tenantId) => {
       const entity = entityRuntime.resolveEntity(entityName, tenantId);
@@ -784,6 +803,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     enqueueDataHookJob:
       hookTasksClient.enqueueDataHookJob.bind(hookTasksClient),
     callWebhook: callDataHookWebhook,
+    aggregation: aggregationEmitter,
   };
   const recordReadEnricher = createEntityFileReadEnricher(
     firebaseAdminConfig,

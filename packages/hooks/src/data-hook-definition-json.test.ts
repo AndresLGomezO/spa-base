@@ -172,10 +172,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(41);
+    expect(hooks.length).toBe(42);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(41);
+    expect(enabled.length).toBe(42);
 
     const ratesEntities = new Set([
       "actor",
@@ -202,37 +202,21 @@ describe("data-hook-definition-json", () => {
     const emailIngestAi = hooks.find(
       (hook) => hook.name === "Email Ingest - AI",
     );
-    expect(emailIngestAi?.entity).toBe("financialItem");
-    expect(emailIngestAi?.trigger).toMatchObject({ kind: "email" });
-    expect(emailIngestAi?.chainHooks).toBe(true);
-    expect(
-      emailIngestAi?.actions.some(
-        (action) =>
-          action.type === "getOrCreateRecord" && action.entity === "category",
-      ),
-    ).toBe(true);
-    expect(
-      emailIngestAi?.actions.some(
-        (action) =>
-          action.type === "matchRelatedRecord" &&
-          action.entity === "financialItem" &&
-          action.as === "subscription",
-      ),
-    ).toBe(true);
-    expect(
-      emailIngestAi?.actions.some(
-        (action) =>
-          action.type === "getOrCreateRecord" &&
-          action.entity === "transaction" &&
-          action.data?.emailId != null,
-      ),
-    ).toBe(true);
+    expect(emailIngestAi).toBeUndefined();
 
     const emailIngestManual = hooks.find(
-      (hook) => hook.name === "Email Ingest - Manual Extract",
+      (hook) => hook.name === "Create transaction from email",
     );
     expect(emailIngestManual?.entity).toBe("financialItem");
-    expect(emailIngestManual?.trigger).toMatchObject({ kind: "email" });
+    expect(emailIngestManual?.trigger).toMatchObject({
+      kind: "email",
+      bindingIds: [
+        "emb_0819cd3c_5",
+        "emb_7c2e9f11_0",
+        "emb_7c2e9f11_5",
+        "emb_7c2e9f11_6",
+      ],
+    });
     expect(emailIngestManual?.chainHooks).toBe(true);
     expect(
       emailIngestManual?.actions.some(
@@ -256,21 +240,20 @@ describe("data-hook-definition-json", () => {
     ).toBe(true);
 
     const emailStatement = hooks.find(
-      (hook) => hook.name === "Email Credit Card Statement",
+      (hook) => hook.name === "Visa statement from email",
     );
     expect(emailStatement?.entity).toBe("financialItem");
-    expect(emailStatement?.trigger).toMatchObject({ kind: "email" });
+    expect(emailStatement?.trigger).toMatchObject({
+      kind: "email",
+      bindingIds: ["emb_0819cd3c_0"],
+    });
     expect(emailStatement?.chainHooks).toBe(false);
     expect(emailStatement?.order).toBe(-1);
-    expect(
-      emailStatement?.condition &&
-        "children" in emailStatement.condition &&
-        emailStatement.condition.children.some(
-          (child) =>
-            child.type === "condition" &&
-            child.field === "__extracted.fields.amount",
-        ),
-    ).toBe(false);
+    expect(emailStatement?.condition).toMatchObject({
+      type: "condition",
+      field: "__emailRelevant",
+      operator: "==",
+    });
     expect(
       emailStatement?.actions.some(
         (action) =>
@@ -297,9 +280,14 @@ describe("data-hook-definition-json", () => {
       ),
     ).toBe(true);
 
-    const emailReversal = hooks.find((hook) => hook.name === "Email Reversal");
+    const emailReversal = hooks.find(
+      (hook) => hook.name === "Reverse card purchase from email",
+    );
     expect(emailReversal?.entity).toBe("financialItem");
-    expect(emailReversal?.trigger).toMatchObject({ kind: "email" });
+    expect(emailReversal?.trigger).toMatchObject({
+      kind: "email",
+      bindingIds: ["emb_0819cd3c_6"],
+    });
     expect(emailReversal?.chainHooks).toBe(false);
     expect(
       emailReversal?.actions.some(
@@ -313,6 +301,26 @@ describe("data-hook-definition-json", () => {
           action.type === "updateMatching" && action.set?.emailId != null,
       ),
     ).toBe(true);
+
+    const emailLink = hooks.find(
+      (hook) => hook.name === "Link PSE payment to schedule",
+    );
+    expect(emailLink?.trigger).toMatchObject({
+      kind: "email",
+      bindingIds: ["emb_06e5cb41_0", "emb_cf757971_10"],
+    });
+
+    const statementClosing = hooks.find(
+      (hook) => hook.name === "Visa statement closing balance",
+    );
+    expect(statementClosing?.trigger).toMatchObject({
+      kind: "email",
+      bindingIds: ["emb_0819cd3c_0"],
+    });
+    expect(statementClosing?.condition).toMatchObject({
+      type: "group",
+      combinator: "and",
+    });
 
     const markPaid = hooks.find((hook) => hook.name === "Mark schedule PAID");
     expect(markPaid?.entity).toBe("transaction");

@@ -32,6 +32,30 @@ describe("gmailApiMessageToEnvelope", () => {
     expect(envelope.attachments).toEqual([]);
   });
 
+  it("decodes named HTML entities in text/plain bodies", () => {
+    const plain = Buffer.from(
+      "N&uacute;mero de transacci&oacute;n: APIE1\nDescripci&oacute;n del pago: Torre 2",
+      "utf8",
+    ).toString("base64url");
+
+    const envelope = gmailApiMessageToEnvelope({
+      id: "msg_entities",
+      threadId: "thr_entities",
+      snippet: "Pago exitoso",
+      payload: {
+        headers: [
+          { name: "From", value: "notificador@bancocajasocial.com" },
+          { name: "Subject", value: "Pago exitoso" },
+        ],
+        mimeType: "text/plain",
+        body: { data: plain },
+      },
+    });
+
+    expect(envelope.bodyText).toContain("Número de transacción: APIE1");
+    expect(envelope.bodyText).toContain("Descripción del pago: Torre 2");
+  });
+
   it("lists PDF attachment metadata from parts", () => {
     const envelope = gmailApiMessageToEnvelope({
       id: "msg_pdf",

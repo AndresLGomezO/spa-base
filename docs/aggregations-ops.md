@@ -4,17 +4,19 @@ Operational guide for the event-driven aggregation pipeline. Design reference: [
 
 ## Pipeline
 
-1. API CRUD writes emit events only when the tenant has **ACTIVE** metrics for that `sourceModel`.
+1. API CRUD, entity import, **hook entity writes** (email ingest, data hooks, schedule ticks, API after-hooks), and **relation cascade/nullify** emit events when the tenant has **ACTIVE** metrics for that `sourceModel`.
 2. Events are stored at `tenants/{tenantId}/__events/{eventId}` with a checksum.
-3. **Local / inline (host-only default):** when `AGGREGATION_EVENTS_PUBSUB=false`, the API processes the event immediately after persisting it and writes `tenants/{tenantId}/metrics/{metricName}/rows/{docId}`. No worker or Pub/Sub required.
-4. **Production / async:** when `AGGREGATION_EVENTS_PUBSUB=true`, the API publishes `{ eventId, tenantId }` to the `aggregation-events` topic and `apps/worker-aggregation` consumes messages to update metric rows.
+3. **Local / inline (host-only default):** when `AGGREGATION_EVENTS_PUBSUB=false`, the API processes the event immediately after persisting it and writes metric rows. No aggregation worker or Pub/Sub required.
+4. **Worker-service (email ingest / data hooks):** always processes aggregation events **inline** in the same write path (does not depend on Pub/Sub). Window sync also drains any stranded `PENDING` `__events` for `transaction`.
+5. **API production / async:** when `AGGREGATION_EVENTS_PUBSUB=true`, the API publishes `{ eventId, tenantId }` to the `aggregation-events` topic and `apps/worker-aggregation` consumes messages to update metric rows.
 
 ## Structured logs
 
 | Log key | When |
 | --- | --- |
-| `aggregation_event_emitted` | API persisted a new event |
-| `aggregation_event_processed` | Worker finished successfully |
+| `aggregation_event_emitted` | API or worker-service persisted a new event |
+| `aggregation_event_processed` | Event applied to metric rows (API inline, worker-service inline, or worker-aggregation) |
+| `aggregation_pending_events_drained` | Gmail window sync processed stranded PENDING events |
 | `aggregation_event_skipped` | Duplicate delivery; event already `PROCESSED` |
 | `aggregation_event_failed` | Worker error; event marked `FAILED` |
 
@@ -120,6 +122,6 @@ After upgrading from keys that omitted `userId`, run **backfill per metric** so 
 
 ## Known limitations (v1)
 
-- Hook-driven writes (`createHookEntityServices`) do not emit aggregation events.
+- Bulk seed / local entity import without the aggregation emitter does not emit per-row events; heal with snapshot backfill (`pnpm seed:database -- --only metrics-backfill` or Settings → Metrics backfill).
 - Share-service and other direct Firestore writes bypass the event pipeline.
 - Hot metric documents may require sharding `docId` at extreme write rates.

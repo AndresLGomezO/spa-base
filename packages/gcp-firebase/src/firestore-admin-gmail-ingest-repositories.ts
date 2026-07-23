@@ -55,6 +55,16 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+function emptyToNull(
+  value: string | null | undefined,
+): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export interface GmailConnectionRepository {
   get(userId: string): Promise<GmailConnectionRecord | null>;
   findByEmail(email: string): Promise<GmailConnectionRecord | null>;
@@ -102,6 +112,15 @@ export interface EmailIngestProcessedRepository {
     userId: string,
     gmailMessageId: string,
   ): Promise<EmailIngestProcessedRecord | null>;
+  /**
+   * Returns gmailMessageIds that already have status "processed".
+   * Used by window sync to avoid enqueueing work the worker would only dedup.
+   */
+  listProcessedMessageIds(
+    tenantId: string,
+    userId: string,
+    gmailMessageIds: readonly string[],
+  ): Promise<ReadonlySet<string>>;
   upsert(
     tenantId: string,
     record: Omit<EmailIngestProcessedRecord, "id" | "tenantId"> & {
@@ -398,7 +417,7 @@ export function createFirestoreAdminEmailMatchBindingRepository(
     },
     async create(tenantId, userId, input) {
       const parsed = createEmailMatchBindingInputSchema.parse(input);
-      const id = `emb_${nanoid(12)}`;
+      const id = parsed.id?.trim() || `emb_${nanoid(12)}`;
       const timestamp = nowIso();
       const record = emailMatchBindingSchema.parse({
         id,
@@ -406,6 +425,8 @@ export function createFirestoreAdminEmailMatchBindingRepository(
         userId,
         entityName: parsed.entityName,
         recordId: parsed.recordId,
+        name: emptyToNull(parsed.name),
+        description: emptyToNull(parsed.description),
         enabled: parsed.enabled ?? true,
         catchupNeeded: true,
         order: parsed.order ?? 100,
@@ -432,6 +453,14 @@ export function createFirestoreAdminEmailMatchBindingRepository(
       const next = emailMatchBindingSchema.parse({
         ...existing,
         ...parsed,
+        name:
+          parsed.name !== undefined
+            ? emptyToNull(parsed.name)
+            : existing.name,
+        description:
+          parsed.description !== undefined
+            ? emptyToNull(parsed.description)
+            : existing.description,
         catchupNeeded:
           parsed.catchupNeeded !== undefined
             ? parsed.catchupNeeded
@@ -488,6 +517,34 @@ export function createFirestoreAdminEmailIngestProcessedRepository(
         id: snapshot.id,
         ...snapshot.data(),
       });
+    },
+    async listProcessedMessageIds(tenantId, userId, gmailMessageIds) {
+      const processed = new Set<string>();
+      if (gmailMessageIds.length === 0) return processed;
+
+      const db = getFirestoreAdmin(config);
+      const col = collection(tenantId);
+      const chunkSize = 100;
+      for (let i = 0; i < gmailMessageIds.length; i += chunkSize) {
+        const chunk = gmailMessageIds.slice(i, i + chunkSize);
+        const refs = chunk.map((gmailMessageId) =>
+          col.doc(buildProcessedDocId(userId, gmailMessageId)),
+        );
+        const snapshots = await db.getAll(...refs);
+        for (const snapshot of snapshots) {
+          if (!snapshot.exists) continue;
+          const status = snapshot.data()?.status;
+          const gmailMessageId = snapshot.data()?.gmailMessageId;
+          if (
+            status === "processed" &&
+            typeof gmailMessageId === "string" &&
+            gmailMessageId.trim()
+          ) {
+            processed.add(gmailMessageId);
+          }
+        }
+      }
+      return processed;
     },
     async upsert(tenantId, record) {
       const id =
@@ -603,8 +660,12 @@ export function createFirestoreAdminEmailIngestJobRepository(
           }
         }
 
+        // Cap the in-doc trace: each append rewrites the whole job document in a
+        // transaction. Unbounded growth (hundreds of messages × many steps) OOMs
+        // the Firestore emulator and stalls the API.
+        const MAX_STEP_TRACE = 100;
         const stepTrace = options.step
-          ? [...existing.stepTrace, options.step]
+          ? [...existing.stepTrace, options.step].slice(-MAX_STEP_TRACE)
           : existing.stepTrace;
 
         const idle =

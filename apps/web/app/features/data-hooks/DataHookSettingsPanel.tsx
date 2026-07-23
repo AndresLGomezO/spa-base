@@ -22,8 +22,13 @@ import {
 } from "@repo/hooks";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
-import { listDataHookExecutions } from "../../lib/api-client";
+import {
+  listDataHookExecutions,
+  listEmailMatchBindings,
+  type EmailMatchBindingRecord,
+} from "../../lib/api-client";
 import { buildDebugRecordKey } from "../debugger/dismissed-debug-records";
+import { bindingDisplayName } from "../email-matching/email-matching-draft";
 import {
   designerPreviewPanelBodyFillClassName,
   designerPreviewPanelHeaderClassName,
@@ -124,6 +129,88 @@ function defaultEmailTrigger(): DataHookTrigger {
   return { kind: "email" };
 }
 
+function EmailBindingIdsEditor({
+  bindingIds,
+  bindings,
+  isLoading,
+  canUpdate,
+  onChange,
+}: {
+  readonly bindingIds: readonly string[];
+  readonly bindings: readonly EmailMatchBindingRecord[];
+  readonly isLoading: boolean;
+  readonly canUpdate: boolean;
+  readonly onChange: (next: readonly string[] | undefined) => void;
+}) {
+  const { t } = useTranslation("common");
+
+  return (
+    <CollapsibleEditorCard
+      title={t("dataHooks.settings.sections.emailBindings")}
+      defaultOpen={bindingIds.length > 0}
+      className="bg-muted/20 shadow-sm"
+    >
+      <Text className="text-muted-foreground text-xs">
+        {t("dataHooks.settings.emailBindingIdsHint")}
+      </Text>
+      {isLoading ? (
+        <Text className="text-muted-foreground text-sm">
+          {t("dataHooks.settings.emailBindingIdsLoading")}
+        </Text>
+      ) : bindings.length === 0 ? (
+        <Text className="text-muted-foreground text-sm">
+          {t("dataHooks.settings.emailBindingIdsEmpty")}
+        </Text>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <Text className="text-muted-foreground text-xs">
+            {bindingIds.length === 0
+              ? t("dataHooks.settings.emailBindingIdsAny")
+              : t("dataHooks.settings.emailBindingIdsSelected", {
+                  count: bindingIds.length,
+                })}
+          </Text>
+          <div className="flex flex-col gap-1.5">
+            {bindings.map((binding) => {
+              const checked = bindingIds.includes(binding.id);
+              return (
+                <label
+                  key={binding.id}
+                  className="border-border flex items-start gap-2 rounded-md border px-2 py-1.5 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={checked}
+                    disabled={!canUpdate}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...bindingIds, binding.id]
+                        : bindingIds.filter((id) => id !== binding.id);
+                      onChange(next.length > 0 ? next : undefined);
+                    }}
+                  />
+                  <span className="min-w-0">
+                    <span className="font-medium">
+                      {bindingDisplayName(binding)}
+                    </span>
+                    <span className="text-muted-foreground block text-xs">
+                      {t("dataHooks.settings.emailBindingIdsMeta", {
+                        order: binding.order,
+                        id: binding.id.slice(0, 8),
+                      })}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </CollapsibleEditorCard>
+  );
+}
+
 export function DataHookSettingsPanel() {
   const { t } = useTranslation("common");
   const { editor, canUpdate } = useDataHooks();
@@ -137,6 +224,22 @@ export function DataHookSettingsPanel() {
 
   const definition = editor.selectedDefinition;
   const draft = editor.draft;
+  const isEmailDraft = draft ? isEmailTrigger(draft.trigger) : false;
+
+  const emailBindingsQuery = useQuery({
+    queryKey: ["data-hook-email-bindings", editor.entityName],
+    queryFn: () => listEmailMatchBindings({ entityName: editor.entityName }),
+    enabled: isEmailDraft && editor.entityName.trim().length > 0,
+  });
+
+  const emailBindings = useMemo(() => {
+    const items = emailBindingsQuery.data?.items ?? [];
+    return [...items].sort(
+      (left, right) =>
+        left.order - right.order ||
+        bindingDisplayName(left).localeCompare(bindingDisplayName(right)),
+    );
+  }, [emailBindingsQuery.data?.items]);
 
   if (!definition || !draft) {
     return (
@@ -549,6 +652,23 @@ export function DataHookSettingsPanel() {
                     })}
                   </div>
                 </CollapsibleEditorCard>
+              ) : null}
+
+              {isEmail && isEmailTrigger(draft.trigger) ? (
+                <EmailBindingIdsEditor
+                  bindingIds={draft.trigger.bindingIds ?? []}
+                  bindings={emailBindings}
+                  isLoading={emailBindingsQuery.isLoading}
+                  canUpdate={canUpdate}
+                  onChange={(next) => {
+                    editor.updateDraft({
+                      trigger: {
+                        kind: "email",
+                        ...(next ? { bindingIds: next } : {}),
+                      },
+                    });
+                  }}
+                />
               ) : null}
             </div>
           </CollapsibleEditorCard>

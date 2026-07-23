@@ -8,6 +8,8 @@ export type GmailWindowSyncTaskPayload = {
   readonly tenantId: string;
   readonly userId: string;
   readonly jobId: string;
+  /** When set, sync only this binding (catch-up style; does not advance watermark). */
+  readonly bindingId?: string;
 };
 
 export type GmailWatchRenewTaskPayload = {
@@ -21,6 +23,11 @@ export type GmailProcessMessageTaskPayload = {
   readonly userId: string;
   readonly jobId: string;
   readonly gmailMessageId: string;
-  /** Prefer this binding when matching (binding catch-up). */
+  /** Prefer / scope this binding when matching (binding Sync Now). */
   readonly bindingId?: string;
+  /**
+   * When true with bindingId, skip ingest dedup and run only that binding.
+   * Used by binding Sync Now so new rules can apply to already-ingested mail.
+   */
+  readonly reprocess?: boolean;
 };

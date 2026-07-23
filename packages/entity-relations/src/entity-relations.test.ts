@@ -11,7 +11,7 @@ import type {
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import { nanoid } from "nanoid";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   createJoinCollectionHandler,
@@ -316,6 +316,98 @@ describe("createRelationDeleteHandler", () => {
     await expect(
       deleteHandler.beforeDelete(Customer, "cust_1", "tenant_a"),
     ).rejects.toBeInstanceOf(RelationError);
+  });
+
+  it("emits onChildRecordMutated for cascade deletes", async () => {
+    const Note = defineEntity({
+      name: "note",
+      fields: {
+        body: { type: "string", required: true },
+        customerId: {
+          type: "relation",
+          required: true,
+          relation: {
+            target: "customer",
+            type: "many-to-one",
+            onDelete: "cascade",
+          },
+        },
+      },
+    });
+
+    const repositories = {
+      customer: createMemoryEntityRepository(),
+      note: createMemoryEntityRepository(),
+    };
+    const onChildRecordMutated = vi.fn(async () => undefined);
+    const deps: RelationServicesDeps = {
+      getEntityDefinition: (name) =>
+        ([Customer, Note] as AnyDefinedEntity[]).find(
+          (entity) => entity.name === name,
+        ),
+      getAllEntityDefinitions: () =>
+        [Customer, Note] as AnyDefinedEntity[],
+      findById: async (entityName, id, tenantId) => {
+        const record = await repositories[
+          entityName as keyof typeof repositories
+        ]?.findById(id, tenantId);
+        return record ? { ...record } : null;
+      },
+      findByField: async (entityName, field, value, tenantId) => {
+        const result = await repositories[
+          entityName as keyof typeof repositories
+        ]?.findByField({
+          tenantId,
+          field,
+          value,
+          limit: 100,
+        });
+        return result?.items.map((record) => ({ ...record })) ?? [];
+      },
+      update: async (entityName, id, tenantId, data) => {
+        const updated = await repositories[
+          entityName as keyof typeof repositories
+        ]?.update(id, tenantId, data);
+        return updated ? { id: updated.id, tenantId: updated.tenantId } : null;
+      },
+      delete: async (entityName, id, tenantId) =>
+        (await repositories[entityName as keyof typeof repositories]?.delete(
+          id,
+          tenantId,
+        )) ?? false,
+      onChildRecordMutated,
+    };
+
+    const now = new Date().toISOString();
+    await repositories.customer.create("tenant_a", {
+      id: "cust_1",
+      tenantId: "tenant_a",
+      name: "Acme",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await repositories.note.create("tenant_a", {
+      id: "note_1",
+      tenantId: "tenant_a",
+      body: "hello",
+      customerId: "cust_1",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const deleteHandler = createRelationDeleteHandler(deps);
+    await deleteHandler.beforeDelete(Customer, "cust_1", "tenant_a");
+
+    expect(onChildRecordMutated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "tenant_a",
+        entityName: "note",
+        operation: "DELETE",
+        documentId: "note_1",
+        after: null,
+      }),
+    );
+    expect(await repositories.note.findById("note_1", "tenant_a")).toBeNull();
   });
 });
 

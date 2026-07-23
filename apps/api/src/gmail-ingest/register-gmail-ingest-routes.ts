@@ -361,6 +361,20 @@ export async function registerGmailIngestRoutes(
       const tenantId = requireJwtTenant(request, reply);
       if (!uid || !tenantId) return;
 
+      const body = z
+        .object({
+          bindingId: z.string().trim().min(1).optional(),
+        })
+        .safeParse(request.body ?? {});
+      if (!body.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid sync request.",
+        );
+      }
+
       const connection = await options.gmailConnectionRepository.get(uid);
       if (!connection || connection.status !== "connected") {
         return replyWithError(
@@ -369,6 +383,31 @@ export async function registerGmailIngestRoutes(
           ApiErrorCode.VALIDATION_ERROR,
           "Connect Gmail before syncing.",
         );
+      }
+
+      let bindingName: string | null = null;
+      if (body.data.bindingId) {
+        const binding = await options.emailMatchBindingRepository.get(
+          tenantId,
+          body.data.bindingId,
+        );
+        if (!binding || binding.userId !== uid) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Email matching binding not found.",
+          );
+        }
+        if (!binding.enabled) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Enable the binding before syncing.",
+          );
+        }
+        bindingName = binding.name?.trim() || binding.id;
       }
 
       // Keep tenantId + email lookup index fresh for Pub/Sub (and older connects).
@@ -381,13 +420,18 @@ export async function registerGmailIngestRoutes(
         tenantId,
         userId: uid,
         kind: "windowSync",
-        title: "Gmail sync now",
+        title: bindingName
+          ? `Gmail binding sync: ${bindingName}`
+          : "Gmail sync now",
       });
 
       await options.gmailTasksClient.enqueueWindowSync({
         tenantId,
         userId: uid,
         jobId: job.id,
+        ...(body.data.bindingId
+          ? { bindingId: body.data.bindingId }
+          : {}),
       });
 
       return reply.send(successEnvelope({ jobId: job.id }));

@@ -183,6 +183,13 @@ function evaluateConditionLeaf(
       );
       return condition.operator === "in" ? found : !found;
     }
+    case "contains": {
+      const target = evaluateConditionValue(condition, scope);
+      if (target == null || target === "") {
+        return true;
+      }
+      return String(fieldValue ?? "").includes(String(target));
+    }
     default: {
       const target = evaluateConditionValue(condition, scope);
       return evaluateComparison(condition.operator, fieldValue, target);

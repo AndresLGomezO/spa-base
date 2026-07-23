@@ -268,14 +268,25 @@ Gmail ingest (worker-service) runs these after a message matches an email bindin
 { "kind": "email" }
 ```
 
+Optional binding scope (omit or empty = any matching binding for the hook entity):
+
+```json
+{
+  "kind": "email",
+  "bindingIds": ["0819cd3c-2926-4297-9845-f1edd9f8ea0d"]
+}
+```
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `kind` | `"email"` | yes | Discriminator |
+| `bindingIds` | string[] | no | When non-empty, only these email-match binding ids fire the hook. Omit or `[]` means any matching binding on the entity. |
 
 **Email constraints:**
 
 - `phase` must be `after`.
 - `current` is the matched entity record plus envelope fields injected by the worker.
+- The worker filters hooks with `bindingIds` before `runDataHook`; conditions can still further gate on `__matchBindingId` if needed.
 
 **Envelope fields on `current` (email hooks):**
 
@@ -285,6 +296,7 @@ Gmail ingest (worker-service) runs these after a message matches an email bindin
 | `__extracted.*` | Extract result (`relevant`, `reason`, `fields`, …) |
 | `__emailRelevant` | Boolean relevance flag |
 | `__matchBindingId` / `__matchEntityName` / `__matchRecordId` | Matched binding |
+| `__matchIngestMode` | `"create"` \| `"link"` from the matched binding |
 | `__emailLedger.id` | Domain `email` ledger row id (set before hooks; use for `emailId` FKs) |
 
 Period-closing **`statement`** rows are created by **tenant email hooks** (not the platform worker). Persist SoT fields from `__extracted` and stamp `statementId` onto schedules / attachments as needed.

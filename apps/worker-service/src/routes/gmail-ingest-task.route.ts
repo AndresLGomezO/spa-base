@@ -22,12 +22,19 @@ const ROUTES = {
 } as const;
 
 /**
- * Window sync fans out many process-message tasks that return 202 and run
- * in parallel. Email hooks then update the same parent records (schedules,
- * financial items), which triggers Firestore "Transaction lock timeout".
- * Serialize per worker instance so chained updates do not contend.
+ * Email hooks update shared parents (schedules / financial items). Serialize
+ * process-message work so chained updates do not contend on Firestore.
+ *
+ * Local HTTP dispatch awaits completion (see X-Local-Task-Dispatcher) so
+ * window-sync enqueue gets backpressure instead of 202-fan-out. Cloud Tasks
+ * keeps 202 accept + queue rate limits (max concurrent 2 in Terraform).
  */
 const processMessageGate = createAsyncSemaphore(1);
+
+function isLocalTaskDispatcher(request: FastifyRequest): boolean {
+  const header = request.headers["x-local-task-dispatcher"];
+  return header === "true";
+}
 
 export async function gmailIngestTaskRoute(
   app: FastifyInstance,
@@ -56,6 +63,7 @@ export async function gmailIngestTaskRoute(
         tenantId: payload.tenantId,
         hookId: payload.jobId,
         logLabel: "Processing Gmail message",
+        awaitCompletion: isLocalTaskDispatcher(request),
         process: () =>
           processMessageGate.run(async () => {
             // Per-message failures update runMetrics.failed; do not fail the whole run.

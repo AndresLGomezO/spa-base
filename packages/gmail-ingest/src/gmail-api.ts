@@ -42,6 +42,8 @@ function headerValue(
   return found?.value?.trim() ?? "";
 }
 
+import { decodeHtmlEntities } from "./html-entities.js";
+
 function decodeBase64UrlText(data: string | undefined): string | null {
   if (!data) return null;
   try {
@@ -63,25 +65,20 @@ export function decodeBase64UrlBuffer(data: string | undefined): Buffer | null {
 }
 
 function htmlToPlainText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<\/tr>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&#(\d+);/g, (_, code: string) =>
-      String.fromCharCode(Number.parseInt(code, 10)),
-    )
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<\/tr>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/[ \t]{2,}/g, " ")
+      .trim(),
+  );
 }
 
 function extractPartText(
@@ -105,7 +102,7 @@ function extractPartText(
 
 function extractBodyText(part: GmailMessagePart | undefined): string | null {
   const plain = extractPartText(part, "text/plain");
-  if (plain?.trim()) return plain;
+  if (plain?.trim()) return decodeHtmlEntities(plain);
   const html = extractPartText(part, "text/html");
   if (html?.trim()) return html;
   return null;

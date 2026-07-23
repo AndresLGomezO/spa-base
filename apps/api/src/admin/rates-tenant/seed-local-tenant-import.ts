@@ -36,6 +36,7 @@ import {
 } from "./constants.js";
 import {
   createRatesRecordSeedContext,
+  deleteRatesRecordsMatching,
   deleteRatesRecordsNotInSet,
   importRatesRecordsBatch,
 } from "./seed-record-helpers.js";
@@ -147,10 +148,14 @@ async function seedLocalEmailMatchBindingsIfPresent(
   firebaseAdminConfig: FirebaseAdminConfig,
   ownerId: string,
   importDir: string,
-  recordIds?: ReadonlySet<string>,
+  options: {
+    readonly recordIds?: ReadonlySet<string>;
+    readonly dropExisting?: boolean;
+  } = {},
 ): Promise<number> {
+  const { recordIds, dropExisting = false } = options;
   const allBindings = readEmailMatchBindingsDir(importDir);
-  if (allBindings.length === 0) {
+  if (allBindings.length === 0 && !dropExisting) {
     return 0;
   }
 
@@ -159,7 +164,12 @@ async function seedLocalEmailMatchBindingsIfPresent(
       ? allBindings.filter((binding) => recordIds.has(binding.recordId))
       : allBindings;
 
-  if (recordIds && recordIds.size > 0 && portableBindings.length === 0) {
+  if (
+    recordIds &&
+    recordIds.size > 0 &&
+    portableBindings.length === 0 &&
+    !dropExisting
+  ) {
     console.warn(
       `[seed] No email match bindings matched --ids filter (${[...recordIds].join(", ")}).`,
     );
@@ -169,15 +179,55 @@ async function seedLocalEmailMatchBindingsIfPresent(
   const repository =
     createFirestoreAdminEmailMatchBindingRepository(firebaseAdminConfig);
   const existing = await repository.listForUser(tenantId, ownerId);
+
+  if (dropExisting) {
+    const toDelete =
+      recordIds && recordIds.size > 0
+        ? existing.filter((binding) => recordIds.has(binding.recordId))
+        : existing;
+    let deleted = 0;
+    for (const binding of toDelete) {
+      const didDelete = await repository.delete(
+        tenantId,
+        binding.id,
+        ownerId,
+      );
+      if (didDelete) {
+        deleted += 1;
+      }
+    }
+    console.log(
+      `[seed] Dropped ${deleted} email match binding(s)${
+        recordIds && recordIds.size > 0
+          ? ` for record id(s) ${[...recordIds].join(", ")}`
+          : ""
+      }.`,
+    );
+  }
+
+  if (portableBindings.length === 0) {
+    return 0;
+  }
+
+  const remaining = dropExisting
+    ? []
+    : await repository.listForUser(tenantId, ownerId);
   const existingByKey = new Map(
-    existing.map((binding) => [bindingSeedKey(binding), binding] as const),
+    remaining.map((binding) => [bindingSeedKey(binding), binding] as const),
+  );
+  const existingById = new Map(
+    remaining.map((binding) => [binding.id, binding] as const),
   );
 
   let upserted = 0;
   for (const portable of portableBindings) {
     const key = bindingSeedKey(portable);
-    const match = existingByKey.get(key);
+    const stableId = portable.id?.trim() || undefined;
+    const matchById = stableId ? existingById.get(stableId) : undefined;
+    const matchByKey = existingByKey.get(key);
     const patchInput = {
+      name: portable.name ?? null,
+      description: portable.description ?? null,
       enabled: portable.enabled ?? true,
       order: portable.order ?? 100,
       ingestMode: portable.ingestMode ?? "create",
@@ -191,18 +241,31 @@ async function seedLocalEmailMatchBindingsIfPresent(
       attachmentImport: portable.attachmentImport ?? null,
     };
 
-    if (match) {
-      await repository.patch(tenantId, match.id, ownerId, {
+    if (matchById) {
+      await repository.patch(tenantId, matchById.id, ownerId, {
+        ...patchInput,
+        catchupNeeded: true,
+      });
+    } else if (matchByKey && (!stableId || matchByKey.id === stableId)) {
+      await repository.patch(tenantId, matchByKey.id, ownerId, {
         ...patchInput,
         // Re-seed must re-list full history for updated rules (skipped_no_match retries).
         catchupNeeded: true,
       });
     } else {
-      await repository.create(tenantId, ownerId, {
+      if (matchByKey && stableId && matchByKey.id !== stableId) {
+        await repository.delete(tenantId, matchByKey.id, ownerId);
+        existingByKey.delete(key);
+        existingById.delete(matchByKey.id);
+      }
+      const created = await repository.create(tenantId, ownerId, {
+        ...(stableId ? { id: stableId } : {}),
         entityName: portable.entityName,
         recordId: portable.recordId,
         ...patchInput,
       });
+      existingByKey.set(key, created);
+      existingById.set(created.id, created);
     }
     upserted += 1;
   }
@@ -252,6 +315,11 @@ export interface LocalTenantImportOptions {
   readonly includeEmailMatchBindings?: boolean;
   /** Upload logos/images from local files (default true). */
   readonly includeEntityImages?: boolean;
+  /**
+   * Delete existing rows for selected entities / email bindings before upsert.
+   * With `recordIds`, only those ids (or bindings for those recordIds) are dropped.
+   */
+  readonly dropExisting?: boolean;
 }
 
 function isAuthUserNotFound(error: unknown): boolean {
@@ -813,6 +881,7 @@ async function importLocalRecords(
     readonly recordIds?: ReadonlySet<string>;
     readonly skipOrphanDelete?: boolean;
     readonly generated?: boolean;
+    readonly dropExisting?: boolean;
   } = {},
 ): Promise<void> {
   for (const spec of specs) {
@@ -826,7 +895,8 @@ async function importLocalRecords(
     if (
       options.recordIds &&
       options.recordIds.size > 0 &&
-      records.length === 0
+      records.length === 0 &&
+      !options.dropExisting
     ) {
       console.warn(
         `[seed]   ${spec.dirName}: 0 ${spec.entityName} record(s) matched --ids filter.`,
@@ -834,7 +904,27 @@ async function importLocalRecords(
       continue;
     }
 
+    if (options.dropExisting) {
+      const deleted = await deleteRatesRecordsMatching(
+        context,
+        spec.entityName,
+        options.recordIds && options.recordIds.size > 0
+          ? options.recordIds
+          : undefined,
+      );
+      if (deleted > 0) {
+        console.log(
+          `[seed]   Dropped ${deleted} existing ${spec.entityName} record(s).`,
+        );
+      }
+    }
+
+    if (records.length === 0) {
+      continue;
+    }
+
     if (
+      !options.dropExisting &&
       !options.skipOrphanDelete &&
       (spec.entityName === "paymentSchedule" ||
         spec.entityName === "transaction")
@@ -894,6 +984,7 @@ export async function seedLocalTenantImportIfPresent(
   const runMockGenerator = importOptions.runMockGenerator ?? true;
   const includeEntityImages = importOptions.includeEntityImages ?? true;
   const skipOrphanDelete = importOptions.skipOrphanDelete ?? false;
+  const dropExisting = importOptions.dropExisting ?? false;
 
   const presentSpecs = filterImportSpecsByEntityNames(
     listPresentLocalImportSpecs(importDir),
@@ -914,8 +1005,9 @@ export async function seedLocalTenantImportIfPresent(
     (runMockGenerator || presentGeneratedSpecs.length > 0);
   const hasBindingWork =
     includeEmailMatchBindings &&
-    listJsonFilesInDir(join(importDir, LOCAL_EMAIL_MATCH_BINDINGS_DIR)).length >
-      0;
+    (dropExisting ||
+      listJsonFilesInDir(join(importDir, LOCAL_EMAIL_MATCH_BINDINGS_DIR))
+        .length > 0);
 
   if (!hasStructuralWork && !hasGeneratedWork && !hasBindingWork) {
     if (importOptions.requireOwner) {
@@ -950,6 +1042,7 @@ export async function seedLocalTenantImportIfPresent(
   const importRecordOptions = {
     recordIds: importOptions.recordIds,
     skipOrphanDelete,
+    dropExisting,
   };
 
   if (hasStructuralWork) {
@@ -1000,7 +1093,10 @@ export async function seedLocalTenantImportIfPresent(
       firebaseAdminConfig,
       ownerId,
       importDir,
-      importOptions.recordIds,
+      {
+        recordIds: importOptions.recordIds,
+        dropExisting,
+      },
     );
     if (bindingsUpserted > 0) {
       console.log(

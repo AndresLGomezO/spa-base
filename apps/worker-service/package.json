@@ -19,6 +19,7 @@
     "@google-cloud/vertexai": "catalog:",
     "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
+    "@repo/aggregation-engine": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/debug-logs": "workspace:*",
     "@repo/entities": "workspace:*",

@@ -40,6 +40,22 @@ describe("email-match-binding-json", () => {
     }
   });
 
+  it("round-trips name and description", () => {
+    const withLabels = {
+      ...sample,
+      name: "Visa Davivienda ****7185 — approved purchases",
+      description:
+        "Creates expenses/payments from Davivienda approval emails for card ****7185.",
+    };
+    const envelope = createEmailMatchBindingEnvelope(withLabels);
+    const parsed = parseEmailMatchBindingJson(JSON.stringify(envelope));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.data.name).toBe(withLabels.name);
+      expect(parsed.data.description).toBe(withLabels.description);
+    }
+  });
+
   it("round-trips bodyFieldExtractors", () => {
     const withExtractors = {
       ...sample,

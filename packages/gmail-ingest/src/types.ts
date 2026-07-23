@@ -52,6 +52,7 @@ export const emailBodyFieldTransformSchema = z.enum([
   "slashDate",
   "compactYmd",
   "monthNameDate",
+  "collapseWhitespace",
   "valueMap",
   "literal",
 ]);
@@ -145,6 +146,10 @@ export type EmailMatchBinding = {
   readonly userId: string;
   readonly entityName: string;
   readonly recordId: string;
+  /** Short human label for lists and settings (not used for matching). */
+  readonly name: string | null;
+  /** Longer purpose text: what emails match, ingest behavior, caveats. */
+  readonly description: string | null;
   readonly enabled: boolean;
   /**
    * When true, the next window sync also lists this binding without an after:
@@ -179,6 +184,8 @@ export const emailMatchBindingSchema: z.ZodType<EmailMatchBinding> = z.object({
   userId: z.string().trim().min(1),
   entityName: z.string().trim().min(1),
   recordId: z.string().trim().min(1),
+  name: z.string().trim().nullable().default(null),
+  description: z.string().trim().nullable().default(null),
   enabled: z.boolean(),
   catchupNeeded: z.boolean().default(true),
   order: z.number().int().default(100),
@@ -196,8 +203,12 @@ export const emailMatchBindingSchema: z.ZodType<EmailMatchBinding> = z.object({
 }) as z.ZodType<EmailMatchBinding>;
 
 export type CreateEmailMatchBindingInput = {
+  /** Optional stable id for seed/import; otherwise generated as `emb_*`. */
+  readonly id?: string;
   readonly entityName: string;
   readonly recordId: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
   readonly enabled?: boolean;
   readonly order?: number;
   readonly ingestMode?: EmailMatchIngestMode;
@@ -213,8 +224,11 @@ export type CreateEmailMatchBindingInput = {
 
 export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindingInput> =
   z.object({
+    id: z.string().trim().min(1).optional(),
     entityName: z.string().trim().min(1),
     recordId: z.string().trim().min(1),
+    name: z.string().trim().nullable().optional(),
+    description: z.string().trim().nullable().optional(),
     enabled: z.boolean().optional(),
     order: z.number().int().optional(),
     ingestMode: emailMatchIngestModeSchema.optional(),
@@ -229,6 +243,8 @@ export const createEmailMatchBindingInputSchema: z.ZodType<CreateEmailMatchBindi
   }) as z.ZodType<CreateEmailMatchBindingInput>;
 
 export type PatchEmailMatchBindingInput = {
+  readonly name?: string | null;
+  readonly description?: string | null;
   readonly enabled?: boolean;
   readonly catchupNeeded?: boolean;
   readonly order?: number;
@@ -245,6 +261,8 @@ export type PatchEmailMatchBindingInput = {
 
 export const patchEmailMatchBindingInputSchema: z.ZodType<PatchEmailMatchBindingInput> =
   z.object({
+    name: z.string().trim().nullable().optional(),
+    description: z.string().trim().nullable().optional(),
     enabled: z.boolean().optional(),
     catchupNeeded: z.boolean().optional(),
     order: z.number().int().optional(),

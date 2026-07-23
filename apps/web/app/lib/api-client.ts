@@ -1864,13 +1864,18 @@ interface GmailConnectionStatus {
   readonly lastError: string | null;
 }
 
-interface EmailMatchBindingRecord {
+export interface EmailMatchBindingRecord {
   readonly id: string;
   readonly tenantId: string;
   readonly userId: string;
   readonly entityName: string;
   readonly recordId: string;
+  readonly name: string | null;
+  readonly description: string | null;
   readonly enabled: boolean;
+  readonly catchupNeeded?: boolean;
+  readonly order: number;
+  readonly ingestMode: "create" | "link";
   readonly fromAddresses: readonly string[];
   readonly subjectPatterns: readonly string[];
   readonly bodyPatterns: readonly string[];
@@ -1886,11 +1891,20 @@ interface EmailMatchBindingRecord {
       | "trim"
       | "amount"
       | "slashDate"
+      | "compactYmd"
+      | "monthNameDate"
       | "valueMap"
       | "literal";
     readonly valueMap?: Readonly<Record<string, string>>;
     readonly literal?: string;
+    readonly sufficientForRelevance?: boolean;
   }[];
+  readonly attachmentImport?: {
+    readonly enabled: boolean;
+    readonly documentType: string;
+    readonly documentDateField?: string;
+    readonly recordIdField?: string;
+  } | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -1917,10 +1931,12 @@ export async function disconnectGmail(): Promise<{
   );
 }
 
-export async function startGmailSync(): Promise<{ readonly jobId: string }> {
+export async function startGmailSync(options?: {
+  readonly bindingId?: string;
+}): Promise<{ readonly jobId: string }> {
   return apiRequest<{ readonly jobId: string }>("/api/gmail/sync", {
     method: "POST",
-    body: {},
+    body: options?.bindingId ? { bindingId: options.bindingId } : {},
   });
 }
 
@@ -1940,7 +1956,11 @@ export async function listEmailMatchBindings(options?: {
 export async function createEmailMatchBinding(input: {
   readonly entityName: string;
   readonly recordId: string;
+  readonly name?: string | null;
+  readonly description?: string | null;
   readonly enabled?: boolean;
+  readonly order?: number;
+  readonly ingestMode?: "create" | "link";
   readonly fromAddresses?: readonly string[];
   readonly subjectPatterns?: readonly string[];
   readonly bodyPatterns?: readonly string[];
@@ -1948,6 +1968,7 @@ export async function createEmailMatchBinding(input: {
   readonly useAi?: boolean;
   readonly aiInstructions?: string | null;
   readonly bodyFieldExtractors?: EmailMatchBindingRecord["bodyFieldExtractors"];
+  readonly attachmentImport?: EmailMatchBindingRecord["attachmentImport"];
 }): Promise<EmailMatchBindingRecord> {
   return apiRequest<EmailMatchBindingRecord>("/api/gmail/bindings", {
     method: "POST",
@@ -1958,7 +1979,12 @@ export async function createEmailMatchBinding(input: {
 export async function patchEmailMatchBinding(
   bindingId: string,
   input: Partial<{
+    name: string | null;
+    description: string | null;
     enabled: boolean;
+    catchupNeeded: boolean;
+    order: number;
+    ingestMode: "create" | "link";
     fromAddresses: readonly string[];
     subjectPatterns: readonly string[];
     bodyPatterns: readonly string[];
@@ -1966,6 +1992,7 @@ export async function patchEmailMatchBinding(
     useAi: boolean;
     aiInstructions: string | null;
     bodyFieldExtractors: EmailMatchBindingRecord["bodyFieldExtractors"];
+    attachmentImport: EmailMatchBindingRecord["attachmentImport"];
   }>,
 ): Promise<EmailMatchBindingRecord> {
   return apiRequest<EmailMatchBindingRecord>(

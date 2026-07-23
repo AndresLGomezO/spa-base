@@ -2,12 +2,26 @@
   "kind": "data-hook-definition",
   "version": 1,
   "data": {
-    "name": "Email Ingest - Manual Extract",
-    "description": "Create a transaction from body-extracted email fields without assigning a category. Match an ACTIVE child subscription of the matched card by scoring description/subject against billingAliases (matchRelatedRecord). When a child matches, book a PAYMENT with the open payment schedule closest to the email/txn date. When there is no child match but extracted type is PAYMENT or INCOME (e.g. PSE on the matched FI), attach the closest open schedule on the matched financial item. Otherwise create an EXPENSE (or extracted type) on the matched financial item without a schedule. Dedupes same financialItem+amount on the same calendar day across email channels (e.g. PSE receipt + Bancolombia debit): reuse the existing payment and fill accountId when missing.",
+    "name": "Create transaction from email",
+    "description": "Card purchase approvals, Bancolombia account alerts, and PSE create emails (Planilla, Hipoteca Granada, Cuota inicial Av Colón): create a hub transaction from manual body extractors (no category). Prefer an ACTIVE child subscription matched by billingAliases; otherwise book on the matched financial item (with closest open schedule for PAYMENT/INCOME).",
     "entity": "financialItem",
     "phase": "after",
     "trigger": {
-      "kind": "email"
+      "kind": "email",
+      "bindingIds": [
+        "emb_0819cd3c_5",
+        "emb_7c2e9f11_0",
+        "emb_7c2e9f11_5",
+        "emb_7c2e9f11_6",
+        "emb_7c2e9f11_7",
+        "emb_7c2e9f11_8",
+        "emb_7c2e9f11_9",
+        "emb_7c2e9f11_10",
+        "emb_7c2e9f11_11",
+        "emb_7c2e9f11_12",
+        "emb_7c2e9f11_13",
+        "emb_7c2e9f11_14"
+      ]
     },
     "condition": {
       "type": "group",
@@ -26,42 +40,6 @@
           "type": "condition",
           "field": "__extracted.fields.amount",
           "operator": "isNotEmpty"
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.isReversal",
-          "operator": "!=",
-          "value": {
-            "kind": "literal",
-            "value": true
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.extractSource",
-          "operator": "==",
-          "value": {
-            "kind": "literal",
-            "value": "manual"
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.emailKind",
-          "operator": "!=",
-          "value": {
-            "kind": "literal",
-            "value": "creditCardStatement"
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__matchIngestMode",
-          "operator": "==",
-          "value": {
-            "kind": "literal",
-            "value": "create"
-          }
         },
         {
           "type": "condition",
@@ -824,6 +802,26 @@
                           }
                         ]
                       }
+                    },
+                    {
+                      "type": "condition",
+                      "field": "description",
+                      "operator": "contains",
+                      "value": {
+                        "kind": "call",
+                        "fn": "coalesce",
+                        "args": [
+                          {
+                            "kind": "field",
+                            "source": "current",
+                            "path": "__extracted.fields.descriptionMatch"
+                          },
+                          {
+                            "kind": "literal",
+                            "value": ""
+                          }
+                        ]
+                      }
                     }
                   ]
                 }
@@ -870,15 +868,31 @@
                 "value": null
               },
               {
-                "kind": "field",
-                "source": "current",
-                "path": "accountId"
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__extracted.fields.accountId"
+                  },
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "accountId"
+                  }
+                ]
               }
             ]
           },
           "categoryId": {
             "kind": "literal",
             "value": null
+          },
+          "relatedFinancialItemId": {
+            "kind": "field",
+            "source": "current",
+            "path": "__extracted.fields.relatedFinancialItemId"
           },
           "amount": {
             "kind": "call",
@@ -1029,6 +1043,58 @@
                     "path": "accountId"
                   }
                 ]
+              }
+            ]
+          },
+          "relatedFinancialItemId": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "previous",
+                "path": "__extracted.fields.relatedFinancialItemId"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "emailIngestTransaction",
+                "path": "relatedFinancialItemId"
+              }
+            ]
+          },
+          "paymentScheduleId": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "emailIngestTransaction",
+                "path": "paymentScheduleId"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "subscriptionSchedule",
+                "path": "id"
+              }
+            ]
+          },
+          "emailId": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "previous",
+                "path": "__emailLedger.id"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "emailIngestTransaction",
+                "path": "emailId"
               }
             ]
           }

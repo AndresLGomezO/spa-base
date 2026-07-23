@@ -2,12 +2,32 @@
   "kind": "data-hook-definition",
   "version": 1,
   "data": {
-    "name": "Email Ingest - Link Related",
-    "description": "When ingestMode=link, find the source transaction created by a prior create binding (same Gmail message id + amount, unlinked relatedFinancialItemId) and attach relatedFinancialItemId + closest open paymentSchedule on the matched financial item. Does not create transactions — if no source txn exists, the link is a no-op.",
+    "name": "Link payment to schedule",
+    "description": "Link emails for Planilla, Hipoteca Granada, Hipoteca Altavista, Cuota inicial Av Colón, Administración Granada, Crediservice Rotativo, Scaleno 17, Mastercard Black, Visa Signature, Visa Davivienda card payment, Móvil Mamá, Internet Centenari (+ Móvil Leo), Arriendo Granada, Arriendo Altavista, and card subscriptions (Apple iCloud, Netflix): find the hub/card transaction (same Gmail message id + amount, or parent/hub FI + amount + date + optional descriptionMatch) and attach this financial item plus the closest open payment schedule. Does not create transactions — no-op if the source payment is missing.",
     "entity": "financialItem",
     "phase": "after",
     "trigger": {
-      "kind": "email"
+      "kind": "email",
+      "bindingIds": [
+        "emb_06e5cb41_0",
+        "emb_cf757971_10",
+        "emb_cf757971_11",
+        "emb_15379d6f_10",
+        "emb_2f136855_10",
+        "emb_7207ba42_10",
+        "emb_cc79f3bd_10",
+        "emb_dfc52452_10",
+        "emb_f613909f_10",
+        "emb_e6c42ac0_10",
+        "emb_9f660323_10",
+        "emb_b3068c84_10",
+        "emb_0819cd3c_10",
+        "emb_606ac06d_10",
+        "emb_07d18b8f_10",
+        "emb_18846ba8_10",
+        "emb_a737d3ed_10",
+        "emb_c3d7ba89_10"
+      ]
     },
     "condition": {
       "type": "group",
@@ -24,35 +44,8 @@
         },
         {
           "type": "condition",
-          "field": "__matchIngestMode",
-          "operator": "==",
-          "value": {
-            "kind": "literal",
-            "value": "link"
-          }
-        },
-        {
-          "type": "condition",
           "field": "__extracted.fields.amount",
           "operator": "isNotEmpty"
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.isReversal",
-          "operator": "!=",
-          "value": {
-            "kind": "literal",
-            "value": true
-          }
-        },
-        {
-          "type": "condition",
-          "field": "__extracted.fields.emailKind",
-          "operator": "!=",
-          "value": {
-            "kind": "literal",
-            "value": "creditCardStatement"
-          }
         }
       ]
     },
@@ -82,7 +75,8 @@
                 "kind": "literal",
                 "value": [
                   "UPCOMING",
-                  "OVERDUE"
+                  "OVERDUE",
+                  "PAID"
                 ]
               }
             },
@@ -388,7 +382,8 @@
                 "kind": "literal",
                 "value": [
                   "UPCOMING",
-                  "OVERDUE"
+                  "OVERDUE",
+                  "PAID"
                 ]
               }
             }
@@ -430,8 +425,23 @@
             },
             {
               "type": "condition",
-              "field": "relatedFinancialItemId",
-              "operator": "isEmpty"
+              "field": "description",
+              "operator": "contains",
+              "value": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "__extracted.fields.descriptionMatch"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": ""
+                  }
+                ]
+              }
             },
             {
               "type": "group",
@@ -445,6 +455,16 @@
                     "kind": "field",
                     "source": "current",
                     "path": "__email.messageId"
+                  }
+                },
+                {
+                  "type": "condition",
+                  "field": "relatedFinancialItemId",
+                  "operator": "==",
+                  "value": {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "id"
                   }
                 },
                 {
@@ -463,6 +483,11 @@
                             "kind": "field",
                             "source": "current",
                             "path": "parentFinancialItemId"
+                          },
+                          {
+                            "kind": "field",
+                            "source": "current",
+                            "path": "__extracted.fields.hubFinancialItemId"
                           },
                           {
                             "kind": "literal",
@@ -505,33 +530,79 @@
                     {
                       "type": "condition",
                       "field": "date",
-                      "operator": "<=",
+                      "operator": "<",
                       "value": {
                         "kind": "call",
-                        "fn": "dateOnly",
+                        "fn": "dateAdd",
                         "args": [
                           {
                             "kind": "call",
-                            "fn": "coalesce",
+                            "fn": "dateOnly",
                             "args": [
                               {
-                                "kind": "field",
-                                "source": "current",
-                                "path": "__extracted.fields.date"
-                              },
-                              {
-                                "kind": "field",
-                                "source": "current",
-                                "path": "__email.date"
-                              },
-                              {
-                                "kind": "var",
-                                "name": "now"
+                                "kind": "call",
+                                "fn": "coalesce",
+                                "args": [
+                                  {
+                                    "kind": "field",
+                                    "source": "current",
+                                    "path": "__extracted.fields.date"
+                                  },
+                                  {
+                                    "kind": "field",
+                                    "source": "current",
+                                    "path": "__email.date"
+                                  },
+                                  {
+                                    "kind": "var",
+                                    "name": "now"
+                                  }
+                                ]
                               }
                             ]
+                          },
+                          {
+                            "kind": "literal",
+                            "value": 1
+                          },
+                          {
+                            "kind": "literal",
+                            "value": "DAY"
                           }
                         ]
                       }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "combinator": "or",
+              "children": [
+                {
+                  "type": "condition",
+                  "field": "relatedFinancialItemId",
+                  "operator": "isEmpty"
+                },
+                {
+                  "type": "group",
+                  "combinator": "and",
+                  "children": [
+                    {
+                      "type": "condition",
+                      "field": "relatedFinancialItemId",
+                      "operator": "==",
+                      "value": {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "id"
+                      }
+                    },
+                    {
+                      "type": "condition",
+                      "field": "paymentScheduleId",
+                      "operator": "isEmpty"
                     }
                   ]
                 }
@@ -572,7 +643,7 @@
                 },
                 "right": {
                   "kind": "field",
-                  "source": "current",
+                  "source": "previous",
                   "path": "id"
                 }
               },
@@ -584,7 +655,7 @@
               },
               {
                 "kind": "field",
-                "source": "current",
+                "source": "previous",
                 "path": "id"
               }
             ]
@@ -619,13 +690,47 @@
               },
               {
                 "kind": "field",
-                "source": "current",
+                "source": "previous",
                 "path": "__extracted.fields.accountId"
               },
               {
                 "kind": "field",
-                "source": "current",
+                "source": "previous",
                 "path": "accountId"
+              }
+            ]
+          },
+          "emailId": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "previous",
+                "path": "__emailLedger.id"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "linkedTransaction",
+                "path": "emailId"
+              }
+            ]
+          },
+          "type": {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "previous",
+                "path": "__extracted.fields.type"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "linkedTransaction",
+                "path": "type"
               }
             ]
           }

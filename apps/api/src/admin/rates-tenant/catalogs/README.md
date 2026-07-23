@@ -28,3 +28,5 @@ Single-document UI shell catalogs remain files:
 - `rates-tenant-sidebar-layout.json`
 
 `removed/` is an archive only — seed does not read it.
+
+`data-hooks-temp/` holds email (or other) hook JSON that is intentionally **not** seeded (for example hooks with no matching local binding yet).

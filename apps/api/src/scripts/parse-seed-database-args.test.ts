@@ -17,6 +17,7 @@ describe("parseSeedDatabaseArgs", () => {
       projectId: undefined,
       components: null,
       ids: null,
+      drop: false,
     });
   });
 
@@ -28,6 +29,7 @@ describe("parseSeedDatabaseArgs", () => {
       projectId: "entitysystem-development",
       components: null,
       ids: null,
+      drop: false,
     });
   });
 
@@ -44,6 +46,7 @@ describe("parseSeedDatabaseArgs", () => {
       projectId: "entitysystem-development",
       components: null,
       ids: null,
+      drop: false,
     });
   });
 
@@ -55,6 +58,7 @@ describe("parseSeedDatabaseArgs", () => {
       projectId: "entitysystem-development",
       components: null,
       ids: null,
+      drop: false,
     });
   });
 
@@ -73,6 +77,7 @@ describe("parseSeedDatabaseArgs", () => {
       new Set(["financialItem", "emailMatchBindings"]),
     );
     expect(result.ids).toBeNull();
+    expect(result.drop).toBe(false);
   });
 
   it("parses --only= and --ids=", () => {
@@ -84,12 +89,35 @@ describe("parseSeedDatabaseArgs", () => {
     expect(result.ids).toEqual(
       new Set(["7c2e9f11-2518-4b3a-9d4e-030cd8568c15"]),
     );
+    expect(result.drop).toBe(false);
+  });
+
+  it("parses --drop with record-level --only", () => {
+    const result = parseSeedDatabaseArgs([
+      "--only",
+      "emailMatchBindings",
+      "--drop",
+    ]);
+    expect(result.components).toEqual(new Set(["emailMatchBindings"]));
+    expect(result.drop).toBe(true);
   });
 
   it("requires --only when --ids is set", () => {
     expect(() => parseSeedDatabaseArgs(["--ids", "abc"])).toThrow(
       "--ids requires --only.",
     );
+  });
+
+  it("requires --only when --drop is set", () => {
+    expect(() => parseSeedDatabaseArgs(["--drop"])).toThrow(
+      "--drop requires --only",
+    );
+  });
+
+  it("rejects --drop with only catalog components", () => {
+    expect(() =>
+      parseSeedDatabaseArgs(["--only", "hooks", "--drop"]),
+    ).toThrow(/--drop only supports record-level/);
   });
 
   it("rejects unknown --only components", () => {

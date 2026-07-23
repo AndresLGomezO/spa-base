@@ -167,7 +167,7 @@ class FirestoreAdminEntityRepository<
   async findByField(params: {
     readonly tenantId: string;
     readonly field: string;
-    readonly value: string;
+    readonly value: string | number | boolean;
     readonly limit?: number;
     readonly cursor?: string;
   }) {

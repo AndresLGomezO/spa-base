@@ -1,0 +1,50 @@
+{
+  "kind": "data-hook-definition",
+  "version": 1,
+  "data": {
+    "name": "Mark schedule PAID on link",
+    "description": "When a transaction update attaches paymentScheduleId (email ingest link), mark that schedule PAID so roll-forward can advance the plan.",
+    "entity": "transaction",
+    "phase": "after",
+    "trigger": {
+      "operation": "update",
+      "updateFields": [
+        "paymentScheduleId"
+      ]
+    },
+    "chainHooks": true,
+    "condition": {
+      "type": "condition",
+      "field": "paymentScheduleId",
+      "operator": "isNotEmpty"
+    },
+    "actions": [
+      {
+        "type": "updateMatching",
+        "entity": "paymentSchedule",
+        "where": {
+          "field": "id",
+          "operator": "==",
+          "value": {
+            "kind": "field",
+            "source": "current",
+            "path": "paymentScheduleId"
+          }
+        },
+        "set": {
+          "status": {
+            "kind": "literal",
+            "value": "PAID"
+          },
+          "paidTransactionId": {
+            "kind": "field",
+            "source": "previous",
+            "path": "id"
+          }
+        }
+      }
+    ],
+    "enabled": true,
+    "order": 0
+  }
+}

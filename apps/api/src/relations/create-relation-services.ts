@@ -17,6 +17,10 @@ import {
 type GenericRecord = { readonly id: string; readonly tenantId: string };
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
+export type RelationChildMutatedHandler = NonNullable<
+  RelationServicesDeps["onChildRecordMutated"]
+>;
+
 interface TenantEntityResolver {
   getEntityDefinition(
     name: string,
@@ -44,6 +48,7 @@ function createRelationDeps(
   >,
   tenantId: string,
   joinRepository?: JoinCollectionRepository,
+  onChildRecordMutated?: RelationChildMutatedHandler,
 ): RelationServicesDeps {
   return {
     getEntityDefinition: (name) => resolver.getEntityDefinition(name, tenantId),
@@ -90,6 +95,7 @@ function createRelationDeps(
       return repository.delete(id, activeTenantId);
     },
     joinRepository,
+    ...(onChildRecordMutated ? { onChildRecordMutated } : {}),
   };
 }
 
@@ -100,6 +106,7 @@ export function createRelationRuntimeContext(
     TenantScopedEntityRepository<GenericRecord, unknown>
   >,
   joinRepository?: JoinCollectionRepository,
+  onChildRecordMutated?: RelationChildMutatedHandler,
 ): RelationRuntimeContext {
   const staticHooks = new Map<string, EntityRelationHooks>();
 
@@ -108,7 +115,13 @@ export function createRelationRuntimeContext(
       entity.name,
       createEntityRelationHooks(
         entity,
-        createRelationDeps(resolver, repositories, "", joinRepository),
+        createRelationDeps(
+          resolver,
+          repositories,
+          "",
+          joinRepository,
+          onChildRecordMutated,
+        ),
       ),
     );
   }
@@ -124,7 +137,13 @@ export function createRelationRuntimeContext(
         }
         const hooks = createEntityRelationHooks(
           entity,
-          createRelationDeps(resolver, repositories, tenantId, joinRepository),
+          createRelationDeps(
+            resolver,
+            repositories,
+            tenantId,
+            joinRepository,
+            onChildRecordMutated,
+          ),
         );
         return hooks.validateWrite(record, mode, userId);
       },
@@ -135,14 +154,26 @@ export function createRelationRuntimeContext(
         }
         const hooks = createEntityRelationHooks(
           entity,
-          createRelationDeps(resolver, repositories, tenantId, joinRepository),
+          createRelationDeps(
+            resolver,
+            repositories,
+            tenantId,
+            joinRepository,
+            onChildRecordMutated,
+          ),
         );
         return hooks.beforeDelete(id, tenantId, userId);
       },
     }),
     joinHandlerFor: (tenantId) =>
       createJoinCollectionHandler(
-        createRelationDeps(resolver, repositories, tenantId, joinRepository),
+        createRelationDeps(
+          resolver,
+          repositories,
+          tenantId,
+          joinRepository,
+          onChildRecordMutated,
+        ),
       ),
   };
 }

@@ -91,8 +91,58 @@ describe("createWorkerGmailTaskEnqueuer", () => {
         headers: expect.objectContaining({
           "X-Local-Task-Dispatcher": "true",
         }),
+        signal: expect.any(AbortSignal),
       }),
     );
+  });
+
+  it("schedules local process-message work on a serial queue", async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const fetchMock = vi.fn().mockImplementation(async () => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      inFlight -= 1;
+      return { ok: true, text: async () => "" };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { createWorkerGmailTaskEnqueuer } =
+      await import("./worker-gmail-task-enqueuer.js");
+    const enqueuer = createWorkerGmailTaskEnqueuer({
+      projectId: "demo",
+      region: "us-central1",
+      queueName: "gmail-jobs",
+      workerBaseUrl: "http://worker-service:3001",
+      localDispatch: true,
+    });
+
+    await Promise.all([
+      enqueuer.enqueueProcessMessage({
+        tenantId: "rates",
+        userId: "u1",
+        jobId: "j1",
+        gmailMessageId: "m1",
+      }),
+      enqueuer.enqueueProcessMessage({
+        tenantId: "rates",
+        userId: "u1",
+        jobId: "j1",
+        gmailMessageId: "m2",
+      }),
+      enqueuer.enqueueProcessMessage({
+        tenantId: "rates",
+        userId: "u1",
+        jobId: "j1",
+        gmailMessageId: "m3",
+      }),
+    ]);
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+    expect(maxInFlight).toBe(1);
   });
 
   it("uses Cloud Tasks for window sync when localDispatch is false", async () => {

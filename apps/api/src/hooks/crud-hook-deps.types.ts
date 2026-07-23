@@ -7,6 +7,7 @@ import type { UserNotificationRepository } from "@repo/firestore-converters";
 import type { DataHookJobPayload } from "@repo/hooks";
 import type { DataHookWebhookRequest } from "@repo/hooks";
 
+import type { AggregationEmitterDeps } from "../aggregation/emit-aggregation-event.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { FormulaRuntimeContext } from "../formulas/formula-runtime-context.js";
 import type { HookRuntimeContext } from "./hook-runtime-context.js";
@@ -32,4 +33,5 @@ export interface CrudHookDeps {
   readonly userNotificationRepository?: UserNotificationRepository;
   readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  readonly aggregation?: AggregationEmitterDeps;
 }

@@ -32,6 +32,7 @@ export default [
     route("settings/metrics", "./routes/settings/metrics.tsx"),
     route("settings/charts", "./routes/settings/charts.tsx"),
     route("settings/formulas", "./routes/settings/formulas.tsx"),
+    route("settings/email-matching", "./routes/settings/email-matching.tsx"),
     route("settings/query-builder", "./routes/settings/query-builder.tsx"),
     route("settings/custom-views", "./routes/settings/custom-views.tsx"),
     route(

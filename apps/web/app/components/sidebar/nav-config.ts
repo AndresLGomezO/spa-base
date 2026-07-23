@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   LayoutTemplate,
   LineChart,
+  Mail,
   Palette,
   Rows3,
   Search,
@@ -45,6 +46,7 @@ export type NavLabelKey =
   | "metricsNav"
   | "chartsNav"
   | "formulasNav"
+  | "emailMatchingNav"
   | "queryBuilderNav"
   | "customViewsNav"
   | "roles"
@@ -201,6 +203,14 @@ export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
   to: "/settings/automation",
   matchPath: "/settings/automation",
   icon: Workflow,
+};
+
+export const SETTINGS_EMAIL_MATCHING_NAV_ITEM: NavLinkConfig = {
+  id: "email-matching",
+  labelKey: "emailMatchingNav",
+  to: "/settings/email-matching",
+  matchPath: "/settings/email-matching",
+  icon: Mail,
 };
 
 export const SETTINGS_QUERY_BUILDER_NAV_ITEM: NavLinkConfig = {

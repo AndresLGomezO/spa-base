@@ -57,6 +57,23 @@ describe("extractBodyFields", () => {
     });
   });
 
+  it("coerces isReversal literal strings to booleans", () => {
+    const result = extractBodyFields(
+      "Fecha: 2026/07/12\nValor Transacción: 1,000\nLugar de Transacción: TEST",
+      [
+        { field: "amount", label: "Valor Transacción", transform: "amount" },
+        {
+          field: "isReversal",
+          label: "",
+          transform: "literal",
+          literal: "true",
+        },
+      ],
+    );
+    expect(result.relevant).toBe(true);
+    expect(result.fields.isReversal).toBe(true);
+  });
+
   it("keeps date-only when time is missing", () => {
     const result = extractBodyFields(
       "Fecha: 2026/07/12\nValor Transacción: 1,000\nLugar de Transacción: TEST",
@@ -180,6 +197,46 @@ CUS: 467121110
       isReversal: false,
       extractSource: "manual",
     });
+  });
+
+  it("extracts PSE Crediservice fields when label and value are on separate lines", () => {
+    const body = `¡Hola, Andrés Leonardo Gómez Ortiz!
+
+ Los siguientes son los datos de tu transacción:
+
+ Valor: 
+ $ 692.500,00 
+
+ Empresa: 
+ Banco de Bogota 
+
+ Descripción: 
+ PAGO BANCO DE BOGOTÁ - CREDISERVICE 
+
+ Fecha de la transacción: 
+ 15/07/2026 
+
+ CUS: 
+ 483564422 
+`;
+    const result = extractBodyFields(body, [
+      { field: "amount", label: "Valor", transform: "amount" },
+      { field: "description", label: "Descripción", transform: "trim" },
+      {
+        field: "date",
+        label: "Fecha de la transacción",
+        transform: "slashDate",
+      },
+      { field: "cus", label: "CUS", transform: "trim" },
+      { field: "type", transform: "literal", literal: "PAYMENT", label: "" },
+    ]);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.amount).toBe(692500);
+    expect(result.fields.date).toBe("2026-07-15");
+    expect(result.fields.cus).toBe("483564422");
+    expect(result.fields.description).toBe(
+      "PAGO BANCO DE BOGOTÁ - CREDISERVICE · CUS 483564422",
+    );
   });
 
   it("extracts PSE Mastercard Black payment fields", () => {
@@ -333,6 +390,51 @@ Bancolombia: Recibiste una transferencia por $3,206,391 de MARIA PARRA en tu cue
       extractSource: "manual",
     });
   });
+
+  it("parses compact datetime without 'a las' (el DD/MM/YYYY HH:mm:ss)", () => {
+    const body =
+      "Bancolombia: Pagaste $2454589.00 a Banco Davivienda SA Zona Pa desde tu producto 2518 el 04/07/2026 23:10:40. ¿Dudas? Llamanos al 6045109095. Estamos cerca ¿";
+    const extractors = [
+      {
+        field: "amount",
+        label: "",
+        pattern: "/\\$\\s?([\\d.,]+)/",
+        transform: "amount" as const,
+      },
+      {
+        field: "date",
+        label: "",
+        pattern:
+          "/(\\d{2}\\/\\d{2}\\/\\d{2,4}(?:\\s+a\\s+las\\s+|\\s+)\\d{2}:\\d{2}(?::\\d{2})?)/i",
+        transform: "slashDate" as const,
+      },
+      {
+        field: "description",
+        label: "",
+        pattern:
+          "/Bancolombia:\\s*(.+?\\s+el\\s+\\d{2}\\/\\d{2}\\/\\d{2,4}(?:\\s+a\\s+las\\s+|\\s+)\\d{2}:\\d{2}(?::\\d{2})?)\\.?/is",
+        transform: "trim" as const,
+      },
+      {
+        field: "type",
+        label: "",
+        pattern: "/(?:^(?![\\s\\S]*QR)[\\s\\S]*?\\b(pagaste)\\b|\\b(recibiste)\\b)/i",
+        transform: "valueMap" as const,
+        valueMap: { pagaste: "PAYMENT", recibiste: "INCOME" },
+      },
+    ];
+    const result = extractBodyFields(body, extractors);
+    expect(result.relevant).toBe(true);
+    expect(result.fields).toEqual({
+      amount: 2454589,
+      date: "2026-07-04T23:10:40",
+      description:
+        "Pagaste $2454589.00 a Banco Davivienda SA Zona Pa desde tu producto 2518 el 04/07/2026 23:10:40",
+      type: "PAYMENT",
+      isReversal: false,
+      extractSource: "manual",
+    });
+  });
 });
 
 describe("Davivienda credit card statement extract", () => {
@@ -476,5 +578,92 @@ En este tiempo de coyuntura queremos mantenerlo más informado sobre sus product
     expect(result.fields.statementDate).toBe("2026-04-04");
     expect(result.fields.description).toBe("00958100400");
     expect(result.fields.amount).toBeUndefined();
+  });
+});
+
+describe("extractBodyFields Banco Caja Social Pago exitoso", () => {
+  const BODY = `Resumen de su transacción
+	
+Su transacción fue aprobada
+Número de transacción APIE2607090052813613
+
+Medio de pago
+
+	
+Banco:	BANCOLOMBIA
+CUS:	467132360
+Dirección IP:	152.201.74.140
+Estado:	Aprobada
+Resumen de pago
+
+Fecha y hora:	9 de julio de 2026-15:17hrs.
+Número de transacción:	APIE2607090052813613
+Nombre del servicio:	ALTAVISTA TORRES DE APARTAMENTOS
+NIT de la empresa:	9003175996
+Dirección:	CL 32 13 52
+Ciudad:	BOGOTA
+Numero de Torre y Apartamento:	22103
+Celular:	3008386182
+Correo electrónico:	andreslgomezo@gmail.com
+Valor:	$ $566.300,00
+Descripción del pago:	Torre 2 AP 2103
+`;
+
+  const EXTRACTORS = [
+    {
+      field: "date",
+      label: "Fecha y hora",
+      transform: "monthNameDate" as const,
+    },
+    { field: "amount", label: "Valor", transform: "amount" as const },
+    {
+      field: "description",
+      label: "",
+      pattern:
+        "/(N[uú]mero de transacci[oó]n:[\\s\\S]*?Descripci[oó]n del pago:\\s*[^\\n]+)/i",
+      transform: "collapseWhitespace" as const,
+    },
+    {
+      field: "type",
+      transform: "literal" as const,
+      literal: "PAYMENT",
+      label: "",
+    },
+  ];
+
+  it("extracts Spanish long datetime, amount, and collapsed description", () => {
+    const result = extractBodyFields(BODY, EXTRACTORS);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.date).toBe("2026-07-09T15:17:00");
+    expect(result.fields.amount).toBe(566300);
+    expect(result.fields.type).toBe("PAYMENT");
+    expect(result.fields.description).toBe(
+      "Número de transacción: APIE2607090052813613 Nombre del servicio: ALTAVISTA TORRES DE APARTAMENTOS NIT de la empresa: 9003175996 Dirección: CL 32 13 52 Ciudad: BOGOTA Numero de Torre y Apartamento: 22103 Celular: 3008386182 Correo electrónico: andreslgomezo@gmail.com Valor: $ $566.300,00 Descripción del pago: Torre 2 AP 2103",
+    );
+  });
+
+  it("decodes HTML named entities before extracting description", () => {
+    const encodedBody = `Fecha y hora:	9 de julio de 2026-15:17hrs.
+N&uacute;mero de transacci&oacute;n:	APIE2607090052813613
+Nombre del servicio:	ALTAVISTA TORRES DE APARTAMENTOS
+NIT de la empresa:	9003175996
+Direcci&oacute;n:	CL 32 13 52
+Ciudad:	BOGOTA
+Numero de Torre y Apartamento:	22103
+Celular:	3008386182
+Correo electr&oacute;nico:	andreslgomezo@gmail.com
+Valor:	$ $566.300,00
+Descripci&oacute;n del pago:	Torre 2 AP 2103
+`;
+    const result = extractBodyFields(encodedBody, EXTRACTORS);
+    expect(result.relevant).toBe(true);
+    expect(result.fields.date).toBe("2026-07-09T15:17:00");
+    expect(result.fields.amount).toBe(566300);
+    expect(String(result.fields.description)).toContain(
+      "ALTAVISTA TORRES DE APARTAMENTOS",
+    );
+    expect(String(result.fields.description)).toContain(
+      "Descripción del pago: Torre 2 AP 2103",
+    );
   });
 });

@@ -26,6 +26,7 @@ export const DATA_HOOK_CONDITION_OPERATORS = [
   "<=",
   "in",
   "notIn",
+  "contains",
   "isEmpty",
   "isNotEmpty",
   "changed",
@@ -76,6 +77,11 @@ export type DataHookScheduleTrigger = {
 
 export type DataHookEmailTrigger = {
   readonly kind: "email";
+  /**
+   * When non-empty, only these email-match binding ids fire the hook.
+   * Omit or empty means any matching binding for the hook entity.
+   */
+  readonly bindingIds?: readonly string[];
 };
 
 export type DataHookTrigger =
@@ -185,6 +191,7 @@ export const dataHookScheduleTriggerSchema = z.object({
 
 export const dataHookEmailTriggerSchema = z.object({
   kind: z.literal("email"),
+  bindingIds: z.array(z.string().trim().min(1)).optional(),
 });
 
 export const dataHookTriggerSchema = z.preprocess(
@@ -212,6 +219,21 @@ export function isCrudTrigger(
   trigger: DataHookTrigger,
 ): trigger is DataHookCrudTrigger {
   return trigger.kind !== "schedule" && trigger.kind !== "email";
+}
+
+/**
+ * Whether an email trigger should run for a matched binding id.
+ * Omit/empty `bindingIds` means any binding (current default behavior).
+ */
+export function emailTriggerAppliesToBinding(
+  trigger: DataHookEmailTrigger,
+  bindingId: string,
+): boolean {
+  const ids = trigger.bindingIds;
+  if (ids == null || ids.length === 0) {
+    return true;
+  }
+  return ids.includes(bindingId);
 }
 
 export const dataHookUpdateMatchingWhereSchema = z.preprocess(

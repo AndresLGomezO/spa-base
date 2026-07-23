@@ -25,7 +25,11 @@ export async function seedPlatformTenants(
   options: SeedPlatformTenantsOptions = {},
 ): Promise<void> {
   const repository = createFirestoreAdminTenantRepository(firebaseAdminConfig);
-  const selection = options.selection ?? { components: null, ids: null };
+  const selection = options.selection ?? {
+    components: null,
+    ids: null,
+    drop: false,
+  };
 
   await repository.ensureTenant(RATES_TENANT_ID, RATES_TENANT_NAME, null);
 

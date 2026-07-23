@@ -1,4 +1,5 @@
 import {
+  assertDropAllowedForSelection,
   assertIdsAllowedForSelection,
   assertValidSeedComponents,
   parseCommaSeparatedSet,
@@ -55,6 +56,7 @@ export function parseSeedDatabaseArgs(
   let projectId: string | undefined;
   let onlyRaw: string | undefined;
   let idsRaw: string | undefined;
+  let drop = false;
 
   for (let index = 0; index < normalizedArgv.length; index += 1) {
     const arg = normalizedArgv[index]!;
@@ -84,6 +86,10 @@ export function parseSeedDatabaseArgs(
       if (parsed.consumedNext) {
         index += 1;
       }
+      continue;
+    }
+    if (arg === "--drop") {
+      drop = true;
       continue;
     }
     throw new Error(`Unknown argument: ${arg}`);
@@ -117,5 +123,7 @@ export function parseSeedDatabaseArgs(
     }
   }
 
-  return { gcp, projectId, components, ids };
+  assertDropAllowedForSelection(components, drop);
+
+  return { gcp, projectId, components, ids, drop };
 }
