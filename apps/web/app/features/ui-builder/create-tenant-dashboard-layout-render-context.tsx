@@ -137,8 +137,6 @@ export function createTenantDashboardLayoutRenderContext(
     ),
     metricWidgetRenderer: getDefinition
       ? createMetricWidgetRenderer({
-          catalogItems,
-          t,
           buildLayoutContext: (definition, item, extras) =>
             createEntityLayoutRenderContext({
               item,

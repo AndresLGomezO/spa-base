@@ -4,6 +4,7 @@ import { Pie } from "@visx/shape";
 import { cn } from "@repo/theme/utils";
 
 import { ChartContainer } from "./ChartContainer.js";
+import { ChartBusySpinner } from "./ChartBusySpinner.js";
 import type { DonutChartProps } from "./types.js";
 
 export interface DonutSlice {
@@ -40,6 +41,7 @@ export function DonutChart({
   ariaLabel,
   className,
   loading = false,
+  loadingLabel,
   emptyMessage = "No data",
 }: DonutChartProps) {
   const slices = useMemo(
@@ -61,11 +63,7 @@ export function DonutChart({
         const centerY = height / 2;
 
         if (loading) {
-          return (
-            <div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">
-              Loading…
-            </div>
-          );
+          return <ChartBusySpinner ariaLabel={loadingLabel} />;
         }
 
         if (!hasValue) {

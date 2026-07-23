@@ -93,7 +93,9 @@ describe("MetricDerivedValueDisplay", () => {
 
     renderDisplay();
 
-    expect(screen.getByText("Loading metric…")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /Loading metric/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the evaluated total using the first metric format", () => {

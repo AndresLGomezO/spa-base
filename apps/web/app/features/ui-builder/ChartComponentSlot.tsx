@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { DonutChart, LineAreaChart } from "@repo/ui-charts";
 import {
   filterComponentInnerStyleRules,
@@ -11,6 +12,7 @@ import { cn } from "@repo/theme/utils";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog.js";
 import { useChartDefinitions } from "../../hooks/useChartDefinitions.js";
 import type { PageFilterContext } from "../../lib/metric-binding-resolution.js";
+import { WidgetLoadingIndicator } from "../../components/loading/WidgetLoadingIndicator.js";
 import { resolveChartComponentConfigFromCatalog } from "./resolve-chart-component-config.js";
 import { useChartData } from "./chart-data/useChartData.js";
 
@@ -27,6 +29,8 @@ export function ChartComponentSlot({
   catalog = [],
   previewMode = false,
 }: ChartComponentSlotProps) {
+  const { t } = useTranslation();
+  const loadingLabel = t("chartComponent.loading");
   const chartDefinitionsQuery = useChartDefinitions(true);
   const definitions = useMemo(
     () => chartDefinitionsQuery.data ?? [],
@@ -62,19 +66,20 @@ export function ChartComponentSlot({
   }, [config.ariaLabel, series]);
 
   if (!resolvedConfig) {
-    return (
-      <div
-        className={cn(
-          "text-muted-foreground flex h-full w-full items-center justify-center text-sm",
-          containerClassName,
-        )}
-        style={containerStyle}
-      >
-        {chartDefinitionsQuery.isLoading
-          ? "Loading…"
-          : "Select a chart definition"}
-      </div>
-    );
+    if (chartDefinitionsQuery.isLoading) {
+      return (
+        <div
+          className={cn(
+            "flex h-full w-full items-center justify-center",
+            containerClassName,
+          )}
+          style={containerStyle}
+        >
+          <WidgetLoadingIndicator ariaLabel={loadingLabel} size="sm" />
+        </div>
+      );
+    }
+    return null;
   }
 
   return (
@@ -94,6 +99,7 @@ export function ChartComponentSlot({
           strokeWidth={donutData.strokeWidth}
           ariaLabel={ariaLabel}
           loading={loading}
+          loadingLabel={loadingLabel}
           className="h-full w-full"
         />
       ) : resolvedConfig.chartType === "line" ||
@@ -108,6 +114,7 @@ export function ChartComponentSlot({
           animation={resolvedConfig.animation}
           ariaLabel={ariaLabel}
           loading={loading}
+          loadingLabel={loadingLabel}
           className="h-full w-full"
         />
       ) : null}

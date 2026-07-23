@@ -23,6 +23,7 @@ import {
 } from "./format-metric-display-value.js";
 import { resolveMetricKpiValueToneClass } from "@repo/ui-builder-core";
 import { ResponsiveStyleTag } from "@repo/ui-builder-renderer";
+import { WidgetLoadingIndicator } from "../loading/WidgetLoadingIndicator.js";
 
 type MetricValuePresentation = "card" | "inline";
 
@@ -286,9 +287,11 @@ export function MetricValueDisplay({
         style={style}
         cssText={cssText}
       >
-        <Text variant="muted" className={statusClassName}>
-          {t("metrics.widget.loading")}
-        </Text>
+        <WidgetLoadingIndicator
+          ariaLabel={t("metrics.widget.loading")}
+          size="sm"
+          className={statusClassName}
+        />
       </MetricValueShell>
     );
   }

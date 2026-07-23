@@ -109,7 +109,9 @@ describe("MetricValueDisplay", () => {
 
     renderDisplay();
 
-    expect(screen.getByText("Loading metric…")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /Loading metric/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows loading state while the metric catalog is loading", () => {
@@ -128,7 +130,9 @@ describe("MetricValueDisplay", () => {
 
     renderDisplay({ metricDefinitionId: "Total revenue" });
 
-    expect(screen.getByText("Loading metric…")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /Loading metric/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows unconfigured state when metricDefinitionId is missing", () => {
@@ -150,7 +154,9 @@ describe("MetricValueDisplay", () => {
     expect(
       screen.getByText("Select a metric for this KPI."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Loading metric…")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: /Loading metric/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows error state when the row query fails", () => {

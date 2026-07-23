@@ -9,6 +9,7 @@ import { scaleLinear, scalePoint } from "@visx/scale";
 import { cn } from "@repo/theme/utils";
 
 import { ChartContainer } from "./ChartContainer.js";
+import { ChartBusySpinner } from "./ChartBusySpinner.js";
 import { ChartLegend } from "./ChartLegend.js";
 import {
   ChartGlowFilters,
@@ -289,6 +290,7 @@ export function LineAreaChart({
   ariaLabel,
   className,
   loading,
+  loadingLabel,
   emptyMessage = "No chart data",
 }: LineAreaChartProps) {
   const instanceId = sanitizeSvgId(useId());
@@ -303,15 +305,7 @@ export function LineAreaChart({
     <ChartContainer className={className} ariaLabel={ariaLabel}>
       {({ width, height }) => {
         if (loading) {
-          return (
-            <div
-              className={cn(
-                "text-muted-foreground flex h-full w-full items-center justify-center text-xs",
-              )}
-            >
-              Loading…
-            </div>
-          );
+          return <ChartBusySpinner ariaLabel={loadingLabel} />;
         }
 
         if (!hasData) {

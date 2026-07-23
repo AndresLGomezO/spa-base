@@ -11,6 +11,7 @@ import type { MetricBindingContext } from "../../lib/metric-binding-resolution.j
 import { useMetricDerivedValue } from "../../hooks/metrics/useMetricDerivedValue.js";
 import { formatMetricDerivedExpressionPreview } from "./metric-derived-expression-preview.js";
 import { formatDefaultMetricDisplayValue } from "./format-metric-display-value.js";
+import { WidgetLoadingIndicator } from "../loading/WidgetLoadingIndicator.js";
 
 type MetricValuePresentation = "card" | "inline";
 
@@ -185,9 +186,11 @@ export function MetricDerivedValueDisplay({
         style={style}
         cssText={cssText}
       >
-        <Text variant="muted" className={statusClassName}>
-          {t("metrics.widget.loading")}
-        </Text>
+        <WidgetLoadingIndicator
+          ariaLabel={t("metrics.widget.loading")}
+          size="sm"
+          className={statusClassName}
+        />
       </MetricValueShell>
     );
   }

@@ -390,6 +390,7 @@
     "status": "Status: {{status}}"
   },
   "chartComponent": {
+    "loading": "Loading chart…",
     "chartType": "Chart type",
     "types": {
       "line": "Line",
@@ -819,7 +820,6 @@
       "entity": "Entity",
       "widget": "Widget",
       "selectWidget": "Select a widget…",
-      "unconfigured": "No widget selected",
       "noWidgetsForEntity": "No metric widgets are defined for this entity.",
       "noEntitiesWithWidgets": "No entities have metric widgets yet."
     },

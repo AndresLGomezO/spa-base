@@ -278,8 +278,6 @@ export function createEntityLayoutRenderContext(options: {
     metricWidgetRenderer:
       getDefinition && t
         ? createMetricWidgetRenderer({
-            catalogItems,
-            t,
             buildLayoutContext: (nestedDefinition, nestedItem, extras) =>
               createEntityLayoutRenderContext({
                 item: nestedItem,

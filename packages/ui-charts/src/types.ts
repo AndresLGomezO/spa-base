@@ -55,6 +55,7 @@ export interface LineAreaChartProps {
   readonly ariaLabel?: string;
   readonly className?: string;
   readonly loading?: boolean;
+  readonly loadingLabel?: string;
   readonly emptyMessage?: string;
 }
 
@@ -70,5 +71,6 @@ export interface DonutChartProps {
   readonly ariaLabel?: string;
   readonly className?: string;
   readonly loading?: boolean;
+  readonly loadingLabel?: string;
   readonly emptyMessage?: string;
 }
