@@ -277,6 +277,29 @@ export async function listEntity<T>(
   });
 }
 
+export interface CatalogSearchItem {
+  readonly entityName: string;
+  readonly entityLabel: string;
+  readonly id: string;
+  readonly label: string;
+  readonly record: Record<string, unknown>;
+}
+
+export async function searchCatalog(options: {
+  readonly q: string;
+  readonly limit?: number;
+}): Promise<{ readonly items: readonly CatalogSearchItem[] }> {
+  return apiRequest<{ readonly items: readonly CatalogSearchItem[] }>(
+    "/api/search",
+    {
+      query: {
+        q: options.q,
+        limit: options.limit,
+      },
+    },
+  );
+}
+
 export async function getEntity<T>(
   entityName: string,
   id: string,

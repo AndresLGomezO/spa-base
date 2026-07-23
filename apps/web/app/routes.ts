@@ -143,6 +143,7 @@ export default [
     ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
+      route("search", "./routes/search.tsx"),
       ...buildEntityRouteConfig(),
       ...buildCustomViewRouteConfig(),
     ]),

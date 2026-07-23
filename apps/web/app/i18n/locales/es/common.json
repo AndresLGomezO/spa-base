@@ -4309,5 +4309,47 @@
     "sortDescending": "Descendente",
     "removeBadge": "Quitar filtro {{label}}",
     "noFilterResults": "No hay opciones coincidentes"
+  },
+  "globalSearch": {
+    "placeholder": "Buscar…",
+    "panelTitle": "Buscar",
+    "close": "Cerrar búsqueda",
+    "recent": "Recientes",
+    "loading": "Buscando…",
+    "topResults": "Mejores resultados",
+    "removeRecent": "Quitar {{label}} de recientes",
+    "sections": {
+      "entities": "Entidades",
+      "features": "Funciones",
+      "views": "Vistas"
+    },
+    "entitySubgroups": {
+      "types": "Tipos"
+    },
+    "results": {
+      "pageTitle": "Resultados de búsqueda",
+      "submitAria": "Buscar",
+      "tabsAria": "Categorías de resultados",
+      "emptyQuery": "Escribe un término para ver resultados.",
+      "empty": "No hay resultados para tu búsqueda.",
+      "sortLabel": "Ordenar",
+      "tabs": {
+        "all": "Todos",
+        "features": "Funciones",
+        "views": "Vistas",
+        "types": "Tipos"
+      },
+      "sort": {
+        "relevance": "Relevancia",
+        "nameAsc": "Nombre A–Z",
+        "nameDesc": "Nombre Z–A"
+      },
+      "badges": {
+        "feature": "Función",
+        "view": "Vista",
+        "type": "Tipo",
+        "record": "Registro"
+      }
+    }
   }
 }

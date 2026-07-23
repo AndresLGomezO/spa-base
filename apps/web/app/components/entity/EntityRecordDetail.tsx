@@ -315,7 +315,9 @@ export function EntityRecordDetail({
                     ) : (
                       <SchemaCell
                         value={rawValue}
-                        fieldType={fieldMeta?.type as DisplayFieldType | undefined}
+                        fieldType={
+                          fieldMeta?.type as DisplayFieldType | undefined
+                        }
                         displayFormat={
                           definition.ui.fields?.[field]?.displayFormat
                         }

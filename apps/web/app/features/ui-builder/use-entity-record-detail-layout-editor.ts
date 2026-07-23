@@ -35,7 +35,10 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
     () => fieldMetaForDefaultLayout(definition),
     [definition],
   );
-  const fieldPaths = useMemo(() => Object.keys(definition.fields), [definition]);
+  const fieldPaths = useMemo(
+    () => Object.keys(definition.fields),
+    [definition],
+  );
   const defaultFieldPath = fieldPaths[0] ?? "name";
 
   const [layout, setLayout] = useState<UiLayoutDocument>(() => {
@@ -53,11 +56,7 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
     const source = existing ?? createDefaultRecordDetailLayout(fieldMeta);
     setLayout(ensureStandardRoot("screen", source));
     setLayoutSyncGeneration((current) => current + 1);
-  }, [
-    definition.ui.detailLayout,
-    definition.ui.recordDetailLayout,
-    fieldMeta,
-  ]);
+  }, [definition.ui.detailLayout, definition.ui.recordDetailLayout, fieldMeta]);
 
   const setLayoutNormalized = useCallback((next: UiLayoutDocument) => {
     setLayout(ensureStandardRoot("screen", next));

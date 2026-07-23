@@ -20,6 +20,7 @@ import {
 } from "./resolve-entity-cell-value.js";
 
 const RELATED_RECORDS_PAGE_SIZE = 10;
+const EMPTY_RELATED_RECORDS: readonly Record<string, unknown>[] = [];
 
 interface RelatedRecordsProps {
   readonly parentEntityName: string;
@@ -58,7 +59,7 @@ export function RelatedRecords({
     enabled: isKnownEntity(childEntityName),
   });
 
-  const items = data ?? [];
+  const items = data ?? EMPTY_RELATED_RECORDS;
   const label = getEntityLabel(definition);
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC } from "./entity-layout-image-placeholder.js";
 
-export interface EntityFileDisplayValue {
+interface EntityFileDisplayValue {
   readonly fileName: string;
   readonly downloadUrl?: string;
 }

@@ -122,7 +122,11 @@ function formatRawDisplayValue(
 }
 
 function renderDocumentFieldDisplay(rawValue: unknown): ReactNode {
-  if (typeof rawValue !== "object" || rawValue === null || !("fileName" in rawValue)) {
+  if (
+    typeof rawValue !== "object" ||
+    rawValue === null ||
+    !("fileName" in rawValue)
+  ) {
     return "—";
   }
   const fileName = (rawValue as { fileName: unknown }).fileName;

@@ -1,7 +1,7 @@
 import {
   SYSTEM_FIELD_KEYS,
   usesForeignKeyStorage,
-  resolveSearchStorageField,
+  listSearchableStringFields,
   type DefinedEntity,
   type FieldDefinitions,
   type NormalizedFieldMeta,
@@ -505,18 +505,21 @@ export function normalizeEntityQuery(
         },
       });
     } else {
-      const field = resolveSearchStorageField(entity);
-      if (!field) {
+      const searchableFields = listSearchableStringFields(entity);
+      if (searchableFields.length === 0) {
         throw new QueryError(
           QueryErrorCode.SEARCH_NOT_CONFIGURED,
           `Search is not available for entity "${entity.name}". No searchable string field found.`,
         );
       }
-      searchField = field;
+      searchField = SEARCH_SOURCE_FIELDS_FILTER_FIELD;
       searchPostFilters.push({
-        field,
-        operator: "tokenStartsWith",
-        value: lowerTerm,
+        field: SEARCH_SOURCE_FIELDS_FILTER_FIELD,
+        operator: "sourceFieldsContain",
+        value: {
+          term: lowerTerm,
+          fields: searchableFields,
+        },
       });
     }
   }

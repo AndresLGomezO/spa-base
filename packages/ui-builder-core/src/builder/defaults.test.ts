@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import { createDefaultRecordDetailLayout } from "./defaults.js";
 
 function collectKinds(
@@ -14,8 +15,9 @@ function collectKinds(
       if (!row || typeof row !== "object") {
         continue;
       }
-      const component = (row as { component?: { kind?: string; rows?: unknown } })
-        .component;
+      const component = (
+        row as { component?: { kind?: string; rows?: unknown } }
+      ).component;
       if (!component) {
         continue;
       }
@@ -27,7 +29,7 @@ function collectKinds(
       }
     }
   };
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     walk(column.rows);
   }
   return kinds;
@@ -65,7 +67,7 @@ function collectFieldPaths(
       }
     }
   };
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     walk(column.rows);
   }
   return paths;

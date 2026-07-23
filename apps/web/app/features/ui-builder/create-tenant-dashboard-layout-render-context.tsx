@@ -24,7 +24,7 @@ import { createEntityLayoutRenderContext } from "./create-entity-layout-render-c
 import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
 import { ChartComponentSlot } from "./ChartComponentSlot";
 import { listFiltersForEntity } from "./list-filters-for-entity";
-import { ViewSearchComponent } from "./ViewSearchComponent";
+import { GlobalSearchDashboardTrigger } from "../global-search/GlobalSearchDashboardTrigger";
 import { ViewFiltersComponent } from "./ViewFiltersComponent";
 import { ViewDateFilterComponent } from "./ViewDateFilterComponent";
 import { resolveStaticImageSrc } from "@repo/entities";
@@ -157,7 +157,9 @@ export function createTenantDashboardLayoutRenderContext(
             }),
         })
       : undefined,
-    viewSearchRenderer: (config) => <ViewSearchComponent config={config} />,
+    viewSearchRenderer: (config) => (
+      <GlobalSearchDashboardTrigger config={config} previewMode={previewMode} />
+    ),
     viewFiltersRenderer: (config) => <ViewFiltersComponent config={config} />,
     viewDateFilterRenderer: (config) => (
       <ViewDateFilterComponent config={config} />

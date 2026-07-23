@@ -142,6 +142,7 @@ import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-ent
 import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
 import { registerEntityRecordsImportExportRoutes } from "./entities/register-entity-records-import-export-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
+import { registerGlobalSearchRoutes } from "./search/register-global-search-routes.js";
 import { registerEntityUiOverrideRoutes } from "./entities/register-entity-ui-override-routes.js";
 import { registerUiBuilderPresetRoutes } from "./ui-builder-presets/register-ui-builder-preset-routes.js";
 import { registerTenantDashboardLayoutRoutes } from "./tenant-dashboard-layout/register-tenant-dashboard-layout-routes.js";
@@ -855,6 +856,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     firebaseAdminConfig,
     entityUiOverrideRepository,
+  });
+
+  await registerGlobalSearchRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    queryEngine: queryContext.queryEngine,
+    recordReadEnricher,
   });
 
   await registerEntityUiOverrideRoutes(server, {

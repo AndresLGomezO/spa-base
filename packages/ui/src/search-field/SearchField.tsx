@@ -20,6 +20,7 @@ const DEFAULT_CLEAR_ARIA_LABEL = "Clear search";
 export interface SearchFieldProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly onSubmit?: (value: string) => void;
   readonly placeholder?: string;
   readonly ariaLabel?: string;
   readonly clearAriaLabel?: string;
@@ -32,6 +33,7 @@ export interface SearchFieldProps {
 export function SearchField({
   value,
   onChange,
+  onSubmit,
   placeholder,
   ariaLabel,
   clearAriaLabel = DEFAULT_CLEAR_ARIA_LABEL,
@@ -43,6 +45,7 @@ export function SearchField({
   const [localValue, setLocalValue] = useState(value);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onChangeRef = useRef(onChange);
+  const onSubmitRef = useRef(onSubmit);
   const isExternalUpdate = useRef(false);
   const isFocusedRef = useRef(false);
 
@@ -62,6 +65,10 @@ export function SearchField({
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
 
   useEffect(() => {
     if (isFocusedRef.current) {
@@ -103,6 +110,15 @@ export function SearchField({
     };
   }, [debounceMs, localValue]);
 
+  const flushAndSubmit = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    onChangeRef.current(localValue);
+    onSubmitRef.current?.(localValue);
+  }, [localValue]);
+
   return (
     <div
       className={cn(
@@ -126,6 +142,12 @@ export function SearchField({
           isFocusedRef.current = true;
         }}
         onBlur={handleBlur}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            flushAndSubmit();
+          }
+        }}
         placeholder={placeholder}
         className={cn(
           "!pl-11 shadow-none",

@@ -181,18 +181,50 @@ describe("normalizeEntityQuery - post-filters", () => {
 });
 
 describe("normalizeEntityQuery - search", () => {
-  it("generates token post-filter for search term on tokens field", () => {
+  it("generates sourceFieldsContain over all searchable fields", () => {
     const normalized = normalizeEntityQuery(
       TestEntity as unknown as AnyDefinedEntity,
       { search: "hello" },
     );
     expect(normalized.search).toBe("hello");
-    expect(normalized.searchField).toBe("titleSearchTokens");
+    expect(normalized.searchField).toBe("__searchSourceFields__");
     expect(normalized.filters).toHaveLength(0);
     expect(normalized.postFilters).toHaveLength(1);
-    expect(normalized.postFilters[0]?.field).toBe("titleSearchTokens");
-    expect(normalized.postFilters[0]?.operator).toBe("tokenStartsWith");
-    expect(normalized.postFilters[0]?.value).toBe("hello");
+    expect(normalized.postFilters[0]?.field).toBe("__searchSourceFields__");
+    expect(normalized.postFilters[0]?.operator).toBe("sourceFieldsContain");
+    expect(normalized.postFilters[0]?.value).toEqual({
+      term: "hello",
+      fields: ["title", "description"],
+    });
+  });
+
+  it("matches search on non-display searchable fields", () => {
+    const normalized = normalizeEntityQuery(
+      TestEntity as unknown as AnyDefinedEntity,
+      { search: "uber" },
+    );
+
+    const matching = applyPostFilters(
+      [
+        {
+          title: "Ride",
+          description: "Paid uber yesterday",
+        },
+      ],
+      normalized.postFilters,
+    );
+    const missing = applyPostFilters(
+      [
+        {
+          title: "Ride",
+          description: "Taxi downtown",
+        },
+      ],
+      normalized.postFilters,
+    );
+
+    expect(matching).toHaveLength(1);
+    expect(missing).toHaveLength(0);
   });
 
   it("preserves user sort when search is active", () => {
@@ -366,30 +398,30 @@ describe("resolveSearchField", () => {
     expect(resolveSearchField(entity)).toBe(null);
   });
 
-  it("token post-filter matches any word prefix on mirror tokens", () => {
+  it("search matches substring within searchable field values", () => {
     const normalized = normalizeEntityQuery(
       TestEntity as unknown as AnyDefinedEntity,
       { search: "ahorr" },
     );
     const record = {
       title: "Bancolombia Ahorros",
-      titleSearchTokens: ["bancolombia", "ahorros"],
+      description: "Savings account",
     };
     const result = applyPostFilters([record], normalized.postFilters);
     expect(result).toHaveLength(1);
   });
 
-  it("token post-filter does not match mid-token substring", () => {
+  it("search matches mid-word substrings in searchable fields", () => {
     const normalized = normalizeEntityQuery(
       TestEntity as unknown as AnyDefinedEntity,
       { search: "colomb" },
     );
     const record = {
       title: "Bancolombia Ahorros",
-      titleSearchTokens: ["bancolombia", "ahorros"],
+      description: "Savings account",
     };
     const result = applyPostFilters([record], normalized.postFilters);
-    expect(result).toHaveLength(0);
+    expect(result).toHaveLength(1);
   });
 
   it("uses document-wide concatenated search for in-memory list entities", () => {

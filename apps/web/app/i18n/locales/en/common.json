@@ -4309,5 +4309,47 @@
     "sortDescending": "Descending",
     "removeBadge": "Remove filter {{label}}",
     "noFilterResults": "No matching options"
+  },
+  "globalSearch": {
+    "placeholder": "Search…",
+    "panelTitle": "Search",
+    "close": "Close search",
+    "recent": "Recent",
+    "loading": "Searching…",
+    "topResults": "Top results",
+    "removeRecent": "Remove {{label}} from recent",
+    "sections": {
+      "entities": "Entities",
+      "features": "Features",
+      "views": "Views"
+    },
+    "entitySubgroups": {
+      "types": "Types"
+    },
+    "results": {
+      "pageTitle": "Search results",
+      "submitAria": "Search",
+      "tabsAria": "Search result categories",
+      "emptyQuery": "Enter a search term to see results.",
+      "empty": "No results match your search.",
+      "sortLabel": "Sort",
+      "tabs": {
+        "all": "All",
+        "features": "Features",
+        "views": "Views",
+        "types": "Types"
+      },
+      "sort": {
+        "relevance": "Relevance",
+        "nameAsc": "Name A–Z",
+        "nameDesc": "Name Z–A"
+      },
+      "badges": {
+        "feature": "Feature",
+        "view": "View",
+        "type": "Type",
+        "record": "Record"
+      }
+    }
   }
 }
