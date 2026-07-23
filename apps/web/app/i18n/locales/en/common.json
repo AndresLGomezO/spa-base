@@ -431,7 +431,7 @@
     "timeSeriesLayout": "Time series layout",
     "timeSeriesLayouts": {
       "span": "Span (relative offsets)",
-      "monthToDateRightAligned": "Month to date (30 slots, right-aligned)"
+      "monthToDateRightAligned": "Month to date (days 1–30, left to right)"
     },
     "periodParameter": "Period parameter",
     "timeSeriesAggregate": "Bucket aggregate",

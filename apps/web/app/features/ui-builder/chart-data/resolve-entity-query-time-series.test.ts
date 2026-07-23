@@ -10,7 +10,7 @@ import {
   bucketEntityQueryTimeSeriesRows,
   buildEntityQueryRowsFetchKey,
   buildEntityQueryTimeSeriesKey,
-  buildMonthToDateRightAlignedPoints,
+  buildMonthToDateChronologicalPoints,
   deriveNetBalanceTypeSets,
   entityQueryTimeSeriesIsConfigured,
   extractDayValuesForMonth,
@@ -481,7 +481,7 @@ describe("fetchEntityQueryRows and bucketEntityQueryTimeSeriesRows", () => {
   });
 });
 
-describe("month-to-date right-aligned layout", () => {
+describe("month-to-date chronological layout", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-07-10T12:00:00.000Z"));
@@ -505,29 +505,34 @@ describe("month-to-date right-aligned layout", () => {
     ).toBe(0);
   });
 
-  it("builds 30 slots with active days right-aligned", () => {
+  it("builds active days 1→N left-to-right with day-number x labels", () => {
     const dayValues = new Map<number, number>([
       [1, 10],
       [5, 50],
       [10, 100],
     ]);
 
-    const points = buildMonthToDateRightAlignedPoints(dayValues, 10, 30);
+    const points = buildMonthToDateChronologicalPoints(dayValues, 10, 30);
 
-    expect(points).toHaveLength(30);
-    expect(points.slice(0, 20).every((point) => point.y === 0)).toBe(true);
-    expect(points.slice(20)).toEqual([
-      { x: "21", y: 10 },
-      { x: "22", y: 0 },
-      { x: "23", y: 0 },
-      { x: "24", y: 0 },
-      { x: "25", y: 50 },
-      { x: "26", y: 0 },
-      { x: "27", y: 0 },
-      { x: "28", y: 0 },
-      { x: "29", y: 0 },
-      { x: "30", y: 100 },
+    expect(points).toHaveLength(10);
+    expect(points).toEqual([
+      { x: "1", y: 10 },
+      { x: "2", y: 0 },
+      { x: "3", y: 0 },
+      { x: "4", y: 0 },
+      { x: "5", y: 50 },
+      { x: "6", y: 0 },
+      { x: "7", y: 0 },
+      { x: "8", y: 0 },
+      { x: "9", y: 0 },
+      { x: "10", y: 100 },
     ]);
+  });
+
+  it("returns an empty series when reference day is zero", () => {
+    expect(
+      buildMonthToDateChronologicalPoints(new Map([[1, 10]]), 0, 30),
+    ).toEqual([]);
   });
 
   it("merges day 31 values into day 30 before slot mapping", () => {
@@ -569,12 +574,9 @@ describe("month-to-date right-aligned layout", () => {
       [{ id: "default", label: "Income", color: "green" }],
     );
 
-    expect(series[0]?.points).toHaveLength(30);
-    expect(series[0]?.points.slice(0, 20).every((point) => point.y === 0)).toBe(
-      true,
-    );
-    expect(series[0]?.points[20]?.y).toBe(10);
-    expect(series[0]?.points[29]?.y).toBe(100);
+    expect(series[0]?.points).toHaveLength(10);
+    expect(series[0]?.points[0]).toEqual({ x: "1", y: 10 });
+    expect(series[0]?.points[9]).toEqual({ x: "10", y: 100 });
     expect(series[0]?.points.some((point) => point.y === 999)).toBe(false);
   });
 
@@ -604,8 +606,8 @@ describe("month-to-date right-aligned layout", () => {
     );
 
     expect(series[0]?.points).toHaveLength(30);
-    expect(series[0]?.points[0]?.y).toBe(10);
-    expect(series[0]?.points[9]?.y).toBe(100);
+    expect(series[0]?.points[0]).toEqual({ x: "1", y: 10 });
+    expect(series[0]?.points[9]).toEqual({ x: "10", y: 100 });
   });
 });
 

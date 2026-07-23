@@ -431,7 +431,7 @@
     "timeSeriesLayout": "Disposición de serie temporal",
     "timeSeriesLayouts": {
       "span": "Rango (offsets relativos)",
-      "monthToDateRightAligned": "Mes hasta la fecha (30 slots, alineado a la derecha)"
+      "monthToDateRightAligned": "Mes hasta la fecha (días 1–30, izquierda a derecha)"
     },
     "periodParameter": "Parámetro de periodo",
     "timeSeriesAggregate": "Agregación por bucket",

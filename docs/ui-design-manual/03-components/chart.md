@@ -118,7 +118,7 @@ Use one **parametric windowed** saved query (e.g. `Transaction trend`) with `per
 
 ### Month-to-date widget overlay (`layout: "monthToDateRightAligned"`)
 
-For metric-widget decorative charts, prefer **30 daily buckets** filled from the **right**. When the dashboard month is the **current calendar month**, slots fill through **today**. For **past months**, the full month is shown (last day of that month on the right). **Future months** stay all zero.
+For metric-widget decorative charts, prefer **up to 30 daily buckets** plotted **left to right** as calendar days `1…N`. When the dashboard month is the **current calendar month**, the series includes days **1 through today**. For **past months**, the full month is shown (capped at 30; day 31 merges into day 30). **Future months** stay empty/zero.
 
 - Set `bucketCount: 30`, `layout: "monthToDateRightAligned"`, `step.unit: "day"`.
 - Fetch scope stays one month (`relativePeriod` offset `0`, unit `month`); bucketing uses day granularity client-side.

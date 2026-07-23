@@ -491,7 +491,7 @@ export function extractDayValuesForMonth(
   return dayValues;
 }
 
-export function buildMonthToDateRightAlignedPoints(
+export function buildMonthToDateChronologicalPoints(
   dayValues: ReadonlyMap<number, number>,
   referenceDay: number,
   slotCount = 30,
@@ -499,13 +499,11 @@ export function buildMonthToDateRightAlignedPoints(
   const activeDays = referenceDay <= 0 ? 0 : Math.min(referenceDay, slotCount);
   const points: Array<{ x: string; y: number }> = [];
 
-  for (let slot = 0; slot < slotCount; slot += 1) {
-    const dayNumber = slot - (slotCount - activeDays) + 1;
-    const y =
-      activeDays > 0 && dayNumber >= 1 && dayNumber <= activeDays
-        ? (dayValues.get(dayNumber) ?? 0)
-        : 0;
-    points.push({ x: String(slot + 1), y });
+  for (let dayNumber = 1; dayNumber <= activeDays; dayNumber += 1) {
+    points.push({
+      x: String(dayNumber),
+      y: dayValues.get(dayNumber) ?? 0,
+    });
   }
 
   return points;
@@ -627,7 +625,7 @@ export function bucketEntityQueryTimeSeriesRows(
       anchorMonth === null
         ? new Map<number, number>()
         : extractDayValuesForMonth(bucketValues, anchorMonth, referenceDay);
-    const points = buildMonthToDateRightAlignedPoints(
+    const points = buildMonthToDateChronologicalPoints(
       dayValues,
       referenceDay,
       timeSeries.bucketCount,
