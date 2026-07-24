@@ -57,6 +57,55 @@ export const DateOnlyMobileViewport: Story = {
   },
 };
 
+export const DateOnlyWithPresets: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | undefined>(
+      "2026-07-24T00:00:00.000Z",
+    );
+
+    return (
+      <div className="max-w-sm">
+        <DatePicker
+          mode="date"
+          value={value}
+          onChange={setValue}
+          labels={labels}
+          presets={[
+            { label: "Today", value: "2026-07-24T00:00:00.000Z" },
+            { label: "Yesterday", value: "2026-07-23T00:00:00.000Z" },
+          ]}
+        />
+      </div>
+    );
+  },
+};
+
+export const DateOnlyMobileWithPresets: Story = {
+  render: () => {
+    const [value, setValue] = useState<string | undefined>(
+      "2026-07-24T00:00:00.000Z",
+    );
+
+    return (
+      <div className="max-w-sm">
+        <DatePicker
+          mode="date"
+          value={value}
+          onChange={setValue}
+          labels={{ ...labels, openCalendar: "Select date" }}
+          presets={[
+            { label: "Today", value: "2026-07-24T00:00:00.000Z" },
+            { label: "Yesterday", value: "2026-07-23T00:00:00.000Z" },
+          ]}
+        />
+      </div>
+    );
+  },
+  parameters: {
+    viewport: { defaultViewport: "mobile1" },
+  },
+};
+
 export const DateTime: Story = {
   render: () => <DatePickerDemo mode="datetime" />,
 };

@@ -4,7 +4,11 @@ export {
   type MonthYearPickerProps,
 } from "./MonthYearPicker.js";
 export { YearPicker, type YearPickerProps } from "./YearPicker.js";
-export type { DatePickerLabels, DatePickerMode } from "./date-picker.types.js";
+export type {
+  DatePickerLabels,
+  DatePickerMode,
+  DatePickerPreset,
+} from "./date-picker.types.js";
 export {
   buildIsoForMode,
   formatDayBucket,

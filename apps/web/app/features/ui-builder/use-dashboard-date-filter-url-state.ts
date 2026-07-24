@@ -12,15 +12,34 @@ function padTwo(value: number): string {
 export function getCurrentDateBucket(
   granularity: ViewFilterDateGranularity,
 ): string {
+  return getRelativeDateBucket(granularity, 0);
+}
+
+/**
+ * Returns a period bucket relative to "now".
+ * `offset` is in units of the granularity (e.g. -1 = last month / yesterday / last year).
+ */
+export function getRelativeDateBucket(
+  granularity: ViewFilterDateGranularity,
+  offset: number,
+): string {
   const now = new Date();
 
   switch (granularity) {
     case "year":
-      return String(now.getFullYear());
-    case "month":
-      return `${now.getFullYear()}-${padTwo(now.getMonth() + 1)}`;
-    case "day":
-      return `${now.getFullYear()}-${padTwo(now.getMonth() + 1)}-${padTwo(now.getDate())}`;
+      return String(now.getFullYear() + offset);
+    case "month": {
+      const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      return `${date.getFullYear()}-${padTwo(date.getMonth() + 1)}`;
+    }
+    case "day": {
+      const date = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + offset,
+      );
+      return `${date.getFullYear()}-${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}`;
+    }
   }
 }
 

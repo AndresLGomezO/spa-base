@@ -5,13 +5,17 @@ import {
   buildIsoForMode,
   parseDayBucket,
   type DatePickerLabels,
+  type DatePickerPreset,
 } from "@repo/ui";
 import type { ViewFilterDateGranularity } from "@repo/ui-builder-core";
 import type { CSSProperties } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import { getCurrentDateBucket } from "./use-dashboard-date-filter-url-state";
+import {
+  getCurrentDateBucket,
+  getRelativeDateBucket,
+} from "./use-dashboard-date-filter-url-state";
 
 interface ViewFilterDateFieldProps {
   readonly granularity: ViewFilterDateGranularity;
@@ -54,6 +58,25 @@ function isoDateToBucket(value: string | undefined): string | undefined {
   return `${year}-${month}-${day}`;
 }
 
+function buildPeriodPresets(
+  granularity: ViewFilterDateGranularity,
+  labels: {
+    readonly thisPeriod: string;
+    readonly lastPeriod: string;
+  },
+): readonly DatePickerPreset[] {
+  return [
+    {
+      label: labels.thisPeriod,
+      value: getRelativeDateBucket(granularity, 0),
+    },
+    {
+      label: labels.lastPeriod,
+      value: getRelativeDateBucket(granularity, -1),
+    },
+  ];
+}
+
 export function ViewFilterDateField({
   granularity,
   value,
@@ -86,6 +109,30 @@ export function ViewFilterDateField({
     clear: t("viewFilterComponents.dateFilterClear"),
   };
 
+  const presets = useMemo((): readonly DatePickerPreset[] => {
+    const thisPeriod =
+      granularity === "year"
+        ? t("viewFilterComponents.dateFilterPresetThisYear")
+        : granularity === "month"
+          ? t("viewFilterComponents.dateFilterPresetThisMonth")
+          : t("viewFilterComponents.dateFilterPresetToday");
+    const lastPeriod =
+      granularity === "year"
+        ? t("viewFilterComponents.dateFilterPresetLastYear")
+        : granularity === "month"
+          ? t("viewFilterComponents.dateFilterPresetLastMonth")
+          : t("viewFilterComponents.dateFilterPresetYesterday");
+
+    return buildPeriodPresets(granularity, { thisPeriod, lastPeriod });
+  }, [granularity, t]);
+
+  const dayPresets = useMemo((): readonly DatePickerPreset[] => {
+    return presets.flatMap((preset) => {
+      const iso = bucketToIsoDate(preset.value);
+      return iso ? [{ label: preset.label, value: iso }] : [];
+    });
+  }, [presets]);
+
   const clearAriaLabel = t("viewFilterComponents.dateFilterResetDefault");
   const clearProps = {
     showClearButton,
@@ -101,6 +148,7 @@ export function ViewFilterDateField({
     compact: true as const,
     inputClassName,
     inputStyle,
+    presets,
     ...clearProps,
   };
 
@@ -127,6 +175,7 @@ export function ViewFilterDateField({
       compact
       inputClassName={inputClassName}
       inputStyle={inputStyle}
+      presets={dayPresets}
       {...clearProps}
     />
   );

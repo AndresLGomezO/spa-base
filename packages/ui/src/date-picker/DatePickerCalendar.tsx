@@ -18,6 +18,8 @@ import {
   shiftMonth,
 } from "./date-picker.utils.js";
 
+export type DatePickerCalendarDensity = "compact" | "comfortable";
+
 interface DatePickerCalendarProps {
   readonly view: CalendarView;
   readonly focus: CalendarDateParts;
@@ -25,6 +27,7 @@ interface DatePickerCalendarProps {
   readonly locale: string;
   readonly labels: DatePickerLabels;
   readonly selectionMode?: "day" | "month" | "year";
+  readonly density?: DatePickerCalendarDensity;
   readonly onViewChange: (view: CalendarView) => void;
   readonly onFocusChange: (focus: CalendarDateParts) => void;
   readonly onSelectDay: (parts: CalendarDateParts) => void;
@@ -41,12 +44,14 @@ export function DatePickerCalendar({
   locale,
   labels,
   selectionMode = "day",
+  density = "compact",
   onViewChange,
   onFocusChange,
   onSelectDay,
   onSelectMonth,
   onSelectYear,
 }: DatePickerCalendarProps) {
+  const comfortable = density === "comfortable";
   const yearPageStart = getYearPageStart(focus.year);
   const yearPageYears = getYearPageYears(yearPageStart);
   const monthLabels = getMonthLabels(locale);
@@ -86,29 +91,59 @@ export function DatePickerCalendar({
         ? String(focus.year)
         : formatMonthYearLabel(focus.year, focus.month, locale);
 
+  const cellClass = cn(
+    "hover:bg-accent rounded-md transition-colors",
+    comfortable
+      ? "min-h-11 px-2 py-2.5 text-sm font-medium"
+      : "px-1.5 py-1.5 text-xs",
+  );
+
+  const dayCellClass = cn(
+    "hover:bg-accent rounded-md transition-colors",
+    comfortable
+      ? "flex min-h-11 items-center justify-center text-sm font-medium"
+      : "px-0.5 py-1 text-xs",
+  );
+
   return (
-    <div className="flex w-64 shrink-0 flex-col gap-2">
+    <div
+      className={cn(
+        "flex shrink-0 flex-col",
+        comfortable ? "w-full gap-3" : "w-64 gap-2",
+      )}
+    >
       <div className="flex items-center justify-between gap-1">
         <IconButton
-          size="sm"
+          size={comfortable ? "md" : "sm"}
           label={labels.previous ?? "Previous"}
           onClick={handlePrevious}
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className={comfortable ? "size-5" : "size-4"} />
         </IconButton>
 
         {view === "day" ? (
-          <div className="flex items-center gap-1 text-xs font-semibold">
+          <div
+            className={cn(
+              "flex items-center gap-1 font-semibold",
+              comfortable ? "text-sm" : "text-xs",
+            )}
+          >
             <button
               type="button"
-              className="hover:text-primary transition-colors"
+              className={cn(
+                "hover:text-primary transition-colors",
+                comfortable && "min-h-11 px-2",
+              )}
               onClick={() => onViewChange("month")}
             >
               {monthLabels[focus.month]}
             </button>
             <button
               type="button"
-              className="hover:text-primary transition-colors"
+              className={cn(
+                "hover:text-primary transition-colors",
+                comfortable && "min-h-11 px-2",
+              )}
               onClick={() => onViewChange("year")}
             >
               {focus.year}
@@ -117,7 +152,10 @@ export function DatePickerCalendar({
         ) : (
           <button
             type="button"
-            className="text-xs font-semibold hover:text-primary transition-colors"
+            className={cn(
+              "font-semibold hover:text-primary transition-colors",
+              comfortable ? "min-h-11 px-2 text-sm" : "text-xs",
+            )}
             onClick={() => {
               if (view === "month") {
                 onViewChange("year");
@@ -129,22 +167,22 @@ export function DatePickerCalendar({
         )}
 
         <IconButton
-          size="sm"
+          size={comfortable ? "md" : "sm"}
           label={labels.next ?? "Next"}
           onClick={handleNext}
         >
-          <ChevronRight className="size-4" />
+          <ChevronRight className={comfortable ? "size-5" : "size-4"} />
         </IconButton>
       </div>
 
       {view === "year" ? (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className={cn("grid grid-cols-3", comfortable ? "gap-2" : "gap-1.5")}>
           {yearPageYears.map((year) => (
             <button
               key={year}
               type="button"
               className={cn(
-                "hover:bg-accent rounded-md px-1.5 py-1.5 text-xs transition-colors",
+                cellClass,
                 year === focus.year &&
                   "bg-primary text-primary-foreground hover:bg-primary",
               )}
@@ -164,13 +202,13 @@ export function DatePickerCalendar({
       ) : null}
 
       {view === "month" ? (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className={cn("grid grid-cols-3", comfortable ? "gap-2" : "gap-1.5")}>
           {monthLabels.map((label, month) => (
             <button
               key={label}
               type="button"
               className={cn(
-                "hover:bg-accent rounded-md px-1.5 py-1.5 text-xs transition-colors",
+                cellClass,
                 month === focus.month &&
                   "bg-primary text-primary-foreground hover:bg-primary",
               )}
@@ -192,12 +230,17 @@ export function DatePickerCalendar({
 
       {view === "day" ? (
         <>
-          <div className="text-muted-foreground grid grid-cols-7 gap-0.5 text-center text-[11px] font-medium">
+          <div
+            className={cn(
+              "text-muted-foreground grid grid-cols-7 text-center font-medium",
+              comfortable ? "gap-1 text-xs" : "gap-0.5 text-[11px]",
+            )}
+          >
             {weekdayLabels.map((label) => (
               <span key={label}>{label}</span>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-0.5">
+          <div className={cn("grid grid-cols-7", comfortable ? "gap-1" : "gap-0.5")}>
             {dayCells.map((cell) => {
               const isSelected =
                 selected?.year === cell.year &&
@@ -209,7 +252,7 @@ export function DatePickerCalendar({
                   key={`${cell.year}-${cell.month}-${cell.day}`}
                   type="button"
                   className={cn(
-                    "hover:bg-accent rounded-md px-0.5 py-1 text-xs transition-colors",
+                    dayCellClass,
                     !cell.inCurrentMonth && "text-muted-foreground/60",
                     isSelected &&
                       "bg-primary text-primary-foreground hover:bg-primary",

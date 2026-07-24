@@ -72,6 +72,7 @@ export {
   DatePicker,
   type DatePickerLabels,
   type DatePickerMode,
+  type DatePickerPreset,
   type DatePickerProps,
   MonthYearPicker,
   type MonthYearPickerProps,
@@ -99,6 +100,7 @@ export {
   type PopoverPlacement,
   type PopoverProps,
 } from "./popover/Popover";
+export { BottomSheet, type BottomSheetProps } from "./sheet/BottomSheet";
 export { Sheet, type SheetProps } from "./sheet/Sheet";
 export {
   BuilderPageShell,

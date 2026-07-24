@@ -2,6 +2,11 @@ export type DatePickerMode = "date" | "datetime" | "time";
 
 export type CalendarView = "year" | "month" | "day";
 
+export interface DatePickerPreset {
+  readonly label: string;
+  readonly value: string;
+}
+
 export interface DatePickerLabels {
   readonly placeholder?: string;
   readonly clear?: string;

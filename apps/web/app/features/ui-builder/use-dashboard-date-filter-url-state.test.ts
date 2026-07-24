@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   applyDateFilterToSearchParams,
   getCurrentDateBucket,
+  getRelativeDateBucket,
   parseDateFilterParam,
 } from "./use-dashboard-date-filter-url-state";
 
@@ -31,6 +32,24 @@ describe("getCurrentDateBucket", () => {
     expect(getCurrentDateBucket("year")).toBe("2026");
     expect(getCurrentDateBucket("month")).toBe("2026-06");
     expect(getCurrentDateBucket("day")).toBe("2026-06-15");
+
+    vi.useRealTimers();
+  });
+});
+
+describe("getRelativeDateBucket", () => {
+  it("offsets by granularity unit", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15, 12, 0, 0));
+
+    expect(getRelativeDateBucket("year", -1)).toBe("2025");
+    expect(getRelativeDateBucket("month", -1)).toBe("2026-05");
+    expect(getRelativeDateBucket("day", -1)).toBe("2026-06-14");
+    expect(getRelativeDateBucket("month", 0)).toBe("2026-06");
+
+    vi.setSystemTime(new Date(2026, 0, 1, 12, 0, 0));
+    expect(getRelativeDateBucket("month", -1)).toBe("2025-12");
+    expect(getRelativeDateBucket("day", -1)).toBe("2025-12-31");
 
     vi.useRealTimers();
   });
