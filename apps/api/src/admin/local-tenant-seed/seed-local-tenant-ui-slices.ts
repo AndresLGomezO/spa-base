@@ -9,9 +9,8 @@ import {
 import { parseEntityQueryDefinitionJson } from "@repo/entity-queries";
 import {
   dashboardSectionsSchema,
-  validateEntityUIConfig,
+  validatePutEntityUiOverrideInput,
   type DashboardSectionDefinition,
-  type EntityUIConfig,
   type PutEntityUiOverrideInput,
   type PutTenantDashboardLayoutInput,
 } from "@repo/entities";
@@ -261,10 +260,19 @@ async function seedLocalEntityUiOverrideSlice(
       metricWidgets: mergedWidgets,
     } as PutEntityUiOverrideInput;
 
-    validateEntityUIConfig(entity, {
-      ...(definition.ui ?? {}),
-      ...resolvedInput,
-    } as EntityUIConfig);
+    const validation = validatePutEntityUiOverrideInput(
+      entity,
+      resolvedInput,
+      definition.ui,
+    );
+    if (!validation.ok) {
+      const detail = validation.errors
+        .map((error) => `${error.path}: ${error.message}`)
+        .join("; ");
+      throw new Error(
+        `Invalid local UI override for "${override.entityName}": ${detail}`,
+      );
+    }
 
     await repository.put(tenantId, override.entityName, resolvedInput);
     seeded += 1;

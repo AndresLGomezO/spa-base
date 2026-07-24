@@ -3,8 +3,7 @@ import {
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import {
-  validateEntityUIConfig,
-  type EntityUIConfig,
+  validatePutEntityUiOverrideInput,
   type PutEntityUiOverrideInput,
 } from "@repo/entities";
 import {
@@ -170,10 +169,19 @@ export async function seedLocalEntityUiOverrides(
         : {}),
     } as PutEntityUiOverrideInput;
 
-    validateEntityUIConfig(entity, {
-      ...(definition.ui ?? {}),
-      ...resolvedInput,
-    } as EntityUIConfig);
+    const validation = validatePutEntityUiOverrideInput(
+      entity,
+      resolvedInput,
+      definition.ui,
+    );
+    if (!validation.ok) {
+      const detail = validation.errors
+        .map((error) => `${error.path}: ${error.message}`)
+        .join("; ");
+      throw new Error(
+        `Invalid entity UI override for "${entityName}": ${detail}`,
+      );
+    }
 
     await repository.put(tenantId, entityName, resolvedInput);
     seeded += 1;
