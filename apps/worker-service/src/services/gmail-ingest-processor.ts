@@ -65,7 +65,7 @@ import {
   createDataHookExecutionRecorderForTenant,
   createRecordDataHookExecution,
 } from "../hooks/record-data-hook-execution.js";
-import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
+import { createSendUserNotificationWithPush } from "@repo/gcp-firebase";
 import { processPendingAggregationEventsForModel } from "@repo/aggregation-engine";
 
 export const gmailWindowSyncTaskPayloadSchema = z.object({
@@ -869,10 +869,22 @@ export async function processGmailProcessMessage(
               : {}),
             ...(deps.userNotificationRepository
               ? {
-                  sendUserNotification: createSendUserNotification(
-                    deps.userNotificationRepository,
+                  sendUserNotification: createSendUserNotificationWithPush({
+                    userNotificationRepository: deps.userNotificationRepository,
                     tenantId,
-                  ),
+                    ...(deps.pushTokenRepository
+                      ? { pushTokenRepository: deps.pushTokenRepository }
+                      : {}),
+                    ...(deps.firebaseAdminConfig
+                      ? { firebaseAdminConfig: deps.firebaseAdminConfig }
+                      : {}),
+                    onPushError: (error) => {
+                      logger.error("Failed to deliver web push notification", {
+                        err: error,
+                        tenantId,
+                      });
+                    },
+                  }),
                 }
               : {}),
           },

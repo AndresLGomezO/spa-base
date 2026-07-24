@@ -2,7 +2,11 @@ import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 import type { DataHookExecutionRepository } from "@repo/firestore-converters";
 import type { HookLogMessageRepository } from "@repo/firestore-converters";
-import type { UserNotificationRepository } from "@repo/firestore-converters";
+import type {
+  PushTokenRepository,
+  UserNotificationRepository,
+} from "@repo/firestore-converters";
+import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import type { DataHookJobPayload } from "@repo/hooks";
 import type { DataHookWebhookRequest } from "@repo/hooks";
@@ -31,6 +35,8 @@ export interface CrudHookDeps {
   readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly userNotificationRepository?: UserNotificationRepository;
+  readonly pushTokenRepository?: PushTokenRepository;
+  readonly firebaseAdminConfig?: FirebaseAdminConfig;
   readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
   readonly aggregation?: AggregationEmitterDeps;

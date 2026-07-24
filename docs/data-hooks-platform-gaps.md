@@ -10,7 +10,9 @@ Open platform and product work for the **generic** data hooks engine. Domain-spe
 
 | Gap | Impact | Ask |
 |-----|--------|-----|
-| `sendNotification` logs only — no email, push, or in-app delivery | Due-date reminders and balance alerts cannot ship as data hooks | Wire notification action to product notification infra |
+| No email delivery for `sendNotification` | Reminder/alert hooks cannot email users | Wire email channel (in-app + browser push already ship) |
+
+In-app bell delivery and optional browser push (when the user enables push in Account → General) are shipped. Email remains the open gap.
 
 ---
 

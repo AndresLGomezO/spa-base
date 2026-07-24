@@ -11,6 +11,9 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     reactRouter(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "app",
+      filename: "sw.ts",
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "favicon.ico"],
       manifest: {
@@ -41,14 +44,16 @@ export default defineConfig(({ command }) => ({
           },
         ],
       },
-      workbox: {
+      injectManifest: {
         globDirectory: "build/client",
         globPatterns: ["**/*.{js,css,html,ico,svg,png,woff2,webmanifest}"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
       },
+      // Dev SW is ESM so static imports (Firebase) work. Do not set
+      // navigateFallback here — Workbox would precache index.html and fail
+      // install with 404 (Vite/RR serve "/" not "/index.html").
       devOptions: {
-        enabled: false,
+        enabled: true,
+        type: "module",
       },
     }),
     ...(command === "serve" ? [devDocumentCspPlugin()] : []),

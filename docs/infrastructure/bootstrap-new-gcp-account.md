@@ -54,6 +54,8 @@ For **each** project:
 | messagingSenderId | `FIREBASE_MESSAGING_SENDER_ID` |
 | appId | `FIREBASE_APP_ID` |
 
+Also generate a **Web Push certificate** (Firebase Console → Project settings → Cloud Messaging → Web Push certificates) and store the public key as GitHub secret `FIREBASE_VAPID_KEY` (mapped to `VITE_FIREBASE_VAPID_KEY` in the web build).
+
 Store these on the matching GitHub Environment (`development`, `staging`, `production`).
 
 Terraform also runs `google_firebase_project` to link Firebase programmatically; Console registration of the Web app is still required for frontend secrets.

@@ -23,6 +23,7 @@ import type {
   DataHookExecutionRepository,
   HookLogMessageRepository,
   UserNotificationRepository,
+  PushTokenRepository,
   RequestPerfLogRepository,
   AuditLogRepository,
   JoinCollectionRepository,
@@ -53,6 +54,7 @@ import {
   createInMemoryDataHookExecutionRepository,
   createInMemoryHookLogMessageRepository,
   createInMemoryUserNotificationRepository,
+  createInMemoryPushTokenRepository,
   createInMemoryRequestPerfLogRepository,
   createInMemoryIndexProvisionEventRepository,
   createInMemoryAuditLogRepository,
@@ -85,6 +87,7 @@ import {
   createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminHookLogMessageRepository,
   createFirestoreAdminUserNotificationRepository,
+  createFirestoreAdminPushTokenRepository,
   createFirestoreAdminRequestPerfLogRepository,
   createFirestoreAdminIndexProvisionEventRepository,
   createFirestoreAdminAuditLogRepository,
@@ -167,6 +170,7 @@ import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerDebugRoutes } from "./debug/register-debug-routes.js";
 import { registerNotificationRoutes } from "./notifications/register-notification-routes.js";
+import { registerPushTokenRoutes } from "./notifications/register-push-token-routes.js";
 import { registerGmailIngestRoutes } from "./gmail-ingest/register-gmail-ingest-routes.js";
 import { createGmailTasksClient } from "./gmail-ingest/gmail-tasks.client.js";
 import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
@@ -213,6 +217,7 @@ interface BuildServerOptions {
   readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly userNotificationRepository?: UserNotificationRepository;
+  readonly pushTokenRepository?: PushTokenRepository;
   readonly requestPerfLogRepository?: RequestPerfLogRepository;
   readonly indexProvisionEventRepository?: import("@repo/firestore-converters").IndexProvisionEventRepository;
   readonly platformRuntimeSettingsRepository?: PlatformRuntimeSettingsRepository;
@@ -406,6 +411,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryUserNotificationRepository()
       : createFirestoreAdminUserNotificationRepository(firebaseAdminConfig));
+
+  const pushTokenRepository =
+    options.pushTokenRepository ??
+    (options.repositories
+      ? createInMemoryPushTokenRepository()
+      : createFirestoreAdminPushTokenRepository(firebaseAdminConfig));
 
   const requestPerfLogRepository =
     options.requestPerfLogRepository ??
@@ -804,6 +815,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     hookExecutionRepository,
     hookLogMessageRepository,
     userNotificationRepository,
+    pushTokenRepository,
+    firebaseAdminConfig,
     enqueueDataHookJob:
       hookTasksClient.enqueueDataHookJob.bind(hookTasksClient),
     callWebhook: callDataHookWebhook,
@@ -985,6 +998,11 @@ export async function buildServer(options: BuildServerOptions = {}) {
   await registerNotificationRoutes(server, {
     authenticate,
     userNotificationRepository,
+  });
+
+  await registerPushTokenRoutes(server, {
+    authenticate,
+    pushTokenRepository,
   });
 
   const gmailOAuthConfigured =

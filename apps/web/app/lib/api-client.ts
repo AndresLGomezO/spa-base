@@ -1742,6 +1742,47 @@ export async function markAllNotificationsRead(): Promise<{
   });
 }
 
+export async function upsertPushToken(input: {
+  readonly token: string;
+  readonly userAgent?: string;
+}): Promise<{
+  readonly id: string;
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly token: string;
+  readonly userAgent?: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}> {
+  return apiRequest("/api/push-tokens", {
+    method: "PUT",
+    body: input,
+  });
+}
+
+export async function listPushTokens(): Promise<{
+  readonly items: readonly {
+    readonly id: string;
+    readonly tenantId: string;
+    readonly userId: string;
+    readonly token: string;
+    readonly userAgent?: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+  }[];
+}> {
+  return apiRequest("/api/push-tokens");
+}
+
+export async function deletePushToken(input: {
+  readonly token: string;
+}): Promise<{ readonly deleted: boolean }> {
+  return apiRequest("/api/push-tokens", {
+    method: "DELETE",
+    body: input,
+  });
+}
+
 interface DataHookExecutionRecord {
   readonly id: string;
   readonly hookId: string;

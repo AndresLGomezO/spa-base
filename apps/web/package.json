@@ -78,6 +78,9 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-pwa": "catalog:",
+    "workbox-core": "catalog:",
+    "workbox-precaching": "catalog:",
+    "workbox-routing": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
   },

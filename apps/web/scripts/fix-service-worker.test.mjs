@@ -34,10 +34,29 @@ test("patchServiceWorkerPrecache inserts entries at precache manifest start", ()
   );
 });
 
+test("patchServiceWorkerPrecache supports injectManifest bundled format", () => {
+  const source =
+    'Ne([{"revision":"abc","url":"manifest.webmanifest"}]),Ce(new Pe(je(`/index.html`),{denylist:[/^\\/api\\//]}));';
+  const patched = patchServiceWorkerPrecache(source, [
+    '{"revision":"deadbeef","url":"/index.html"}',
+  ]);
+
+  assert.match(
+    patched,
+    /Ne\(\[\{"revision":"deadbeef","url":"\/index\.html"\},\{"revision":"abc","url":"manifest\.webmanifest"\}\]/,
+  );
+});
+
 test("isServiceWorkerPrecachePatched detects existing index.html entry", () => {
   assert.equal(
     isServiceWorkerPrecachePatched(
       'precacheAndRoute([{url:"/index.html",revision:"abc"}]);',
+    ),
+    true,
+  );
+  assert.equal(
+    isServiceWorkerPrecachePatched(
+      'Ne([{"revision":"abc","url":"/index.html"}])',
     ),
     true,
   );

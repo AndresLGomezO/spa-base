@@ -34,6 +34,7 @@ function IosSwitch({
   className,
   width = DEFAULT_IOS_WIDTH,
   height = DEFAULT_IOS_HEIGHT,
+  ariaLabelledBy,
 }: SwitchProps) {
   const thumbSize = height - TRACK_PADDING * 2;
   const thumbOffset = checked
@@ -67,6 +68,7 @@ function IosSwitch({
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-labelledby={ariaLabelledBy}
         disabled={disabled}
         onClick={toggle}
         onKeyDown={handleKeyDown}

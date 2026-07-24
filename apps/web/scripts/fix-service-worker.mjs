@@ -6,15 +6,44 @@ import { fileURLToPath } from "node:url";
 const INDEX_PRECACHE_URL = "/index.html";
 
 function findPrecacheInsertPoint(source) {
-  const match = source.match(/\.precacheAndRoute\(\[/);
-  if (!match || match.index === undefined) {
+  const classic = source.match(/\.precacheAndRoute\(\[/);
+  if (classic && classic.index !== undefined) {
+    return classic.index + classic[0].length;
+  }
+
+  // injectManifest bundles Workbox with mangled names, e.g.:
+  // Ne([{"revision":"...","url":"manifest.webmanifest"},...]),Ce(new Pe(je(`/index.html`),...
+  const navigationMarker = source.includes("`/index.html`")
+    ? "`/index.html`"
+    : source.includes('"/index.html"')
+      ? '"/index.html"'
+      : null;
+  if (!navigationMarker) {
     return null;
   }
-  return match.index + match[0].length;
+
+  const navigationAt = source.indexOf(navigationMarker);
+  const beforeNavigation = source.slice(0, navigationAt);
+  const revisionArray = /\[\s*\{\s*"revision"\s*:/g;
+  let lastMatch = null;
+  let match;
+  while ((match = revisionArray.exec(beforeNavigation)) !== null) {
+    lastMatch = match;
+  }
+  if (!lastMatch || lastMatch.index === undefined) {
+    return null;
+  }
+  // Insert after the opening `[`
+  return lastMatch.index + 1;
 }
 
 export function isServiceWorkerPrecachePatched(source) {
-  return source.includes(`{url:"${INDEX_PRECACHE_URL}",`);
+  return (
+    source.includes(`{url:"${INDEX_PRECACHE_URL}",`) ||
+    source.includes(`"url":"${INDEX_PRECACHE_URL}"`) ||
+    source.includes(`"url":"index.html"`) ||
+    source.includes(`{url:"index.html",`)
+  );
 }
 
 export function buildMissingPrecacheEntries({
@@ -24,9 +53,16 @@ export function buildMissingPrecacheEntries({
 }) {
   const entries = [];
 
-  if (indexHtml !== undefined) {
+  if (indexHtml !== undefined && !isServiceWorkerPrecachePatched(source)) {
     const indexRevision = createHash("md5").update(indexHtml).digest("hex");
-    entries.push(`{url:"${INDEX_PRECACHE_URL}",revision:"${indexRevision}"}`);
+    // Match injectManifest object key order when the SW is bundled.
+    if (source.includes('"revision":') && source.includes('"url":')) {
+      entries.push(
+        `{"revision":"${indexRevision}","url":"${INDEX_PRECACHE_URL}"}`,
+      );
+    } else {
+      entries.push(`{url:"${INDEX_PRECACHE_URL}",revision:"${indexRevision}"}`);
+    }
   }
 
   for (const file of assetFiles) {
@@ -35,11 +71,15 @@ export function buildMissingPrecacheEntries({
     }
 
     const assetUrl = `/assets/${file}`;
-    if (source.includes(assetUrl)) {
+    if (source.includes(assetUrl) || source.includes(`"url":"${file}"`)) {
       continue;
     }
 
-    entries.push(`{url:"${assetUrl}",revision:null}`);
+    if (source.includes('"revision":') && source.includes('"url":')) {
+      entries.push(`{"revision":null,"url":"${assetUrl}"}`);
+    } else {
+      entries.push(`{url:"${assetUrl}",revision:null}`);
+    }
   }
 
   return entries;

@@ -25,6 +25,7 @@ const app = initializeApp({
   appId: appConfig.firebase.appId,
 });
 
+export const firebaseApp = app;
 export const auth = getAuth(app);
 
 void setPersistence(auth, browserLocalPersistence);

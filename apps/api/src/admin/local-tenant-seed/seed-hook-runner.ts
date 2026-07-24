@@ -2,7 +2,9 @@ import { createPersistingHookLogger } from "@repo/debug-logs";
 import {
   createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminHookLogMessageRepository,
+  createFirestoreAdminPushTokenRepository,
   createFirestoreAdminUserNotificationRepository,
+  createSendUserNotificationWithPush,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 import type {
@@ -16,7 +18,6 @@ import {
   createDataHookExecutionRecorderForTenant,
   createRecordDataHookExecution,
 } from "../../hooks/record-data-hook-execution.js";
-import { createSendUserNotification } from "../../notifications/create-send-user-notification.js";
 
 const seedHookConsoleLogger: HookLogger = {
   info(message, meta) {
@@ -68,6 +69,9 @@ export function buildSeedHookObservabilityServices(options: {
   );
   const userNotificationRepository =
     createFirestoreAdminUserNotificationRepository(options.firebaseAdminConfig);
+  const pushTokenRepository = createFirestoreAdminPushTokenRepository(
+    options.firebaseAdminConfig,
+  );
 
   return {
     logger: createPersistingHookLogger({
@@ -83,9 +87,16 @@ export function buildSeedHookObservabilityServices(options: {
       hookExecutionRepository,
       options.tenantId,
     ),
-    sendUserNotification: createSendUserNotification(
+    sendUserNotification: createSendUserNotificationWithPush({
       userNotificationRepository,
-      options.tenantId,
-    ),
+      tenantId: options.tenantId,
+      pushTokenRepository,
+      firebaseAdminConfig: options.firebaseAdminConfig,
+      onPushError: (error) => {
+        seedHookConsoleLogger.error("Failed to deliver web push notification", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      },
+    }),
   };
 }

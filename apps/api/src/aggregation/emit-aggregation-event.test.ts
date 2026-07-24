@@ -16,6 +16,8 @@ const { publishAggregationEventMessage } = vi.hoisted(() => ({
 }));
 
 vi.mock("@repo/gcp-firebase", () => ({
+  createFirestoreAdminPushTokenRepository: vi.fn(),
+  createSendUserNotificationWithPush: vi.fn(() => vi.fn(async () => undefined)),
   configureIndexProvisioningQueue: vi.fn(),
   AGGREGATION_EVENTS_TOPIC: "aggregation-events",
   publishAggregationEventMessage,

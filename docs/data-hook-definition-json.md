@@ -816,7 +816,7 @@ Rolling horizons combine `aggregateMatching` (`count`) with `createRecords` and 
 
 ### `sendNotification`
 
-Log a computed message (no real notification infrastructure yet).
+Deliver a computed message to the acting user: persists an in-app notification (bell inbox) and, when the user has enabled browser push for a device, also sends a web push. Denial of browser permission does not affect in-app delivery.
 
 ```json
 {
@@ -833,7 +833,7 @@ Log a computed message (no real notification infrastructure yet).
 }
 ```
 
-Writes to the hook logger at `info` level with entity, event, and tenant context.
+Also writes to the hook logger at `info` level with entity, event, and tenant context. Email delivery is not supported yet.
 
 ### `callWebhook`
 
@@ -1684,7 +1684,7 @@ Do **not** assume these features exist:
 
 | Feature | Status |
 |---------|--------|
-| Real email/push notifications | `sendNotification` logs only |
+| Email notifications from `sendNotification` | Not yet — in-app bell + browser push (Account → General) ship; email deferred |
 | Aggregate/list expression functions | **Done** — use `aggregateMatching` action + `aggregate` field source (no I/O in expressions) |
 | Sandboxed script hooks | Deferred |
 | System events (`user.login`, etc.) | Future |

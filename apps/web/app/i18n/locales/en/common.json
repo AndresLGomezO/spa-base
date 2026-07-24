@@ -1892,7 +1892,19 @@
       "title": "General",
       "description": "Choose how the app looks and which language you prefer.",
       "themeHint": "Switch between light and dark appearance.",
-      "languageHint": "Choose the language used across the app."
+      "languageHint": "Choose the language used across the app.",
+      "pushLabel": "Browser notifications",
+      "pushHint": "Allow this browser to show notifications when the app is in the background.",
+      "pushEnabledSuccess": "Browser notifications enabled for this device.",
+      "pushDisabledSuccess": "Browser notifications disabled for this device.",
+      "pushStatusLoading": "Checking…",
+      "pushStatusDefault": "Off on this device.",
+      "pushStatusRegistered": "On for this device.",
+      "pushStatusDenied": "Blocked by the browser.",
+      "pushDeniedHint": "Notifications are blocked. Re-enable them in your browser site settings, then try again.",
+      "pushUnsupported": "Browser notifications are not supported in this browser or context.",
+      "pushUnsupportedNoSw": "Browser notifications need the app service worker. Reload the page and try again.",
+      "pushUnsupportedMissingVapid": "Browser notifications are not configured for this environment."
     },
     "profile": {
       "name": "Name",

@@ -14,6 +14,8 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminDataHookExecutionRepository: vi.fn(() => ({})),
   createFirestoreAdminHookLogMessageRepository: vi.fn(() => ({})),
   createFirestoreAdminUserNotificationRepository: vi.fn(() => ({})),
+  createFirestoreAdminPushTokenRepository: vi.fn(() => ({})),
+  createSendUserNotificationWithPush: vi.fn(() => vi.fn()),
 }));
 
 describe("buildSeedHookObservabilityServices", () => {

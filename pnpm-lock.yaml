@@ -237,6 +237,15 @@ catalogs:
     vitest:
       specifier: ^3.2.0
       version: 3.2.4
+    workbox-core:
+      specifier: ^7.4.1
+      version: 7.4.1
+    workbox-precaching:
+      specifier: ^7.4.1
+      version: 7.4.1
+    workbox-routing:
+      specifier: ^7.4.1
+      version: 7.4.1
     workbox-window:
       specifier: ^7.4.1
       version: 7.4.1
@@ -629,6 +638,15 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.3)(yaml@2.9.0)
+      workbox-core:
+        specifier: 'catalog:'
+        version: 7.4.1
+      workbox-precaching:
+        specifier: 'catalog:'
+        version: 7.4.1
+      workbox-routing:
+        specifier: 'catalog:'
+        version: 7.4.1
 
   apps/worker-aggregation:
     dependencies:

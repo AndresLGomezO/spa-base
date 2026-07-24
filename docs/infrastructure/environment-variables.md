@@ -138,6 +138,7 @@ curl -X POST http://127.0.0.1:3001/tasks/gmail-poll \
 | `VITE_FIREBASE_STORAGE_BUCKET` | `demo-project-base.appspot.com` | GitHub secret | Storage bucket |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | `123456789` | GitHub secret | FCM sender ID |
 | `VITE_FIREBASE_APP_ID` | `1:...:web:...` | GitHub secret | Firebase web app ID |
+| `VITE_FIREBASE_VAPID_KEY` | unset locally until testing push | GitHub secret | Web Push certificate public key (Firebase Console → Project settings → Cloud Messaging → Web Push certificates) |
 | `VITE_FIREBASE_AUTH_EMULATOR_HOST` | `127.0.0.1:9099` (opt-in via `.env.development`) | **unset** (empty default) | Auth emulator (browser); omit in CI so production uses real Auth |
 | `VITE_APP_CHECK_RECAPTCHA_SITE_KEY` | unset (emulator stub when Auth emulator set) | GitHub secret `FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY` | reCAPTCHA v3 site key for Firebase App Check |
 | `VITE_FIREBASE_APPCHECK_DEBUG_TOKEN` | optional in `.env.development` | **unset** | App Check debug token (local dev without Auth emulator) |
@@ -225,6 +226,7 @@ Sensitive Gmail scopes may require Google verification for multi-user production
 | `FIREBASE_STORAGE_BUCKET` | per environment | Usually `{project}.appspot.com` |
 | `FIREBASE_MESSAGING_SENDER_ID` | per environment | |
 | `FIREBASE_APP_ID` | per environment | |
+| `FIREBASE_VAPID_KEY` | per environment | Web Push certificate public key → `VITE_FIREBASE_VAPID_KEY` |
 
 GitHub Environments: `development`, `staging`, `production`.
 

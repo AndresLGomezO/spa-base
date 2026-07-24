@@ -21,6 +21,7 @@ import {
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminMetricValueRepository,
   createFirestoreAdminUserNotificationRepository,
+  createFirestoreAdminPushTokenRepository,
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminTenantRoleRepository,
@@ -48,7 +49,7 @@ import {
   resolveHookUserContext,
   type WorkerCrudHookDeps,
 } from "../hooks/worker-hook-entity-services.js";
-import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
+import { createSendUserNotificationWithPush } from "@repo/gcp-firebase";
 import { vertexAiConfig, workerEnv } from "../config/env.js";
 
 export { dataHookJobPayloadSchema };
@@ -75,6 +76,8 @@ export function createDataHookProcessorDeps(
     createFirestoreAdminHookLogMessageRepository(firebaseAdminConfig);
   const userNotificationRepository =
     createFirestoreAdminUserNotificationRepository(firebaseAdminConfig);
+  const pushTokenRepository =
+    createFirestoreAdminPushTokenRepository(firebaseAdminConfig);
   const registeredUserRepository =
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
   const tenantRoleRepository =
@@ -139,6 +142,8 @@ export function createDataHookProcessorDeps(
     hookExecutionRepository,
     hookLogMessageRepository,
     userNotificationRepository,
+    pushTokenRepository,
+    firebaseAdminConfig,
     callWebhook: callDataHookWebhook,
     callAi: createCallDataHookAi({
       vertexAiConfig,
@@ -268,10 +273,23 @@ export async function processDataHookJob(
       : {}),
     ...(deps.userNotificationRepository
       ? {
-          sendUserNotification: createSendUserNotification(
-            deps.userNotificationRepository,
-            payload.tenantId,
-          ),
+          sendUserNotification: createSendUserNotificationWithPush({
+            userNotificationRepository: deps.userNotificationRepository,
+            tenantId: payload.tenantId,
+            ...(deps.pushTokenRepository
+              ? { pushTokenRepository: deps.pushTokenRepository }
+              : {}),
+            ...(deps.firebaseAdminConfig
+              ? { firebaseAdminConfig: deps.firebaseAdminConfig }
+              : {}),
+            onPushError: (error) => {
+              logger.error("Failed to deliver web push notification", {
+                err: error,
+                tenantId: payload.tenantId,
+                userId: payload.user.uid,
+              });
+            },
+          }),
         }
       : {}),
   });

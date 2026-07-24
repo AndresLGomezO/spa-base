@@ -12,7 +12,7 @@ import {
   createRecordDataHookExecution,
   createDataHookExecutionRecorderForTenant,
 } from "./record-data-hook-execution.js";
-import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
+import { createSendUserNotificationWithPush } from "@repo/gcp-firebase";
 
 interface ResolvedHookUserContext {
   readonly tenantId: string;
@@ -108,10 +108,23 @@ export function buildHookEntityServices(options: {
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
         ...(deps.userNotificationRepository
           ? {
-              sendUserNotification: createSendUserNotification(
-                deps.userNotificationRepository,
-                user.tenantId,
-              ),
+              sendUserNotification: createSendUserNotificationWithPush({
+                userNotificationRepository: deps.userNotificationRepository,
+                tenantId: user.tenantId,
+                ...(deps.pushTokenRepository
+                  ? { pushTokenRepository: deps.pushTokenRepository }
+                  : {}),
+                ...(deps.firebaseAdminConfig
+                  ? { firebaseAdminConfig: deps.firebaseAdminConfig }
+                  : {}),
+                onPushError: (error) => {
+                  logger.error("Failed to deliver web push notification", {
+                    err: error,
+                    tenantId: user.tenantId,
+                    userId: user.uid,
+                  });
+                },
+              }),
             }
           : {}),
         ...(formulaResolver ? { formulaResolver } : {}),

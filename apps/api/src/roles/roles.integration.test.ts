@@ -29,6 +29,8 @@ const userProfile = {
 };
 
 vi.mock("@repo/gcp-firebase", () => ({
+  createFirestoreAdminPushTokenRepository: vi.fn(),
+  createSendUserNotificationWithPush: vi.fn(() => vi.fn(async () => undefined)),
   configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: authState.uid,

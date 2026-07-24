@@ -34,6 +34,12 @@ export function buildCrudHookRunParams(
     ...(crudHooks?.userNotificationRepository
       ? { userNotificationRepository: crudHooks.userNotificationRepository }
       : {}),
+    ...(crudHooks?.pushTokenRepository
+      ? { pushTokenRepository: crudHooks.pushTokenRepository }
+      : {}),
+    ...(crudHooks?.firebaseAdminConfig
+      ? { firebaseAdminConfig: crudHooks.firebaseAdminConfig }
+      : {}),
     ...(crudHooks?.formulaRuntime
       ? { formulaRuntime: crudHooks.formulaRuntime }
       : {}),

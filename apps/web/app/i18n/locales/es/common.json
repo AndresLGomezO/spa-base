@@ -1892,7 +1892,19 @@
       "title": "General",
       "description": "Elige la apariencia de la app y el idioma que prefieres.",
       "themeHint": "Cambia entre apariencia clara y oscura.",
-      "languageHint": "Elige el idioma usado en toda la aplicación."
+      "languageHint": "Elige el idioma usado en toda la aplicación.",
+      "pushLabel": "Notificaciones del navegador",
+      "pushHint": "Permite que este navegador muestre notificaciones cuando la app esté en segundo plano.",
+      "pushEnabledSuccess": "Notificaciones del navegador activadas en este dispositivo.",
+      "pushDisabledSuccess": "Notificaciones del navegador desactivadas en este dispositivo.",
+      "pushStatusLoading": "Comprobando…",
+      "pushStatusDefault": "Desactivadas en este dispositivo.",
+      "pushStatusRegistered": "Activadas en este dispositivo.",
+      "pushStatusDenied": "Bloqueadas por el navegador.",
+      "pushDeniedHint": "Las notificaciones están bloqueadas. Vuelve a habilitarlas en la configuración del sitio del navegador e inténtalo de nuevo.",
+      "pushUnsupported": "Las notificaciones del navegador no son compatibles en este navegador o contexto.",
+      "pushUnsupportedNoSw": "Las notificaciones del navegador requieren el service worker de la app. Recarga la página e inténtalo de nuevo.",
+      "pushUnsupportedMissingVapid": "Las notificaciones del navegador no están configuradas en este entorno."
     },
     "profile": {
       "name": "Nombre",

@@ -54,6 +54,14 @@
         { "fieldPath": "createdAt", "order": "DESCENDING" },
         { "fieldPath": "id", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "__push_tokens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

@@ -53,6 +53,8 @@ vi.mock("firebase-admin/auth", () => ({
 }));
 
 vi.mock("@repo/gcp-firebase", () => ({
+  createFirestoreAdminPushTokenRepository: vi.fn(),
+  createSendUserNotificationWithPush: vi.fn(() => vi.fn(async () => undefined)),
   initializeFirebaseAdmin: vi.fn(),
   getFirebaseUserRecord: vi.fn(async () => ({
     uid: TEST_GCP_OWNER_UID,

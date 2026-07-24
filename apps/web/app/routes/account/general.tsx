@@ -1,12 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@repo/ui";
-
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { ThemeToggle } from "../../components/ThemeToggle";
+import { BrowserPushNotificationsSetting } from "../../features/notifications/BrowserPushNotificationsSetting";
 
 export default function AccountSettingsGeneralRoute() {
   const { t } = useTranslation("common");
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="space-y-1">
@@ -15,7 +14,6 @@ export default function AccountSettingsGeneralRoute() {
           {t("accountSettings.general.description")}
         </Text>
       </div>
-
       <div className="border-border divide-border divide-y rounded-lg border">
         <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
@@ -39,6 +37,7 @@ export default function AccountSettingsGeneralRoute() {
             <LanguageSwitcher fullWidth />
           </div>
         </div>
+        <BrowserPushNotificationsSetting />
       </div>
     </div>
   );

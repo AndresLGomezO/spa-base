@@ -20,10 +20,15 @@ import {
 
 import type { DataHookExecutionRepository } from "@repo/firestore-converters";
 import type { HookLogMessageRepository } from "@repo/firestore-converters";
-import type { UserNotificationRepository } from "@repo/firestore-converters";
+import type {
+  PushTokenRepository,
+  UserNotificationRepository,
+} from "@repo/firestore-converters";
 import type { DataHookJobPayload, DataHookWebhookRequest } from "@repo/hooks";
 import type { FormulaRuntimeContext } from "@repo/formula-definitions/runtime";
 import type { FormulaResolver } from "@repo/hooks";
+import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
+import { createSendUserNotificationWithPush } from "@repo/gcp-firebase";
 
 import type { WorkerHookEntityRuntime } from "./worker-hook-entity-runtime.js";
 import type { WorkerPermissionDeps } from "./worker-permission-deps.js";
@@ -32,7 +37,6 @@ import {
   createDataHookExecutionRecorderForTenant,
   createRecordDataHookExecution,
 } from "./record-data-hook-execution.js";
-import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
 export interface WorkerCrudHookDeps {
   readonly hookRuntime: HookRuntimeContext;
@@ -42,6 +46,8 @@ export interface WorkerCrudHookDeps {
   readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly userNotificationRepository?: UserNotificationRepository;
+  readonly pushTokenRepository?: PushTokenRepository;
+  readonly firebaseAdminConfig?: FirebaseAdminConfig;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
   readonly callAi?: (
     request: import("@repo/hooks").DataHookAiRequest,
@@ -269,10 +275,23 @@ export function buildHookEntityServices(options: {
           : {}),
         ...(deps.userNotificationRepository
           ? {
-              sendUserNotification: createSendUserNotification(
-                deps.userNotificationRepository,
-                user.tenantId,
-              ),
+              sendUserNotification: createSendUserNotificationWithPush({
+                userNotificationRepository: deps.userNotificationRepository,
+                tenantId: user.tenantId,
+                ...(deps.pushTokenRepository
+                  ? { pushTokenRepository: deps.pushTokenRepository }
+                  : {}),
+                ...(deps.firebaseAdminConfig
+                  ? { firebaseAdminConfig: deps.firebaseAdminConfig }
+                  : {}),
+                onPushError: (error) => {
+                  logger.error("Failed to deliver web push notification", {
+                    err: error,
+                    tenantId: user.tenantId,
+                    userId: user.uid,
+                  });
+                },
+              }),
             }
           : {}),
         ...(formulaResolver ? { formulaResolver } : {}),

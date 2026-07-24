@@ -12,10 +12,14 @@ import type {
 import type { FormulaRuntimeContext } from "../formulas/formula-runtime-context.js";
 import { dispatchChainedEntityHooks } from "../hooks/dispatch-chained-entity-hooks.js";
 import { createTenantHookLogger } from "../hooks/create-tenant-hook-logger.js";
-import type { HookLogMessageRepository } from "@repo/firestore-converters";
-import type { UserNotificationRepository } from "@repo/firestore-converters";
+import type {
+  HookLogMessageRepository,
+  PushTokenRepository,
+  UserNotificationRepository,
+} from "@repo/firestore-converters";
+import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
+import { createSendUserNotificationWithPush } from "@repo/gcp-firebase";
 import { measureHooksTiming } from "../observability/request-timing.js";
-import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
 export interface RunEntityHooksParams {
   readonly entityName: string;
@@ -34,6 +38,8 @@ export interface RunEntityHooksParams {
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly userNotificationRepository?: UserNotificationRepository;
+  readonly pushTokenRepository?: PushTokenRepository;
+  readonly firebaseAdminConfig?: FirebaseAdminConfig;
   readonly formulaRuntime?: FormulaRuntimeContext;
 }
 
@@ -82,10 +88,16 @@ export async function runEntityHooks(
       ...(params.callWebhook ? { callWebhook: params.callWebhook } : {}),
       ...(params.userNotificationRepository
         ? {
-            sendUserNotification: createSendUserNotification(
-              params.userNotificationRepository,
-              ctx.tenantId,
-            ),
+            sendUserNotification: createSendUserNotificationWithPush({
+              userNotificationRepository: params.userNotificationRepository,
+              tenantId: ctx.tenantId,
+              ...(params.pushTokenRepository
+                ? { pushTokenRepository: params.pushTokenRepository }
+                : {}),
+              ...(params.firebaseAdminConfig
+                ? { firebaseAdminConfig: params.firebaseAdminConfig }
+                : {}),
+            }),
           }
         : {}),
       ...(formulaResolver ? { formulaResolver } : {}),
