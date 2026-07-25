@@ -5,4 +5,8 @@ export const tenantMigrations: Record<number, SchemaTransform> = {
     ...input,
     _schemaVersion: 2,
   }),
+  2: (input) => ({
+    ...input,
+    _schemaVersion: 3,
+  }),
 };

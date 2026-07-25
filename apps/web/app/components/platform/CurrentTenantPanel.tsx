@@ -24,6 +24,7 @@ import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnviro
 import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import { EditTenantNameModal } from "./EditTenantNameModal";
 import { DeleteTenantModal } from "./DeleteTenantModal";
+import { TenantAiLimitsEditor } from "./TenantAiLimitsEditor";
 import { TenantBundleJsonImportDialog } from "./TenantBundleJsonImportDialog";
 import { TenantBundleJsonViewDialog } from "./TenantBundleJsonViewDialog";
 import { tenantBundleJsonLabels } from "./tenant-bundle-json-labels";
@@ -176,6 +177,11 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
           <dd>{new Date(tenant.createdAt).toLocaleString()}</dd>
         </div>
       </dl>
+
+      <TenantAiLimitsEditor
+        tenant={tenant}
+        onSaved={(updated) => setTenant(updated)}
+      />
 
       <section className="flex flex-col gap-3">
         <div className="space-y-1">

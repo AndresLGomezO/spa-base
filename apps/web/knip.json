@@ -3,6 +3,7 @@
   "entry": ["app/routes/**/*.tsx", "app/sw.ts"],
   "ignoreDependencies": [
     "@app/platform",
+    "@repo/ai-context",
     "@repo/custom-views",
     "@repo/data-view",
     "@repo/dynamic-entities",

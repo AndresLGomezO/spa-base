@@ -17,7 +17,6 @@
     "./schemas": "./src/schemas/index.ts",
     "./sanitize-ai-job-persistence": "./src/sanitize-ai-job-persistence.ts",
     "./controller": "./src/controller/index.ts",
-    "./process-ai-chat": "./src/process-ai-chat.ts",
     "./process-ai-ui-builder": "./src/process-ai-ui-builder.ts",
     "./task-routes": "./src/task-routes.ts",
     "./vertex-ai.client": "./src/vertex-ai.client.ts",
@@ -27,7 +26,13 @@
     "./ui-builder-output-prompts": "./src/ui-builder-output-prompts.ts",
     "./parse-ui-builder-list-suggestion": "./src/parse-ui-builder-list-suggestion.ts",
     "./normalize-ai-list-slice-suggestion": "./src/normalize-ai-list-slice-suggestion.ts",
-    "./ui-builder-orchestrator": "./src/ui-builder-orchestrator/index.ts"
+    "./ui-builder-orchestrator": "./src/ui-builder-orchestrator/index.ts",
+    "./grounded-chat": "./src/grounded-chat/index.ts",
+    "./grounded-chat/refresh-user-ai-memory": "./src/grounded-chat/refresh-user-ai-memory.ts",
+    "./model-router": "./src/model-router.ts",
+    "./observability": "./src/observability/index.ts",
+    "./record-ai-summary": "./src/record-ai-summary/index.ts",
+    "./spend": "./src/spend/index.ts"
   },
   "dependencies": {
     "@google-cloud/aiplatform": "catalog:",
@@ -35,7 +40,9 @@
     "@google/genai": "catalog:",
     "@repo/ai-context": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/shared-types": "workspace:*",
     "@repo/ui-builder-core": "workspace:*",
+    "google-auth-library": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -25,6 +25,8 @@ import {
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminTenantRoleRepository,
+  createFirestoreAdminTenantAiContextRepository,
+  createFirestoreAdminAiRecordSummaryRepository,
   publishAggregationEventMessage,
 } from "@repo/gcp-firebase";
 import { createFirestoreAdminEntityDefinitionRepository } from "@repo/gcp-firebase";
@@ -34,11 +36,18 @@ import { platformApp } from "@app/platform/app.config.js";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import type { AiController } from "@repo/ai-engine/controller";
+import type { VectorIndexService } from "@repo/ai-retrieval";
 
 import { PermanentTaskError } from "./ai-chat-processor.js";
 import { callDataHookWebhook } from "../hooks/call-data-hook-webhook.js";
 import { createCallDataHookAi } from "../hooks/call-data-hook-ai.js";
 import { createComputeDataHookEmbedding } from "../hooks/compute-data-hook-embedding.js";
+import {
+  createComputeRecordAiSummary,
+  createEnqueueAiRecordNarrative,
+  createUpsertAiRecordContext,
+} from "../ai/compute-record-ai-summary.js";
+import { createRecordNarrativeRefreshProcessor } from "./record-narrative-refresh-processor.js";
 import {
   createRecordDataHookExecution,
   createDataHookExecutionRecorderForTenant,
@@ -67,7 +76,17 @@ export type DataHookProcessorDeps = WorkerCrudHookDeps;
 
 export function createDataHookProcessorDeps(
   firebaseAdminConfig: FirebaseAdminConfig,
-  options: { readonly aiController: AiController },
+  options: {
+    readonly aiController: AiController;
+    readonly vectorIndexService: VectorIndexService;
+    readonly onRecordSummaryUpdated?: (input: {
+      readonly tenantId: string;
+      readonly entityName: string;
+      readonly recordId: string;
+      readonly ownerId?: string;
+      readonly accessUserIds: readonly string[];
+    }) => void;
+  },
 ): DataHookProcessorDeps {
   bootstrapPlatformApp(platformApp);
 
@@ -89,6 +108,25 @@ export function createDataHookProcessorDeps(
     createFirestoreAdminPlatformRoleRepository(firebaseAdminConfig);
   const entityDefinitionRepository =
     createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
+  const tenantAiContextRepository =
+    createFirestoreAdminTenantAiContextRepository(firebaseAdminConfig);
+  const aiRecordSummaryRepository =
+    createFirestoreAdminAiRecordSummaryRepository(firebaseAdminConfig);
+  const refreshNarrative = createRecordNarrativeRefreshProcessor({
+    aiRecordSummaryRepository,
+    aiController: options.aiController,
+    reasoningModelId: vertexAiConfig.reasoningModelId ?? vertexAiConfig.modelId,
+  });
+  const computeRecordAiSummaryDeps = {
+    tenantAiContextRepository,
+    aiRecordSummaryRepository,
+    aiController: options.aiController,
+    vectorIndexService: options.vectorIndexService,
+    refreshNarrative,
+    ...(options.onRecordSummaryUpdated
+      ? { onRecordSummaryUpdated: options.onRecordSummaryUpdated }
+      : {}),
+  };
 
   const permissionDeps = createLoadRequestPermissionsDeps(
     registeredUserRepository,
@@ -158,6 +196,17 @@ export function createDataHookProcessorDeps(
       vertexAiConfig,
       aiController: options.aiController,
     }),
+    computeRecordAiSummary: createComputeRecordAiSummary(
+      computeRecordAiSummaryDeps,
+    ),
+    upsertAiRecordContext: createUpsertAiRecordContext(
+      computeRecordAiSummaryDeps,
+    ),
+    enqueueAiRecordNarrative: createEnqueueAiRecordNarrative(
+      computeRecordAiSummaryDeps,
+    ),
+    refreshNarrative,
+    aiRecordSummaryRepository,
     aiController: options.aiController,
     aggregation,
   };
@@ -278,6 +327,15 @@ export async function processDataHookJob(
     ...(deps.callAi ? { callAi: deps.callAi } : {}),
     ...(deps.computeEmbedding
       ? { computeEmbedding: deps.computeEmbedding }
+      : {}),
+    ...(deps.computeRecordAiSummary
+      ? { computeRecordAiSummary: deps.computeRecordAiSummary }
+      : {}),
+    ...(deps.upsertAiRecordContext
+      ? { upsertAiRecordContext: deps.upsertAiRecordContext }
+      : {}),
+    ...(deps.enqueueAiRecordNarrative
+      ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
       : {}),
     ...(deps.userNotificationRepository
       ? {

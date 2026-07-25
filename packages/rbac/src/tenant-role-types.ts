@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { aiSpendLimitsSchema } from "@repo/shared-types";
+
 export const TENANT_ROLES_SUBCOLLECTION = "roles" as const;
 
 export const ROLE_PERMISSIONS = [
@@ -39,6 +41,7 @@ export const tenantRoleRecordSchema = z.object({
   description: z.string().trim().min(1).optional(),
   grants: z.array(z.string().trim().min(1)).min(1),
   fieldRules: z.array(entityFieldRulesSchema).optional(),
+  aiSpendLimits: aiSpendLimitsSchema.optional(),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
 });
@@ -62,6 +65,7 @@ export const patchTenantRoleInputSchema = z.object({
   description: z.string().trim().min(1).optional(),
   grants: z.array(z.string().trim().min(1)).min(1).optional(),
   fieldRules: z.array(entityFieldRulesSchema).optional(),
+  aiSpendLimits: aiSpendLimitsSchema.nullable().optional(),
 });
 
 export type PatchTenantRoleInput = z.infer<typeof patchTenantRoleInputSchema>;

@@ -28,7 +28,9 @@ export type AiFeature =
   | "dataHookCallAi"
   | "dataHookBatchCallAi"
   | "dataHookEmbedding"
-  | "gmailExtract";
+  | "gmailExtract"
+  | "userAiMemoryRefresh"
+  | "recordNarrativeRefresh";
 
 export const AI_FEATURE_PERMISSIONS: Record<
   AiFeature,
@@ -41,6 +43,8 @@ export const AI_FEATURE_PERMISSIONS: Record<
   dataHookBatchCallAi: AI_DATA_HOOK_PERMISSIONS,
   dataHookEmbedding: AI_DATA_HOOK_PERMISSIONS,
   gmailExtract: AI_DATA_HOOK_PERMISSIONS,
+  userAiMemoryRefresh: AI_CHAT_PERMISSIONS,
+  recordNarrativeRefresh: AI_DATA_HOOK_PERMISSIONS,
 };
 
 export const AI_FEATURE_RUN_PERMISSION: Record<AiFeature, string> = {
@@ -51,4 +55,6 @@ export const AI_FEATURE_RUN_PERMISSION: Record<AiFeature, string> = {
   dataHookBatchCallAi: "ai.dataHook.run",
   dataHookEmbedding: "ai.dataHook.run",
   gmailExtract: "ai.dataHook.run",
+  userAiMemoryRefresh: "ai.chat.run",
+  recordNarrativeRefresh: "ai.dataHook.run",
 };

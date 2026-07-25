@@ -16,6 +16,129 @@ export function buildMockChatAnswer(question: string): string {
   return `[mock] You asked: ${preview || "(empty question)"}`;
 }
 
+/**
+ * Deterministic chart-capable narrative JSON for recordNarrativeRefresh (mock Vertex).
+ * Detects loan-ish data snapshots when present; otherwise returns a minimal progress chart.
+ */
+export function buildMockRecordNarrativeAnswer(userText: string): string {
+  const dataMatch = userText.match(/\*\*Data:\*\*\s*(\{[\s\S]*\})\s*$/);
+  let label = "Avance (mock)";
+  let percent = 42;
+  let barSegments: Array<{ label: string; value: number }> = [
+    { label: "A", value: 60 },
+    { label: "B", value: 40 },
+  ];
+  if (dataMatch?.[1]) {
+    try {
+      const data = JSON.parse(dataMatch[1]) as Record<string, unknown>;
+      const terms =
+        data.terms && typeof data.terms === "object"
+          ? (data.terms as Record<string, unknown>)
+          : null;
+      const termMonths =
+        typeof terms?.termMonths === "number" ? terms.termMonths : null;
+      const remaining =
+        typeof terms?.remainingTermMonths === "number"
+          ? terms.remainingTermMonths
+          : null;
+      if (termMonths && termMonths > 0 && remaining != null) {
+        percent = Math.round((100 * (termMonths - remaining)) / termMonths);
+        label = "Avance del plazo";
+      }
+      const payment =
+        data.payment && typeof data.payment === "object"
+          ? (data.payment as Record<string, unknown>)
+          : null;
+      const interest =
+        typeof payment?.lastInterestPayment === "number"
+          ? payment.lastInterestPayment
+          : null;
+      const principal =
+        typeof payment?.lastPrincipalPayment === "number"
+          ? payment.lastPrincipalPayment
+          : null;
+      if (interest != null && principal != null) {
+        barSegments = [
+          { label: "Interés", value: interest },
+          { label: "Capital", value: principal },
+        ];
+      }
+    } catch {
+      // Keep defaults when Data JSON is truncated or invalid.
+    }
+  }
+  return JSON.stringify({
+    text: [
+      "## Qué es",
+      "",
+      "> **De un vistazo:** Resumen mock con charts.",
+      "",
+      "## Cómo va hoy",
+      "",
+      "{{chart:0}}",
+      "",
+      "## En gráficos",
+      "",
+      "{{chart:0}}",
+      "",
+      "{{chart:1}}",
+      "",
+      "## Los números",
+      "",
+      "| Dato | Valor |",
+      "| --- | --- |",
+      `| Avance | ${percent}% |`,
+    ].join("\n"),
+    charts: [
+      {
+        id: 0,
+        kind: "progress",
+        label,
+        percent,
+        caption: `Mock progress ${percent}%`,
+      },
+      {
+        id: 1,
+        kind: "bar",
+        title: "Mock bar",
+        segments: barSegments,
+      },
+    ],
+  });
+}
+
+function looksLikeRecordNarrativePrompt(userText: string): boolean {
+  const text = userText.trim();
+  return (
+    text.includes("**Data:**") ||
+    text.includes('"charts"') ||
+    text.includes("{{chart:") ||
+    text.startsWith("CONTRACT") ||
+    text.includes("CONTRACT (must be followed exactly)")
+  );
+}
+
+export { looksLikeRecordNarrativePrompt };
+
+/** Deterministic planner JSON for grounded chat (mock Vertex). */
+export function buildMockGroundedChatAnswer(userText: string): string {
+  const hasToolFindings = userText.includes("## Scratchpad / tool findings");
+  if (!hasToolFindings) {
+    return JSON.stringify({
+      action: "tool_calls",
+      reasoning: "Mock planner requests catalog listing.",
+      toolCalls: [{ name: "listEntities", args: {} }],
+    });
+  }
+  return JSON.stringify({
+    action: "final",
+    reasoning: "Mock planner finalizes from tool findings.",
+    answer:
+      "Based on your tenant data (mock), I found matching catalog entities. Ask a more specific question for live numbers.",
+    citations: [],
+  });
+}
+
 function extractFieldNamesFromEntityBlock(content: string): readonly string[] {
   const fields = [...content.matchAll(/`([^`]+)`/g)]
     .map((match) => match[1]?.trim())

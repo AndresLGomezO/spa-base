@@ -23,6 +23,9 @@ export async function runQueuedDataHookJob(
     readonly callWebhook?: HookServices["callWebhook"];
     readonly callAi?: HookServices["callAi"];
     readonly computeEmbedding?: HookServices["computeEmbedding"];
+    readonly computeRecordAiSummary?: HookServices["computeRecordAiSummary"];
+    readonly upsertAiRecordContext?: HookServices["upsertAiRecordContext"];
+    readonly enqueueAiRecordNarrative?: HookServices["enqueueAiRecordNarrative"];
     readonly sendUserNotification?: HookServices["sendUserNotification"];
     readonly formulaResolver?: FormulaResolver;
   },
@@ -58,6 +61,15 @@ export async function runQueuedDataHookJob(
       ...(services.callAi ? { callAi: services.callAi } : {}),
       ...(services.computeEmbedding
         ? { computeEmbedding: services.computeEmbedding }
+        : {}),
+      ...(services.computeRecordAiSummary
+        ? { computeRecordAiSummary: services.computeRecordAiSummary }
+        : {}),
+      ...(services.upsertAiRecordContext
+        ? { upsertAiRecordContext: services.upsertAiRecordContext }
+        : {}),
+      ...(services.enqueueAiRecordNarrative
+        ? { enqueueAiRecordNarrative: services.enqueueAiRecordNarrative }
         : {}),
       ...(services.sendUserNotification
         ? { sendUserNotification: services.sendUserNotification }

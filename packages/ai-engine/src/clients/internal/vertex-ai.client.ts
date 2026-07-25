@@ -2,7 +2,10 @@ import { VertexAI } from "@google-cloud/vertexai";
 
 import {
   buildMockChatAnswer,
+  buildMockGroundedChatAnswer,
+  buildMockRecordNarrativeAnswer,
   buildMockUiBuilderStepAnswer,
+  looksLikeRecordNarrativePrompt,
 } from "../../vertex-mock-responses.js";
 import { getStepTemperature } from "../../ui-builder-orchestrator/limits.js";
 import { MAX_OUTPUT_TOKENS_ERROR } from "../../extract-json-from-model-answer.js";
@@ -185,6 +188,8 @@ export interface GenerateModelAnswerOptions {
   readonly responseMimeType?: "text/plain" | "application/json";
   /** When true, enable Vertex Google Search grounding (incompatible with JSON mime). */
   readonly googleSearch?: boolean;
+  /** Vertex CachedContent resource name (projects/.../cachedContents/...). */
+  readonly cachedContent?: string;
   readonly stepId?: string;
 }
 
@@ -212,13 +217,23 @@ export async function generateModelAnswer(
 
   if (config.mockEnabled) {
     let text: string;
-    if (options?.stepId) {
+    if (options?.stepId?.startsWith("groundedChat.")) {
+      text = buildMockGroundedChatAnswer(input.userText);
+    } else if (options?.stepId) {
       text = buildMockUiBuilderStepAnswer(options.stepId, input.contextBlocks);
     } else if (input.contextBlocks && input.contextBlocks.length > 0) {
       text = buildMockUiBuilderStepAnswer(
         "list.selectViewType",
         input.contextBlocks,
       );
+    } else if (
+      options?.responseMimeType === "application/json" ||
+      looksLikeRecordNarrativePrompt(input.userText)
+    ) {
+      // Prefer chart-capable narrative JSON for recordNarrativeRefresh / callAi narratives.
+      text = looksLikeRecordNarrativePrompt(input.userText)
+        ? buildMockRecordNarrativeAnswer(input.userText)
+        : buildMockChatAnswer(input.userText);
     } else {
       text = buildMockChatAnswer(input.userText);
     }
@@ -236,13 +251,20 @@ export async function generateModelAnswer(
     ? `${contextText}\n\n---\n\n${input.userText}`
     : input.userText;
 
-  const model = getVertexClient(config).getGenerativeModel({
-    model: resolvedModelId,
-    systemInstruction: {
-      role: "system",
-      parts: [{ text: input.systemInstruction }],
-    },
-  });
+  const model = getVertexClient(config).getGenerativeModel(
+    options?.cachedContent
+      ? ({
+          model: resolvedModelId,
+          cachedContent: options.cachedContent,
+        } as never)
+      : {
+          model: resolvedModelId,
+          systemInstruction: {
+            role: "system",
+            parts: [{ text: input.systemInstruction }],
+          },
+        },
+  );
 
   for (let attempt = 0; attempt <= VERTEX_MAX_RETRIES; attempt += 1) {
     try {

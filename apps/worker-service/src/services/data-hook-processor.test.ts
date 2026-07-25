@@ -12,6 +12,20 @@ vi.mock("../hooks/record-data-hook-execution.js", () => ({
   createRecordDataHookExecution: vi.fn(),
 }));
 
+vi.mock("../config/env.js", () => ({
+  vertexAiConfig: {
+    projectId: "test",
+    region: "us-central1",
+    geminiLocation: "global",
+    modelId: "gemini-flash",
+    mockEnabled: true,
+  },
+  workerEnv: {
+    GCP_PROJECT_ID: "test",
+    AGGREGATION_EVENTS_TOPIC: "",
+  },
+}));
+
 import {
   PermanentHookTaskError,
   processDataHookJob,

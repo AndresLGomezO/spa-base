@@ -831,6 +831,15 @@ export async function processGmailProcessMessage(
             ...(deps.computeEmbedding
               ? { computeEmbedding: deps.computeEmbedding }
               : {}),
+            ...(deps.computeRecordAiSummary
+              ? { computeRecordAiSummary: deps.computeRecordAiSummary }
+              : {}),
+            ...(deps.upsertAiRecordContext
+              ? { upsertAiRecordContext: deps.upsertAiRecordContext }
+              : {}),
+            ...(deps.enqueueAiRecordNarrative
+              ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
+              : {}),
             ...(deps.userNotificationRepository
               ? {
                   sendUserNotification: createSendUserNotificationWithPush({

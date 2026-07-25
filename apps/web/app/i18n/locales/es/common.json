@@ -59,6 +59,7 @@
     "dataStructure": "Data structure",
     "dataModelBuilder": "Data Entity Builder",
     "automationNav": "Automation",
+    "aiContextNav": "Contexto AI",
     "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
     "chartsNav": "Charts",
@@ -420,6 +421,21 @@
     "submitError": "No se pudo enviar tu pregunta. Inténtalo de nuevo.",
     "forbidden": "No tienes permiso para usar el chat IA.",
     "status": "Estado: {{status}}"
+  },
+  "aiSpend": {
+    "limitReached": "Se alcanzó el límite de uso de IA de este mes.",
+    "approachingLimit": "El uso de IA se acerca al límite de este mes.",
+    "tenantLimitsTitle": "Límites mensuales de IA",
+    "tenantLimitsDescription": "Tope opcional para este tenant. Déjalo vacío para ilimitado. Los límites de rol aplican por usuario bajo este techo.",
+    "monthlyInputTokens": "Tokens de entrada mensuales",
+    "monthlyOutputTokens": "Tokens de salida mensuales",
+    "monthlyBudgetUsd": "Presupuesto mensual (USD)",
+    "unlimitedPlaceholder": "Ilimitado",
+    "saveLimits": "Guardar límites de IA",
+    "limitsSaved": "Límites de IA guardados.",
+    "limitsSaveFailed": "No se pudieron guardar los límites de IA.",
+    "roleLimitsTitle": "Límites de gasto de IA",
+    "roleLimitsHelp": "Tope opcional por usuario para miembros con este rol. El límite efectivo es el más estricto entre tenant y rol."
   },
   "chartComponent": {
     "loading": "Cargando gráfico…",
@@ -1592,7 +1608,13 @@
       "copyMarkdownFailed": "No se pudo copiar el markdown",
       "tabsAriaLabel": "Secciones del resumen",
       "emptyTitle": "Resumen en progreso",
-      "emptyDescription": "Esta sección se completará cuando se genere el resumen con IA."
+      "emptyDescription": "Esta sección se completará cuando se genere el resumen con IA.",
+      "outOfSync": "Desactualizado",
+      "outOfSyncDescription": "Los datos cambiaron. El resumen se actualiza de noche o al refrescar.",
+      "refreshSummary": "Actualizar resumen",
+      "refreshing": "Actualizando…",
+      "refreshQueued": "Actualización del resumen en cola.",
+      "refreshFailed": "No se pudo actualizar el resumen."
     },
     "recordsJson": {
       "viewTitle": "JSON de registros exportados",
@@ -2828,6 +2850,160 @@
       }
     }
   },
+  "aiContext": {
+    "navTitle": "Contexto AI",
+    "description": "Configura secciones de memoria y plantillas de resumen por entidad para el chat fundamentado.",
+    "forbidden": "No tienes permiso para administrar el contexto AI.",
+    "tabForbiddenHint": "Pide a un administrador acceso a esta pestaña, u abre la otra pestaña de Contexto AI si está disponible.",
+    "tabs": {
+      "sections": "Secciones",
+      "recordSummaries": "Resúmenes de registros"
+    }
+  },
+  "recordAiSummaryTemplates": {
+    "forbidden": "No tienes permiso para administrar plantillas de resumen AI de registros.",
+    "loading": "Cargando plantillas de resumen…",
+    "loadError": "No se pudieron cargar las plantillas de resumen.",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Plantilla guardada.",
+    "saveError": "No se pudo guardar la plantilla.",
+    "clear": "Quitar plantilla",
+    "clearing": "Quitando…",
+    "cleared": "Plantilla eliminada.",
+    "clearError": "No se pudo eliminar la plantilla.",
+    "list": {
+      "title": "Entidades",
+      "searchPlaceholder": "Buscar entidades",
+      "searchClear": "Limpiar búsqueda",
+      "empty": "Ninguna entidad coincide con la búsqueda.",
+      "configured": "Configurada",
+      "expandPanel": "Expandir panel de entidades",
+      "collapsePanel": "Contraer panel de entidades"
+    },
+    "settings": {
+      "empty": "Selecciona una entidad para editar su plantilla de resumen.",
+      "description": "Las plantillas impulsan la acción computeRecordAiSummary: texto, JSON, embeddings y redacción PII."
+    },
+    "fields": {
+      "textTemplate": "Plantilla de texto",
+      "textTemplatePlaceholder": "{{name}} — {{status}}",
+      "jsonFields": "Campos JSON",
+      "embeddingFields": "Campos de embedding",
+      "embeddingFieldsHint": "Déjalo vacío para embeber el texto renderizado de la plantilla.",
+      "piiLevel": "Niveles PII",
+      "piiEmpty": "Añade campos vía la plantilla o las listas JSON/embedding para configurar PII.",
+      "fieldsPlaceholder": "Seleccionar campos",
+      "selectedCount": "{{count}} seleccionados",
+      "searchFields": "Buscar campos",
+      "noFields": "No se encontraron campos",
+      "removeField": "Quitar {{label}}"
+    },
+    "piiLevels": {
+      "public": "Público",
+      "masked": "Enmascarado",
+      "excluded": "Excluido"
+    }
+  },
+  "userAiContext": {
+    "navTitle": "Secciones",
+    "description": "Define secciones ordenadas que alimentan la memoria AI de cada usuario.",
+    "forbidden": "No tienes permiso para administrar secciones de contexto AI.",
+    "loading": "Cargando secciones de contexto AI…",
+    "deleted": "Sección eliminada.",
+    "cancel": "Cancelar",
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "order": "Orden",
+      "scope": "Alcance",
+      "status": "Estado"
+    },
+    "scopes": {
+      "perUser": "Por usuario",
+      "tenantWide": "Todo el tenant"
+    },
+    "metadata": {
+      "createTitle": "Crear sección",
+      "editTitle": "Renombrar sección",
+      "create": "Crear",
+      "save": "Guardar",
+      "created": "Sección creada.",
+      "updated": "Sección actualizada."
+    },
+    "delete": {
+      "title": "Eliminar sección",
+      "confirm": "Eliminar",
+      "description": "¿Eliminar \"{{name}}\"? Esto invalida las memorias AI en caché en el próximo refresco."
+    },
+    "list": {
+      "title": "Secciones",
+      "add": "Agregar sección",
+      "rename": "Renombrar",
+      "delete": "Eliminar",
+      "empty": "Aún no hay secciones.",
+      "emptyFiltered": "Ninguna sección coincide con los filtros.",
+      "searchPlaceholder": "Buscar secciones",
+      "searchClear": "Limpiar búsqueda",
+      "filter": "Filtros",
+      "clearFilters": "Limpiar filtros",
+      "removeBadge": "Quitar {{label}}",
+      "expandPanel": "Expandir panel",
+      "collapsePanel": "Colapsar panel",
+      "sort": "Orden",
+      "sortOrder": "Orden de ensamblado",
+      "sortNameAsc": "Nombre A–Z",
+      "sortNameDesc": "Nombre Z–A",
+      "sortUpdatedDesc": "Actualizados recientemente",
+      "status": "Estado",
+      "statusEnabled": "Habilitado",
+      "statusDisabled": "Deshabilitado",
+      "rowMeta": "#{{order}} · {{blocks}} blocks · {{scope}} · {{status}}"
+    },
+    "settings": {
+      "empty": "Selecciona una sección para editar sus bloques.",
+      "save": "Guardar",
+      "saved": "Sección guardada.",
+      "sections": {
+        "metadata": "Metadatos",
+        "blocks": "Bloques de contenido"
+      }
+    },
+    "blocks": {
+      "title": "Bloque {{index}}",
+      "add": "Agregar bloque",
+      "remove": "Eliminar",
+      "kind": "Tipo de bloque",
+      "label": "Etiqueta",
+      "content": "Contenido markdown",
+      "entity": "Entidad",
+      "field": "Campo",
+      "fieldsCsv": "Campos (separados por coma)",
+      "source": "Fuente",
+      "recordId": "ID de registro",
+      "limit": "Límite",
+      "joinAs": "Formato",
+      "joinAsList": "Lista",
+      "joinAsTable": "Tabla",
+      "metric": "Métrica",
+      "query": "Consulta guardada",
+      "selectEntity": "Seleccionar entidad",
+      "selectMetric": "Seleccionar métrica",
+      "selectQuery": "Seleccionar consulta",
+      "kinds": {
+        "staticMarkdown": "Static markdown",
+        "entityField": "Entity field",
+        "entityRecordsSummary": "Entity records summary",
+        "metricValue": "Metric value",
+        "savedQueryTop": "Saved query rows"
+      },
+      "sources": {
+        "singleton": "Singleton / first accessible",
+        "firstMatch": "First match",
+        "recordId": "Specific record"
+      }
+    }
+  },
   "formulas": {
     "title": "Fórmulas",
     "description": "Definiciones de expresiones reutilizables referenciadas desde hooks y automatización.",
@@ -3960,6 +4136,9 @@
       "callWebhook": "Llamar webhook",
       "callAi": "Llamar IA",
       "computeEmbedding": "Calcular embedding",
+      "computeRecordAiSummary": "Calcular resumen de IA del registro",
+      "upsertAiRecordContext": "Actualizar contexto de IA del registro",
+      "enqueueAiRecordNarrative": "Encolar narrativa de IA del registro",
       "matchSimilarRecord": "Emparejar registro similar"
     },
     "actions": {
@@ -3985,6 +4164,17 @@
       "embeddingText": "Texto a embeber",
       "embeddingField": "Campo de embedding en candidatos",
       "matchSimilarHint": "Embebe el haystack y elige el candidato más cercano por similitud coseno (minScore por defecto 0.82).",
+      "computeRecordAiSummaryHint": "Usa la plantilla por entidad en Contexto AI → Resúmenes de registros.",
+      "computeRecordAiSummaryLink": "Abrir plantillas de resumen",
+      "upsertAiRecordContextHint": "Escribe el snapshot de contexto (y texto RAG opcional) en el documento de resumen AI; puede encolar un refresco de narrativa.",
+      "enqueueAiRecordNarrativeHint": "Encola el job recordNarrativeRefresh para una variante (default, loans, …).",
+      "enqueueNarrative": "Encolar narrativa cuando cambie el contexto",
+      "narrativeVariant": "Variante de narrativa",
+      "narrativePrompt": "Prompt de narrativa (rol / objetivo)",
+      "narrativeSystemInstruction": "Instrucción de sistema de narrativa (contrato de charts)",
+      "context": "Snapshot de contexto",
+      "ragText": "Texto RAG (opcional)",
+      "recordId": "Id del registro",
       "targetEntity": "Entidad destino",
       "selectEntity": "Selecciona una entidad…",
       "recordData": "Datos del registro",
@@ -3994,7 +4184,6 @@
       "createRecordsQueuedHint": "Los hooks en cola pueden crear hasta {{max}} registros por ejecución. Para horizontes más largos, usa startIndex con hooks programados de extensión.",
       "matchWhere": "Coincidir registros donde",
       "matchValue": "Valor",
-      "recordId": "Id del registro",
       "alias": "Alias",
       "aliasPlaceholder": "p. ej. parent",
       "getOrCreateRecordHint": "Carga el primer registro coincidente en el alias. Si no hay coincidencias y el valor de búsqueda no está vacío, crea uno con los datos del registro. Una búsqueda vacía omite la creación y carga null.",
@@ -4232,6 +4421,9 @@
         "callWebhook": "Llamar un webhook externo",
         "callAi": "Llamar IA y cargar el resultado JSON",
         "computeEmbedding": "Calcular un vector de embedding",
+        "computeRecordAiSummary": "Calcular resumen de IA del registro como \"{{alias}}\"",
+        "upsertAiRecordContext": "Actualizar contexto de IA del registro como \"{{alias}}\"",
+        "enqueueAiRecordNarrative": "Encolar narrativa de IA del registro como \"{{alias}}\"",
         "matchSimilarRecord": "Emparejar {{entity}} por similitud de embedding como \"{{alias}}\"",
         "fieldAssignment": "{{field}} = {{value}}"
       },

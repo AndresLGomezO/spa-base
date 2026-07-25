@@ -1685,6 +1685,7 @@ export function RecursiveLayoutRenderer({
   if (isScreenRootNode(layout.root)) {
     const screenRoot = layout.root;
     const isMainPageScreen = context.mode === "mainPage";
+    const screenHasPageList = screenRoot.rows.some(rowContainsPageList);
     const rootStylesResolved = resolveRowWrapperStyleRules(screenRoot.styles, {
       baseClassName: className,
       atBreakpoint,
@@ -1718,15 +1719,19 @@ export function RecursiveLayoutRenderer({
       );
     }
 
+    // Height-fill + overflow-hidden is only for entity main pages with a
+    // page-list scrollport. App-shell chrome (sidebar/header/footer) also uses
+    // mode "mainPage" but must grow so SidebarContent can scroll.
     const useMainPageColumnFill =
       isMainPageScreen &&
+      screenHasPageList &&
       isSingleColumnGridTemplate(screenRoot.gridTemplateColumns);
 
     return (
       <LayoutRenderOptionsProvider value={columnGridOptions}>
         <div
           className={[
-            isMainPageScreen
+            useMainPageColumnFill
               ? MAIN_PAGE_FILL_ROOT_CLASS
               : "flex w-full min-w-0 max-w-full flex-col",
             rootStylesResolved.className,

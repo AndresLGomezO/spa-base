@@ -56,6 +56,7 @@ export function createInMemoryTenantRoleRepository(): TenantRoleRepository & {
         description: parsed.description,
         grants: parsed.grants,
         fieldRules: parsed.fieldRules,
+        aiSpendLimits: parsed.aiSpendLimits,
         createdAt: now,
         updatedAt: now,
       });
@@ -70,7 +71,7 @@ export function createInMemoryTenantRoleRepository(): TenantRoleRepository & {
 
       patchTenantRoleInputSchema.parse(input);
       const now = new Date().toISOString();
-      const next = tenantRoleRecordSchema.parse({
+      const nextBase: TenantRoleRecord = {
         ...current,
         ...(input.description !== undefined
           ? { description: input.description }
@@ -80,7 +81,13 @@ export function createInMemoryTenantRoleRepository(): TenantRoleRepository & {
           ? { fieldRules: input.fieldRules }
           : {}),
         updatedAt: now,
-      });
+      };
+      if (input.aiSpendLimits === null) {
+        Reflect.deleteProperty(nextBase, "aiSpendLimits");
+      } else if (input.aiSpendLimits !== undefined) {
+        nextBase.aiSpendLimits = input.aiSpendLimits;
+      }
+      const next = tenantRoleRecordSchema.parse(nextBase);
       tenantStore(tenantId).set(id, next);
       return next;
     },

@@ -27,14 +27,21 @@ export {
   TENANTS_COLLECTION,
   persistedTenantSchemaV1,
   persistedTenantSchemaV2,
+  persistedTenantSchemaV3,
   tenantSchemaV1,
   tenantSchemaV2,
+  tenantSchemaV3,
   tenantStatusSchema,
   type PersistedTenant,
   type Tenant,
   type TenantOption,
   type TenantStatus,
 } from "./tenant/tenant.js";
+export {
+  aiSpendLimitsSchema,
+  isAiSpendLimitsEmpty,
+  type AiSpendLimits,
+} from "./tenant/ai-spend-limits.js";
 export {
   TENANT_DELETION_ARCHIVE_MIRROR_SUBCOLLECTION,
   TENANT_DELETION_ARCHIVE_MIRROR_ROOT_DOC,

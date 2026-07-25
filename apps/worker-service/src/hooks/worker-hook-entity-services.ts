@@ -55,6 +55,19 @@ export interface WorkerCrudHookDeps {
   readonly computeEmbedding?: (
     request: import("@repo/hooks").DataHookEmbeddingRequest,
   ) => Promise<readonly number[]>;
+  readonly computeRecordAiSummary?: (
+    request: import("@repo/hooks").DataHookRecordAiSummaryRequest,
+  ) => Promise<import("@repo/hooks").DataHookRecordAiSummaryResult | null>;
+  readonly upsertAiRecordContext?: (
+    request: import("@repo/hooks").DataHookUpsertAiRecordContextRequest,
+  ) => Promise<
+    import("@repo/hooks").DataHookUpsertAiRecordContextResult | null
+  >;
+  readonly enqueueAiRecordNarrative?: (
+    request: import("@repo/hooks").DataHookEnqueueAiRecordNarrativeRequest,
+  ) => Promise<{ readonly ok: true } | null>;
+  readonly refreshNarrative?: import("../services/record-narrative-refresh-processor.js").RecordNarrativeRefreshProcessor;
+  readonly aiRecordSummaryRepository?: import("@repo/firestore-converters").AiRecordSummaryRepository;
   readonly aggregation?: AggregationEmitterDeps;
   readonly aiController?: import("@repo/ai-engine/controller").AiController;
 }
@@ -144,6 +157,17 @@ async function dispatchChainedEntityHooks(options: {
   readonly computeEmbedding?: (
     request: import("@repo/hooks").DataHookEmbeddingRequest,
   ) => Promise<readonly number[]>;
+  readonly computeRecordAiSummary?: (
+    request: import("@repo/hooks").DataHookRecordAiSummaryRequest,
+  ) => Promise<import("@repo/hooks").DataHookRecordAiSummaryResult | null>;
+  readonly upsertAiRecordContext?: (
+    request: import("@repo/hooks").DataHookUpsertAiRecordContextRequest,
+  ) => Promise<
+    import("@repo/hooks").DataHookUpsertAiRecordContextResult | null
+  >;
+  readonly enqueueAiRecordNarrative?: (
+    request: import("@repo/hooks").DataHookEnqueueAiRecordNarrativeRequest,
+  ) => Promise<{ readonly ok: true } | null>;
   readonly sendUserNotification?: (
     input: import("@repo/firestore-converters").CreateUserNotificationInput,
   ) => Promise<void>;
@@ -181,6 +205,15 @@ async function dispatchChainedEntityHooks(options: {
       ...(options.callAi ? { callAi: options.callAi } : {}),
       ...(options.computeEmbedding
         ? { computeEmbedding: options.computeEmbedding }
+        : {}),
+      ...(options.computeRecordAiSummary
+        ? { computeRecordAiSummary: options.computeRecordAiSummary }
+        : {}),
+      ...(options.upsertAiRecordContext
+        ? { upsertAiRecordContext: options.upsertAiRecordContext }
+        : {}),
+      ...(options.enqueueAiRecordNarrative
+        ? { enqueueAiRecordNarrative: options.enqueueAiRecordNarrative }
         : {}),
       ...(options.sendUserNotification
         ? { sendUserNotification: options.sendUserNotification }
@@ -273,6 +306,15 @@ export function buildHookEntityServices(options: {
         ...(deps.callAi ? { callAi: deps.callAi } : {}),
         ...(deps.computeEmbedding
           ? { computeEmbedding: deps.computeEmbedding }
+          : {}),
+        ...(deps.computeRecordAiSummary
+          ? { computeRecordAiSummary: deps.computeRecordAiSummary }
+          : {}),
+        ...(deps.upsertAiRecordContext
+          ? { upsertAiRecordContext: deps.upsertAiRecordContext }
+          : {}),
+        ...(deps.enqueueAiRecordNarrative
+          ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
           : {}),
         ...(deps.userNotificationRepository
           ? {

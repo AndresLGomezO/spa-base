@@ -1201,6 +1201,11 @@ export interface TenantRoleRecord {
       readonly access: "read" | "write" | "none";
     }[];
   }[];
+  readonly aiSpendLimits?: {
+    readonly monthlyInputTokens?: number;
+    readonly monthlyOutputTokens?: number;
+    readonly monthlyBudgetUsd?: number;
+  };
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -1222,6 +1227,7 @@ export async function createRole(input: {
   readonly description?: string;
   readonly grants: readonly string[];
   readonly fieldRules?: TenantRoleRecord["fieldRules"];
+  readonly aiSpendLimits?: TenantRoleRecord["aiSpendLimits"];
 }): Promise<TenantRoleRecord> {
   return apiRequest<TenantRoleRecord>("/api/roles", {
     method: "POST",
@@ -1235,6 +1241,7 @@ export async function patchRole(
     readonly description?: string;
     readonly grants?: readonly string[];
     readonly fieldRules?: TenantRoleRecord["fieldRules"];
+    readonly aiSpendLimits?: TenantRoleRecord["aiSpendLimits"] | null;
   },
   options?: { readonly tenantId?: string },
 ): Promise<TenantRoleRecord> {
@@ -1558,6 +1565,60 @@ export async function submitAiChat(
     method: "POST",
     body: { question },
   });
+}
+
+export interface AiSpendLimitsDto {
+  readonly monthlyInputTokens?: number;
+  readonly monthlyOutputTokens?: number;
+  readonly monthlyBudgetUsd?: number;
+}
+
+export interface AiSpendCountersDto {
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly estimatedCostUsd: number;
+}
+
+export interface AiSpendStatus {
+  readonly period: string;
+  readonly tenant: {
+    readonly limits: AiSpendLimitsDto | null;
+    readonly used: AiSpendCountersDto;
+    readonly remaining: {
+      readonly monthlyInputTokens: number | null;
+      readonly monthlyOutputTokens: number | null;
+      readonly monthlyBudgetUsd: number | null;
+    };
+  };
+  readonly user: {
+    readonly limits: AiSpendLimitsDto | null;
+    readonly used: AiSpendCountersDto;
+    readonly remaining: {
+      readonly monthlyInputTokens: number | null;
+      readonly monthlyOutputTokens: number | null;
+      readonly monthlyBudgetUsd: number | null;
+    };
+  };
+  readonly blocked: boolean;
+  readonly softWarn: boolean;
+  readonly blockReason?: {
+    readonly scope: "tenant" | "role";
+    readonly meter:
+      | "monthlyInputTokens"
+      | "monthlyOutputTokens"
+      | "monthlyBudgetUsd";
+  };
+}
+
+export async function getAiSpendStatus(): Promise<AiSpendStatus> {
+  return apiRequest<AiSpendStatus>("/api/ai/spend-status");
+}
+
+export function isAiSpendLimitError(error: unknown): error is ApiClientError {
+  return (
+    isApiClientError(error) &&
+    (error.code === "ai.spend_limit" || error.code === "AI_SPEND_LIMIT")
+  );
 }
 
 export async function getAiJob(jobId: string): Promise<AiJobRecord> {
@@ -2056,6 +2117,191 @@ export async function replaceFormulaDefinitionsCatalog(body: unknown): Promise<{
     method: "PUT",
     body,
   });
+}
+
+export type AiContextSectionBlock =
+  import("@repo/ai-context/storage").AiContextSectionBlock;
+export type AiContextSectionScope =
+  import("@repo/ai-context/storage").AiContextSectionScope;
+
+export interface AiContextSectionRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly order: number;
+  readonly enabled: boolean;
+  readonly scope: AiContextSectionScope;
+  readonly visibility: {
+    readonly requiredPermissions?: readonly string[];
+  };
+  readonly blocks: readonly AiContextSectionBlock[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listAiContextSections(): Promise<{
+  readonly items: readonly AiContextSectionRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly AiContextSectionRecord[] }>(
+    "/api/ai-context-sections",
+  );
+}
+
+export async function createAiContextSection(input: {
+  readonly name: string;
+  readonly description?: string;
+  readonly order?: number;
+  readonly enabled?: boolean;
+  readonly scope?: AiContextSectionScope;
+  readonly blocks?: readonly AiContextSectionBlock[];
+}): Promise<AiContextSectionRecord> {
+  return apiRequest<AiContextSectionRecord>("/api/ai-context-sections", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function updateAiContextSection(
+  id: string,
+  input: Partial<{
+    readonly name: string;
+    readonly description: string | null;
+    readonly order: number;
+    readonly enabled: boolean;
+    readonly scope: AiContextSectionScope;
+    readonly visibility: { readonly requiredPermissions?: readonly string[] };
+    readonly blocks: readonly AiContextSectionBlock[];
+  }>,
+): Promise<AiContextSectionRecord> {
+  return apiRequest<AiContextSectionRecord>(`/api/ai-context-sections/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function deleteAiContextSection(id: string): Promise<void> {
+  await apiRequest<void>(`/api/ai-context-sections/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export type AiRecordSummaryPiiLevel = "public" | "masked" | "excluded";
+
+export interface AiRecordSummaryTemplatePayload {
+  readonly textTemplate: string;
+  readonly jsonFields: readonly string[];
+  readonly embeddingFields: readonly string[];
+  readonly piiLevel: Readonly<Record<string, AiRecordSummaryPiiLevel>>;
+}
+
+interface AiRecordSummaryTemplateItem {
+  readonly entityName: string;
+  readonly template: AiRecordSummaryTemplatePayload;
+}
+
+export async function listAiRecordSummaryTemplates(): Promise<{
+  readonly items: readonly AiRecordSummaryTemplateItem[];
+}> {
+  return apiRequest<{ readonly items: readonly AiRecordSummaryTemplateItem[] }>(
+    "/api/ai-record-summary-templates",
+  );
+}
+
+export async function upsertAiRecordSummaryTemplate(
+  entityName: string,
+  template: AiRecordSummaryTemplatePayload,
+): Promise<AiRecordSummaryTemplateItem> {
+  return apiRequest<AiRecordSummaryTemplateItem>(
+    `/api/ai-record-summary-templates/${encodeURIComponent(entityName)}`,
+    {
+      method: "PUT",
+      body: template,
+    },
+  );
+}
+
+export async function deleteAiRecordSummaryTemplate(
+  entityName: string,
+): Promise<void> {
+  await apiRequest<void>(
+    `/api/ai-record-summary-templates/${encodeURIComponent(entityName)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+interface AiRecordSummaryDoc {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly ownerId?: string;
+  readonly accessUserIds?: readonly string[];
+  readonly tenantWideRead?: boolean;
+  readonly context?: Readonly<Record<string, unknown>>;
+  readonly contextHash?: string;
+  readonly rag?: {
+    readonly text: string;
+    readonly hash: string;
+    readonly embedding?: readonly number[];
+    readonly updatedAt: string;
+    readonly sourceHash: string;
+    readonly hasEmbedding?: boolean;
+  };
+  readonly narratives: Readonly<
+    Record<
+      string,
+      {
+        readonly text: string;
+        readonly sourceHash: string;
+        readonly model?: string;
+        readonly updatedAt: string;
+      }
+    >
+  >;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function getAiRecordSummary(
+  entityName: string,
+  recordId: string,
+): Promise<AiRecordSummaryDoc | null> {
+  try {
+    return await apiRequest<AiRecordSummaryDoc>(
+      `/api/ai-record-summaries/${encodeURIComponent(entityName)}/${encodeURIComponent(recordId)}`,
+    );
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "statusCode" in error &&
+      (error as { statusCode: number }).statusCode === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function refreshAiRecordNarrative(
+  entityName: string,
+  recordId: string,
+  variant?: string,
+): Promise<{
+  readonly enqueued: boolean;
+  readonly variant: string;
+  readonly reason?: "already_current";
+}> {
+  return apiRequest(
+    `/api/ai-record-summaries/${encodeURIComponent(entityName)}/${encodeURIComponent(recordId)}/refresh-narrative`,
+    {
+      method: "POST",
+      body: JSON.stringify(variant ? { variant } : {}),
+    },
+  );
 }
 
 interface GmailConnectionStatus {

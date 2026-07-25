@@ -21,6 +21,18 @@ export default [
     route("settings/users", "./routes/settings/users.tsx"),
     route("settings/data-models", "./routes/settings/data-models.tsx"),
     route("settings/automation", "./routes/settings/automation.tsx"),
+    route("settings/ai-context", "./routes/settings/ai-context-layout.tsx", [
+      index("./routes/settings/ai-context-index.tsx"),
+      route("sections", "./routes/settings/ai-context-sections.tsx"),
+      route(
+        "record-summaries",
+        "./routes/settings/ai-context-record-summaries.tsx",
+      ),
+    ]),
+    route(
+      "settings/user-ai-context",
+      "./routes/settings/user-ai-context-redirect.tsx",
+    ),
     route("settings/email", "./routes/settings/email.tsx"),
     route("account/settings", "./routes/account/settings-layout.tsx", [
       index("./routes/account/settings-index.tsx"),

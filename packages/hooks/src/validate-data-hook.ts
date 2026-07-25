@@ -104,7 +104,7 @@ function validateLoadedAliases(
   for (const alias of aliases) {
     if (!available.has(alias)) {
       throw new HookExecutionError(
-        `Expression references unknown loaded alias "${alias}". Add a prior getRecord, getOrCreateRecord, matchRelatedRecord, matchSimilarRecord, callAi, or computeEmbedding action with as="${alias}".`,
+        `Expression references unknown loaded alias "${alias}". Add a prior action that loads as="${alias}".`,
       );
     }
   }
@@ -319,6 +319,122 @@ function validateActionExpressions(
         availableFormulas,
       );
       return;
+    case "computeRecordAiSummary":
+      if (action.entityName) {
+        validateExpressionReferences(
+          action.entityName,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.when) {
+        validateExpressionReferences(
+          action.when,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      return;
+    case "upsertAiRecordContext":
+      if (action.entityName) {
+        validateExpressionReferences(
+          action.entityName,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.recordId) {
+        validateExpressionReferences(
+          action.recordId,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      validateExpressionReferences(
+        action.context,
+        availableLoaded,
+        availableAggregates,
+        availableFormulas,
+      );
+      if (action.ragText) {
+        validateExpressionReferences(
+          action.ragText,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.narrativePrompt) {
+        validateExpressionReferences(
+          action.narrativePrompt,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.narrativeSystemInstruction) {
+        validateExpressionReferences(
+          action.narrativeSystemInstruction,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.when) {
+        validateExpressionReferences(
+          action.when,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      return;
+    case "enqueueAiRecordNarrative":
+      if (action.entityName) {
+        validateExpressionReferences(
+          action.entityName,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.recordId) {
+        validateExpressionReferences(
+          action.recordId,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.prompt) {
+        validateExpressionReferences(
+          action.prompt,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.systemInstruction) {
+        validateExpressionReferences(
+          action.systemInstruction,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.when) {
+        validateExpressionReferences(
+          action.when,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      return;
     case "matchSimilarRecord":
       validateExpressionReferences(
         action.haystack,
@@ -340,7 +456,7 @@ function validateActionExpressions(
 function registerBindingAlias(alias: string, boundAliases: Set<string>): void {
   if (boundAliases.has(alias)) {
     throw new HookExecutionError(
-      `Duplicate binding alias "${alias}". Each getRecord, getOrCreateRecord, matchRelatedRecord, matchSimilarRecord, callAi, computeEmbedding, or aggregateMatching as value must be unique.`,
+      `Duplicate binding alias "${alias}". Each loaded-result or aggregate alias must be unique.`,
     );
   }
   boundAliases.add(alias);
@@ -405,13 +521,27 @@ export function validateDataHookActions(
       action.type === "matchRelatedRecord" ||
       action.type === "matchSimilarRecord" ||
       action.type === "callAi" ||
-      action.type === "computeEmbedding"
+      action.type === "computeEmbedding" ||
+      action.type === "computeRecordAiSummary" ||
+      action.type === "upsertAiRecordContext" ||
+      action.type === "enqueueAiRecordNarrative"
     ) {
-      loadedRecordCount += 1;
-      if (loadedRecordCount > MAX_LOADED_RECORDS) {
-        throw new HookExecutionError(
-          `Hook exceeds the maximum of ${MAX_LOADED_RECORDS} getRecord / getOrCreateRecord / matchRelatedRecord / matchSimilarRecord / callAi / computeEmbedding actions.`,
-        );
+      // Alias-producing actions always register bindings; only entity/AI loads
+      // that pull records or model payloads count toward MAX_LOADED_RECORDS.
+      const countsTowardLoadedLimit =
+        action.type === "getRecord" ||
+        action.type === "getOrCreateRecord" ||
+        action.type === "matchRelatedRecord" ||
+        action.type === "matchSimilarRecord" ||
+        action.type === "callAi" ||
+        action.type === "computeEmbedding";
+      if (countsTowardLoadedLimit) {
+        loadedRecordCount += 1;
+        if (loadedRecordCount > MAX_LOADED_RECORDS) {
+          throw new HookExecutionError(
+            `Hook exceeds the maximum of ${MAX_LOADED_RECORDS} loaded-result actions.`,
+          );
+        }
       }
       registerBindingAlias(action.as, boundAliases);
       loadedAliases.add(action.as);

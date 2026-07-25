@@ -31,7 +31,11 @@ import { summaryChartBlockRenderers } from "../../features/entity-summary/summar
 import { SummaryCopyMarkdownButton } from "../../features/entity-summary/SummaryCopyMarkdownButton";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { EntityLayoutDetailView } from "./EntityLayoutDetailView";
-import { getEntity, getEntityRelationTargets } from "../../lib/api-client";
+import {
+  getEntity,
+  getAiRecordSummary,
+  getEntityRelationTargets,
+} from "../../lib/api-client";
 import { entityRecordQueryKey } from "../../query/query-client";
 import { formatRecordDisplayLabel } from "./format-record-display-label";
 import { RelatedRecords } from "./RelatedRecords";
@@ -49,6 +53,13 @@ import {
   resolveEntityDetailImagePlaceholderSrc,
 } from "./entity-file-display.js";
 import { readEntityFileDownloadUrl } from "./resolve-entity-layout-image-src.js";
+import {
+  hasAiSummarySurface,
+  isAiNarrativeStale,
+  narrativeVariantFromSummaryField,
+  resolveSummaryFieldText,
+} from "../../features/entity-summary/resolve-summary-tabs";
+import { SummaryOutOfSyncBanner } from "../../features/entity-summary/SummaryOutOfSyncBanner";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -73,6 +84,7 @@ export function EntityRecordDetail({
   );
   const recordDetailLayout =
     definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
+  const summaryField = recordDetailLayout?.summaryField?.trim();
   const { items: catalogItems } = useEntityCatalog();
 
   const fkFields = useMemo(
@@ -96,6 +108,12 @@ export function EntityRecordDetail({
       getEntity<Record<string, unknown>>(entityName, recordId, {
         populate: populateParam,
       }),
+  });
+
+  const { data: aiSummary } = useQuery({
+    queryKey: ["ai-record-summary", entityName, recordId] as const,
+    queryFn: () => getAiRecordSummary(entityName, recordId),
+    enabled: Boolean(summaryField),
   });
 
   const manyToManyFieldNames = useMemo(
@@ -177,11 +195,16 @@ export function EntityRecordDetail({
   >;
 
   const businessFields = Object.keys(definition.fields);
-  const summaryField = recordDetailLayout?.summaryField?.trim();
-  const summaryText =
-    summaryField && typeof record[summaryField] === "string"
-      ? String(record[summaryField]).trim()
-      : "";
+  const summaryVariant = narrativeVariantFromSummaryField(summaryField);
+  const summaryText = resolveSummaryFieldText(
+    summaryField,
+    record,
+    aiSummary ?? null,
+  );
+  const summaryStale = isAiNarrativeStale(aiSummary ?? null, summaryVariant);
+  const showSummaryButton =
+    Boolean(summaryField) &&
+    hasAiSummarySurface(aiSummary ?? null, summaryText);
   const recordLabel = formatRecordDisplayLabel(record, definition.displayField);
 
   return (
@@ -193,7 +216,7 @@ export function EntityRecordDetail({
       <div className="flex items-center justify-between gap-4">
         <Heading level={1}>{recordLabel}</Heading>
         <div className="flex items-center gap-2">
-          {summaryText.length > 0 ? (
+          {showSummaryButton ? (
             <Button
               type="button"
               variant="ai"
@@ -206,9 +229,23 @@ export function EntityRecordDetail({
                     <SummaryCopyMarkdownButton getText={() => summaryText} />
                   ),
                   body: (
-                    <Markdown blockRenderers={summaryChartBlockRenderers}>
-                      {summaryText}
-                    </Markdown>
+                    <div className="flex flex-col gap-4">
+                      <SummaryOutOfSyncBanner
+                        entityName={entityName}
+                        recordId={recordId}
+                        variant={summaryVariant}
+                        stale={summaryStale}
+                      />
+                      {summaryText.length > 0 ? (
+                        <Markdown blockRenderers={summaryChartBlockRenderers}>
+                          {summaryText}
+                        </Markdown>
+                      ) : (
+                        <Text className="text-muted-foreground text-sm">
+                          {t("entity.summary.emptyDescription")}
+                        </Text>
+                      )}
+                    </div>
                   ),
                   widths: { base: "full", md: "1/2", lg: "1/3" },
                   tone: "ai",
@@ -217,6 +254,11 @@ export function EntityRecordDetail({
             >
               <AiSparkIcon size={16} animated className="shrink-0" />
               {t("entity.summary.button")}
+              {summaryStale ? (
+                <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                  {t("entity.summary.outOfSync")}
+                </span>
+              ) : null}
             </Button>
           ) : null}
           {isSuperAdmin ? (

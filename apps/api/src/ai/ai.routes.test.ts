@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildRoleCatalog } from "@repo/rbac";
-import { createInMemoryAiJobRepository } from "@repo/firestore-converters";
+import {
+  createInMemoryAiChatSessionRepository,
+  createInMemoryAiJobRepository,
+  createInMemoryAiSpendRepository,
+} from "@repo/firestore-converters";
 
+import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import { buildServer } from "../server.js";
 
 vi.hoisted(() => {
@@ -32,8 +37,13 @@ const authState = {
 
 describe("AI chat routes", () => {
   const aiJobRepository = createInMemoryAiJobRepository();
+  const aiChatSessionRepository = createInMemoryAiChatSessionRepository();
+  const aiSpendRepository = createInMemoryAiSpendRepository();
+  const tenantRepository = createInMemoryTenantRepository();
 
   beforeEach(() => {
+    aiSpendRepository.clear();
+    void tenantRepository.update("tenant_a", { aiLimits: null });
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -62,6 +72,9 @@ describe("AI chat routes", () => {
       logger: false,
       repositories: {},
       aiJobRepository,
+      aiChatSessionRepository,
+      aiSpendRepository,
+      tenantRepository,
       getRoleCatalog: async () => buildRoleCatalog([]),
       getUserAccessProfile: async () => ({
         platformRole: "superadmin" as const,
@@ -72,7 +85,7 @@ describe("AI chat routes", () => {
     });
   }
 
-  it("creates a chat job and returns the job id", async () => {
+  it("creates a chat job and returns the job id and session id", async () => {
     const server = await buildTestServer();
     await server.ready();
 
@@ -87,12 +100,19 @@ describe("AI chat routes", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json() as { data: { jobId: string } };
+    const body = response.json() as {
+      data: { jobId: string; sessionId: string };
+    };
     expect(body.data.jobId).toMatch(/^aijob_/);
+    expect(body.data.sessionId).toMatch(/^aisess_/);
 
     const job = await aiJobRepository.getById("tenant_a", body.data.jobId);
     expect(job?.status).toBe("completed");
     expect(job?.output).toEqual({ answer: "mock answer" });
+    expect(job?.input).toMatchObject({
+      question: "What is ESP?",
+      sessionId: body.data.sessionId,
+    });
 
     await server.close();
   });
@@ -184,6 +204,63 @@ describe("AI chat routes", () => {
     expect(body.data.progress?.stepId).toBe("list.layoutSkeleton:listItem");
     expect(body.data.draft?.listViewType).toBe("card");
     expect(body.data.draft?.completedStepIds).toEqual(["list.selectViewType"]);
+
+    await server.close();
+  });
+
+  it("rejects chat enqueue when tenant AI spend limit is reached", async () => {
+    await tenantRepository.update("tenant_a", {
+      aiLimits: { monthlyInputTokens: 10 },
+    });
+    const period = new Date().toISOString().slice(0, 7);
+    await aiSpendRepository.incrementTenantPeriod("tenant_a", period, {
+      inputTokens: 10,
+      outputTokens: 0,
+      estimatedCostUsd: 0,
+    });
+
+    const server = await buildTestServer();
+    await server.ready();
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/ai/chat",
+      headers: {
+        authorization: "Bearer test-token",
+        "x-firebase-appcheck": "test-app-check",
+      },
+      payload: { question: "What is ESP?" },
+    });
+
+    expect(response.statusCode).toBe(403);
+    const body = response.json() as {
+      error: { code: string; details?: { meter?: string } };
+    };
+    expect(body.error.code).toBe("ai.spend_limit");
+    expect(body.error.details?.meter).toBe("monthlyInputTokens");
+
+    await server.close();
+  });
+
+  it("returns spend status for the current period", async () => {
+    const server = await buildTestServer();
+    await server.ready();
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/ai/spend-status",
+      headers: {
+        authorization: "Bearer test-token",
+        "x-firebase-appcheck": "test-app-check",
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: { period: string; blocked: boolean };
+    };
+    expect(body.data.period).toMatch(/^\d{4}-\d{2}$/);
+    expect(body.data.blocked).toBe(false);
 
     await server.close();
   });

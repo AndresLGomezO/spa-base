@@ -44,6 +44,21 @@ export function RoleEditor({
   const [fieldRules, setFieldRules] = useState<readonly FieldRuleDraft[]>(
     role?.fieldRules ?? [],
   );
+  const [monthlyInputTokens, setMonthlyInputTokens] = useState(
+    role?.aiSpendLimits?.monthlyInputTokens != null
+      ? String(role.aiSpendLimits.monthlyInputTokens)
+      : "",
+  );
+  const [monthlyOutputTokens, setMonthlyOutputTokens] = useState(
+    role?.aiSpendLimits?.monthlyOutputTokens != null
+      ? String(role.aiSpendLimits.monthlyOutputTokens)
+      : "",
+  );
+  const [monthlyBudgetUsd, setMonthlyBudgetUsd] = useState(
+    role?.aiSpendLimits?.monthlyBudgetUsd != null
+      ? String(role.aiSpendLimits.monthlyBudgetUsd)
+      : "",
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const grantOptions = useMemo(() => {
@@ -62,7 +77,33 @@ export function RoleEditor({
   async function handleSave() {
     setIsSaving(true);
 
+    const parseOptional = (raw: string): number | undefined | null => {
+      const trimmed = raw.trim();
+      if (!trimmed) return undefined;
+      const value = Number(trimmed);
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error(t("roles.saveFailed"));
+      }
+      return value;
+    };
+
     try {
+      const inputTokens = parseOptional(monthlyInputTokens);
+      const outputTokens = parseOptional(monthlyOutputTokens);
+      const budgetUsd = parseOptional(monthlyBudgetUsd);
+      const aiSpendLimits =
+        inputTokens == null && outputTokens == null && budgetUsd == null
+          ? null
+          : {
+              ...(inputTokens != null
+                ? { monthlyInputTokens: inputTokens }
+                : {}),
+              ...(outputTokens != null
+                ? { monthlyOutputTokens: outputTokens }
+                : {}),
+              ...(budgetUsd != null ? { monthlyBudgetUsd: budgetUsd } : {}),
+            };
+
       if (isCreate) {
         if (!canCreate) {
           throw new Error(t("roles.forbiddenCreate"));
@@ -72,6 +113,7 @@ export function RoleEditor({
           description: description.trim() || undefined,
           grants,
           fieldRules: fieldRules.length > 0 ? fieldRules : undefined,
+          ...(aiSpendLimits ? { aiSpendLimits } : {}),
         });
         onSaved(created);
         return;
@@ -85,6 +127,7 @@ export function RoleEditor({
         description: description.trim() || undefined,
         ...(isBuiltIn ? {} : { grants }),
         fieldRules,
+        aiSpendLimits,
       });
       onSaved(updated);
     } catch (saveError) {
@@ -152,6 +195,51 @@ export function RoleEditor({
           value={fieldRules}
           onChange={setFieldRules}
         />
+      </div>
+
+      <div className="space-y-2">
+        <FieldLabel>{t("aiSpend.roleLimitsTitle")}</FieldLabel>
+        <Text className="text-muted-foreground text-sm">
+          {t("aiSpend.roleLimitsHelp")}
+        </Text>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="space-y-1">
+            <FieldLabel htmlFor="role-ai-input-tokens">
+              {t("aiSpend.monthlyInputTokens")}
+            </FieldLabel>
+            <Input
+              id="role-ai-input-tokens"
+              inputMode="numeric"
+              placeholder={t("aiSpend.unlimitedPlaceholder")}
+              value={monthlyInputTokens}
+              onChange={(event) => setMonthlyInputTokens(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel htmlFor="role-ai-output-tokens">
+              {t("aiSpend.monthlyOutputTokens")}
+            </FieldLabel>
+            <Input
+              id="role-ai-output-tokens"
+              inputMode="numeric"
+              placeholder={t("aiSpend.unlimitedPlaceholder")}
+              value={monthlyOutputTokens}
+              onChange={(event) => setMonthlyOutputTokens(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel htmlFor="role-ai-budget-usd">
+              {t("aiSpend.monthlyBudgetUsd")}
+            </FieldLabel>
+            <Input
+              id="role-ai-budget-usd"
+              inputMode="decimal"
+              placeholder={t("aiSpend.unlimitedPlaceholder")}
+              value={monthlyBudgetUsd}
+              onChange={(event) => setMonthlyBudgetUsd(event.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

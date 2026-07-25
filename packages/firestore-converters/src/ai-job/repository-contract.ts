@@ -38,6 +38,7 @@ export interface AiJobRepository {
         | "draft"
         | "stepTrace"
         | "modelUsage"
+        | "metrics"
         | "input"
         | "operation"
         | "parentJobId"

@@ -2557,11 +2557,13 @@ describe("callAi action", () => {
       context,
     );
 
-    expect(callAi).toHaveBeenCalledWith({
-      prompt: "Classify: UBER TRIP",
-      tenantId: "tenant_a",
-      includeEntities: ["category"],
-    });
+    expect(callAi).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: "Classify: UBER TRIP",
+        tenantId: "tenant_a",
+        includeEntities: ["category"],
+      }),
+    );
     expect(context.current.categoryId).toBe("cat_1");
     expect(loaded.classification).toEqual({
       categoryId: "cat_1",
@@ -2618,7 +2620,45 @@ describe("callAi action", () => {
   });
 });
 
-describe("computeEmbedding and matchSimilarRecord", () => {
+describe("AI enrichment actions", () => {
+  it("computeRecordAiSummary loads ok without writing record fields", async () => {
+    const computeRecordAiSummary = vi.fn(async () => ({
+      ok: true as const,
+      contextChanged: true,
+    }));
+    const current = { id: "record_1", name: "Ada" };
+    const loaded: Record<string, Record<string, unknown> | null> = {};
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        actions: [
+          {
+            type: "computeRecordAiSummary",
+            as: "summary",
+          },
+        ],
+      },
+      createContext({
+        current,
+        loaded,
+        services: {
+          computeRecordAiSummary,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(computeRecordAiSummary).toHaveBeenCalledWith({
+      tenantId: "tenant_a",
+      entityName: "loan",
+      recordId: "record_1",
+      record: current,
+    });
+    expect(current).toEqual({ id: "record_1", name: "Ada" });
+    expect(loaded.summary).toEqual({ ok: true, contextChanged: true });
+  });
+
   it("computeEmbedding loads values from the service", async () => {
     const computeEmbedding = vi.fn(async () => [0.1, 0.2, 0.3] as const);
     const loaded: Record<string, Record<string, unknown> | null> = {};
@@ -2641,7 +2681,9 @@ describe("computeEmbedding and matchSimilarRecord", () => {
         },
       }),
     );
-    expect(computeEmbedding).toHaveBeenCalledWith({ text: "UBER TRIP" });
+    expect(computeEmbedding).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "UBER TRIP" }),
+    );
     expect(loaded.embedding).toEqual({ values: [0.1, 0.2, 0.3] });
   });
 

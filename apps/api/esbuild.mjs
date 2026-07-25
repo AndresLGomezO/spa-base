@@ -77,7 +77,7 @@ assertDirectRuntimeDependencies({
 
 const { size } = await stat(join(rootDir, "dist/index.js"));
 // Soft cap on bundled workspace code. The GCP guard below catches accidental client inlining.
-const maxBundleBytes = 2_070_000;
+const maxBundleBytes = 2_150_000;
 if (size > maxBundleBytes) {
   throw new Error(
     `api dist/index.js is ${size} bytes (max ${maxBundleBytes}). ` +

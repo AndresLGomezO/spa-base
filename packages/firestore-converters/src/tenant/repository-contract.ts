@@ -1,4 +1,5 @@
 import type {
+  AiSpendLimits,
   Tenant,
   TenantAppearance,
   TenantStatus,
@@ -14,6 +15,7 @@ export interface UpdateTenantInput {
   readonly name?: string;
   readonly status?: TenantStatus;
   readonly appearance?: TenantAppearance | null;
+  readonly aiLimits?: AiSpendLimits | null;
 }
 
 export interface TenantRepository {

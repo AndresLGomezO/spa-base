@@ -153,6 +153,9 @@ catalogs:
     firebase-tools:
       specifier: ^13.0.0
       version: 13.35.1
+    google-auth-library:
+      specifier: ^9.15.1
+      version: 9.15.1
     i18next:
       specifier: ^24.2.0
       version: 24.2.3
@@ -478,6 +481,9 @@ importers:
       '@react-router/node':
         specifier: 'catalog:'
         version: 7.15.1(react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@5.9.3)
+      '@repo/ai-context':
+        specifier: workspace:*
+        version: link:../../packages/ai-context
       '@repo/chart-definitions':
         specifier: workspace:*
         version: link:../../packages/chart-definitions
@@ -778,6 +784,9 @@ importers:
       '@repo/ai-engine':
         specifier: workspace:*
         version: link:../../packages/ai-engine
+      '@repo/ai-retrieval':
+        specifier: workspace:*
+        version: link:../../packages/ai-retrieval
       '@repo/debug-logs':
         specifier: workspace:*
         version: link:../../packages/debug-logs
@@ -787,6 +796,9 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../../packages/entities
+      '@repo/entity-queries':
+        specifier: workspace:*
+        version: link:../../packages/entity-queries
       '@repo/firestore-converters':
         specifier: workspace:*
         version: link:../../packages/firestore-converters
@@ -820,6 +832,9 @@ importers:
       firebase-admin:
         specifier: 'catalog:'
         version: 13.10.0
+      google-auth-library:
+        specifier: 'catalog:'
+        version: 9.15.1
       nanoid:
         specifier: 'catalog:'
         version: 5.1.11
@@ -946,12 +961,46 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../entities
+      '@repo/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
       '@repo/ui-builder-core':
         specifier: workspace:*
         version: link:../ui-builder-core
+      google-auth-library:
+        specifier: 'catalog:'
+        version: 9.15.1
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/ai-retrieval:
+    dependencies:
+      google-auth-library:
+        specifier: 'catalog:'
+        version: 9.15.1
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -1790,6 +1839,9 @@ importers:
 
   packages/rbac:
     dependencies:
+      '@repo/ai-context':
+        specifier: workspace:*
+        version: link:../ai-context
       '@repo/ai-engine':
         specifier: workspace:*
         version: link:../ai-engine
