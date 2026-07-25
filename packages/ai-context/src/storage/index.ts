@@ -50,6 +50,7 @@ export {
   aiChatSessionStatusSchema,
   type AiChatCitation,
   type AiChatSessionCreateInput,
+  type AiChatSessionListByUserOptions,
   type AiChatSessionMessage,
   type AiChatSessionRecord,
   type AiChatSessionRepository,

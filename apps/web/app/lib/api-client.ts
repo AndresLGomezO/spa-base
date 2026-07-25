@@ -1520,6 +1520,15 @@ export interface AiJobUiBuilderInput {
   readonly listViewType?: string;
 }
 
+export interface AiChatCitation {
+  readonly kind: "entity" | "metric" | "query" | "memory";
+  readonly entityName?: string;
+  readonly recordId?: string;
+  readonly metricId?: string;
+  readonly queryId?: string;
+  readonly label: string;
+}
+
 export interface AiJobRecord {
   readonly id: string;
   readonly status: AiJobStatus;
@@ -1532,7 +1541,11 @@ export interface AiJobRecord {
     | { readonly question: string }
     | Record<string, unknown>;
   readonly output:
-    | { readonly answer: string }
+    | {
+        readonly answer: string;
+        readonly citations?: readonly AiChatCitation[];
+        readonly confidence?: number;
+      }
     | { readonly summary: string; readonly stepCount: number }
     | { readonly text: string }
     | { readonly vector: readonly number[]; readonly dimensions: number }
@@ -1558,12 +1571,74 @@ export interface AiJobChildSummary {
   readonly updatedAt: string;
 }
 
+export interface AiChatSessionMessage {
+  readonly role: "user" | "assistant";
+  readonly content: string;
+  readonly createdAt: string;
+  readonly jobId?: string;
+  readonly citations?: readonly AiChatCitation[];
+}
+
+export interface AiChatSessionSummary {
+  readonly id: string;
+  readonly status: "active" | "completed" | "abandoned";
+  readonly preview: string;
+  readonly messageCount: number;
+  readonly lastJobId: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface AiChatSessionDetail {
+  readonly id: string;
+  readonly status: "active" | "completed" | "abandoned";
+  readonly messages: readonly AiChatSessionMessage[];
+  readonly citations: readonly AiChatCitation[];
+  readonly lastJobId: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export async function submitAiChat(
   question: string,
-): Promise<{ readonly jobId: string }> {
-  return apiRequest<{ readonly jobId: string }>("/api/ai/chat", {
-    method: "POST",
-    body: { question },
+  sessionId?: string,
+): Promise<{ readonly jobId: string; readonly sessionId: string }> {
+  return apiRequest<{ readonly jobId: string; readonly sessionId: string }>(
+    "/api/ai/chat",
+    {
+      method: "POST",
+      body: sessionId ? { question, sessionId } : { question },
+    },
+  );
+}
+
+export async function listAiChatSessions(): Promise<{
+  readonly sessions: readonly AiChatSessionSummary[];
+}> {
+  return apiRequest<{ readonly sessions: readonly AiChatSessionSummary[] }>(
+    "/api/ai/chat/sessions",
+  );
+}
+
+export async function getAiChatSession(
+  sessionId: string,
+): Promise<AiChatSessionDetail> {
+  return apiRequest<AiChatSessionDetail>(
+    `/api/ai/chat/sessions/${encodeURIComponent(sessionId)}`,
+  );
+}
+
+export async function hideAiChatSession(sessionId: string): Promise<{
+  readonly id: string;
+  readonly status: string;
+  readonly updatedAt: string;
+}> {
+  return apiRequest<{
+    readonly id: string;
+    readonly status: string;
+    readonly updatedAt: string;
+  }>(`/api/ai/chat/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "DELETE",
   });
 }
 

@@ -14,8 +14,10 @@ Registered from `apps/api/src/server.ts`.
 
 | Method | Path | Notes |
 |---|---|---|
-| `POST` | `/api/ai/chat` | Spend assert → session → job → `PROCESS_AI_CHAT` |
-| `GET` | `/api/ai/chat/sessions/:sessionId` | Owner-scoped |
+| `POST` | `/api/ai/chat` | Spend assert → session → job → `PROCESS_AI_CHAT`; body `{ question, sessionId? }` → `{ jobId, sessionId }` |
+| `GET` | `/api/ai/chat/sessions` | Owner list (excludes `abandoned`); summaries with preview |
+| `GET` | `/api/ai/chat/sessions/:sessionId` | Owner-scoped thread + citations |
+| `DELETE` | `/api/ai/chat/sessions/:sessionId` | Soft-hide → `status: "abandoned"` |
 | `POST` | `/api/ai/ui-builder` | Spend assert → sync contexts → `PROCESS_AI_UI_BUILDER` |
 | `GET` | `/api/ai/jobs/:jobId` | Poll status / output / progress / draft |
 | `GET` | `/api/ai/jobs` | List (permission-filtered) |
@@ -80,7 +82,8 @@ Dockerfile.dev must `COPY packages/ai-retrieval/package.json` (and other workspa
 
 | Surface | Path | Gate |
 |---|---|---|
-| Chat | `/ai/chat` | `ai.chat.run` |
+| Chat (full page) | `/ai/chat` | `ai.chat.run` |
+| Chat FAB + popup | Global (private layout) | `ai.chat.run` — shared components under `apps/web/app/features/ai-chat/` |
 | AI Context layout | `/settings/ai-context` | section **or** template read |
 | Sections | `/settings/ai-context/sections` | `aiContextSection.*` |
 | Record summaries | `/settings/ai-context/record-summaries` | `aiRecordSummaryTemplate.*` |
@@ -91,9 +94,9 @@ Dockerfile.dev must `COPY packages/ai-retrieval/package.json` (and other workspa
 | Role limits | Role editor | role update |
 | AI jobs debugger | `/debugger/ai-jobs` | debugger perms |
 
-Client helpers: `apps/web/app/lib/api-client.ts` (`submitAiChat`, `getAiSpendStatus`, job getters, section/template/summary APIs).
+Client helpers: `apps/web/app/lib/api-client.ts` (`submitAiChat`, `listAiChatSessions`, `getAiChatSession`, `hideAiChatSession`, `getAiSpendStatus`, job getters, section/template/summary APIs).
 
-i18n: `common.json` keys under `userAiContext`, `recordAiSummaryTemplates`, nav `aiContextNav`, spend copy as applicable. Run `pnpm i18n:validate` when adding strings.
+i18n: `common.json` keys under `aiChat`, `userAiContext`, `recordAiSummaryTemplates`, nav `aiContextNav`, spend copy as applicable. Run `pnpm i18n:validate` when adding strings.
 
 ---
 

@@ -192,6 +192,7 @@ export {
   AI_CHAT_SESSIONS_COLLECTION,
   type AiChatCitation,
   type AiChatSessionCreateInput,
+  type AiChatSessionListByUserOptions,
   type AiChatSessionMessage,
   type AiChatSessionRecord,
   type AiChatSessionRepository,

@@ -52,8 +52,17 @@ export interface AiChatSessionCreateInput {
   readonly messages?: readonly AiChatSessionMessage[];
 }
 
+export interface AiChatSessionListByUserOptions {
+  readonly excludeStatuses?: readonly AiChatSessionStatus[];
+}
+
 export interface AiChatSessionRepository {
   get(tenantId: string, sessionId: string): Promise<AiChatSessionRecord | null>;
+  listByUser(
+    tenantId: string,
+    userId: string,
+    options?: AiChatSessionListByUserOptions,
+  ): Promise<readonly AiChatSessionRecord[]>;
   create(
     tenantId: string,
     input: AiChatSessionCreateInput,

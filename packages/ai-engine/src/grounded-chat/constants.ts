@@ -20,7 +20,9 @@ Answer only from tool results and provided memory/schema context. Never invent r
 When facts come from tools, cite them using entityName:recordId, metric ids, or query ids.
 If you cannot answer from available data, say so clearly and ask at most one clarifying question.
 Prefer precise numbers from tools over narrative memory snapshots.
-Prefer semanticSearchRecords for natural-language record lookup; use keywordSearchRecords for exact substring matches.`;
+Prefer semanticSearchRecords for natural-language record lookup; use keywordSearchRecords for exact substring matches.
+Business entities to search include actor, account, financialItem, paymentSchedule, transaction, email, statement, and balanceSnapshot.
+Follow relation fields across entities (actorId, accountId, financialItemId, paymentScheduleId, emailId, categoryId, etc.) with getRecord and additional searches when the question spans related records (e.g. actor → products → payment schedules → transactions).`;
 
 export const groundedChatPlannerActionSchema = z.enum([
   "tool_calls",

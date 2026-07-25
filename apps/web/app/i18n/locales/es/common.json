@@ -414,13 +414,27 @@
   },
   "aiChat": {
     "title": "Chat IA",
-    "description": "Haz una pregunta y recibe una respuesta generada por IA.",
+    "description": "Haz preguntas sobre tus datos con respuestas fundamentadas.",
     "questionPlaceholder": "Escribe tu pregunta…",
     "submit": "Preguntar",
     "submitting": "Pensando…",
     "submitError": "No se pudo enviar tu pregunta. Inténtalo de nuevo.",
     "forbidden": "No tienes permiso para usar el chat IA.",
-    "status": "Estado: {{status}}"
+    "openFab": "Abrir chat IA",
+    "closeFab": "Cerrar chat IA",
+    "sessionsTitle": "Chats",
+    "sessionsLoading": "Cargando chats…",
+    "sessionsEmpty": "Aún no hay chats. Empieza una conversación nueva.",
+    "sessionsLoadError": "No se pudieron cargar las sesiones de chat.",
+    "newChat": "Nuevo chat",
+    "untitledSession": "Nueva conversación",
+    "sessionMeta": "{{count}} mensajes · {{updatedAt}}",
+    "hideSession": "Ocultar chat",
+    "hideSessionConfirm": "¿Ocultar este chat de tu lista? Puedes empezar uno nuevo cuando quieras.",
+    "backToSessions": "Volver a chats",
+    "conversation": "Conversación",
+    "emptyThread": "Pregunta por pagos próximos, gastos, actores, transacciones y más.",
+    "citations": "Fuentes"
   },
   "aiSpend": {
     "notice": {

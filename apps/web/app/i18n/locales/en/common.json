@@ -414,13 +414,27 @@
   },
   "aiChat": {
     "title": "AI Chat",
-    "description": "Ask a question and receive an AI-generated answer.",
+    "description": "Ask questions about your data with grounded answers.",
     "questionPlaceholder": "Type your question…",
     "submit": "Ask",
     "submitting": "Thinking…",
     "submitError": "Could not submit your question. Try again.",
     "forbidden": "You do not have permission to use AI chat.",
-    "status": "Status: {{status}}"
+    "openFab": "Open AI chat",
+    "closeFab": "Close AI chat",
+    "sessionsTitle": "Chats",
+    "sessionsLoading": "Loading chats…",
+    "sessionsEmpty": "No chats yet. Start a new conversation.",
+    "sessionsLoadError": "Could not load chat sessions.",
+    "newChat": "New chat",
+    "untitledSession": "New conversation",
+    "sessionMeta": "{{count}} messages · {{updatedAt}}",
+    "hideSession": "Hide chat",
+    "hideSessionConfirm": "Hide this chat from your list? You can start a new one anytime.",
+    "backToSessions": "Back to chats",
+    "conversation": "Conversation",
+    "emptyThread": "Ask about due payments, expenses, actors, transactions, and more.",
+    "citations": "Sources"
   },
   "aiSpend": {
     "notice": {

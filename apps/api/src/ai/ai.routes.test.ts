@@ -152,6 +152,80 @@ describe("AI chat routes", () => {
     await server.close();
   });
 
+  it("lists chat sessions and soft-hides them", async () => {
+    const session = await aiChatSessionRepository.create("tenant_a", {
+      userId: authState.uid,
+      messages: [
+        {
+          role: "user",
+          content: "What is due this week?",
+          createdAt: "2026-07-01T00:00:00.000Z",
+        },
+      ],
+    });
+    const abandoned = await aiChatSessionRepository.create("tenant_a", {
+      userId: authState.uid,
+      status: "abandoned",
+    });
+
+    const server = await buildTestServer();
+    await server.ready();
+
+    const listResponse = await server.inject({
+      method: "GET",
+      url: "/api/ai/chat/sessions",
+      headers: {
+        authorization: "Bearer test-token",
+        "x-firebase-appcheck": "test-app-check",
+      },
+    });
+    expect(listResponse.statusCode).toBe(200);
+    const listBody = listResponse.json() as {
+      data: {
+        sessions: Array<{ id: string; preview: string; messageCount: number }>;
+      };
+    };
+    const listedIds = listBody.data.sessions.map((item) => item.id);
+    expect(listedIds).toContain(session.id);
+    expect(listedIds).not.toContain(abandoned.id);
+    const listed = listBody.data.sessions.find(
+      (item) => item.id === session.id,
+    );
+    expect(listed?.preview).toBe("What is due this week?");
+    expect(listed?.messageCount).toBe(1);
+
+    const hideResponse = await server.inject({
+      method: "DELETE",
+      url: `/api/ai/chat/sessions/${session.id}`,
+      headers: {
+        authorization: "Bearer test-token",
+        "x-firebase-appcheck": "test-app-check",
+      },
+    });
+    expect(hideResponse.statusCode).toBe(200);
+    const hideBody = hideResponse.json() as {
+      data: { id: string; status: string };
+    };
+    expect(hideBody.data.status).toBe("abandoned");
+
+    const listedAfterHide = await server.inject({
+      method: "GET",
+      url: "/api/ai/chat/sessions",
+      headers: {
+        authorization: "Bearer test-token",
+        "x-firebase-appcheck": "test-app-check",
+      },
+    });
+    const afterBody = listedAfterHide.json() as {
+      data: { sessions: Array<{ id: string }> };
+    };
+    expect(afterBody.data.sessions.map((item) => item.id)).not.toContain(
+      session.id,
+    );
+
+    await server.close();
+  });
+
   it("returns progress and draft for ui builder job polling", async () => {
     const server = await buildTestServer();
     await server.ready();

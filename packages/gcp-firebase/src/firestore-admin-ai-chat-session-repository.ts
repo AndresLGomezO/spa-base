@@ -2,6 +2,7 @@ import {
   AI_CHAT_SESSIONS_COLLECTION,
   aiChatSessionRecordSchema,
   type AiChatSessionCreateInput,
+  type AiChatSessionListByUserOptions,
   type AiChatSessionRecord,
 } from "@repo/ai-context/storage";
 
@@ -38,6 +39,25 @@ export function createFirestoreAdminAiChatSessionRepository(
         id: snapshot.id,
         ...snapshot.data(),
       });
+    },
+    async listByUser(
+      tenantId,
+      userId,
+      options?: AiChatSessionListByUserOptions,
+    ) {
+      const exclude = new Set(options?.excludeStatuses ?? []);
+      const snapshot = await collection(tenantId)
+        .where("userId", "==", userId)
+        .orderBy("updatedAt", "desc")
+        .get();
+      return snapshot.docs
+        .map((doc) =>
+          aiChatSessionRecordSchema.parse({
+            id: doc.id,
+            ...doc.data(),
+          }),
+        )
+        .filter((session) => !exclude.has(session.status));
     },
     async create(tenantId, input: AiChatSessionCreateInput) {
       const now = new Date().toISOString();
