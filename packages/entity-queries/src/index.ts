@@ -50,6 +50,12 @@ export {
   ENTITY_QUERY_PERMISSIONS,
 } from "./permissions.js";
 export { resolveTemporalPreset } from "./temporal.js";
+export {
+  resolveQueryExecutionNow,
+  resolveQueryExecutionNowFromDateFilter,
+  resolveQueryExecutionNowFromDateBucket,
+  inferDateBucketGranularity,
+} from "./resolve-query-execution-now.js";
 export { resolveEntityQueryDefinitionByReference } from "./resolve-entity-query-definition-by-reference.js";
 export { compareFilterValues } from "./compare-filter-values.js";
 export {

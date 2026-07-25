@@ -69,12 +69,13 @@ describe("parseSeedDatabaseArgs", () => {
   });
 
   it("parses --only components", () => {
+    // Use catalog keys that exist without local tenant entity folders (CI).
     const result = parseSeedDatabaseArgs([
       "--only",
-      "financialItem,emailMatchBindings",
+      "metrics,emailMatchBindings",
     ]);
     expect(result.components).toEqual(
-      new Set(["financialItem", "emailMatchBindings"]),
+      new Set(["metrics", "emailMatchBindings"]),
     );
     expect(result.ids).toBeNull();
     expect(result.drop).toBe(false);
@@ -82,10 +83,12 @@ describe("parseSeedDatabaseArgs", () => {
 
   it("parses --only= and --ids=", () => {
     const result = parseSeedDatabaseArgs([
-      "--only=hooks,financialItem",
+      "--only=hooks,emailMatchBindings",
       "--ids=7c2e9f11-2518-4b3a-9d4e-030cd8568c15",
     ]);
-    expect(result.components).toEqual(new Set(["hooks", "financialItem"]));
+    expect(result.components).toEqual(
+      new Set(["hooks", "emailMatchBindings"]),
+    );
     expect(result.ids).toEqual(
       new Set(["7c2e9f11-2518-4b3a-9d4e-030cd8568c15"]),
     );

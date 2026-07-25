@@ -2,6 +2,7 @@ import {
   evaluateEntityQueryFilterTree,
   expandRelationFiltersInTree,
   isEmptyFilterTree,
+  resolveQueryExecutionNowFromDateBucket,
   type EntityCatalogEntry,
 } from "@repo/entity-queries";
 import {
@@ -183,6 +184,14 @@ function createComputedMetricInputResolver(input: {
       // Expand relation filters once for the whole evaluation. Expanding inside
       // per-record matching re-lists related entities (e.g. financialItem) for
       // every paymentSchedule row and makes Due Today KPIs unusable.
+      // Anchor temporal presets (startOfWeek / today / …) to the `period`
+      // parameter when present so dashboard date filter drives week windows.
+      const queryOptions = {
+        parameters: definition.parameters ?? [],
+        parameterValues,
+        now: resolveQueryExecutionNowFromDateBucket(parameterValues?.period),
+      };
+
       let expandedFilterTree = null;
       if (!isEmptyFilterTree(definition.filter)) {
         const expanded = await expandRelationFiltersInTree({
@@ -190,10 +199,7 @@ function createComputedMetricInputResolver(input: {
           catalog,
           filter: definition.filter,
           listChildRecords,
-          options: {
-            parameters: definition.parameters ?? [],
-            parameterValues,
-          },
+          options: queryOptions,
         });
         if (expanded.emptyResult) {
           return aggregateRecords([], aggregationField, aggregationOperation);

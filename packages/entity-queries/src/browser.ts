@@ -41,6 +41,12 @@ export type {
   PatchEntityQueryDefinitionInput,
 } from "./types.js";
 export { resolveTemporalPreset } from "./temporal.js";
+export {
+  resolveQueryExecutionNow,
+  resolveQueryExecutionNowFromDateFilter,
+  resolveQueryExecutionNowFromDateBucket,
+  inferDateBucketGranularity,
+} from "./resolve-query-execution-now.js";
 export { compareFilterValues } from "./compare-filter-values.js";
 export { buildDefaultEntityQueryParameterValues } from "./query-parameter-resolution.js";
 export {
