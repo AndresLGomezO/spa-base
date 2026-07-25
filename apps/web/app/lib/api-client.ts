@@ -1472,6 +1472,9 @@ export interface UiBuilderJobDraft {
       }
     >
   >;
+  /** Chat streaming draft fields (job.draft is a free-form record). */
+  readonly partialAnswer?: string;
+  readonly streaming?: boolean;
 }
 
 export interface AiJobModelUsage {

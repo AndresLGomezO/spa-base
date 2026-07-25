@@ -5,6 +5,7 @@ import type {
   GroundedChatToolCall,
   GroundedChatToolName,
 } from "./constants.js";
+import { topSearchHitCitations } from "./constants.js";
 
 export interface GroundedChatEntitySummary {
   readonly name: string;
@@ -212,12 +213,7 @@ export async function executeGroundedChatTool(
           name: call.name,
           ok: true,
           result: hits,
-          citations: hits.map((h) => ({
-            kind: "entity" as const,
-            entityName: h.entityName,
-            recordId: h.recordId,
-            label: h.label,
-          })),
+          citations: topSearchHitCitations(hits),
         };
       }
       case "semanticSearchRecords": {
@@ -243,12 +239,7 @@ export async function executeGroundedChatTool(
             name: call.name,
             ok: true,
             result: fallback,
-            citations: fallback.map((h) => ({
-              kind: "entity" as const,
-              entityName: h.entityName,
-              recordId: h.recordId,
-              label: h.label,
-            })),
+            citations: topSearchHitCitations(fallback),
           };
         }
         const hits = await ports.semanticSearchRecords(tenantId, userId, {
@@ -260,12 +251,7 @@ export async function executeGroundedChatTool(
           name: call.name,
           ok: true,
           result: hits,
-          citations: hits.map((h) => ({
-            kind: "entity" as const,
-            entityName: h.entityName,
-            recordId: h.recordId,
-            label: h.label,
-          })),
+          citations: topSearchHitCitations(hits),
           ...(hits[0]?.score != null
             ? { retrievalTop1Score: hits[0].score }
             : {}),

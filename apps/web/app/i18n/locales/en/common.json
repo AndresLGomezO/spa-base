@@ -422,6 +422,8 @@
     "forbidden": "You do not have permission to use AI chat.",
     "openFab": "Open AI chat",
     "closeFab": "Close AI chat",
+    "minimize": "Minimize chat",
+    "expandToPage": "Open full AI chat",
     "sessionsTitle": "Chats",
     "sessionsLoading": "Loading chats…",
     "sessionsEmpty": "No chats yet. Start a new conversation.",
@@ -434,7 +436,13 @@
     "backToSessions": "Back to chats",
     "conversation": "Conversation",
     "emptyThread": "Ask about due payments, expenses, actors, transactions, and more.",
-    "citations": "Sources"
+    "sourcesCount": "Sources ({{count}})",
+    "sourcesLoading": "Loading source…",
+    "hitPreviewLoading": "Loading preview…",
+    "hitPreviewUnavailable": "Could not load this record.",
+    "hitPreviewOpen": "Open",
+    "dayToday": "Today",
+    "dayYesterday": "Yesterday"
   },
   "aiSpend": {
     "notice": {

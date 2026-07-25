@@ -3,6 +3,7 @@ import { VertexAI } from "@google-cloud/vertexai";
 import {
   buildMockChatAnswer,
   buildMockGroundedChatAnswer,
+  buildMockGroundedChatSynthesisAnswer,
   buildMockRecordNarrativeAnswer,
   buildMockUiBuilderStepAnswer,
   looksLikeRecordNarrativePrompt,
@@ -208,6 +209,100 @@ export const DATA_HOOK_AI_NARRATIVE_MAX_OUTPUT_TOKENS = 32_768;
 export const DATA_HOOK_AI_NARRATIVE_THINKING_BUDGET = 128;
 export const DATA_HOOK_AI_BATCH_MAX_OUTPUT_TOKENS = 16_384;
 
+function resolveMockModelAnswer(
+  input: GenerateModelAnswerInput,
+  options?: GenerateModelAnswerOptions,
+): string {
+  if (options?.stepId === "groundedChat.synthesis") {
+    return buildMockGroundedChatSynthesisAnswer(input.userText);
+  }
+  if (options?.stepId?.startsWith("groundedChat.")) {
+    return buildMockGroundedChatAnswer(input.userText);
+  }
+  if (options?.stepId) {
+    return buildMockUiBuilderStepAnswer(options.stepId, input.contextBlocks);
+  }
+  if (input.contextBlocks && input.contextBlocks.length > 0) {
+    return buildMockUiBuilderStepAnswer(
+      "list.selectViewType",
+      input.contextBlocks,
+    );
+  }
+  if (
+    options?.responseMimeType === "application/json" ||
+    looksLikeRecordNarrativePrompt(input.userText)
+  ) {
+    // Prefer chart-capable narrative JSON for recordNarrativeRefresh / callAi narratives.
+    return looksLikeRecordNarrativePrompt(input.userText)
+      ? buildMockRecordNarrativeAnswer(input.userText)
+      : buildMockChatAnswer(input.userText);
+  }
+  return buildMockChatAnswer(input.userText);
+}
+
+function extractPartialResponseText(response: {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+}): string {
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  return parts.map((part) => part.text ?? "").join("");
+}
+
+function buildGenerationConfig(
+  options?: GenerateModelAnswerOptions,
+): Record<string, unknown> {
+  const generationConfig: Record<string, unknown> = {
+    temperature: options?.stepId ? getStepTemperature(options.stepId) : 0.2,
+    maxOutputTokens: options?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+  };
+  // JSON mime + Google Search tools are often incompatible on Gemini.
+  if (options?.responseMimeType && !options.googleSearch) {
+    generationConfig.responseMimeType = options.responseMimeType;
+  }
+  if (typeof options?.thinkingBudget === "number") {
+    // Not yet on GenerationConfig typings in @google-cloud/vertexai@1.12;
+    // the Vertex REST API accepts thinkingConfig for Gemini 2.5+.
+    generationConfig.thinkingConfig = {
+      thinkingBudget: options.thinkingBudget,
+    };
+  }
+  return generationConfig;
+}
+
+function buildUserParts(
+  userText: string,
+  inlineImage?: GenerateModelAnswerInput["inlineImage"],
+): Array<
+  { text: string } | { inlineData: { mimeType: string; data: string } }
+> {
+  const userParts: Array<
+    { text: string } | { inlineData: { mimeType: string; data: string } }
+  > = [{ text: userText }];
+  if (inlineImage) {
+    userParts.push({
+      inlineData: {
+        mimeType: inlineImage.mimeType,
+        data: inlineImage.base64Data,
+      },
+    });
+  }
+  return userParts;
+}
+
+async function emitMockAnswerChunks(
+  text: string,
+  onChunk?: (textSoFar: string) => void | Promise<void>,
+): Promise<void> {
+  if (!onChunk) {
+    return;
+  }
+  const chunkSize = Math.max(12, Math.ceil(text.length / 4));
+  for (let index = chunkSize; index < text.length; index += chunkSize) {
+    await onChunk(text.slice(0, index));
+    await sleep(15);
+  }
+  await onChunk(text);
+}
+
 export async function generateModelAnswer(
   config: VertexAiConfig,
   input: GenerateModelAnswerInput,
@@ -216,27 +311,94 @@ export async function generateModelAnswer(
   const resolvedModelId = options?.modelId ?? config.modelId;
 
   if (config.mockEnabled) {
-    let text: string;
-    if (options?.stepId?.startsWith("groundedChat.")) {
-      text = buildMockGroundedChatAnswer(input.userText);
-    } else if (options?.stepId) {
-      text = buildMockUiBuilderStepAnswer(options.stepId, input.contextBlocks);
-    } else if (input.contextBlocks && input.contextBlocks.length > 0) {
-      text = buildMockUiBuilderStepAnswer(
-        "list.selectViewType",
-        input.contextBlocks,
-      );
-    } else if (
-      options?.responseMimeType === "application/json" ||
-      looksLikeRecordNarrativePrompt(input.userText)
-    ) {
-      // Prefer chart-capable narrative JSON for recordNarrativeRefresh / callAi narratives.
-      text = looksLikeRecordNarrativePrompt(input.userText)
-        ? buildMockRecordNarrativeAnswer(input.userText)
-        : buildMockChatAnswer(input.userText);
-    } else {
-      text = buildMockChatAnswer(input.userText);
+    return {
+      text: resolveMockModelAnswer(input, options),
+      usage: mockUsage("mock"),
+    };
+  }
+
+  const contextText =
+    input.contextBlocks && input.contextBlocks.length > 0
+      ? input.contextBlocks
+          .map((block) => `<!-- ${block.id} -->\n${block.content}`)
+          .join("\n\n")
+      : "";
+
+  const userText = contextText
+    ? `${contextText}\n\n---\n\n${input.userText}`
+    : input.userText;
+
+  const model = getVertexClient(config).getGenerativeModel(
+    options?.cachedContent
+      ? ({
+          model: resolvedModelId,
+          cachedContent: options.cachedContent,
+        } as never)
+      : {
+          model: resolvedModelId,
+          systemInstruction: {
+            role: "system",
+            parts: [{ text: input.systemInstruction }],
+          },
+        },
+  );
+
+  for (let attempt = 0; attempt <= VERTEX_MAX_RETRIES; attempt += 1) {
+    try {
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: buildUserParts(userText, input.inlineImage),
+          },
+        ],
+        generationConfig: buildGenerationConfig(options),
+        ...(options?.googleSearch
+          ? // Gemini 2.x+: use googleSearch (googleSearchRetrieval is legacy 1.5-only).
+            { tools: [{ googleSearch: {} } as never] }
+          : {}),
+      });
+
+      const response = result.response;
+      const finishReason = response.candidates?.[0]?.finishReason;
+      const text = extractResponseText(response);
+      const usage = parseVertexUsageMetadata(resolvedModelId, response);
+      if (finishReason === "MAX_TOKENS") {
+        if (options?.stepId) {
+          return { text, usage };
+        }
+        throw new Error(MAX_OUTPUT_TOKENS_ERROR);
+      }
+      return { text, usage };
+    } catch (error) {
+      if (!isVertexRateLimitError(error) || attempt === VERTEX_MAX_RETRIES) {
+        throw new Error(normalizeVertexError(error));
+      }
+      await sleep(parseVertexRetryDelayMs(error, attempt));
     }
+  }
+
+  throw new Error(normalizeVertexError("Vertex AI request failed."));
+}
+
+export interface GenerateModelAnswerStreamOptions extends GenerateModelAnswerOptions {
+  readonly onChunk?: (textSoFar: string) => void | Promise<void>;
+}
+
+/**
+ * Stream a text completion, calling `onChunk` with the accumulated answer so far.
+ * Spend/usage is taken from the final stream response (same metering as non-stream).
+ */
+export async function generateModelAnswerStream(
+  config: VertexAiConfig,
+  input: GenerateModelAnswerInput,
+  options?: GenerateModelAnswerStreamOptions,
+): Promise<GenerateModelAnswerResult> {
+  const resolvedModelId = options?.modelId ?? config.modelId;
+
+  if (config.mockEnabled) {
+    const text = resolveMockModelAnswer(input, options);
+    await emitMockAnswerChunks(text, options?.onChunk);
     return { text, usage: mockUsage("mock") };
   }
 
@@ -268,46 +430,38 @@ export async function generateModelAnswer(
 
   for (let attempt = 0; attempt <= VERTEX_MAX_RETRIES; attempt += 1) {
     try {
-      const userParts: Array<
-        { text: string } | { inlineData: { mimeType: string; data: string } }
-      > = [{ text: userText }];
-      if (input.inlineImage) {
-        userParts.push({
-          inlineData: {
-            mimeType: input.inlineImage.mimeType,
-            data: input.inlineImage.base64Data,
+      const streamingResult = await model.generateContentStream({
+        contents: [
+          {
+            role: "user",
+            parts: buildUserParts(userText, input.inlineImage),
           },
-        });
-      }
-
-      const generationConfig: Record<string, unknown> = {
-        temperature: options?.stepId ? getStepTemperature(options.stepId) : 0.2,
-        maxOutputTokens: options?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-      };
-      // JSON mime + Google Search tools are often incompatible on Gemini.
-      if (options?.responseMimeType && !options.googleSearch) {
-        generationConfig.responseMimeType = options.responseMimeType;
-      }
-      if (typeof options?.thinkingBudget === "number") {
-        // Not yet on GenerationConfig typings in @google-cloud/vertexai@1.12;
-        // the Vertex REST API accepts thinkingConfig for Gemini 2.5+.
-        generationConfig.thinkingConfig = {
-          thinkingBudget: options.thinkingBudget,
-        };
-      }
-
-      const result = await model.generateContent({
-        contents: [{ role: "user", parts: userParts }],
-        generationConfig,
+        ],
+        generationConfig: buildGenerationConfig(options),
         ...(options?.googleSearch
-          ? // Gemini 2.x+: use googleSearch (googleSearchRetrieval is legacy 1.5-only).
-            { tools: [{ googleSearch: {} } as never] }
+          ? { tools: [{ googleSearch: {} } as never] }
           : {}),
       });
 
-      const response = result.response;
+      let textSoFar = "";
+      for await (const chunk of streamingResult.stream) {
+        const delta = extractPartialResponseText(chunk);
+        if (!delta) continue;
+        textSoFar += delta;
+        if (options?.onChunk) {
+          await options.onChunk(textSoFar);
+        }
+      }
+
+      const response = await streamingResult.response;
       const finishReason = response.candidates?.[0]?.finishReason;
-      const text = extractResponseText(response);
+      const text =
+        textSoFar.trim().length > 0
+          ? textSoFar.trim()
+          : extractResponseText(response);
+      if (options?.onChunk && text !== textSoFar) {
+        await options.onChunk(text);
+      }
       const usage = parseVertexUsageMetadata(resolvedModelId, response);
       if (finishReason === "MAX_TOKENS") {
         if (options?.stepId) {

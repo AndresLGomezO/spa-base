@@ -14,7 +14,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./storage": "./src/storage/index.ts",
-    "./permissions": "./src/permissions.ts"
+    "./permissions": "./src/permissions.ts",
+    "./grounded-chat-record-ref": "./src/grounded-chat-record-ref.ts"
   },
   "dependencies": {
     "@repo/entities": "workspace:*",

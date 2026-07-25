@@ -13,6 +13,7 @@ import type {
   GenerateModelAnswerInput,
   GenerateModelAnswerOptions,
   GenerateModelAnswerResult,
+  GenerateModelAnswerStreamOptions,
   VertexAiConfig,
 } from "../clients/internal/vertex-ai.client.js";
 
@@ -74,6 +75,11 @@ export interface AiControllerClients {
     config: VertexAiConfig,
     input: GenerateModelAnswerInput,
     options?: GenerateModelAnswerOptions,
+  ): Promise<GenerateModelAnswerResult>;
+  generateModelAnswerStream?(
+    config: VertexAiConfig,
+    input: GenerateModelAnswerInput,
+    options?: GenerateModelAnswerStreamOptions,
   ): Promise<GenerateModelAnswerResult>;
   generateChatAnswer(
     config: VertexAiConfig,
@@ -140,6 +146,8 @@ export interface AiRequest {
   readonly parentJobId?: string;
   readonly contextRef?: AiJobContextRef;
   readonly params: AiOperationParams;
+  /** When set for generateText, uses the streaming Vertex path when available. */
+  readonly onTextChunk?: (textSoFar: string) => void | Promise<void>;
 }
 
 export interface AiResponse<TOutput extends AiJobOutput = AiJobOutput> {

@@ -1,7 +1,7 @@
-import { Bot, X } from "lucide-react";
+import { Bot, Maximize2, Minus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { Text } from "@repo/ui";
+import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { AiChatSessionList } from "./AiChatSessionList";
@@ -15,12 +15,16 @@ export function AiChatPanel({
   layout = "popup",
   animateEnter = false,
   className,
+  onMinimize,
+  onExpand,
 }: {
   readonly chat: UseAiChatSessionResult;
   readonly canRun: boolean;
   readonly layout?: "popup" | "page";
   readonly animateEnter?: boolean;
   readonly className?: string;
+  readonly onMinimize?: () => void;
+  readonly onExpand?: () => void;
 }) {
   const { t } = useTranslation("common");
   const isPage = layout === "page";
@@ -32,39 +36,64 @@ export function AiChatPanel({
       className={cn(
         "ai-chat-panel-shell flex min-h-0 flex-col",
         isPage
-          ? "h-full min-h-[28rem]"
+          ? "h-full min-h-0 flex-1 overflow-hidden"
           : "h-[min(36rem,70vh)] w-[min(26rem,calc(100vw-2rem))]",
         className,
       )}
       data-animate={animateEnter ? "enter" : undefined}
     >
-      <header className="ai-chat-panel-header flex items-center justify-between gap-2 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="bg-primary/15 text-primary inline-flex size-8 items-center justify-center rounded-full">
-            <Bot className="size-4" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <div className="ai-chat-panel-title truncate text-sm font-semibold">
-              {t("aiChat.title")}
+      {!isPage ? (
+        <header className="ai-chat-panel-header flex items-center justify-between gap-2 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="bg-primary/15 text-primary inline-flex size-8 items-center justify-center rounded-full">
+              <Bot className="size-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="ai-chat-panel-title truncate text-sm font-semibold">
+                {t("aiChat.title")}
+              </div>
+              <Text className="text-muted-foreground truncate text-xs">
+                {t("aiChat.description")}
+              </Text>
             </div>
-            <Text className="text-muted-foreground truncate text-xs">
-              {t("aiChat.description")}
-            </Text>
           </div>
-        </div>
-      </header>
+          <div className="flex shrink-0 items-center gap-0.5">
+            {onExpand ? (
+              <IconButton
+                size="sm"
+                label={t("aiChat.expandToPage")}
+                onClick={onExpand}
+              >
+                <Maximize2 className="size-4" aria-hidden />
+              </IconButton>
+            ) : null}
+            {onMinimize ? (
+              <IconButton
+                size="sm"
+                label={t("aiChat.minimize")}
+                onClick={onMinimize}
+              >
+                <Minus className="size-4" aria-hidden />
+              </IconButton>
+            ) : null}
+          </div>
+        </header>
+      ) : null}
 
       <div
         className={cn(
           "min-h-0 flex-1 p-3",
-          isPage && "grid gap-3 md:grid-cols-[16rem_minmax(0,1fr)]",
+          isPage &&
+            "grid gap-3 overflow-hidden md:grid-cols-[16rem_minmax(0,1fr)]",
         )}
       >
         {showSessionList ? (
           <div
             className={cn(
-              "min-h-0",
-              isPage ? "border-border rounded-xl border p-3" : "h-full",
+              "min-h-0 overflow-hidden",
+              isPage
+                ? "border-border flex flex-col rounded-xl border bg-background/80 p-3"
+                : "h-full",
               isPage && !showThread ? "md:col-span-2" : null,
             )}
           >
@@ -85,13 +114,18 @@ export function AiChatPanel({
         {showThread ? (
           <div
             className={cn(
-              "min-h-0",
-              isPage ? "border-border rounded-xl border p-3" : "h-full",
+              "min-h-0 overflow-hidden",
+              isPage
+                ? "border-border flex flex-col rounded-xl border bg-background/80 p-3"
+                : "h-full",
             )}
           >
             <AiChatThread
               messages={chat.messages}
               isPending={chat.isPending}
+              isStreaming={chat.isStreaming}
+              partialAnswer={chat.partialAnswer}
+              progressLabel={chat.progressLabel}
               jobStatus={chat.job?.status}
               jobError={chat.jobError}
               submitError={chat.submitError}
@@ -99,6 +133,7 @@ export function AiChatPanel({
               showBack={!isPage}
               onBack={chat.showSessions}
               onAsk={chat.ask}
+              density={isPage ? "comfortable" : "compact"}
             />
           </div>
         ) : null}
