@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
+import { useMdUpMediaQuery } from "../../hooks/use-md-up-media-query";
 import { AiChatSessionList } from "./AiChatSessionList";
 import { AiChatThread } from "./AiChatThread";
 import type { UseAiChatSessionResult } from "./use-ai-chat-session";
@@ -28,8 +29,16 @@ export function AiChatPanel({
 }) {
   const { t } = useTranslation("common");
   const isPage = layout === "page";
-  const showSessionList = isPage || chat.view === "sessions";
-  const showThread = isPage || chat.view === "thread";
+  const isWideViewport = useMdUpMediaQuery();
+  /** Below md, page matches popup: history OR thread (not stacked). */
+  const isNarrowPage = isPage && !isWideViewport;
+  const showSessionList = isNarrowPage
+    ? chat.view === "sessions"
+    : isPage || chat.view === "sessions";
+  const showThread = isNarrowPage
+    ? chat.view === "thread"
+    : isPage || chat.view === "thread";
+  const showBack = !isPage || isNarrowPage;
 
   return (
     <div
@@ -37,10 +46,13 @@ export function AiChatPanel({
         "ai-chat-panel-shell flex min-h-0 flex-col",
         isPage
           ? "h-full min-h-0 flex-1 overflow-hidden"
-          : "h-[min(36rem,70vh)] w-[min(26rem,calc(100vw-2rem))]",
+          : "ai-chat-panel-popup",
         className,
       )}
+      data-testid="ai-chat-panel-shell"
       data-animate={animateEnter ? "enter" : undefined}
+      data-layout={layout}
+      data-narrow-page={isNarrowPage ? "true" : "false"}
     >
       {!isPage ? (
         <header className="ai-chat-panel-header flex items-center justify-between gap-2 px-4 py-3">
@@ -84,7 +96,9 @@ export function AiChatPanel({
         className={cn(
           "min-h-0 flex-1 p-3",
           isPage &&
-            "grid gap-3 overflow-hidden md:grid-cols-[16rem_minmax(0,1fr)]",
+            !isNarrowPage &&
+            "grid gap-3 overflow-hidden md:grid-cols-[14rem_minmax(0,1fr)] lg:grid-cols-[16rem_minmax(0,1fr)]",
+          (isNarrowPage || !isPage) && "flex flex-col overflow-hidden",
         )}
       >
         {showSessionList ? (
@@ -96,6 +110,7 @@ export function AiChatPanel({
                 : "h-full",
               isPage && !showThread ? "md:col-span-2" : null,
             )}
+            data-testid="ai-chat-session-pane"
           >
             <AiChatSessionList
               sessions={chat.sessions}
@@ -106,7 +121,7 @@ export function AiChatPanel({
               onSelect={chat.openSession}
               onNewChat={chat.startNewChat}
               onHide={chat.hideSession}
-              compact={!isPage}
+              compact={!isPage || isNarrowPage}
             />
           </div>
         ) : null}
@@ -116,9 +131,10 @@ export function AiChatPanel({
             className={cn(
               "min-h-0 overflow-hidden",
               isPage
-                ? "border-border flex flex-col rounded-xl border bg-background/80 p-3"
+                ? "border-border flex min-h-0 flex-1 flex-col rounded-xl border bg-background/80 p-3"
                 : "h-full",
             )}
+            data-testid="ai-chat-thread-pane"
           >
             <AiChatThread
               messages={chat.messages}
@@ -130,10 +146,10 @@ export function AiChatPanel({
               jobError={chat.jobError}
               submitError={chat.submitError}
               canRun={canRun}
-              showBack={!isPage}
+              showBack={showBack}
               onBack={chat.showSessions}
               onAsk={chat.ask}
-              density={isPage ? "comfortable" : "compact"}
+              density={isPage && !isNarrowPage ? "comfortable" : "compact"}
             />
           </div>
         ) : null}

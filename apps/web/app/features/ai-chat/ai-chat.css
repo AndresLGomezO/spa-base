@@ -114,6 +114,12 @@
   transform: none;
 }
 
+.ai-chat-panel-popup {
+  width: min(26rem, calc(100vw - 2rem));
+  height: min(36rem, calc(70vh - var(--app-shell-footer-offset, 0px)));
+  max-height: calc(100dvh - 5.5rem - var(--app-shell-footer-offset, 0px));
+}
+
 .ai-chat-panel-shell {
   overflow: hidden;
   border-radius: 1rem;
