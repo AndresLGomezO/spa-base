@@ -28,16 +28,21 @@ describe("text-embedding", () => {
   });
 
   it("generateTextEmbedding uses mock when mockEnabled", async () => {
-    const values = await generateTextEmbedding(
+    const result = await generateTextEmbedding(
       {
         projectId: "demo",
         region: "us-central1",
-        modelId: "gemini-2.5-flash",
+        modelId: "gemini-3.6-flash",
         mockEnabled: true,
       },
       "UBER TRIP",
     );
-    expect(values).toEqual(buildMockTextEmbedding("UBER TRIP"));
+    expect(result.vector).toEqual(buildMockTextEmbedding("UBER TRIP"));
+    expect(result.usage).toMatchObject({
+      modelId: "mock",
+      outputDimensions: result.vector.length,
+      inputCharacters: "UBER TRIP".length,
+    });
   });
 
   it("pickBestEmbeddingMatch returns null below threshold", () => {

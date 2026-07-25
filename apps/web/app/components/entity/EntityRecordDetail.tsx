@@ -3,9 +3,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import {
   Alert,
+  AiSparkIcon,
   Button,
   CardFieldImage,
   Heading,
+  Markdown,
   SchemaCell,
   Text,
   useThirdRail,
@@ -25,6 +27,8 @@ import {
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { RecordHookExecutionsThirdRailPanel } from "../../features/debugger/RecordHookExecutionsThirdRailPanel";
+import { summaryChartBlockRenderers } from "../../features/entity-summary/summary-chart-renderers";
+import { SummaryCopyMarkdownButton } from "../../features/entity-summary/SummaryCopyMarkdownButton";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { EntityLayoutDetailView } from "./EntityLayoutDetailView";
 import { getEntity, getEntityRelationTargets } from "../../lib/api-client";
@@ -173,6 +177,12 @@ export function EntityRecordDetail({
   >;
 
   const businessFields = Object.keys(definition.fields);
+  const summaryField = recordDetailLayout?.summaryField?.trim();
+  const summaryText =
+    summaryField && typeof record[summaryField] === "string"
+      ? String(record[summaryField]).trim()
+      : "";
+  const recordLabel = formatRecordDisplayLabel(record, definition.displayField);
 
   return (
     <div className="space-y-6">
@@ -181,10 +191,34 @@ export function EntityRecordDetail({
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <Heading level={1}>
-          {formatRecordDisplayLabel(record, definition.displayField)}
-        </Heading>
+        <Heading level={1}>{recordLabel}</Heading>
         <div className="flex items-center gap-2">
+          {summaryText.length > 0 ? (
+            <Button
+              type="button"
+              variant="ai"
+              size="sm"
+              onClick={() =>
+                openThirdRail({
+                  title: t("entity.summary.title"),
+                  subtitle: recordLabel,
+                  headerActions: (
+                    <SummaryCopyMarkdownButton getText={() => summaryText} />
+                  ),
+                  body: (
+                    <Markdown blockRenderers={summaryChartBlockRenderers}>
+                      {summaryText}
+                    </Markdown>
+                  ),
+                  widths: { base: "full", md: "1/2", lg: "1/3" },
+                  tone: "ai",
+                })
+              }
+            >
+              <AiSparkIcon size={16} animated className="shrink-0" />
+              {t("entity.summary.button")}
+            </Button>
+          ) : null}
           {isSuperAdmin ? (
             <Button
               type="button"

@@ -99,6 +99,7 @@ export const EXPRESSION_FUNCTION_SPECS: Record<
     args: [{ kind: "expression" }],
     variadic: true,
   },
+  sha256: fixedArgs(1),
 };
 
 export function getExpressionFunctionSpec(

@@ -1,12 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
+import type { AiJobModelUsage } from "../../schemas/ai-job.schema.js";
 import {
   isVertexRateLimitError,
   normalizeVertexError,
   parseVertexRetryDelayMs,
   sleep,
   VERTEX_MAX_RETRIES,
-} from "./vertex-retry.js";
+} from "../../vertex-retry.js";
 
 export interface VertexImagenConfig {
   readonly projectId: string;
@@ -18,6 +19,7 @@ export interface VertexImagenConfig {
 export interface GenerateImagenImageResult {
   readonly buffer: Buffer;
   readonly mimeType: string;
+  readonly usage: AiJobModelUsage;
 }
 
 /** Minimal valid 1×1 PNG for mock mode. */
@@ -47,10 +49,18 @@ export async function generateImagenImage(
     throw new Error("Imagen prompt is empty.");
   }
 
+  const aspectRatio = options?.aspectRatio ?? "16:9";
+  const usage: AiJobModelUsage = {
+    modelId: config.mockEnabled ? "mock" : config.imagenModelId,
+    imageCount: 1,
+    aspectRatio,
+  };
+
   if (config.mockEnabled) {
     return {
       buffer: Buffer.from(MOCK_PNG_BASE64, "base64"),
       mimeType: "image/png",
+      usage,
     };
   }
 
@@ -63,7 +73,7 @@ export async function generateImagenImage(
         prompt: trimmedPrompt,
         config: {
           numberOfImages: 1,
-          aspectRatio: options?.aspectRatio ?? "16:9",
+          aspectRatio,
         },
       });
 
@@ -76,6 +86,11 @@ export async function generateImagenImage(
       return {
         buffer: Buffer.from(imageBytes, "base64"),
         mimeType: "image/png",
+        usage: {
+          modelId: config.imagenModelId,
+          imageCount: 1,
+          aspectRatio,
+        },
       };
     } catch (error) {
       if (!isVertexRateLimitError(error) || attempt === VERTEX_MAX_RETRIES) {

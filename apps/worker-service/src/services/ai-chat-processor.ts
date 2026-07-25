@@ -1,3 +1,4 @@
+import type { AiController } from "@repo/ai-engine/controller";
 import type { AiJobRepository } from "@repo/worker-firestore";
 import { AI_FEATURE_RUN_PERMISSION } from "@repo/ai-engine/permissions";
 import { processAiChatTaskPayloadSchema } from "@repo/ai-engine/schemas";
@@ -7,6 +8,7 @@ import { processAiChat, type VertexAiConfig } from "../process-ai-chat.js";
 export interface AiChatProcessorDeps {
   readonly aiJobRepository: AiJobRepository;
   readonly vertexAiConfig: VertexAiConfig;
+  readonly aiController: AiController;
 }
 
 export async function processAiChatJob(
@@ -34,7 +36,20 @@ export async function processAiChatJob(
   await deps.aiJobRepository.update(tenantId, jobId, { status: "running" });
 
   try {
-    const output = await processAiChat(deps.vertexAiConfig, job.input);
+    if (!("question" in job.input) || typeof job.input.question !== "string") {
+      throw new PermanentTaskError("INVALID_INPUT");
+    }
+    const question = job.input.question;
+    const output = await processAiChat(
+      deps.vertexAiConfig,
+      { question },
+      {
+        aiController: deps.aiController,
+        tenantId,
+        parentJobId: jobId,
+        requestedBy: job.requestedBy,
+      },
+    );
     await deps.aiJobRepository.update(tenantId, jobId, {
       status: "completed",
       output,

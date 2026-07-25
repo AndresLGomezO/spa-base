@@ -255,7 +255,8 @@ export async function registerDebugRoutes(
       const canReadAi =
         hasPermission("debug.read", permissions, { isSuperAdmin }) ||
         hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin }) ||
-        hasPermission("ai.chat.read", permissions, { isSuperAdmin });
+        hasPermission("ai.chat.read", permissions, { isSuperAdmin }) ||
+        hasPermission("ai.dataHook.read", permissions, { isSuperAdmin });
 
       const canReadHooks =
         hasPermission("debug.read", permissions, { isSuperAdmin }) ||
@@ -446,7 +447,8 @@ export async function registerDebugRoutes(
       const canReadAi =
         hasPermission("debug.read", permissions, { isSuperAdmin }) ||
         hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin }) ||
-        hasPermission("ai.chat.read", permissions, { isSuperAdmin });
+        hasPermission("ai.chat.read", permissions, { isSuperAdmin }) ||
+        hasPermission("ai.dataHook.read", permissions, { isSuperAdmin });
       const canReadHooks =
         hasPermission("debug.read", permissions, { isSuperAdmin }) ||
         hasPermission("hook.read", permissions, { isSuperAdmin });
@@ -574,7 +576,12 @@ export async function registerDebugRoutes(
         (job.feature === "chat" &&
           hasPermission("ai.chat.read", permissions, { isSuperAdmin })) ||
         (job.feature === "uiBuilder" &&
-          hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin }));
+          hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin })) ||
+        ((job.feature === "dataHookCallAi" ||
+          job.feature === "dataHookBatchCallAi" ||
+          job.feature === "dataHookEmbedding" ||
+          job.feature === "gmailExtract") &&
+          hasPermission("ai.dataHook.read", permissions, { isSuperAdmin }));
 
       if (!canReadJob) {
         return replyWithError(
@@ -587,13 +594,17 @@ export async function registerDebugRoutes(
 
       const canReadStepTrace =
         hasPermission("debug.read", permissions, { isSuperAdmin }) ||
-        hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin });
+        hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin }) ||
+        hasPermission("ai.dataHook.read", permissions, { isSuperAdmin });
 
       return reply.send(
         successEnvelope({
           id: job.id,
           status: job.status,
           feature: job.feature,
+          ...(job.operation ? { operation: job.operation } : {}),
+          ...(job.parentJobId ? { parentJobId: job.parentJobId } : {}),
+          ...(job.modelUsage ? { modelUsage: job.modelUsage } : {}),
           input: job.input,
           output: job.output,
           error: job.error,
@@ -610,6 +621,58 @@ export async function registerDebugRoutes(
             : {}),
           createdAt: job.createdAt,
           updatedAt: job.updatedAt,
+        }),
+      );
+    },
+  );
+
+  app.get(
+    "/api/debug/ai-jobs/:jobId/children",
+    {
+      preHandler: [options.authenticate, requireDebugRead],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const jobId = (request.params as { jobId?: string }).jobId?.trim();
+      if (!jobId) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Job id is required.",
+        );
+      }
+
+      const parent = await options.aiJobRepository.getById(tenantId, jobId);
+      if (!parent) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "AI job not found.",
+        );
+      }
+
+      const children = await options.aiJobRepository.listRecent(tenantId, {
+        parentJobId: jobId,
+        limit: 100,
+      });
+
+      return reply.send(
+        successEnvelope({
+          parentJobId: jobId,
+          children: children.map((child) => ({
+            id: child.id,
+            status: child.status,
+            feature: child.feature,
+            ...(child.operation ? { operation: child.operation } : {}),
+            ...(child.modelUsage ? { modelUsage: child.modelUsage } : {}),
+            error: child.error,
+            createdAt: child.createdAt,
+            updatedAt: child.updatedAt,
+          })),
         }),
       );
     },

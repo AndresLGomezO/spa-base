@@ -10,6 +10,13 @@ export const PLATFORM_RUNTIME_SETTINGS_DOC_ID = "runtimeSettings";
 
 export const platformRuntimeSettingsSchema = z
   .object({
+    /** Global AI kill-switch. null = use env AI_ENABLED (default true). */
+    aiEnabled: z.boolean().nullable().default(null),
+    /**
+     * Persist full prompt/output stepTrace on ai_jobs.
+     * Prefer aiTraceEnabled; aiStepTraceEnabled kept for back-compat.
+     */
+    aiTraceEnabled: z.boolean().nullable().default(null),
     aiStepTraceEnabled: z.boolean().nullable(),
     requestPerfTraceEnabled: z.boolean().nullable(),
     seedHookObservabilityEnabled: z.boolean().nullable(),
@@ -28,6 +35,8 @@ export type PlatformRuntimeSettings = z.infer<
 
 export const updatePlatformRuntimeSettingsInputSchema = z
   .object({
+    aiEnabled: z.boolean().nullable().optional(),
+    aiTraceEnabled: z.boolean().nullable().optional(),
     aiStepTraceEnabled: z.boolean().nullable().optional(),
     requestPerfTraceEnabled: z.boolean().nullable().optional(),
     seedHookObservabilityEnabled: z.boolean().nullable().optional(),
@@ -38,6 +47,8 @@ export const updatePlatformRuntimeSettingsInputSchema = z
   .strict()
   .refine(
     (value) =>
+      value.aiEnabled !== undefined ||
+      value.aiTraceEnabled !== undefined ||
       value.aiStepTraceEnabled !== undefined ||
       value.requestPerfTraceEnabled !== undefined ||
       value.seedHookObservabilityEnabled !== undefined ||
@@ -50,6 +61,9 @@ export type UpdatePlatformRuntimeSettingsInput = z.infer<
 >;
 
 export interface ObservabilityEnvDefaults {
+  readonly aiEnabled: boolean;
+  readonly aiTraceEnabled: boolean;
+  /** @deprecated alias of aiTraceEnabled */
   readonly aiStepTraceEnabled: boolean;
   readonly requestPerfTraceEnabled: boolean;
   readonly seedHookObservabilityEnabled: boolean;
@@ -57,6 +71,9 @@ export interface ObservabilityEnvDefaults {
 }
 
 export interface EffectiveObservabilityFlags {
+  readonly aiEnabled: boolean;
+  readonly aiTraceEnabled: boolean;
+  /** @deprecated alias of aiTraceEnabled */
   readonly aiStepTraceEnabled: boolean;
   readonly requestPerfTraceEnabled: boolean;
   readonly seedHookObservabilityEnabled: boolean;

@@ -4,6 +4,7 @@ export { runFormsUiBuilderOrchestrator } from "./surfaces/forms/run-forms-orches
 export { runFormsRenderOrchestrator } from "./surfaces/forms-render/run-forms-render-orchestrator.js";
 export { createOrchestratorTraceCallbacks } from "./trace-callbacks.js";
 export { isAiStepTraceEnabled } from "../step-trace.js";
+export type { GenerateAnswerFn } from "./step-runner.js";
 export {
   sanitizeStepTraceForPersistence,
   slimUiBuilderDraftForPersistence,

@@ -123,6 +123,7 @@ export {
   type ThirdRailContextValue,
   type ThirdRailHeaderProps,
   type ThirdRailProps,
+  type ThirdRailTone,
   type ThirdRailVariant,
   type ThirdRailWidthConfig,
   type ThirdRailWidthFraction,
@@ -168,6 +169,12 @@ export {
 } from "./collapsible-segmented-switcher/CollapsibleSegmentedSwitcher";
 export { Heading, type HeadingProps } from "./typography/Heading";
 export { Text, type TextProps } from "./typography/Text";
+export {
+  Markdown,
+  ensureBlockRendererFences,
+  type MarkdownBlockRenderer,
+  type MarkdownProps,
+} from "./markdown";
 export { PageLoader, type PageLoaderProps } from "./loading/PageLoader";
 export { Skeleton, type SkeletonProps } from "./skeleton/Skeleton";
 export {

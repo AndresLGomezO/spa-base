@@ -11,6 +11,7 @@ import {
   getExpandableTableColumns,
   getExpandableTableRowExpandLayout,
   getExpandableTableShowActions,
+  getExpandableTableSummaryField,
   getListToolbarFields,
   getTableColumns,
   getTableViewShowActions,
@@ -79,6 +80,47 @@ describe("@repo/ui-builder", () => {
     expect(getExpandableTableRowExpandLayout(withExpandable)).toBeDefined();
     expect(getExpandableTableShowActions(withExpandable)).toBe(true);
     expect(getListToolbarFields(withExpandable)).toEqual(["name", "isActive"]);
+  });
+
+  it("resolves expandable summaryField with detail inherit and explicit off", () => {
+    const withDetail = {
+      ...definition,
+      ui: {
+        ...definition.ui,
+        recordDetailLayout: {
+          root: definition.ui.detailLayout?.root ?? {
+            type: "root" as const,
+            id: "root",
+            columnCount: 1,
+            columns: [],
+          },
+          summaryField: "aiSummaryText",
+        },
+      },
+    };
+    expect(getExpandableTableSummaryField(withDetail)).toBe("aiSummaryText");
+
+    const expandable = createDefaultExpandableTableView(["name", "isActive"]);
+    const explicit = {
+      ...withDetail,
+      ui: {
+        ...withDetail.ui,
+        views: [
+          withDetail.ui.views[0]!,
+          { ...expandable, summaryField: "description" },
+        ],
+      },
+    };
+    expect(getExpandableTableSummaryField(explicit)).toBe("description");
+
+    const disabled = {
+      ...withDetail,
+      ui: {
+        ...withDetail.ui,
+        views: [withDetail.ui.views[0]!, { ...expandable, summaryField: "" }],
+      },
+    };
+    expect(getExpandableTableSummaryField(disabled)).toBeUndefined();
   });
 
   it("resolves table showActions from view config", () => {

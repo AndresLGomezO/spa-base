@@ -10,6 +10,15 @@ export interface LocalTenantTestUserConfig {
   readonly displayName: string;
 }
 
+/** Copy an image file ref from a related record when the target field is empty. */
+export interface RecordImageInheritanceRule {
+  readonly entityName: string;
+  readonly targetField: string;
+  readonly relationField: string;
+  readonly sourceEntity: string;
+  readonly sourceField: string;
+}
+
 export interface LocalTenantConfig {
   readonly id: string;
   readonly name: string;
@@ -20,6 +29,10 @@ export interface LocalTenantConfig {
   readonly gcpDemoOwnerUid: string;
   readonly gcpDemoUserRole: string;
   readonly indexProvisioningExcluded: boolean;
+  /** Optional entity → image field map (e.g. `{ "actor": "logo" }`). */
+  readonly recordImageFields: Readonly<Record<string, string>>;
+  /** Optional rules to derive images from related records. */
+  readonly recordImageInheritance: readonly RecordImageInheritanceRule[];
 }
 
 export function resolveLocalTenantCatalogsDir(
@@ -87,7 +100,76 @@ export function loadLocalTenantConfig(
     gcpDemoOwnerUid: requireString("gcpDemoOwnerUid", raw.gcpDemoOwnerUid),
     gcpDemoUserRole: requireString("gcpDemoUserRole", raw.gcpDemoUserRole),
     indexProvisioningExcluded: raw.indexProvisioningExcluded === true,
+    recordImageFields: parseRecordImageFields(path, raw.recordImageFields),
+    recordImageInheritance: parseRecordImageInheritance(
+      path,
+      raw.recordImageInheritance,
+    ),
   };
+}
+
+function parseRecordImageFields(
+  path: string,
+  value: unknown,
+): Readonly<Record<string, string>> {
+  if (value === undefined) {
+    return {};
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(
+      `Invalid tenant.json at ${path}: recordImageFields must be an object.`,
+    );
+  }
+  const out: Record<string, string> = {};
+  for (const [entityName, fieldName] of Object.entries(
+    value as Record<string, unknown>,
+  )) {
+    if (typeof fieldName !== "string" || fieldName.trim().length === 0) {
+      throw new Error(
+        `Invalid tenant.json at ${path}: recordImageFields.${entityName} must be a non-empty string.`,
+      );
+    }
+    out[entityName] = fieldName.trim();
+  }
+  return out;
+}
+
+function parseRecordImageInheritance(
+  path: string,
+  value: unknown,
+): readonly RecordImageInheritanceRule[] {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new Error(
+      `Invalid tenant.json at ${path}: recordImageInheritance must be an array.`,
+    );
+  }
+  return value.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(
+        `Invalid tenant.json at ${path}: recordImageInheritance[${index}] must be an object.`,
+      );
+    }
+    const row = entry as Record<string, unknown>;
+    const requireKey = (key: string): string => {
+      const raw = row[key];
+      if (typeof raw !== "string" || raw.trim().length === 0) {
+        throw new Error(
+          `Invalid tenant.json at ${path}: recordImageInheritance[${index}].${key} must be a non-empty string.`,
+        );
+      }
+      return raw.trim();
+    };
+    return {
+      entityName: requireKey("entityName"),
+      targetField: requireKey("targetField"),
+      relationField: requireKey("relationField"),
+      sourceEntity: requireKey("sourceEntity"),
+      sourceField: requireKey("sourceField"),
+    };
+  });
 }
 
 export function tryLoadLocalTenantConfig(

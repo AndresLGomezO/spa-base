@@ -111,6 +111,12 @@ function ItemListDesignerExpandableTablePreviewBody({
         columns={editor.expandableColumns}
         rowExpandLayout={editor.rowExpandLayout}
         showActions={editor.expandableShowActions}
+        summaryField={
+          editor.expandableSummaryField === undefined
+            ? (editor.definition.ui.recordDetailLayout?.summaryField ??
+              editor.definition.ui.detailLayout?.summaryField)
+            : editor.expandableSummaryField
+        }
         previewItem={previewItem}
         title=""
         locale={i18n.language}
@@ -151,6 +157,12 @@ export function ItemListDesignerPreviewPanel({
             columns={editor.expandableColumns}
             rowExpandLayout={editor.rowExpandLayout}
             showActions={editor.expandableShowActions}
+            summaryField={
+              editor.expandableSummaryField === undefined
+                ? (editor.definition.ui.recordDetailLayout?.summaryField ??
+                  editor.definition.ui.detailLayout?.summaryField)
+                : editor.expandableSummaryField
+            }
             previewItem={previewItem}
             title=""
             locale={i18n.language}

@@ -87,6 +87,10 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
     readonly GroupedTableColumn[]
   >(() => createDefaultExpandableTableView(fieldPaths).columns);
   const [expandableShowActions, setExpandableShowActions] = useState(true);
+  /** `undefined` inherits detail summaryField; `""` hides; otherwise field path. */
+  const [expandableSummaryField, setExpandableSummaryField] = useState<
+    string | undefined
+  >(undefined);
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
     createDefaultExpandableLayout(fieldPaths),
   );
@@ -154,10 +158,16 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
     if (expandableView) {
       setExpandableColumns([...expandableView.columns]);
       setExpandableShowActions(expandableView.showActions !== false);
+      setExpandableSummaryField(
+        expandableView.summaryField !== undefined
+          ? expandableView.summaryField
+          : undefined,
+      );
     } else {
       const defaults = createDefaultExpandableTableView(fieldPaths);
       setExpandableColumns(defaults.columns);
       setExpandableShowActions(true);
+      setExpandableSummaryField(undefined);
     }
 
     const listItem =
@@ -183,28 +193,46 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
   }, [definition, fieldPaths, listViewType, uiViews]);
 
   const buildExpandableTableView = useCallback(
-    (existing?: ExpandableTableViewConfig): ExpandableTableViewConfig => ({
-      ...(existing ?? {
-        type: "expandableTable",
+    (existing?: ExpandableTableViewConfig): ExpandableTableViewConfig => {
+      const existingSource = existing ?? {
+        type: "expandableTable" as const,
         name: "expandable",
         fields: fieldPaths,
-      }),
-      type: "expandableTable",
-      name: existing?.name ?? "expandable",
-      fields:
-        existing?.fields && existing.fields.length > 0
-          ? existing.fields
-          : fieldPaths,
-      columns:
-        expandableColumns.length > 0
-          ? expandableColumns
-          : createDefaultExpandableTableView(fieldPaths).columns,
-      rowExpandLayout: layout,
-      showActions: expandableShowActions,
-      ...(existing?.filters ? { filters: existing.filters } : {}),
-      ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
-    }),
-    [expandableColumns, expandableShowActions, fieldPaths, layout],
+        columns: [] as ExpandableTableViewConfig["columns"],
+        rowExpandLayout: layout,
+      };
+      const { summaryField: _ignoredSummaryField, ...existingWithoutSummary } =
+        existingSource;
+      void _ignoredSummaryField;
+
+      return {
+        ...existingWithoutSummary,
+        type: "expandableTable",
+        name: existing?.name ?? "expandable",
+        fields:
+          existing?.fields && existing.fields.length > 0
+            ? existing.fields
+            : fieldPaths,
+        columns:
+          expandableColumns.length > 0
+            ? expandableColumns
+            : createDefaultExpandableTableView(fieldPaths).columns,
+        rowExpandLayout: layout,
+        showActions: expandableShowActions,
+        ...(expandableSummaryField !== undefined
+          ? { summaryField: expandableSummaryField }
+          : {}),
+        ...(existing?.filters ? { filters: existing.filters } : {}),
+        ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
+      };
+    },
+    [
+      expandableColumns,
+      expandableShowActions,
+      expandableSummaryField,
+      fieldPaths,
+      layout,
+    ],
   );
 
   const buildViews = useCallback((): readonly ViewConfig[] => {
@@ -284,12 +312,16 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
         columns: [...expandableColumns],
         rowExpandLayout: layout,
         showActions: expandableShowActions,
+        ...(expandableSummaryField !== undefined
+          ? { summaryField: expandableSummaryField }
+          : {}),
       },
       listItem: layout,
     };
   }, [
     expandableColumns,
     expandableShowActions,
+    expandableSummaryField,
     fieldPaths,
     layout,
     tableFields,
@@ -308,6 +340,11 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
     setTableShowActions(listData.table.showActions !== false);
     setExpandableColumns([...listData.expandableTable.columns]);
     setExpandableShowActions(listData.expandableTable.showActions !== false);
+    setExpandableSummaryField(
+      listData.expandableTable.summaryField !== undefined
+        ? listData.expandableTable.summaryField
+        : undefined,
+    );
     const nextLayout = ensureContainerRoot(
       listData.listItem ?? listData.expandableTable.rowExpandLayout,
     );
@@ -339,6 +376,8 @@ export function useCustomViewListLayoutEditor(viewId?: string) {
     setRowExpandLayout: setLayout,
     expandableShowActions,
     setExpandableShowActions,
+    expandableSummaryField,
+    setExpandableSummaryField,
     layout,
     setLayout,
     isSaving,

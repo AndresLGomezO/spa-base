@@ -12,6 +12,8 @@ export interface ItemListDesignerSettingsSnapshot {
 export interface ItemListDesignerExpandableColumnsSnapshot {
   readonly expandableColumns: readonly GroupedTableColumn[];
   readonly expandableShowActions: boolean;
+  /** `undefined` inherits detail summaryField; `""` hides. */
+  readonly expandableSummaryField: string | undefined;
   readonly rowExpandLayout: UiLayoutDocument;
 }
 
@@ -33,7 +35,10 @@ function readExpandableViewFromDefinition(
   definition: UseEntityListLayoutEditorResult["definition"],
   editor: Pick<
     UseEntityListLayoutEditorResult,
-    "expandableColumns" | "rowExpandLayout" | "expandableShowActions"
+    | "expandableColumns"
+    | "rowExpandLayout"
+    | "expandableShowActions"
+    | "expandableSummaryField"
   >,
 ): ItemListDesignerExpandableColumnsSnapshot {
   const expandableView = definition.ui.views.find(
@@ -49,6 +54,10 @@ function readExpandableViewFromDefinition(
       expandableView?.type === "expandableTable"
         ? expandableView.showActions !== false
         : editor.expandableShowActions,
+    expandableSummaryField:
+      expandableView?.type === "expandableTable"
+        ? expandableView.summaryField
+        : editor.expandableSummaryField,
     rowExpandLayout:
       expandableView?.type === "expandableTable"
         ? expandableView.rowExpandLayout
@@ -86,12 +95,16 @@ export function areSettingsSnapshotsEqual(
 function readExpandableColumnsSnapshot(
   editor: Pick<
     UseEntityListLayoutEditorResult,
-    "expandableColumns" | "expandableShowActions" | "rowExpandLayout"
+    | "expandableColumns"
+    | "expandableShowActions"
+    | "expandableSummaryField"
+    | "rowExpandLayout"
   >,
 ): ItemListDesignerExpandableColumnsSnapshot {
   return {
     expandableColumns: [...editor.expandableColumns],
     expandableShowActions: editor.expandableShowActions,
+    expandableSummaryField: editor.expandableSummaryField,
     rowExpandLayout: editor.rowExpandLayout,
   };
 }
@@ -109,7 +122,10 @@ export function readColumnsSnapshotFromDefinition(
   definition: UseEntityListLayoutEditorResult["definition"],
   editor: Pick<
     UseEntityListLayoutEditorResult,
-    "expandableColumns" | "rowExpandLayout" | "expandableShowActions"
+    | "expandableColumns"
+    | "rowExpandLayout"
+    | "expandableShowActions"
+    | "expandableSummaryField"
   >,
 ): ItemListDesignerColumnsSnapshot {
   return {
@@ -148,6 +164,7 @@ export function areColumnsSnapshotsEqual(
 ): boolean {
   return (
     left.data.expandableShowActions === right.data.expandableShowActions &&
+    left.data.expandableSummaryField === right.data.expandableSummaryField &&
     areGroupedColumnsEqual(
       left.data.expandableColumns,
       right.data.expandableColumns,
@@ -172,12 +189,16 @@ export function applySettingsSnapshotToEditor(
 export function applyColumnsSnapshotToEditor(
   editor: Pick<
     UseEntityListLayoutEditorResult,
-    "setExpandableColumns" | "setExpandableShowActions" | "setRowExpandLayout"
+    | "setExpandableColumns"
+    | "setExpandableShowActions"
+    | "setExpandableSummaryField"
+    | "setRowExpandLayout"
   >,
   snapshot: ItemListDesignerColumnsSnapshot,
 ): void {
   editor.setExpandableColumns([...snapshot.data.expandableColumns]);
   editor.setExpandableShowActions(snapshot.data.expandableShowActions);
+  editor.setExpandableSummaryField(snapshot.data.expandableSummaryField);
   editor.setRowExpandLayout(snapshot.data.rowExpandLayout);
 }
 

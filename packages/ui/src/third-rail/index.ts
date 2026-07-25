@@ -1,6 +1,7 @@
 export {
   ThirdRail,
   type ThirdRailProps,
+  type ThirdRailTone,
   type ThirdRailVariant,
 } from "./ThirdRail";
 export { ThirdRailHeader, type ThirdRailHeaderProps } from "./ThirdRailHeader";

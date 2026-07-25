@@ -1,0 +1,160 @@
+import type {
+  AiJobContextRef,
+  AiJobFeature,
+  AiJobInput,
+  AiJobModelUsage,
+  AiJobOperation,
+  AiJobOutput,
+  AiJobRecord,
+  AiJobStatus,
+  AiJobStepTraceEntry,
+} from "../schemas/ai-job.schema.js";
+import type {
+  GenerateModelAnswerInput,
+  GenerateModelAnswerOptions,
+  GenerateModelAnswerResult,
+  VertexAiConfig,
+} from "../clients/internal/vertex-ai.client.js";
+
+export class AiDisabledError extends Error {
+  readonly code = "ai.disabled" as const;
+
+  constructor(message = "AI is disabled by platform kill-switch.") {
+    super(message);
+    this.name = "AiDisabledError";
+  }
+}
+
+export interface AiJobRepositoryPort {
+  create(
+    tenantId: string,
+    input: {
+      readonly feature: AiJobFeature;
+      readonly input: AiJobInput;
+      readonly requestedBy: string;
+      readonly permission: string;
+      readonly status?: AiJobStatus;
+      readonly operation?: AiJobOperation;
+      readonly parentJobId?: string;
+      readonly contextRef?: AiJobContextRef;
+      readonly error?: string | null;
+    },
+  ): Promise<AiJobRecord>;
+  update(
+    tenantId: string,
+    id: string,
+    patch: Partial<
+      Pick<
+        AiJobRecord,
+        | "status"
+        | "output"
+        | "error"
+        | "progress"
+        | "draft"
+        | "stepTrace"
+        | "modelUsage"
+      >
+    >,
+  ): Promise<AiJobRecord>;
+  appendStepTrace(
+    tenantId: string,
+    id: string,
+    entry: AiJobStepTraceEntry,
+  ): Promise<AiJobRecord>;
+}
+
+export interface AiControllerFlags {
+  isAiEnabled(): boolean | Promise<boolean>;
+  isAiTraceEnabled(): boolean | Promise<boolean>;
+}
+
+export interface AiControllerClients {
+  generateModelAnswer(
+    config: VertexAiConfig,
+    input: GenerateModelAnswerInput,
+    options?: GenerateModelAnswerOptions,
+  ): Promise<GenerateModelAnswerResult>;
+  generateChatAnswer(
+    config: VertexAiConfig,
+    question: string,
+  ): Promise<GenerateModelAnswerResult>;
+  generateTextEmbedding(
+    config: VertexAiConfig,
+    text: string,
+  ): Promise<{
+    readonly vector: readonly number[];
+    readonly usage: AiJobModelUsage;
+  }>;
+  generateImagenImage?(
+    config: VertexAiConfig,
+    prompt: string,
+  ): Promise<{
+    readonly base64: string;
+    readonly mimeType: string;
+    readonly usage: AiJobModelUsage;
+  }>;
+}
+
+export type AiGenerateTextParams = {
+  readonly operation: "generateText";
+  readonly systemInstruction: string;
+  readonly userText: string;
+  readonly contextBlocks?: readonly {
+    readonly id: string;
+    readonly content: string;
+  }[];
+  readonly outputInstruction?: string;
+  readonly modelOptions?: GenerateModelAnswerOptions;
+  readonly stepId?: string;
+};
+
+export type AiGenerateChatParams = {
+  readonly operation: "generateChat";
+  readonly question: string;
+};
+
+export type AiGenerateEmbeddingParams = {
+  readonly operation: "generateEmbedding";
+  readonly text: string;
+};
+
+export type AiGenerateImageParams = {
+  readonly operation: "generateImage";
+  readonly prompt: string;
+};
+
+export type AiOperationParams =
+  | AiGenerateTextParams
+  | AiGenerateChatParams
+  | AiGenerateEmbeddingParams
+  | AiGenerateImageParams;
+
+export interface AiRequest {
+  readonly tenantId: string;
+  readonly feature: AiJobFeature;
+  readonly operation: AiJobOperation;
+  readonly requestedBy: string;
+  readonly permission: string;
+  readonly input: AiJobInput;
+  readonly parentJobId?: string;
+  readonly contextRef?: AiJobContextRef;
+  readonly params: AiOperationParams;
+}
+
+export interface AiResponse<TOutput extends AiJobOutput = AiJobOutput> {
+  readonly jobId: string;
+  readonly output: TOutput;
+  readonly rawModelAnswer: string;
+  readonly durationMs: number;
+  readonly modelUsage?: AiJobModelUsage;
+  /** Full embedding vector (not persisted on ai_jobs). */
+  readonly embeddingVector?: readonly number[];
+}
+
+export interface AiControllerDeps {
+  readonly repository: AiJobRepositoryPort;
+  readonly vertexAiConfig: VertexAiConfig;
+  readonly clients: AiControllerClients;
+  readonly flags: AiControllerFlags;
+  readonly now?: () => Date;
+}

@@ -9,7 +9,7 @@ Recursive layout tree persisted as JSON. Use **grid** for multi-column sections;
 
 \`\`\`
 UiLayoutDocument
-├── showActions?, cardsPerRow?, motion?
+├── showActions?, cardsPerRow?, motion?, summaryField?, summary?
 └── root
     ├── screen-root (screen scope): gridTemplateColumns, gap?, rows[]
     └── root (component/block scope): columnCount, columns[] → single container row
@@ -35,7 +35,7 @@ UiLayoutDocument
 | Container | \`container\` | \`rows[]\`, \`stackDirection?\`, \`styles?\` |
 | Grid | \`grid\` | \`gridTemplateColumns\`, \`gap?\`, \`alignItems?\`, \`rows[]\`, \`styles?\` |
 
-Optional document fields: \`showActions\`, \`cardsPerRow\` (1–4), \`motion\`.
+Optional document fields: \`showActions\`, \`cardsPerRow\` (1–4), \`motion\`, \`summaryField\` (entity string field path for the detail Summary third rail; omit for none), \`summary\` (main-page Summary third rail: \`{ sourceEntity, sourceRecordId?, tabs: [{ id, label, field }] }\`; omit for none).
 
 See \`ui.responsive-visibility\` for breakpoint and dashboard date-filter visibility rules.
 

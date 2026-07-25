@@ -60,6 +60,10 @@ export interface DebuggerSourceStats {
   readonly emailIngestFinished: number | null;
   readonly emailIngestProcessed: number | null;
   readonly emailIngestFailedMessages: number | null;
+  /** Sum of AI job token counts in the window (null when not AI source). */
+  readonly totalTokens: number | null;
+  /** Sum of AI job estimated USD cost in the window (null when not AI source). */
+  readonly estimatedCostUsd: number | null;
   readonly barCharts: readonly DebuggerBarChartStats[];
   readonly timelineBuckets: readonly DebuggerTimelineBucket[];
   readonly attentionItems: readonly DebugEvent[];
@@ -320,6 +324,32 @@ function sumNumericSummary(
     }
   }
   return total;
+}
+
+function sumAiTotalTokens(events: readonly DebugEvent[]): number | null {
+  let total = 0;
+  let seen = false;
+  for (const event of events) {
+    const raw = event.summary?.totalTokens;
+    if (typeof raw === "number" && Number.isFinite(raw) && raw >= 0) {
+      total += raw;
+      seen = true;
+    }
+  }
+  return seen ? Math.round(total) : null;
+}
+
+function sumAiEstimatedCostUsd(events: readonly DebugEvent[]): number | null {
+  let total = 0;
+  let seen = false;
+  for (const event of events) {
+    const raw = event.summary?.estimatedCostUsd;
+    if (typeof raw === "number" && Number.isFinite(raw) && raw >= 0) {
+      total += raw;
+      seen = true;
+    }
+  }
+  return seen ? Math.round(total * 1_000_000) / 1_000_000 : null;
 }
 
 function formatTimelineLabel(ms: number, rangeMs: number): string {
@@ -630,6 +660,9 @@ export function computeDebuggerSourceStats(
     inProgressCount,
     uniqueActors: activeSource === "audit" ? countUniqueActors(events) : null,
     ...emailIngest,
+    totalTokens: activeSource === "ai" ? sumAiTotalTokens(events) : null,
+    estimatedCostUsd:
+      activeSource === "ai" ? sumAiEstimatedCostUsd(events) : null,
     barCharts: buildBarCharts(events, activeSource),
     timelineBuckets: computeTimelineBuckets(events),
     attentionItems: pickAttentionEvents(events, activeSource, 5),

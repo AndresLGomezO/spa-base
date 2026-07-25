@@ -897,6 +897,7 @@ Invoke Vertex AI (worker-service) with a prompt, parse the JSON object response,
 - `includeEntities` (optional): up to 3 entity names; worker loads up to 500 compact records each into the prompt
 - `as` (required): loaded alias for the parsed JSON object (or `null` when skipped)
 - Requires the `callAi` service (wired on worker-service). Sync API runs without Vertex will throw if this action executes.
+- **Every `callAi` / batch / embedding request is recorded** to `ai_jobs` via the unified AI controller and appears under `/debugger/ai-jobs` (feature `dataHookCallAi`, `dataHookBatchCallAi`, or `dataHookEmbedding`). Platform Observability exposes the AI kill-switch (`aiEnabled`) and trace toggle (`aiTraceEnabled`).
 
 ### `computeEmbedding`
 
@@ -1175,6 +1176,7 @@ Outer hook scope (`current`, `loaded.*`, `loopState`, etc.) remains visible insi
 | `lower` | text | string | Lowercase |
 | `normalizeMerchantText` | text | string | Uppercase; strip digits, long hex tokens, and punctuation for stable merchant alias matching |
 | `arrayOf` | v… | array | Build a flat array from 1–8 expression arguments (null entries kept as null) |
+| `sha256` | text | hex string | SHA-256 digest of `String(value)` (`null` → `""`); used for AI summary source fingerprints |
 | `lower` | text | string | Lowercase |
 | `startsWith` | text, prefix | boolean | Prefix test |
 | `endsWith` | text, suffix | boolean | Suffix test |

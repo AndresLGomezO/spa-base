@@ -42,7 +42,12 @@ export function BottomSheet({
   }, []);
 
   return (
-    <OverlayRoot open={open} onClose={close} closeLabel="Close" focusPanel={focusPanel}>
+    <OverlayRoot
+      open={open}
+      onClose={close}
+      closeLabel="Close"
+      focusPanel={focusPanel}
+    >
       <BottomSheetPanel
         panelRef={panelRef}
         titleId={titleId}
@@ -90,13 +95,21 @@ function BottomSheetPanel({
       )}
       style={overlayTransitionStyle(durationMs, "transform")}
     >
-      <div className="bg-muted mx-auto mb-3 h-1 w-10 shrink-0 rounded-full" aria-hidden />
+      <div
+        className="bg-muted mx-auto mb-3 h-1 w-10 shrink-0 rounded-full"
+        aria-hidden
+      />
       {title ? (
-        <p id={titleId} className="text-foreground mb-3 shrink-0 text-sm font-semibold">
+        <p
+          id={titleId}
+          className="text-foreground mb-3 shrink-0 text-sm font-semibold"
+        >
           {title}
         </p>
       ) : null}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {children}
+      </div>
     </div>
   );
 }

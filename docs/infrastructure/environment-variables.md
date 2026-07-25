@@ -58,8 +58,11 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `USE_REAL_VERTEX` | `false` (default in `.env.dev`) | **unset** / `false` | When `IS_LOCAL=true`, set `true` to call real Vertex AI instead of mock |
 | `GCP_PROJECT_ID` | `demo-project-base` | workspace project ID | Firebase / Firestore project (keep `demo-project-base` locally for emulators) |
 | `VERTEX_GCP_PROJECT_ID` | optional; your GCP project for real Vertex | **unset** (falls back to `GCP_PROJECT_ID`) | Vertex AI billing project when it differs from emulator project |
-| `GCP_REGION` | `us-central1` | `us-central1` | Vertex AI region |
-| `VERTEX_MODEL_ID` | `gemini-2.5-flash` | `gemini-2.5-flash` | Gemini model for chat and UI builder |
+| `GCP_REGION` | `us-central1` | `us-central1` | Regional location for embeddings / Imagen (and Cloud Run infra) |
+| `VERTEX_LOCATION` | `global` | `global` | Location for Gemini `generateContent`. Gemini 3.x preview models (e.g. `gemini-3.1-pro-preview`) are **global-only** — using `us-central1` returns 404 |
+| `VERTEX_MODEL_ID` | `gemini-3.6-flash` | `gemini-3.6-flash` | Default Gemini for classify, chat, UI builder, Gmail extract |
+| `VERTEX_REASONING_MODEL_ID` | `gemini-3.1-pro-preview` | `gemini-3.1-pro-preview` | Gemini for demanding narrative / contract JSON summaries (`callAi` without `includeEntities`) |
+| `VERTEX_IMAGEN_MODEL_ID` | `imagen-3.0-generate-002` | `imagen-3.0-generate-002` | Imagen model for image generation |
 | `GOOGLE_APPLICATION_CREDENTIALS` | mounted ADC path (real mode only) | **unset** (Cloud Run SA) | Path to gcloud application-default credentials |
 | `FIRESTORE_EMULATOR_HOST` | `firebase-emulator:8080` | **unset** | Firestore emulator |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `firebase-emulator:9099` | **unset** | Auth emulator |
@@ -81,6 +84,21 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `AGGREGATION_EVENTS_TOPIC` | `aggregation-events` | `aggregation-events` | Pub/Sub topic for aggregation events |
 
 Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).
+
+### AI job model usage and cost estimates
+
+Every `runAiRequest` call persists `modelUsage` on the `ai_jobs` record (and on each `stepTrace` entry when tracing is enabled): model id, token counts / embedding dimensions / image count, finish reason, and `estimatedCostUsd`.
+
+Cost estimates use a **hardcoded price table** in [`packages/ai-engine/src/pricing/model-prices.ts`](../../packages/ai-engine/src/pricing/model-prices.ts) aligned with the default Vertex models above:
+
+| Model id | Kind | Estimate basis (USD) |
+| -------- | ---- | -------------------- |
+| `gemini-3.6-flash` | Flash | $0.50 / 1M input, $3.00 / 1M output, $0.05 / 1M cached input |
+| `gemini-3.1-pro-preview` | Pro | $2.00 / 1M input, $12.00 / 1M output (≤200K prompt); $4.00 / $18.00 above 200K |
+| `text-embedding-005` | Embedding | $0.10 / 1M input tokens (falls back to chars÷4 when tokens missing) |
+| `imagen-3.0-generate-002` | Image | $0.04 per generated image |
+
+These are rough list-price estimates and may lag real Vertex billing (tiers, regional surcharges, grounding, batch). Unknown model ids still record tokens when available but omit `estimatedCostUsd`. Update the table in code when Vertex list prices change.
 
 ### Gmail ingest delivery
 

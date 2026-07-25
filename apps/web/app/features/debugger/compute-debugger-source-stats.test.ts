@@ -208,6 +208,54 @@ describe("computeDebuggerSourceStats", () => {
     expect(stats.barCharts[0]?.groups[0]?.count).toBe(500);
     expect(stats.attentionItems[0]?.id).toBe("2");
   });
+
+  it("sums AI job tokens and estimated cost", () => {
+    const stats = computeDebuggerSourceStats(
+      [
+        {
+          id: "ai_1",
+          source: "ai",
+          timestamp: "2026-01-01T12:00:00.000Z",
+          title: "summary",
+          subtitle: "dataHookCallAi",
+          status: "completed",
+          summary: {
+            feature: "dataHookCallAi",
+            totalTokens: 1_000,
+            estimatedCostUsd: 0.0015,
+          },
+        },
+        {
+          id: "ai_2",
+          source: "ai",
+          timestamp: "2026-01-01T12:01:00.000Z",
+          title: "embed",
+          subtitle: "dataHookEmbedding",
+          status: "completed",
+          summary: {
+            feature: "dataHookEmbedding",
+            totalTokens: 250,
+            estimatedCostUsd: 0.000025,
+          },
+        },
+        {
+          id: "ai_3",
+          source: "ai",
+          timestamp: "2026-01-01T12:02:00.000Z",
+          title: "running",
+          subtitle: "chat",
+          status: "running",
+          summary: { feature: "chat" },
+        },
+      ],
+      "ai",
+    );
+
+    expect(stats.totalTokens).toBe(1_250);
+    expect(stats.estimatedCostUsd).toBeCloseTo(0.001525, 6);
+    expect(stats.totalTokens).not.toBeNull();
+    expect(stats.statusCounts.completed).toBe(2);
+  });
 });
 
 describe("computeTimelineBuckets", () => {

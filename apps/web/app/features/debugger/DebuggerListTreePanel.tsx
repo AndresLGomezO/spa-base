@@ -48,6 +48,7 @@ import {
   parsePositiveInt,
   useDebuggerListQuery,
 } from "./use-debugger-list-query";
+import type { AiJobFeatureKey } from "./ai-job-features";
 
 function formatJson(value: unknown): string {
   try {
@@ -103,9 +104,24 @@ function DebuggerRecordRow({ event }: { readonly event: DebugEvent }) {
           {event.status ? (
             <DebuggerStatusBadge status={event.status} size="compact" />
           ) : null}
+          {event.source === "ai" &&
+          typeof event.summary?.estimatedCostUsd === "number" ? (
+            <Text className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
+              {new Intl.NumberFormat(undefined, {
+                style: "currency",
+                currency: "USD",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 6,
+              }).format(event.summary.estimatedCostUsd)}
+            </Text>
+          ) : null}
         </div>
         <Text className="text-muted-foreground mt-0.5 break-words text-xs">
           {event.subtitle ?? event.timestamp}
+          {event.source === "ai" &&
+          typeof event.summary?.modelId === "string" ? (
+            <> · {event.summary.modelId}</>
+          ) : null}
         </Text>
       </div>
       <div className="flex shrink-0 items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/node:opacity-100">
@@ -167,6 +183,7 @@ export function DebuggerListTreePanel() {
     statusCounts,
     availableStatuses,
     availableExecutionTypes,
+    availableAiFeatures,
     hasActiveFilters,
     activeFilterBadges,
     setSearch,
@@ -174,11 +191,13 @@ export function DebuggerListTreePanel() {
     toggleStatus,
     toggleShowSkipped,
     toggleExecutionType,
+    toggleAiFeature,
     setMinWrites,
     setMinDurationMs,
     clearFilters,
     debuggerStatusLabelKey,
     hookExecutionTypeLabelKey,
+    aiJobFeatureLabelKey,
   } = useDebuggerListQuery(sourceEvents, activeSource, timeRangeBounds);
 
   useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
@@ -217,6 +236,15 @@ export function DebuggerListTreePanel() {
             label: t(hookExecutionTypeLabelKey(executionType)),
           };
         }
+        if (badge.id.startsWith("aiFeature:")) {
+          const feature = badge.id.slice(
+            "aiFeature:".length,
+          ) as AiJobFeatureKey;
+          return {
+            ...badge,
+            label: t(aiJobFeatureLabelKey(feature)),
+          };
+        }
         if (badge.id === "minWrites") {
           return {
             ...badge,
@@ -233,6 +261,7 @@ export function DebuggerListTreePanel() {
       }),
     [
       activeFilterBadges,
+      aiJobFeatureLabelKey,
       debuggerStatusLabelKey,
       hookExecutionTypeLabelKey,
       query.sort,
@@ -264,7 +293,7 @@ export function DebuggerListTreePanel() {
   const filterBody = (
     <div
       className={
-        activeSource === "hookExecution"
+        activeSource === "hookExecution" || activeSource === "ai"
           ? "grid gap-6 sm:grid-cols-2"
           : "space-y-3"
       }
@@ -297,6 +326,25 @@ export function DebuggerListTreePanel() {
           ) : null}
         </div>
       </div>
+
+      {activeSource === "ai" ? (
+        <div className="space-y-3">
+          <Text className="text-muted-foreground text-xs font-medium">
+            {t("debugger.list.filterByFeature")}
+          </Text>
+          <div className="flex flex-col gap-2">
+            {availableAiFeatures.map((feature) => (
+              <Checkbox
+                key={feature}
+                id={`debugger-ai-feature-${feature}`}
+                checked={query.aiFeatures.includes(feature)}
+                onChange={() => toggleAiFeature(feature)}
+                label={t(aiJobFeatureLabelKey(feature))}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {activeSource === "hookExecution" ? (
         <div className="space-y-3">

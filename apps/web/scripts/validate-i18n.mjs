@@ -857,6 +857,27 @@ function extractAiDebuggerTabKeys(corpus) {
   );
 }
 
+/** aiJobFeatureLabelKey() → all keys under aiDebugger.features */
+function extractAiDebuggerFeatureKeys(corpus) {
+  if (
+    !corpus.includes("aiJobFeatureLabelKey") &&
+    !corpus.includes("aiDebugger.features.${")
+  ) {
+    return [];
+  }
+
+  const refAiDebugger = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).aiDebugger;
+
+  const features = refAiDebugger?.features;
+  if (!features || typeof features !== "object") return [];
+
+  return Object.keys(features).map(
+    (key) => `${DEFAULT_NAMESPACE}:aiDebugger.features.${key}`,
+  );
+}
+
 /** debuggerSourceLabelKey() → all keys under debugger.sources */
 function extractDebuggerSourceKeys(corpus) {
   if (
@@ -1329,6 +1350,11 @@ const aiJobDetailFile = path.join(
   "features/debugger/sources/ai-job-detail.tsx",
 );
 mergeUsedKeys(usedKeys, extractAiDebuggerTabKeys(corpus), aiJobDetailFile);
+mergeUsedKeys(
+  usedKeys,
+  extractAiDebuggerFeatureKeys(corpus),
+  path.join(SRC_DIR, "features/debugger/ai-job-features.ts"),
+);
 mergeUsedKeys(
   usedKeys,
   extractDebuggerSourceKeys(corpus),

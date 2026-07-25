@@ -25,6 +25,7 @@ export {
   getExpandableTableColumns,
   getExpandableTableRowExpandLayout,
   getExpandableTableShowActions,
+  getExpandableTableSummaryField,
   getExpandableTableViewConfig,
   getListToolbarFields,
   getTableColumns,

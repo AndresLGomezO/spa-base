@@ -99,6 +99,27 @@ function formatPercent(value: number | null): string {
   return value == null ? "—" : `${value}%`;
 }
 
+function formatTokenCount(value: number | null): string {
+  if (value == null) {
+    return "—";
+  }
+  return new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatEstimatedCostUsd(value: number | null): string {
+  if (value == null) {
+    return "—";
+  }
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  }).format(value);
+}
+
 function mapBarChartItems(chart: DebuggerBarChartStats) {
   return chart.groups.map((group) => ({
     key: group.key,
@@ -238,6 +259,16 @@ function buildKpiItems(
           key: "errorRate",
           label: t("debugger.summary.errorRate"),
           value: formatPercent(stats.errorRate),
+        },
+        {
+          key: "totalTokens",
+          label: t("debugger.summary.totalTokens"),
+          value: formatTokenCount(stats.totalTokens),
+        },
+        {
+          key: "estimatedCostUsd",
+          label: t("debugger.summary.estimatedCostUsd"),
+          value: formatEstimatedCostUsd(stats.estimatedCostUsd),
         },
       );
       break;

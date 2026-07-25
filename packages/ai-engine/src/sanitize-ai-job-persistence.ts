@@ -103,6 +103,7 @@ export function sanitizeStepTraceEntry(
     ...(entry.draftAfterStep !== undefined
       ? { draftAfterStep: summarizeDraftForTrace(entry.draftAfterStep) }
       : {}),
+    ...(entry.modelUsage !== undefined ? { modelUsage: entry.modelUsage } : {}),
   };
 }
 

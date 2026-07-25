@@ -1,4 +1,4 @@
-import { IconButton } from "@repo/ui";
+import { AiSparkIcon, IconButton } from "@repo/ui";
 import { Eye, Pencil, Share2, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -10,16 +10,30 @@ interface ExpandableTableRowActionsProps {
   readonly canDeleteRow: boolean;
   readonly canShareRow: boolean;
   readonly item: Record<string, unknown>;
+  readonly summaryField?: string;
   readonly labels: {
     readonly view: string;
     readonly edit: string;
     readonly share: string;
     readonly delete: string;
+    readonly summary: string;
   };
   readonly onView: (id: string) => void;
   readonly onEdit?: (id: string) => void;
   readonly onShare?: (id: string) => void;
   readonly onDelete?: (id: string) => void;
+  readonly onSummary?: (item: Record<string, unknown>, text: string) => void;
+}
+
+function resolveRowSummaryText(
+  item: Record<string, unknown>,
+  summaryField: string | undefined,
+): string {
+  if (!summaryField) {
+    return "";
+  }
+  const value = item[summaryField];
+  return typeof value === "string" ? value.trim() : "";
 }
 
 export function ExpandableTableRowActions({
@@ -30,18 +44,31 @@ export function ExpandableTableRowActions({
   canDeleteRow,
   canShareRow,
   item,
+  summaryField,
   labels,
   onView,
   onEdit,
   onShare,
   onDelete,
+  onSummary,
 }: ExpandableTableRowActionsProps) {
   const itemId = String(item.id);
   const sharedWith = item.sharedWith as Record<string, string> | undefined;
   const shareCount = sharedWith ? Object.keys(sharedWith).length : 0;
+  const summaryText = resolveRowSummaryText(item, summaryField);
 
   return (
     <>
+      {summaryText.length > 0 && onSummary ? (
+        <IconButton
+          type="button"
+          label={labels.summary}
+          onClick={() => onSummary(item, summaryText)}
+          className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+        >
+          <AiSparkIcon size={16} animated className="shrink-0" />
+        </IconButton>
+      ) : null}
       {canRead ? (
         <IconButton
           type="button"

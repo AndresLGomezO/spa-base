@@ -54,6 +54,7 @@ export function ThirdRailHost() {
       footer={options.footer}
       variant={resizeContent ? "push" : "overlay"}
       widths={options.widths}
+      tone={options.tone}
       closeLabel={closeLabel}
       onClose={close}
       panelRef={panelRef}

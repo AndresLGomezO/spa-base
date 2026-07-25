@@ -44,6 +44,7 @@ export interface RunFormsRenderOrchestratorInput {
   readonly entityCurrentFragment: string;
   readonly formFieldPaths: readonly string[];
   readonly callbacks: OrchestratorCallbacks;
+  readonly generateAnswer?: import("../../step-runner.js").GenerateAnswerFn;
 }
 
 export interface RunFormsRenderOrchestratorResult {
@@ -96,6 +97,7 @@ async function runHtmlStep(
       stepContext,
       stepId: step.id,
       draftBeforeStep,
+      ...(input.generateAnswer ? { generateAnswer: input.generateAnswer } : {}),
       ...(input.callbacks.onStepTrace
         ? {
             onAttempt: async (entry) => {

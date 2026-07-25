@@ -206,12 +206,18 @@ async function processTenantScheduleTick(
               MAX_SCHEDULE_EACH_RECORD_CONCURRENCY,
             )
           : 1;
-      if (typeof aiBatchSize === "number" && aiBatchSize > 0 && deps.callAi) {
+      if (
+        typeof aiBatchSize === "number" &&
+        aiBatchSize > 0 &&
+        deps.callAi &&
+        deps.aiController
+      ) {
         aiBatcher = createBatchedCallAi({
           callAi: deps.callAi,
           batchSize: recordConcurrency,
           batchCallAi: createBatchCallDataHookAi({
             vertexAiConfig,
+            aiController: deps.aiController,
             getRepository: (tenantId, entityName) =>
               deps.entityRuntime.getRepository(tenantId, entityName),
           }),

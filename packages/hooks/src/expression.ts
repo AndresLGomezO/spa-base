@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { sha256Hex } from "./sha256.js";
+
 /**
  * Expression engine for Data Hooks.
  *
@@ -67,6 +69,7 @@ export const EXPRESSION_FUNCTIONS = [
   "ln",
   "normalizeMerchantText",
   "arrayOf",
+  "sha256",
 ] as const;
 
 export type ExpressionFunction = (typeof EXPRESSION_FUNCTIONS)[number];
@@ -618,6 +621,10 @@ function evaluateCall(
         }
       }
       return items;
+    }
+    case "sha256": {
+      const text = args[0] == null ? "" : String(args[0]);
+      return sha256Hex(text);
     }
     default: {
       const exhaustive: never = fn;

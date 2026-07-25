@@ -188,6 +188,8 @@ export type { AdminTenant };
 
 export interface PlatformRuntimeSettingsResponse {
   readonly settings: {
+    readonly aiEnabled: boolean | null;
+    readonly aiTraceEnabled: boolean | null;
     readonly aiStepTraceEnabled: boolean | null;
     readonly requestPerfTraceEnabled: boolean | null;
     readonly seedHookObservabilityEnabled: boolean | null;
@@ -196,12 +198,16 @@ export interface PlatformRuntimeSettingsResponse {
     readonly updatedBy: string;
   } | null;
   readonly effective: {
+    readonly aiEnabled: boolean;
+    readonly aiTraceEnabled: boolean;
     readonly aiStepTraceEnabled: boolean;
     readonly requestPerfTraceEnabled: boolean;
     readonly seedHookObservabilityEnabled: boolean;
     readonly gmailIngestDeliveryMode: "poll" | "push";
   };
   readonly envDefaults: {
+    readonly aiEnabled: boolean;
+    readonly aiTraceEnabled: boolean;
     readonly aiStepTraceEnabled: boolean;
     readonly requestPerfTraceEnabled: boolean;
     readonly seedHookObservabilityEnabled: boolean;
@@ -221,6 +227,8 @@ export async function getPlatformRuntimeSettings(): Promise<PlatformRuntimeSetti
 }
 
 export async function updatePlatformRuntimeSettings(input: {
+  readonly aiEnabled?: boolean | null;
+  readonly aiTraceEnabled?: boolean | null;
   readonly aiStepTraceEnabled?: boolean | null;
   readonly requestPerfTraceEnabled?: boolean | null;
   readonly seedHookObservabilityEnabled?: boolean | null;

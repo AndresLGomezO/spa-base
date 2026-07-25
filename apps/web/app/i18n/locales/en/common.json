@@ -134,6 +134,7 @@
       "sortTitle": "Title A–Z",
       "filterByStatus": "Status",
       "filterByTypology": "Execution type",
+      "filterByFeature": "Feature",
       "showSkipped": "Show skipped",
       "clearFilters": "Clear filters",
       "minWrites": "Min writes",
@@ -271,6 +272,8 @@
       "writesDeleted": "Deleted",
       "writesAcrossExecutions": "{{total}} writes across {{count}} executions",
       "totalWrites": "Total writes",
+      "totalTokens": "Total tokens",
+      "estimatedCostUsd": "Estimated cost",
       "noIssues": "No issues detected in the current sample.",
       "uniqueActors": "Unique actors",
       "errors": "Errors",
@@ -350,16 +353,45 @@
   },
   "aiDebugger": {
     "selectStep": "Select a trace step.",
-    "noTrace": "No step trace recorded for this job. Traces are enabled in non-production when AI_STEP_TRACE_ENABLED is not false.",
+    "noTrace": "No step trace recorded for this job. Traces are enabled when AI_TRACE_ENABLED is not false (defaults on outside production).",
     "noTraceEarlyFailure": "This job failed before any orchestrator steps ran, so there is no step trace. Inspect input and the raw record below.",
+    "relatedJobs": "Related jobs",
+    "features": {
+      "chat": "Chat",
+      "uiBuilder": "UI Builder",
+      "dataModelBuilder": "Data model builder",
+      "dataHookCallAi": "Data hook callAi",
+      "dataHookBatchCallAi": "Data hook batch callAi",
+      "dataHookEmbedding": "Data hook embedding",
+      "gmailExtract": "Gmail extract"
+    },
     "fields": {
       "feature": "Feature",
+      "operation": "Operation",
+      "parentJobId": "Parent job",
       "createdAt": "Created",
       "updatedAt": "Updated",
       "surface": "Surface",
       "outputMode": "Output mode",
       "input": "Input",
       "progress": "Progress"
+    },
+    "usage": {
+      "title": "Model usage",
+      "model": "Model",
+      "promptTokens": "Prompt tokens",
+      "candidatesTokens": "Output tokens",
+      "thoughtsTokens": "Thinking tokens",
+      "cachedContentTokens": "Cached tokens",
+      "totalTokens": "Total tokens",
+      "finishReason": "Finish reason",
+      "outputDimensions": "Embedding dimensions",
+      "inputCharacters": "Input characters",
+      "imageCount": "Images",
+      "aspectRatio": "Aspect ratio",
+      "estimatedCostUsd": "Estimated cost",
+      "costTier": "Cost tier",
+      "estimateDisclaimer": "Rough estimate from a hardcoded price table — may lag real Vertex billing."
     },
     "copyTrace": "Copy full trace JSON",
     "liveDraft": "Live draft snapshot",
@@ -754,6 +786,28 @@
   "mainViewDesigner": {
     "title": "Main view Designer",
     "settings": "Settings",
+    "summary": {
+      "help": "Configure a Summary button on the entity main page. It loads Markdown from another entity (for example portfolio settings) and shows one tab per field.",
+      "sourceEntity": {
+        "label": "Summary source entity",
+        "none": "None"
+      },
+      "sourceRecordId": {
+        "label": "Source record id (optional)",
+        "placeholder": "Leave empty to use the first record"
+      },
+      "tabs": {
+        "label": "Summary tabs",
+        "add": "Add tab",
+        "empty": "Add at least one tab with a string field.",
+        "defaultLabel": "Overview",
+        "id": "Id",
+        "tabLabel": "Label",
+        "field": "Field",
+        "fieldNone": "Select field",
+        "remove": "Remove"
+      }
+    },
     "tabs": {
       "settings": "Settings",
       "layout": "Layout",
@@ -780,6 +834,11 @@
     "title": "Detailed View Designer",
     "settings": "Settings",
     "previewNoRecords": "Create at least one element to visualize the preview.",
+    "summaryField": {
+      "label": "Summary field",
+      "none": "None",
+      "help": "Choose a string field to show as a Summary button on the record detail page. The field value is rendered as Markdown in a side panel. Leave empty to hide the button."
+    },
     "tabs": {
       "settings": "Settings",
       "layout": "Layout",
@@ -1525,6 +1584,16 @@
       "sectionRelatedEmail": "Related email ingest",
       "sectionRelatedEmailEmpty": "No related email-ingest hook executions in the selected time range."
     },
+    "summary": {
+      "button": "Summary",
+      "title": "Summary",
+      "copyMarkdown": "Copy markdown",
+      "copiedMarkdown": "Markdown copied",
+      "copyMarkdownFailed": "Could not copy markdown",
+      "tabsAriaLabel": "Summary sections",
+      "emptyTitle": "Summary in progress",
+      "emptyDescription": "This section will fill in once the AI summary is generated."
+    },
     "recordsJson": {
       "viewTitle": "Exported records JSON",
       "viewDescription": "Copy or review the exported entity records. Import accepts the same shape as a single object or an array of objects.",
@@ -1783,6 +1852,13 @@
       "labelAlignCenter": "Center",
       "labelAlignRight": "Right",
       "showActions": "Show actions menu",
+      "summaryField": {
+        "label": "Row summary field",
+        "none": "None (hide summary icon)",
+        "inherit": "Same as detail ({{field}})",
+        "inheritNone": "Same as detail (none configured)",
+        "help": "Shows an AI Summary icon on expandable row actions. It opens the side panel with that field’s Markdown. Leave as “Same as detail” to reuse the detail Summary field."
+      },
       "layoutColumns": "Layout columns",
       "gridGap": "Grid gap",
       "gridTemplateColumns": "Grid template columns",
@@ -1993,9 +2069,13 @@
       "saveFailed": "Unable to update observability settings.",
       "loadFailed": "Unable to load observability settings.",
       "viewLogsPrefix": "View captured logs in",
-      "aiStepTrace": {
-        "title": "AI step trace",
-        "description": "Record orchestrator step prompts, model answers, and validation details on UI Builder AI jobs."
+      "aiEnabled": {
+        "title": "AI enabled (kill-switch)",
+        "description": "When off, every model call is rejected and recorded as a failed AI job. No Vertex requests are made."
+      },
+      "aiTrace": {
+        "title": "AI request trace",
+        "description": "Record prompts, model answers, and validation details on every AI job (chat, UI Builder, data hooks, Gmail extract)."
       },
       "requestPerfTrace": {
         "title": "Request performance trace",

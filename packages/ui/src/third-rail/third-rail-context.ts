@@ -12,6 +12,8 @@ export interface OpenThirdRailOptions {
   readonly widths?: ThirdRailWidthConfig;
   readonly closeLabel?: string;
   readonly headerActions?: ReactNode;
+  /** Visual tone; `ai` applies spark/gradient chrome for AI-authored panels. */
+  readonly tone?: "default" | "ai";
   /** Return false to keep the rail open (e.g. unsaved-changes guard). */
   readonly onClose?: () => void | boolean;
 }

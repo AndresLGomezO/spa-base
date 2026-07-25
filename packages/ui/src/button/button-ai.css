@@ -1,0 +1,58 @@
+.btn-ai {
+  isolation: isolate;
+}
+
+.btn-ai::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    color-mix(in oklab, #a78bfa 35%, transparent) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  opacity: 0.55;
+  animation: btn-ai-shimmer 3.2s ease-in-out infinite;
+}
+
+.btn-ai > * {
+  position: relative;
+  z-index: 1;
+}
+
+.btn-ai:hover {
+  animation: btn-ai-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes btn-ai-shimmer {
+  0%,
+  100% {
+    background-position: 120% 0;
+  }
+  50% {
+    background-position: -20% 0;
+  }
+}
+
+@keyframes btn-ai-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px color-mix(in oklab, #8b5cf6 18%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 28px color-mix(in oklab, #8b5cf6 32%, transparent),
+      0 0 12px color-mix(in oklab, #22d3ee 18%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-ai::before,
+  .btn-ai:hover {
+    animation: none;
+  }
+}

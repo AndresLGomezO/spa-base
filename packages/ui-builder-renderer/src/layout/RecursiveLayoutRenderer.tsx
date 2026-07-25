@@ -278,6 +278,44 @@ function columnContainsComponentKind(
   return false;
 }
 
+/** True when this row is page-list or nests one (container/grid shell). */
+function rowContainsPageList(row: RowNode): boolean {
+  if (row.type !== "component") {
+    return false;
+  }
+  if (row.component.kind === "page-list") {
+    return true;
+  }
+  if (isContainerComponent(row.component) || isGridComponent(row.component)) {
+    return row.component.rows.some(rowContainsPageList);
+  }
+  return false;
+}
+
+/**
+ * Single-column templates from container→grid migration (`1fr`, `repeat(1,…)`).
+ * Those stacks must stay flex columns on main pages so page-list can scroll.
+ */
+function isSingleColumnGridTemplate(template: string | undefined): boolean {
+  const normalized = (template ?? "1fr").trim().toLowerCase();
+  if (
+    normalized === "1fr" ||
+    normalized === "100%" ||
+    normalized === "minmax(0, 1fr)" ||
+    normalized === "minmax(0,1fr)" ||
+    normalized === "minmax(0, 100fr)" ||
+    normalized === "minmax(0,100fr)"
+  ) {
+    return true;
+  }
+  return /^repeat\(\s*1\s*,/.test(normalized);
+}
+
+const MAIN_PAGE_FILL_ROOT_CLASS =
+  "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden";
+const MAIN_PAGE_LIST_SLOT_CLASS =
+  "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden";
+
 function isStretchedSurfaceFillContext(
   context: LayoutRenderContext,
   stretchRootColumns: boolean,
@@ -410,6 +448,7 @@ function shouldStretchContainerInnerRows(
   return (
     shouldStretchRootContainerRow(row, context, rowScope, columnGridOptions) ||
     containerParentIsRow ||
+    (context.mode === "mainPage" && rowContainsPageList(row)) ||
     containerEstablishesDefiniteHeight(styles) ||
     containerUsesPercentFillHeight(styles) ||
     containerUsesPercentSplitHeight(styles) ||
@@ -1041,7 +1080,42 @@ function renderRow(
         row.component.styles,
         atBreakpoint,
       );
-      const gridInner = (
+      const renderAsMainPageColumnStack =
+        context.mode === "mainPage" &&
+        rowContainsPageList(row) &&
+        isSingleColumnGridTemplate(row.component.gridTemplateColumns);
+      const gridInner = renderAsMainPageColumnStack ? (
+        <MotionPressHost
+          key={row.id}
+          press={row.motion?.press}
+          pressDurationMs={row.motion?.pressDurationMs}
+          data-layout-row-id={row.id}
+          className={[
+            MAIN_PAGE_LIST_SLOT_CLASS,
+            gridStyles.className,
+            motionPreset.className,
+            visibilityClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={{
+            ...mergeMotionPresetStyle(gridStyleWithoutGap, motionPreset),
+            ...(resolvedGap !== undefined ? { gap: resolvedGap } : {}),
+          }}
+        >
+          <ResponsiveStyleTag cssText={gridStyles.cssText} />
+          {renderRows(
+            row.component.rows,
+            context,
+            syntheticColumn,
+            atBreakpoint,
+            gridScope,
+            rowIndex,
+            true,
+            columnGridOptions,
+          )}
+        </MotionPressHost>
+      ) : (
         <MotionPressHost
           key={row.id}
           press={row.motion?.press}
@@ -1271,6 +1345,12 @@ function renderRow(
         !stretchPercentFillContainer
           ? "self-stretch"
           : undefined;
+      const mainPageListContainerClass =
+        context.mode === "mainPage" &&
+        containerStackDirection === "column" &&
+        rowContainsPageList(row)
+          ? MAIN_PAGE_LIST_SLOT_CLASS
+          : undefined;
       const containerInner = (
         <MotionPressHost
           key={row.id}
@@ -1278,6 +1358,7 @@ function renderRow(
           pressDurationMs={row.motion?.pressDurationMs}
           data-layout-row-id={row.id}
           className={[
+            mainPageListContainerClass,
             stretchedContainerClass,
             flexWrapRowItemClass,
             containerWidthClass,
@@ -1379,10 +1460,15 @@ function renderRow(
     const embeddableLayoutRowClass = isEmbeddableLayoutRow
       ? resolveEmbeddableComponentRowClassName(row.component, stackDirection)
       : undefined;
+    const isMainPageListSlot =
+      isPageListRow ||
+      ((isContainerComponent(row.component) ||
+        isGridComponent(row.component)) &&
+        rowContainsPageList(row));
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
-        ? isPageListRow
-          ? "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col"
+        ? isMainPageListSlot
+          ? MAIN_PAGE_LIST_SLOT_CLASS
           : isPageToolbarRow
             ? "relative z-20 shrink-0"
             : "shrink-0"
@@ -1598,6 +1684,7 @@ export function RecursiveLayoutRenderer({
 
   if (isScreenRootNode(layout.root)) {
     const screenRoot = layout.root;
+    const isMainPageScreen = context.mode === "mainPage";
     const rootStylesResolved = resolveRowWrapperStyleRules(screenRoot.styles, {
       baseClassName: className,
       atBreakpoint,
@@ -1631,11 +1718,17 @@ export function RecursiveLayoutRenderer({
       );
     }
 
+    const useMainPageColumnFill =
+      isMainPageScreen &&
+      isSingleColumnGridTemplate(screenRoot.gridTemplateColumns);
+
     return (
       <LayoutRenderOptionsProvider value={columnGridOptions}>
         <div
           className={[
-            "flex w-full min-w-0 max-w-full flex-col",
+            isMainPageScreen
+              ? MAIN_PAGE_FILL_ROOT_CLASS
+              : "flex w-full min-w-0 max-w-full flex-col",
             rootStylesResolved.className,
             rootMotionClass.className,
           ]
@@ -1661,6 +1754,33 @@ export function RecursiveLayoutRenderer({
               (styleGap?.gap !== undefined && styleGap.gap !== null
                 ? `${styleGap.gap}px`
                 : undefined);
+
+            if (useMainPageColumnFill) {
+              return (
+                <div
+                  className={[MAIN_PAGE_FILL_ROOT_CLASS, styleGap?.className]
+                    .filter(Boolean)
+                    .join(" ")}
+                  style={
+                    gapStyleValue !== undefined
+                      ? { gap: gapStyleValue }
+                      : undefined
+                  }
+                >
+                  <ResponsiveStyleTag cssText={styleGap?.cssText} />
+                  {renderRows(
+                    screenRoot.rows,
+                    context,
+                    syntheticColumn,
+                    atBreakpoint,
+                    { rootColumnIndex: 0 },
+                    0,
+                    true,
+                    columnGridOptions,
+                  )}
+                </div>
+              );
+            }
 
             return (
               <div
@@ -1703,7 +1823,7 @@ export function RecursiveLayoutRenderer({
     stretchRootColumns,
   );
   const fillRootClass = isMainPage
-    ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+    ? MAIN_PAGE_FILL_ROOT_CLASS
     : isStretchedSurfaceFill
       ? "flex h-full min-h-0 min-w-0 max-w-full flex-1 flex-col"
       : isListOrDetailSurface(context)

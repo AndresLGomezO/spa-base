@@ -10,12 +10,19 @@ vi.mock("@google-cloud/vertexai", () => ({
   })),
 }));
 
-import { generateModelAnswer } from "./vertex-ai.client.js";
-import { VERTEX_RATE_LIMIT_ERROR_MESSAGE } from "./vertex-retry.js";
+import {
+  generateModelAnswer,
+  resetVertexClientsForTests,
+  resolveGeminiLocation,
+  resolveVertexApiEndpoint,
+} from "./vertex-ai.client.js";
+import { VERTEX_RATE_LIMIT_ERROR_MESSAGE } from "../../vertex-retry.js";
+import { VertexAI } from "@google-cloud/vertexai";
 
 const vertexConfig = {
   projectId: "demo",
   region: "us-central1",
+  geminiLocation: "global",
   modelId: "gemini-test",
   mockEnabled: false,
 };
@@ -29,13 +36,39 @@ function successResponse(text: string) {
           content: { parts: [{ text }] },
         },
       ],
+      usageMetadata: {
+        promptTokenCount: 12,
+        candidatesTokenCount: 4,
+        thoughtsTokenCount: 2,
+        cachedContentTokenCount: 1,
+        totalTokenCount: 18,
+      },
     },
   };
 }
 
+describe("Gemini location helpers", () => {
+  it("defaults gemini location to global and uses the global api host", () => {
+    expect(
+      resolveGeminiLocation({
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        mockEnabled: false,
+      }),
+    ).toBe("global");
+    expect(resolveVertexApiEndpoint("global")).toBe(
+      "aiplatform.googleapis.com",
+    );
+    expect(resolveVertexApiEndpoint("us-central1")).toBeUndefined();
+  });
+});
+
 describe("generateModelAnswer rate limit retries", () => {
   beforeEach(() => {
     generateContentMock.mockReset();
+    resetVertexClientsForTests();
+    vi.mocked(VertexAI).mockClear();
     vi.useFakeTimers();
   });
 
@@ -63,7 +96,18 @@ describe("generateModelAnswer rate limit retries", () => {
     });
 
     await vi.runAllTimersAsync();
-    await expect(promise).resolves.toBe("hello");
+    await expect(promise).resolves.toMatchObject({
+      text: "hello",
+      usage: {
+        modelId: "gemini-test",
+        promptTokens: 12,
+        candidatesTokens: 4,
+        thoughtsTokens: 2,
+        cachedContentTokens: 1,
+        totalTokens: 18,
+        finishReason: "STOP",
+      },
+    });
     expect(generateContentMock).toHaveBeenCalledTimes(3);
   });
 
@@ -101,6 +145,23 @@ describe("generateModelAnswer rate limit retries", () => {
           maxOutputTokens: 8192,
           thinkingConfig: { thinkingBudget: 512 },
         }),
+      }),
+    );
+  });
+
+  it("constructs the Vertex client with global location and apiEndpoint", async () => {
+    generateContentMock.mockResolvedValueOnce(successResponse("ok"));
+
+    await generateModelAnswer(vertexConfig, {
+      systemInstruction: "test",
+      userText: "question",
+    });
+
+    expect(VertexAI).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project: "demo",
+        location: "global",
+        apiEndpoint: "aiplatform.googleapis.com",
       }),
     );
   });

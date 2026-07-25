@@ -1077,12 +1077,30 @@ const layoutDocumentRootSchema = z.union([
   screenRootNodeSchema,
 ]);
 
+export const uiLayoutSummaryTabSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    field: z.string().trim().min(1),
+  })
+  .strict();
+
+export const uiLayoutSummarySchema = z
+  .object({
+    sourceEntity: z.string().trim().min(1),
+    sourceRecordId: z.string().trim().min(1).optional(),
+    tabs: z.array(uiLayoutSummaryTabSchema).min(1),
+  })
+  .strict();
+
 export const uiLayoutDocumentSchema = z
   .object({
     root: layoutDocumentRootSchema,
     showActions: z.boolean().optional(),
     cardsPerRow: z.number().int().min(1).max(4).optional(),
     motion: motionPresetSchema.optional(),
+    summaryField: z.string().trim().min(1).optional(),
+    summary: uiLayoutSummarySchema.optional(),
   })
   .strict()
   .superRefine((value, ctx) => {

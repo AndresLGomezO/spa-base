@@ -32,13 +32,69 @@ function aiJobTitle(job: AiJobRecord): string {
       return question.slice(0, 80);
     }
   }
-  if (job.feature === "uiBuilder" && "entityName" in job.input) {
+  if (
+    (job.feature === "uiBuilder" || job.feature === "gmailExtract") &&
+    "entityName" in job.input
+  ) {
     const entityName = job.input.entityName;
     if (typeof entityName === "string") {
       return `${entityName} · ${job.status}`;
     }
   }
+  if (
+    job.feature === "dataHookCallAi" &&
+    "kind" in job.input &&
+    job.input.kind === "dataHookCallAi"
+  ) {
+    const hookLabel = job.input.hookName ?? job.input.hookId;
+    return `${hookLabel} · callAi`;
+  }
+  if (
+    job.feature === "dataHookBatchCallAi" &&
+    "kind" in job.input &&
+    job.input.kind === "dataHookBatchCallAi"
+  ) {
+    return `batch callAi · ${job.input.itemCount} items`;
+  }
+  if (
+    job.feature === "dataHookEmbedding" &&
+    "kind" in job.input &&
+    job.input.kind === "dataHookEmbedding"
+  ) {
+    const label = job.input.entityName ?? job.input.hookId ?? "embedding";
+    return `${label} · embedding`;
+  }
+  if (
+    job.feature === "uiBuilder" &&
+    "kind" in job.input &&
+    job.input.kind === "uiBuilderStep"
+  ) {
+    return `${job.input.stepId} · step`;
+  }
   return job.id;
+}
+
+function aiJobUsageSummary(job: AiJobRecord): {
+  readonly modelId?: string;
+  readonly totalTokens?: number;
+  readonly estimatedCostUsd?: number;
+} {
+  const usage = job.modelUsage;
+  if (!usage) {
+    return {};
+  }
+  const totalTokens =
+    usage.totalTokens ??
+    (usage.promptTokens != null || usage.candidatesTokens != null
+      ? (usage.promptTokens ?? 0) + (usage.candidatesTokens ?? 0)
+      : undefined);
+  return {
+    modelId: usage.modelId,
+    ...(totalTokens != null ? { totalTokens } : {}),
+    ...(usage.estimatedCostUsd != null
+      ? { estimatedCostUsd: usage.estimatedCostUsd }
+      : {}),
+  };
 }
 
 export function toAiDebugEvent(job: AiJobRecord): DebugEvent {
@@ -53,6 +109,7 @@ export function toAiDebugEvent(job: AiJobRecord): DebugEvent {
       feature: job.feature,
       status: job.status,
       error: job.error,
+      ...aiJobUsageSummary(job),
     },
     payload: {
       id: job.id,
@@ -62,6 +119,7 @@ export function toAiDebugEvent(job: AiJobRecord): DebugEvent {
       output: job.output,
       error: job.error,
       progress: job.progress,
+      ...(job.modelUsage ? { modelUsage: job.modelUsage } : {}),
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
     },

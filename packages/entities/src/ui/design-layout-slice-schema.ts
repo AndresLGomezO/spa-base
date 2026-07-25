@@ -66,6 +66,7 @@ const listSliceDataSchema = z
         columns: z.array(groupedTableColumnSchema).min(1),
         rowExpandLayout: uiLayoutDocumentSchema,
         showActions: z.boolean().optional(),
+        summaryField: z.string().optional(),
       })
       .strict(),
     listItem: uiLayoutDocumentSchema.optional(),
@@ -101,6 +102,7 @@ export interface ListSliceData {
     readonly columns: readonly GroupedTableColumn[];
     readonly rowExpandLayout: UiLayoutDocument;
     readonly showActions?: boolean;
+    readonly summaryField?: string;
   };
   readonly listItem?: UiLayoutDocument;
 }
@@ -320,12 +322,21 @@ function listSliceToUiConfig(
       : {}),
   };
 
+  const expandableViewSource = expandableView ?? {
+    type: "expandableTable" as const,
+    name: "expandable",
+    fields: data.table.fields,
+    columns: data.expandableTable.columns,
+    rowExpandLayout: data.expandableTable.rowExpandLayout,
+  };
+  const {
+    summaryField: _ignoredSummaryField,
+    ...expandableViewWithoutSummary
+  } = expandableViewSource;
+  void _ignoredSummaryField;
+
   const expandableViewConfig: ExpandableTableViewConfig = {
-    ...(expandableView ?? {
-      type: "expandableTable",
-      name: "expandable",
-      fields: data.table.fields,
-    }),
+    ...expandableViewWithoutSummary,
     type: "expandableTable",
     name: expandableView?.name ?? "expandable",
     fields:
@@ -335,6 +346,9 @@ function listSliceToUiConfig(
     columns: data.expandableTable.columns,
     rowExpandLayout: data.expandableTable.rowExpandLayout,
     showActions: data.expandableTable.showActions,
+    ...(data.expandableTable.summaryField !== undefined
+      ? { summaryField: data.expandableTable.summaryField }
+      : {}),
     ...(expandableView?.filters ? { filters: expandableView.filters } : {}),
     ...(expandableView?.defaultSort
       ? { defaultSort: expandableView.defaultSort }

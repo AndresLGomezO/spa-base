@@ -60,6 +60,26 @@ function sliceFirstJsonObject(text: string): string | null {
   return null;
 }
 
+export const INCOMPLETE_JSON_OBJECT_ERROR =
+  "Model response appears truncated (incomplete JSON object).";
+
+export const MAX_OUTPUT_TOKENS_ERROR =
+  "Model response was truncated (max output tokens reached).";
+
+/** True when the model answer was cut off mid-JSON (or hit max tokens). */
+export function isRetriableTruncatedModelAnswerError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const message = error.message;
+  return (
+    message.includes(INCOMPLETE_JSON_OBJECT_ERROR) ||
+    message.includes(MAX_OUTPUT_TOKENS_ERROR) ||
+    message.includes("truncated (incomplete JSON") ||
+    message.includes("max output tokens reached")
+  );
+}
+
 /**
  * Extract a JSON object from a model answer that may include markdown fences or prose.
  */
@@ -72,10 +92,8 @@ export function extractJsonFromModelAnswer(answer: string): unknown {
   const candidate = extractJsonCandidate(trimmed);
   const jsonText = sliceFirstJsonObject(candidate);
   if (!jsonText) {
-    if (candidate.includes("{") && !candidate.includes("}")) {
-      throw new Error(
-        "Model response appears truncated (incomplete JSON object).",
-      );
+    if (candidate.includes("{")) {
+      throw new Error(INCOMPLETE_JSON_OBJECT_ERROR);
     }
     throw new Error("No JSON object found in model answer.");
   }

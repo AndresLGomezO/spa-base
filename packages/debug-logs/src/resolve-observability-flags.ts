@@ -17,14 +17,33 @@ function parseBooleanEnvFlag(value: string | undefined): boolean | undefined {
   return undefined;
 }
 
-export function resolveEnvAiStepTraceEnabled(
+export function resolveEnvAiEnabled(
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  const explicit = parseBooleanEnvFlag(env.AI_STEP_TRACE_ENABLED);
+  const explicit = parseBooleanEnvFlag(env.AI_ENABLED);
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  return true;
+}
+
+export function resolveEnvAiTraceEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const explicit =
+    parseBooleanEnvFlag(env.AI_TRACE_ENABLED) ??
+    parseBooleanEnvFlag(env.AI_STEP_TRACE_ENABLED);
   if (explicit !== undefined) {
     return explicit;
   }
   return env.NODE_ENV !== "production";
+}
+
+/** @deprecated use resolveEnvAiTraceEnabled */
+export function resolveEnvAiStepTraceEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return resolveEnvAiTraceEnabled(env);
 }
 
 export function resolveEnvRequestPerfTraceEnabled(
@@ -59,25 +78,53 @@ export function resolveEnvGmailIngestDeliveryMode(
 export function getObservabilityEnvDefaults(
   env: NodeJS.ProcessEnv = process.env,
 ): ObservabilityEnvDefaults {
+  const aiTraceEnabled = resolveEnvAiTraceEnabled(env);
   return {
-    aiStepTraceEnabled: resolveEnvAiStepTraceEnabled(env),
+    aiEnabled: resolveEnvAiEnabled(env),
+    aiTraceEnabled,
+    aiStepTraceEnabled: aiTraceEnabled,
     requestPerfTraceEnabled: resolveEnvRequestPerfTraceEnabled(env),
     seedHookObservabilityEnabled: resolveEnvSeedHookObservabilityEnabled(env),
     gmailIngestDeliveryMode: resolveEnvGmailIngestDeliveryMode(env),
   };
 }
 
-export function resolveAiStepTraceEnabled(
+export function resolveAiEnabled(
   settings: PlatformRuntimeSettings | null | undefined,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
+  if (settings?.aiEnabled !== null && settings?.aiEnabled !== undefined) {
+    return settings.aiEnabled;
+  }
+  return resolveEnvAiEnabled(env);
+}
+
+export function resolveAiTraceEnabled(
+  settings: PlatformRuntimeSettings | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (
+    settings?.aiTraceEnabled !== null &&
+    settings?.aiTraceEnabled !== undefined
+  ) {
+    return settings.aiTraceEnabled;
+  }
+  // Back-compat: legacy platform key
   if (
     settings?.aiStepTraceEnabled !== null &&
     settings?.aiStepTraceEnabled !== undefined
   ) {
     return settings.aiStepTraceEnabled;
   }
-  return resolveEnvAiStepTraceEnabled(env);
+  return resolveEnvAiTraceEnabled(env);
+}
+
+/** @deprecated use resolveAiTraceEnabled */
+export function resolveAiStepTraceEnabled(
+  settings: PlatformRuntimeSettings | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return resolveAiTraceEnabled(settings, env);
 }
 
 export function resolveRequestPerfTraceEnabled(
@@ -123,8 +170,11 @@ export function resolveEffectiveObservabilityFlags(
   settings: PlatformRuntimeSettings | null | undefined,
   env: NodeJS.ProcessEnv = process.env,
 ): EffectiveObservabilityFlags {
+  const aiTraceEnabled = resolveAiTraceEnabled(settings, env);
   return {
-    aiStepTraceEnabled: resolveAiStepTraceEnabled(settings, env),
+    aiEnabled: resolveAiEnabled(settings, env),
+    aiTraceEnabled,
+    aiStepTraceEnabled: aiTraceEnabled,
     requestPerfTraceEnabled: resolveRequestPerfTraceEnabled(settings, env),
     seedHookObservabilityEnabled: resolveSeedHookObservabilityEnabled(
       settings,

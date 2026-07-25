@@ -7,7 +7,7 @@ const mockVertexConfig = {
   mockEnabled: true as const,
   projectId: "demo",
   region: "us-central1",
-  modelId: "gemini-2.5-pro",
+  modelId: "gemini-3.6-flash",
 };
 
 const entityCurrentFragment = `# Entity contract

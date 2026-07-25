@@ -110,6 +110,10 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     readonly GroupedTableColumn[]
   >(() => defaultExpandableView.columns);
   const [expandableShowActions, setExpandableShowActions] = useState(true);
+  /** `undefined` inherits detail summaryField; `""` hides; otherwise field path. */
+  const [expandableSummaryField, setExpandableSummaryField] = useState<
+    string | undefined
+  >(undefined);
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
     createDefaultExpandableLayout(fieldPaths),
   );
@@ -174,10 +178,16 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     if (expandableView) {
       setExpandableColumns([...expandableView.columns]);
       setExpandableShowActions(expandableView.showActions !== false);
+      setExpandableSummaryField(
+        expandableView.summaryField !== undefined
+          ? expandableView.summaryField
+          : undefined,
+      );
     } else {
       const defaults = buildDefaultExpandableTable(definition, fieldPaths);
       setExpandableColumns(defaults.columns);
       setExpandableShowActions(true);
+      setExpandableSummaryField(undefined);
     }
 
     const listItem =
@@ -203,37 +213,50 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   }, [definition, definition.ui.listItem, fieldPaths, listViewType, uiViews]);
 
   const buildExpandableTableView = useCallback(
-    (existing?: ExpandableTableViewConfig): ExpandableTableViewConfig => ({
-      ...(existing ?? {
-        type: "expandableTable",
+    (existing?: ExpandableTableViewConfig): ExpandableTableViewConfig => {
+      const existingSource = existing ?? {
+        type: "expandableTable" as const,
         name: "expandable",
         fields: fieldPaths,
-      }),
-      type: "expandableTable",
-      name: existing?.name ?? "expandable",
-      fields:
-        existing?.fields && existing.fields.length > 0
-          ? existing.fields
-          : fieldPaths,
-      columns:
-        expandableColumns.length > 0
-          ? expandableColumns
-          : buildDefaultExpandableTable(definition, fieldPaths).columns,
-      rowExpandLayout: layout,
-      showActions: expandableShowActions,
-      ...(existing?.imageFieldPath
-        ? { imageFieldPath: existing.imageFieldPath }
-        : defaultExpandableView.imageFieldPath
-          ? { imageFieldPath: defaultExpandableView.imageFieldPath }
+        columns: [] as ExpandableTableViewConfig["columns"],
+        rowExpandLayout: layout,
+      };
+      const { summaryField: _ignoredSummaryField, ...existingWithoutSummary } =
+        existingSource;
+      void _ignoredSummaryField;
+
+      return {
+        ...existingWithoutSummary,
+        type: "expandableTable",
+        name: existing?.name ?? "expandable",
+        fields:
+          existing?.fields && existing.fields.length > 0
+            ? existing.fields
+            : fieldPaths,
+        columns:
+          expandableColumns.length > 0
+            ? expandableColumns
+            : buildDefaultExpandableTable(definition, fieldPaths).columns,
+        rowExpandLayout: layout,
+        showActions: expandableShowActions,
+        ...(expandableSummaryField !== undefined
+          ? { summaryField: expandableSummaryField }
           : {}),
-      ...(existing?.filters ? { filters: existing.filters } : {}),
-      ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
-    }),
+        ...(existing?.imageFieldPath
+          ? { imageFieldPath: existing.imageFieldPath }
+          : defaultExpandableView.imageFieldPath
+            ? { imageFieldPath: defaultExpandableView.imageFieldPath }
+            : {}),
+        ...(existing?.filters ? { filters: existing.filters } : {}),
+        ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
+      };
+    },
     [
       defaultExpandableView.imageFieldPath,
       definition,
       expandableColumns,
       expandableShowActions,
+      expandableSummaryField,
       fieldPaths,
       layout,
     ],
@@ -313,12 +336,16 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
         columns: [...expandableColumns],
         rowExpandLayout: layout,
         showActions: expandableShowActions,
+        ...(expandableSummaryField !== undefined
+          ? { summaryField: expandableSummaryField }
+          : {}),
       },
       listItem: layout,
     };
   }, [
     expandableColumns,
     expandableShowActions,
+    expandableSummaryField,
     fieldPaths,
     layout,
     tableFields,
@@ -337,6 +364,11 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     setTableShowActions(listData.table.showActions !== false);
     setExpandableColumns([...listData.expandableTable.columns]);
     setExpandableShowActions(listData.expandableTable.showActions !== false);
+    setExpandableSummaryField(
+      listData.expandableTable.summaryField !== undefined
+        ? listData.expandableTable.summaryField
+        : undefined,
+    );
     const nextLayout = ensureContainerRoot(
       listData.listItem ?? listData.expandableTable.rowExpandLayout,
     );
@@ -366,6 +398,8 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     setRowExpandLayout: setLayout,
     expandableShowActions,
     setExpandableShowActions,
+    expandableSummaryField,
+    setExpandableSummaryField,
     layout,
     setLayout,
     isSaving,

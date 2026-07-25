@@ -8,6 +8,7 @@ import {
 import { createRuntimeSettingsCache } from "@repo/debug-logs";
 import { createFirestoreAdminPlatformRuntimeSettingsRepository } from "@repo/gcp-firebase";
 
+import { createWorkerAiController } from "./ai/create-worker-ai-controller.js";
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
 import { createGmailIngestProcessorDeps } from "./services/gmail-ingest-processor.js";
@@ -39,7 +40,17 @@ const platformRuntimeSettingsRepository =
 const runtimeSettingsCache = createRuntimeSettingsCache(
   platformRuntimeSettingsRepository,
 );
-const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig);
+
+const aiController = createWorkerAiController({
+  aiJobRepository,
+  vertexAiConfig,
+  isAiEnabled: () => runtimeSettingsCache.isAiEnabled(),
+  isAiTraceEnabled: () => runtimeSettingsCache.isAiTraceEnabled(),
+});
+
+const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig, {
+  aiController,
+});
 
 const gmailTaskEnqueuer = createWorkerGmailTaskEnqueuer({
   projectId: workerEnv.GCP_PROJECT_ID,
@@ -69,6 +80,7 @@ const gmailIngest =
             ? { gmailPubsubTopic: workerEnv.GMAIL_PUBSUB_TOPIC }
             : {}),
           vertexAiConfig,
+          aiController,
           enqueueProcessMessage: gmailTaskEnqueuer.enqueueProcessMessage,
           enqueueWindowSync: gmailTaskEnqueuer.enqueueWindowSync,
           scheduleWatchRenew: gmailTaskEnqueuer.scheduleWatchRenew,
@@ -82,9 +94,10 @@ const server = await buildWorkerServer({
   uiBuilderAiSuggestionRepository,
   entityDefinitionRepository,
   vertexAiConfig,
+  aiController,
   firebaseAdminConfig,
   indexProjectId: workerEnv.GCP_PROJECT_ID,
-  isAiStepTraceEnabled: () => runtimeSettingsCache.isAiStepTraceEnabled(),
+  isAiStepTraceEnabled: () => runtimeSettingsCache.isAiTraceEnabled(),
   ...dataHookProcessorDeps,
   ...(gmailIngest ? { gmailIngest } : {}),
 });
@@ -109,6 +122,8 @@ console.log(
     useRealVertex: workerEnv.USE_REAL_VERTEX,
     gcpProjectId: workerEnv.GCP_PROJECT_ID,
     vertexProjectId: vertexAiConfig.projectId,
+    vertexModelId: vertexAiConfig.modelId,
+    vertexReasoningModelId: vertexAiConfig.reasoningModelId,
     vertexMock: vertexAiConfig.mockEnabled,
     gmailIngestEnabled: Boolean(gmailIngest),
     localGmailPollScheduler: workerEnv.IS_LOCAL && Boolean(gmailIngest),

@@ -58,10 +58,22 @@ variable "worker_service_image" {
   default     = "us-central1-docker.pkg.dev/entitysystem-development/entitysystem-repo/worker-service:latest"
 }
 
-variable "vertex_gemini_model_id" {
-  description = "Vertex AI Gemini model id for the AI worker (VERTEX_MODEL_ID)."
+variable "vertex_location" {
+  description = "Vertex AI location for Gemini generateContent (VERTEX_LOCATION). Gemini 3.x preview models require global."
   type        = string
-  default     = "gemini-2.5-flash"
+  default     = "global"
+}
+
+variable "vertex_gemini_model_id" {
+  description = "Default Vertex AI Gemini model id for the AI worker (VERTEX_MODEL_ID). Used for classify, chat, UI builder, Gmail extract."
+  type        = string
+  default     = "gemini-3.6-flash"
+}
+
+variable "vertex_gemini_reasoning_model_id" {
+  description = "Vertex AI Gemini model id for demanding narrative / contract JSON summaries (VERTEX_REASONING_MODEL_ID)."
+  type        = string
+  default     = "gemini-3.1-pro-preview"
 }
 
 variable "enable_ai_worker" {

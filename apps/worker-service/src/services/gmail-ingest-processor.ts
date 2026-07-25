@@ -1,14 +1,12 @@
 import { z } from "zod";
 
 import {
-  buildEmailAiPrompt,
   buildEmailContentFingerprint,
   buildEmailHookEnvelope,
   buildGmailSearchQuery,
   buildIngestBatchHash,
   computeGmailWatchRenewAt,
   decryptUserSecret,
-  emailAiExtractResultSchema,
   extractBodyFields,
   GmailApiClient,
   refreshGmailAccessToken,
@@ -21,8 +19,8 @@ import {
   type EmailIngestStepTraceEntry,
   type EmailMatchBinding,
   type GmailIngestDeliveryMode,
-  type GmailMessageEnvelope,
 } from "@repo/gmail-ingest";
+import { runAiExtract } from "./gmail-ai-extract.js";
 import {
   createFirestoreAdminEmailIngestFingerprintRepository,
   createFirestoreAdminEmailIngestJobRepository,
@@ -49,11 +47,8 @@ import {
   runDataHook,
   type HookLogger,
 } from "@repo/hooks";
-import { extractJsonFromModelAnswer } from "@repo/ai-engine/extract-json-from-model-answer";
-import {
-  generateModelAnswer,
-  type VertexAiConfig,
-} from "@repo/ai-engine/vertex-ai.client";
+import type { AiController } from "@repo/ai-engine/controller";
+import { type VertexAiConfig } from "@repo/ai-engine/vertex-ai.client";
 import { getAllKnownPermissions } from "@repo/rbac";
 
 import type { DataHookProcessorDeps } from "./data-hook-processor.js";
@@ -103,6 +98,7 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
   readonly gmailPubsubTopic?: string;
   readonly getDeliveryMode: () => Promise<GmailIngestDeliveryMode>;
   readonly vertexAiConfig: VertexAiConfig;
+  readonly aiController: AiController;
   readonly enqueueProcessMessage: (payload: {
     readonly tenantId: string;
     readonly userId: string;
@@ -261,41 +257,6 @@ async function renewGmailWatchAndSchedule(
       watchExpiration,
     },
   });
-}
-
-async function runAiExtract(
-  deps: GmailIngestProcessorDeps,
-  options: {
-    readonly email: GmailMessageEnvelope;
-    readonly entityName: string;
-    readonly record: Record<string, unknown>;
-    readonly fieldNames: readonly string[];
-    readonly aiInstructions?: string | null;
-  },
-): Promise<EmailAiExtractResult | null> {
-  try {
-    const prompt = buildEmailAiPrompt({
-      email: options.email,
-      entityName: options.entityName,
-      recordSnapshot: options.record,
-      fieldNames: options.fieldNames,
-      aiInstructions: options.aiInstructions,
-    });
-    const answer = await generateModelAnswer(
-      deps.vertexAiConfig,
-      {
-        systemInstruction:
-          "You are an email structuring assistant. Reply with JSON only.",
-        userText: prompt,
-      },
-      { responseMimeType: "application/json" },
-    );
-    const json = extractJsonFromModelAnswer(answer);
-    const parsed = emailAiExtractResultSchema.safeParse(json);
-    return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
-  }
 }
 
 function messageOutcomeStepStatus(
@@ -608,6 +569,9 @@ export async function processGmailProcessMessage(
         );
         const fieldNames = entity ? Object.keys(entity.metadata.fields) : [];
         extracted = await runAiExtract(deps, {
+          tenantId,
+          userId,
+          jobId,
           email,
           entityName: binding.entityName,
           record: { ...record },
@@ -1574,6 +1538,7 @@ export function createGmailIngestProcessorDeps(
     readonly gmailPubsubTopic?: string;
     readonly getDeliveryMode: () => Promise<GmailIngestDeliveryMode>;
     readonly vertexAiConfig: VertexAiConfig;
+    readonly aiController: AiController;
     readonly enqueueProcessMessage: GmailIngestProcessorDeps["enqueueProcessMessage"];
     readonly enqueueWindowSync?: GmailIngestProcessorDeps["enqueueWindowSync"];
     readonly scheduleWatchRenew?: GmailIngestProcessorDeps["scheduleWatchRenew"];
@@ -1600,6 +1565,7 @@ export function createGmailIngestProcessorDeps(
       ? { gmailPubsubTopic: options.gmailPubsubTopic }
       : {}),
     vertexAiConfig: options.vertexAiConfig,
+    aiController: options.aiController,
     enqueueProcessMessage: options.enqueueProcessMessage,
     ...(options.enqueueWindowSync
       ? { enqueueWindowSync: options.enqueueWindowSync }

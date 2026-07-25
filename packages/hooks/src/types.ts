@@ -152,10 +152,21 @@ export interface DataHookAiRequest {
    * within a schedule tick share one model call.
    */
   readonly cacheKey?: string;
+  /** Observability metadata for unified AI job tracing. */
+  readonly hookId?: string;
+  readonly hookName?: string;
+  readonly hookExecutionId?: string;
+  readonly recordId?: string;
+  readonly entityName?: string;
 }
 
 export interface DataHookEmbeddingRequest {
   readonly text: string;
+  readonly tenantId?: string;
+  readonly hookId?: string;
+  readonly hookExecutionId?: string;
+  readonly recordId?: string;
+  readonly entityName?: string;
 }
 
 export interface HookServices {

@@ -56,6 +56,7 @@ import {
 } from "./entity-page-scroll-compact";
 import { useEntityFormModal } from "./entity-form-modal-context";
 import { EntityRecordsJsonToolbar } from "./json/EntityRecordsJsonToolbar";
+import { EntityMainPageSummaryButton } from "../../features/entity-summary/EntityMainPageSummaryButton";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -473,12 +474,17 @@ function EntityPageInner({ entityName }: EntityPageProps) {
           }
           onCreate={openCreateFormModal}
           extraActions={
-            isSuperAdmin ? (
-              <EntityRecordsJsonToolbar
-                entityName={entityName}
-                definition={definition}
-              />
-            ) : null
+            <>
+              {mainPageLayout?.summary ? (
+                <EntityMainPageSummaryButton summary={mainPageLayout.summary} />
+              ) : null}
+              {isSuperAdmin ? (
+                <EntityRecordsJsonToolbar
+                  entityName={entityName}
+                  definition={definition}
+                />
+              ) : null}
+            </>
           }
         />
       </div>

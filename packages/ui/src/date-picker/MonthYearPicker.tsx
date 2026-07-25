@@ -104,7 +104,12 @@ function MonthYearPickerPanel({
   }
 
   return (
-    <div className={cn("flex flex-col", density === "comfortable" ? "gap-3" : "gap-1.5")}>
+    <div
+      className={cn(
+        "flex flex-col",
+        density === "comfortable" ? "gap-3" : "gap-1.5",
+      )}
+    >
       {presets && presets.length > 0 ? (
         <DatePickerPresets
           presets={presets}
@@ -162,7 +167,11 @@ function MonthYearPickerTrigger({
   return (
     <div
       {...triggerProps}
-      className={cn("relative", compact ? "inline-block w-fit" : "w-full", className)}
+      className={cn(
+        "relative",
+        compact ? "inline-block w-fit" : "w-full",
+        className,
+      )}
     >
       <Input
         id={id}

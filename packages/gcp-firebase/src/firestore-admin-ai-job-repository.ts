@@ -1,4 +1,5 @@
 import { AI_JOBS_COLLECTION, aiJobRecordSchema } from "@repo/ai-engine/schemas";
+import { sanitizeStepTraceForPersistence } from "@repo/ai-engine/sanitize-ai-job-persistence";
 import { nanoid } from "nanoid";
 
 import type { AiJobRepository } from "@repo/firestore-converters/ai-job";
@@ -29,16 +30,19 @@ export function createFirestoreAdminAiJobRepository(
         id,
         tenantId,
         feature: input.feature,
-        status: "pending",
+        status: input.status ?? "pending",
         input: input.input,
         output: null,
-        error: null,
+        error: input.error ?? null,
         progress: null,
         draft: null,
         requestedBy: input.requestedBy,
         permission: input.permission,
         createdAt: now,
         updatedAt: now,
+        ...(input.operation ? { operation: input.operation } : {}),
+        ...(input.parentJobId ? { parentJobId: input.parentJobId } : {}),
+        ...(input.contextRef ? { contextRef: input.contextRef } : {}),
       });
       await collection(tenantId).doc(id).set(record);
       return record;
@@ -65,6 +69,23 @@ export function createFirestoreAdminAiJobRepository(
       await collection(tenantId).doc(id).set(next);
       return next;
     },
+    async appendStepTrace(tenantId, id, entry) {
+      const current = await this.getById(tenantId, id);
+      if (!current) {
+        throw new Error(`AI job not found: ${id}`);
+      }
+      const nextTrace = sanitizeStepTraceForPersistence([
+        ...(current.stepTrace ?? []),
+        entry,
+      ]);
+      const next = aiJobRecordSchema.parse({
+        ...current,
+        stepTrace: nextTrace,
+        updatedAt: new Date().toISOString(),
+      });
+      await collection(tenantId).doc(id).set(next);
+      return next;
+    },
     async listRecent(tenantId, options) {
       const limit = Math.min(Math.max(options?.limit ?? 20, 1), 1000);
       const query = applyListRecentTimeRange(
@@ -85,6 +106,11 @@ export function createFirestoreAdminAiJobRepository(
         )
         .filter((record) =>
           options?.feature ? record.feature === options.feature : true,
+        )
+        .filter((record) =>
+          options?.parentJobId
+            ? record.parentJobId === options.parentJobId
+            : true,
         )
         .slice(0, limit);
       return records;

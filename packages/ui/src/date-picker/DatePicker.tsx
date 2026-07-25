@@ -242,7 +242,11 @@ function DatePickerTrigger({
   return (
     <div
       {...triggerProps}
-      className={cn("relative", compact ? "inline-block w-fit" : "w-full", className)}
+      className={cn(
+        "relative",
+        compact ? "inline-block w-fit" : "w-full",
+        className,
+      )}
     >
       <Input
         id={id}

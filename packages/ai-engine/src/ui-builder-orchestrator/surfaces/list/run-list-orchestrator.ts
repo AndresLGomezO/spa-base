@@ -33,6 +33,7 @@ export interface RunListOrchestratorInput {
   readonly entityCurrentFragment: string;
   readonly entityFieldPaths: readonly string[];
   readonly callbacks: OrchestratorCallbacks;
+  readonly generateAnswer?: import("../../step-runner.js").GenerateAnswerFn;
 }
 
 export interface RunListOrchestratorResult {
@@ -83,6 +84,7 @@ export async function runListUiBuilderOrchestrator(
     recipe: listSurfaceRecipe,
     context,
     callbacks: input.callbacks,
+    ...(input.generateAnswer ? { generateAnswer: input.generateAnswer } : {}),
   });
 
   const draft = result.draft as ListUiBuilderDraft;

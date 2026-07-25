@@ -25,6 +25,8 @@
   "dependencies": {
     "@repo/theme": "workspace:*",
     "lucide-react": "catalog:",
+    "react-markdown": "catalog:",
+    "remark-gfm": "catalog:",
     "sonner": "catalog:"
   },
   "devDependencies": {

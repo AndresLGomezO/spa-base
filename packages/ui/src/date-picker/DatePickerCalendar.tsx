@@ -18,7 +18,7 @@ import {
   shiftMonth,
 } from "./date-picker.utils.js";
 
-export type DatePickerCalendarDensity = "compact" | "comfortable";
+type DatePickerCalendarDensity = "compact" | "comfortable";
 
 interface DatePickerCalendarProps {
   readonly view: CalendarView;
@@ -176,7 +176,9 @@ export function DatePickerCalendar({
       </div>
 
       {view === "year" ? (
-        <div className={cn("grid grid-cols-3", comfortable ? "gap-2" : "gap-1.5")}>
+        <div
+          className={cn("grid grid-cols-3", comfortable ? "gap-2" : "gap-1.5")}
+        >
           {yearPageYears.map((year) => (
             <button
               key={year}
@@ -202,7 +204,9 @@ export function DatePickerCalendar({
       ) : null}
 
       {view === "month" ? (
-        <div className={cn("grid grid-cols-3", comfortable ? "gap-2" : "gap-1.5")}>
+        <div
+          className={cn("grid grid-cols-3", comfortable ? "gap-2" : "gap-1.5")}
+        >
           {monthLabels.map((label, month) => (
             <button
               key={label}
@@ -240,7 +244,12 @@ export function DatePickerCalendar({
               <span key={label}>{label}</span>
             ))}
           </div>
-          <div className={cn("grid grid-cols-7", comfortable ? "gap-1" : "gap-0.5")}>
+          <div
+            className={cn(
+              "grid grid-cols-7",
+              comfortable ? "gap-1" : "gap-0.5",
+            )}
+          >
             {dayCells.map((cell) => {
               const isSelected =
                 selected?.year === cell.year &&

@@ -34,6 +34,13 @@ import {
   type HookExecutionStatusFilter,
   type HookExecutionTypeKey,
 } from "./hook-execution-live-metrics";
+import {
+  AI_JOB_FEATURE_KEYS,
+  aiJobFeatureForEvent,
+  aiJobFeatureLabelKey,
+  parseAiJobFeatures,
+  type AiJobFeatureKey,
+} from "./ai-job-features";
 
 type DebuggerListStatusFilter = DebugEventStatus | HookExecutionStatusFilter;
 
@@ -41,6 +48,7 @@ interface DebuggerListQuery {
   readonly search: string;
   readonly statuses: readonly DebuggerListStatusFilter[];
   readonly executionTypes: readonly HookExecutionTypeKey[];
+  readonly aiFeatures: readonly AiJobFeatureKey[];
   readonly minWrites: number;
   readonly minDurationMs: number;
   readonly sort: DebuggerListSort;
@@ -156,6 +164,10 @@ export function useDebuggerListQuery(
         activeSource === "hookExecution"
           ? parseHookExecutionTypes(searchParams.get("executionType"))
           : [],
+      aiFeatures:
+        activeSource === "ai"
+          ? parseAiJobFeatures(searchParams.get("aiFeature"))
+          : [],
       minWrites:
         activeSource === "hookExecution"
           ? parsePositiveInt(searchParams.get("minWrites"))
@@ -270,6 +282,28 @@ export function useDebuggerListQuery(
     [activeSource, updateSearchParams],
   );
 
+  const toggleAiFeature = useCallback(
+    (feature: AiJobFeatureKey) => {
+      if (activeSource !== "ai") {
+        return;
+      }
+      updateSearchParams((next) => {
+        const current = parseAiJobFeatures(next.get("aiFeature"));
+        const exists = current.includes(feature);
+        const updated = exists
+          ? current.filter((entry) => entry !== feature)
+          : [...current, feature];
+
+        if (updated.length === 0) {
+          next.delete("aiFeature");
+        } else {
+          next.set("aiFeature", updated.join(","));
+        }
+      });
+    },
+    [activeSource, updateSearchParams],
+  );
+
   const setMinWrites = useCallback(
     (value: number) => {
       if (activeSource !== "hookExecution") {
@@ -307,6 +341,7 @@ export function useDebuggerListQuery(
       next.delete("q");
       next.delete("status");
       next.delete("executionType");
+      next.delete("aiFeature");
       next.delete("typology");
       next.delete("minWrites");
       next.delete("minDuration");
@@ -362,6 +397,16 @@ export function useDebuggerListQuery(
       }
 
       if (
+        activeSource === "ai" &&
+        query.aiFeatures.length > 0 &&
+        !query.aiFeatures.some(
+          (feature) => aiJobFeatureForEvent(event) === feature,
+        )
+      ) {
+        return false;
+      }
+
+      if (
         activeSource === "hookExecution" &&
         query.minWrites > 0 &&
         totalHookExecutionWritesFromEvent(event) < query.minWrites
@@ -385,6 +430,7 @@ export function useDebuggerListQuery(
     });
   }, [
     activeSource,
+    query.aiFeatures,
     query.executionTypes,
     query.minDurationMs,
     query.minWrites,
@@ -443,6 +489,7 @@ export function useDebuggerListQuery(
     query.search.trim().length > 0 ||
     query.statuses.length > 0 ||
     query.executionTypes.length > 0 ||
+    query.aiFeatures.length > 0 ||
     query.minWrites > 0 ||
     query.minDurationMs > 0 ||
     query.showSkipped ||
@@ -483,6 +530,14 @@ export function useDebuggerListQuery(
       });
     }
 
+    for (const feature of query.aiFeatures) {
+      badges.push({
+        id: `aiFeature:${feature}`,
+        label: feature,
+        onRemove: () => toggleAiFeature(feature),
+      });
+    }
+
     if (query.minWrites > 0) {
       badges.push({
         id: "minWrites",
@@ -509,6 +564,7 @@ export function useDebuggerListQuery(
 
     return badges;
   }, [
+    query.aiFeatures,
     query.executionTypes,
     query.minDurationMs,
     query.minWrites,
@@ -521,6 +577,7 @@ export function useDebuggerListQuery(
     setSearch,
     setShowSkipped,
     setSort,
+    toggleAiFeature,
     toggleExecutionType,
     toggleStatus,
   ]);
@@ -531,6 +588,7 @@ export function useDebuggerListQuery(
       : DEBUGGER_STATUSES_BY_SOURCE[activeSource];
   const availableExecutionTypes =
     activeSource === "hookExecution" ? HOOK_EXECUTION_TYPE_KEYS : [];
+  const availableAiFeatures = activeSource === "ai" ? AI_JOB_FEATURE_KEYS : [];
 
   return {
     query,
@@ -540,6 +598,7 @@ export function useDebuggerListQuery(
     executionTypeCounts,
     availableStatuses,
     availableExecutionTypes,
+    availableAiFeatures,
     hasActiveFilters,
     activeFilterBadges,
     setSearch,
@@ -548,10 +607,12 @@ export function useDebuggerListQuery(
     toggleShowSkipped,
     setShowSkipped,
     toggleExecutionType,
+    toggleAiFeature,
     setMinWrites,
     setMinDurationMs,
     clearFilters,
     debuggerStatusLabelKey,
     hookExecutionTypeLabelKey,
+    aiJobFeatureLabelKey,
   };
 }

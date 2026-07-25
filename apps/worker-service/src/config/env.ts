@@ -11,12 +11,24 @@ const workerEnvSchema = z.object({
   GCP_PROJECT_ID: z.string().trim().min(1),
   VERTEX_GCP_PROJECT_ID: z.string().trim().optional(),
   GCP_REGION: z.string().trim().min(1).default("us-central1"),
+  /**
+   * Vertex location for Gemini generateContent.
+   * Gemini 3.x preview models (incl. gemini-3.1-pro-preview) are global-only.
+   */
+  VERTEX_LOCATION: z.string().trim().min(1).default("global"),
   GCP_STORAGE_BUCKET: z.string().trim().optional(),
   FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
   FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
   FIREBASE_STORAGE_EMULATOR_HOST: z.string().trim().optional(),
   FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST: z.string().trim().optional(),
-  VERTEX_MODEL_ID: z.string().trim().min(1).default("gemini-2.5-pro"),
+  /** Default Gemini for classify, chat, UI builder, Gmail extract. */
+  VERTEX_MODEL_ID: z.string().trim().min(1).default("gemini-3.6-flash"),
+  /** Gemini for demanding narrative / contract JSON summaries (callAi without includeEntities). */
+  VERTEX_REASONING_MODEL_ID: z
+    .string()
+    .trim()
+    .min(1)
+    .default("gemini-3.1-pro-preview"),
   VERTEX_IMAGEN_MODEL_ID: z
     .string()
     .trim()
@@ -67,8 +79,12 @@ export const workerEnv = parsed.data;
 
 export const vertexAiConfig = {
   projectId: workerEnv.VERTEX_GCP_PROJECT_ID ?? workerEnv.GCP_PROJECT_ID,
+  /** Regional endpoint for embeddings / Imagen. */
   region: workerEnv.GCP_REGION,
+  /** Global (default) for Gemini 3.x generateContent. */
+  geminiLocation: workerEnv.VERTEX_LOCATION,
   modelId: workerEnv.VERTEX_MODEL_ID,
+  reasoningModelId: workerEnv.VERTEX_REASONING_MODEL_ID,
   imagenModelId: workerEnv.VERTEX_IMAGEN_MODEL_ID,
   mockEnabled: workerEnv.IS_LOCAL && !workerEnv.USE_REAL_VERTEX,
 };

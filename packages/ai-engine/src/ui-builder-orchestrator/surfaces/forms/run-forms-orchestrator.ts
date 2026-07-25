@@ -40,6 +40,7 @@ export interface RunFormsOrchestratorInput {
   readonly entityCurrentFragment: string;
   readonly entityFieldPaths: readonly string[];
   readonly callbacks: OrchestratorCallbacks;
+  readonly generateAnswer?: import("../../step-runner.js").GenerateAnswerFn;
 }
 
 export interface RunFormsOrchestratorResult {
@@ -105,6 +106,7 @@ export async function runFormsUiBuilderOrchestrator(
     recipe: formsSurfaceRecipe,
     context,
     callbacks: input.callbacks,
+    ...(input.generateAnswer ? { generateAnswer: input.generateAnswer } : {}),
     ...(skipSelection && initialPresentation
       ? {
           initialSteps: expandStepsAfterPresentation(initialPresentation, {

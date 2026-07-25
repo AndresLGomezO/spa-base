@@ -1,7 +1,8 @@
 import {
   getObservabilityEnvDefaults,
   resolveEffectiveObservabilityFlags,
-  resolveAiStepTraceEnabled,
+  resolveAiEnabled,
+  resolveAiTraceEnabled,
   resolveGmailIngestDeliveryMode,
   resolveRequestPerfTraceEnabled,
   resolveSeedHookObservabilityEnabled,
@@ -40,9 +41,19 @@ export function createRuntimeSettingsCache(
     expiresAt = 0;
   }
 
-  async function isAiStepTraceEnabled(): Promise<boolean> {
+  async function isAiEnabled(): Promise<boolean> {
     const settings = await getSettings();
-    return resolveAiStepTraceEnabled(settings);
+    return resolveAiEnabled(settings);
+  }
+
+  async function isAiTraceEnabled(): Promise<boolean> {
+    const settings = await getSettings();
+    return resolveAiTraceEnabled(settings);
+  }
+
+  /** @deprecated use isAiTraceEnabled */
+  async function isAiStepTraceEnabled(): Promise<boolean> {
+    return isAiTraceEnabled();
   }
 
   async function isRequestPerfTraceEnabled(): Promise<boolean> {
@@ -72,6 +83,8 @@ export function createRuntimeSettingsCache(
   return {
     getSettings,
     invalidate,
+    isAiEnabled,
+    isAiTraceEnabled,
     isAiStepTraceEnabled,
     isRequestPerfTraceEnabled,
     isSeedHookObservabilityEnabled,

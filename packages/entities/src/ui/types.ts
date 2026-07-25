@@ -87,6 +87,13 @@ export interface ExpandableTableViewConfig extends ViewConfigBase {
   readonly columns: readonly GroupedTableColumn[];
   readonly rowExpandLayout: UiLayoutDocument;
   readonly showActions?: boolean;
+  /**
+   * String field rendered as an AI Summary icon in expandable row actions.
+   * - omitted: inherit `recordDetail.summaryField` / `detailLayout.summaryField`
+   * - `""`: hide the summary action
+   * - non-empty: use that field
+   */
+  readonly summaryField?: string;
   /** Optional image/logo column rendered before grouped columns. */
   readonly imageFieldPath?: string;
 }

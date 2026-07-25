@@ -56,6 +56,7 @@ export interface WorkerCrudHookDeps {
     request: import("@repo/hooks").DataHookEmbeddingRequest,
   ) => Promise<readonly number[]>;
   readonly aggregation?: AggregationEmitterDeps;
+  readonly aiController?: import("@repo/ai-engine/controller").AiController;
 }
 
 export interface ResolvedHookUserContext {

@@ -17,11 +17,40 @@ export type LayoutAlign = "start" | "center" | "end" | "stretch";
 /** How component rows inside a column are stacked (default: column / vertical). */
 export type ColumnStackDirection = "column" | "row";
 
+/** One tab in a main-page Summary third rail. */
+export interface UiLayoutSummaryTab {
+  readonly id: string;
+  readonly label: string;
+  /** String field path on `summary.sourceEntity`. */
+  readonly field: string;
+}
+
+/**
+ * Main-page Summary config: load a source entity record and show Markdown
+ * tabs in an AI third rail. Empty/omitted = no Summary button.
+ */
+export interface UiLayoutSummary {
+  readonly sourceEntity: string;
+  /** Optional fixed record id; omit to load the first list row. */
+  readonly sourceRecordId?: string;
+  readonly tabs: readonly UiLayoutSummaryTab[];
+}
+
 export interface UiLayoutDocument {
   readonly root: LayoutRootNode | ScreenRootNode;
   readonly showActions?: boolean;
   readonly cardsPerRow?: number;
   readonly motion?: MotionPreset;
+  /**
+   * Optional entity field path whose string value opens the detail Summary
+   * third rail (Markdown). Empty/omitted = no Summary button.
+   */
+  readonly summaryField?: string;
+  /**
+   * Optional main-page Summary third rail (source entity + Markdown tabs).
+   * Empty/omitted = no Summary button on the entity main page.
+   */
+  readonly summary?: UiLayoutSummary;
 }
 
 export interface ScreenRootNode {

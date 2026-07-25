@@ -33,6 +33,8 @@ import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { platformApp } from "@app/platform/app.config.js";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
+import type { AiController } from "@repo/ai-engine/controller";
+
 import { PermanentTaskError } from "./ai-chat-processor.js";
 import { callDataHookWebhook } from "../hooks/call-data-hook-webhook.js";
 import { createCallDataHookAi } from "../hooks/call-data-hook-ai.js";
@@ -65,6 +67,7 @@ export type DataHookProcessorDeps = WorkerCrudHookDeps;
 
 export function createDataHookProcessorDeps(
   firebaseAdminConfig: FirebaseAdminConfig,
+  options: { readonly aiController: AiController },
 ): DataHookProcessorDeps {
   bootstrapPlatformApp(platformApp);
 
@@ -147,10 +150,15 @@ export function createDataHookProcessorDeps(
     callWebhook: callDataHookWebhook,
     callAi: createCallDataHookAi({
       vertexAiConfig,
+      aiController: options.aiController,
       getRepository: (tenantId, entityName) =>
         entityRuntime.getRepository(tenantId, entityName),
     }),
-    computeEmbedding: createComputeDataHookEmbedding({ vertexAiConfig }),
+    computeEmbedding: createComputeDataHookEmbedding({
+      vertexAiConfig,
+      aiController: options.aiController,
+    }),
+    aiController: options.aiController,
     aggregation,
   };
 }

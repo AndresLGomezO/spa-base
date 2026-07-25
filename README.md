@@ -76,6 +76,10 @@ docs/         Guides and handoff documentation
 | API | [apps/api/README.md](apps/api/README.md) |
 | Web | [apps/web/README.md](apps/web/README.md) |
 
+### AI usage
+
+All model calls (chat, UI Builder, data-hook `callAi` / embeddings, Gmail extract) go through a single `runAiRequest` controller in `@repo/ai-engine` and are persisted to `ai_jobs`. Each job records the model used, token/usage metadata, and a rough USD cost estimate. Inspect them at **`/debugger/ai-jobs`**. Platform Observability exposes the kill-switch (`aiEnabled` / `AI_ENABLED`) and prompt/output tracing (`aiTraceEnabled` / `AI_TRACE_ENABLED`).
+
 ---
 
 ## Master plans (source specs)

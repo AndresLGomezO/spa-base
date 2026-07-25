@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  enrichFinancialItemRecordsWithActorLogos,
+  enrichRecordsWithRelatedEntityImages,
   filterImportRecordsByIds,
   filterImportSpecsByEntityNames,
   listPresentLocalGeneratedImportSpecs,
@@ -37,6 +37,8 @@ vi.mock("./load-tenant-config.js", () => ({
     gcpDemoOwnerUid: TEST_GCP_OWNER_UID,
     gcpDemoUserRole: "owner",
     indexProvisioningExcluded: true,
+    recordImageFields: {},
+    recordImageInheritance: [],
   }),
   tryLoadLocalTenantConfig: () => null,
   resolveLocalTenantCatalogsDir: () => "/tmp",
@@ -92,21 +94,34 @@ describe("seed-local-tenant-import", () => {
 
     const specs = listPresentLocalImportSpecs(importDir);
     expect(specs.map((spec) => spec.dirName)).toEqual([
-      "records/category",
       "records/actor",
+      "records/category",
+    ]);
+  });
+
+  it("discovers any records/* entity directory with JSON", () => {
+    const importDir = mkdtempSync(join(tmpdir(), "tenant-import-extra-"));
+    mkdirSync(join(importDir, "records/widget"), { recursive: true });
+    writeFileSync(
+      join(importDir, "records/widget/w1.json"),
+      JSON.stringify({ id: "w1", name: "W" }),
+    );
+
+    expect(listPresentLocalImportSpecs(importDir)).toEqual([
+      { dirName: "records/widget", entityName: "widget" },
     ]);
   });
 
   it("filters import specs and records by entity name / id", () => {
     const specs = filterImportSpecsByEntityNames(
       [
-        { dirName: "records/actor", entityName: "actor" },
-        { dirName: "records/financialItem", entityName: "financialItem" },
+        { dirName: "records/vendor", entityName: "vendor" },
+        { dirName: "records/product", entityName: "product" },
       ],
-      ["financialItem"],
+      ["product"],
     );
     expect(specs).toEqual([
-      { dirName: "records/financialItem", entityName: "financialItem" },
+      { dirName: "records/product", entityName: "product" },
     ]);
 
     const records = filterImportRecordsByIds(
@@ -126,17 +141,20 @@ describe("seed-local-tenant-import", () => {
 
   it("lists generated import directories when present", () => {
     const importDir = mkdtempSync(join(tmpdir(), "tenant-import-generated-"));
-    mkdirSync(join(importDir, "generated/paymentSchedule"), {
+    mkdirSync(join(importDir, "generated/schedule"), {
       recursive: true,
     });
-    mkdirSync(join(importDir, "generated/transaction"), { recursive: true });
-    writeFileSync(join(importDir, "generated/paymentSchedule/fi1.json"), "[]");
-    writeFileSync(join(importDir, "generated/transaction/fi1.json"), "[]");
+    mkdirSync(join(importDir, "generated/event"), { recursive: true });
+    mkdirSync(join(importDir, "generated/customThing"), { recursive: true });
+    writeFileSync(join(importDir, "generated/schedule/p1.json"), "[]");
+    writeFileSync(join(importDir, "generated/event/p1.json"), "[]");
+    writeFileSync(join(importDir, "generated/customThing/x.json"), "[]");
 
     const specs = listPresentLocalGeneratedImportSpecs(importDir);
     expect(specs.map((spec) => spec.dirName)).toEqual([
-      "generated/paymentSchedule",
-      "generated/transaction",
+      "generated/customThing",
+      "generated/event",
+      "generated/schedule",
     ]);
   });
 
@@ -183,41 +201,45 @@ describe("seed-local-tenant-import", () => {
     expect(readEntityImageFileName(record, "missing")).toBeNull();
   });
 
-  it("derives financialItem image refs from linked actor logos", () => {
-    const actorLogoById = new Map([
+  it("derives target image refs from related entity images", () => {
+    const relatedLogoById = new Map([
       ["00000000-0000-4000-8000-000000000010", "visa.png"],
       ["00000000-0000-4000-8000-000000000011", "mastercard.png"],
     ]);
 
-    const enriched = enrichFinancialItemRecordsWithActorLogos(
+    const enriched = enrichRecordsWithRelatedEntityImages(
       [
         {
           id: "00000000-0000-4000-8000-000000000020",
           name: "Visa Signature",
-          actorId: "00000000-0000-4000-8000-000000000010",
+          vendorId: "00000000-0000-4000-8000-000000000010",
         },
         {
           id: "00000000-0000-4000-8000-000000000021",
           name: "Mastercard Black",
-          actorId: "00000000-0000-4000-8000-000000000011",
+          vendorId: "00000000-0000-4000-8000-000000000011",
         },
         {
-          id: "no-actor",
+          id: "no-vendor",
           name: "Cash buffer",
         },
         {
           id: "explicit-image",
           name: "Custom image",
-          actorId: "00000000-0000-4000-8000-000000000010",
+          vendorId: "00000000-0000-4000-8000-000000000010",
           image: {
             fileName: "custom.png",
             contentType: "image/png",
-            storagePath:
-              "tenants/TENANT_ID/entity-files/financialItem/custom.png",
+            storagePath: "tenants/TENANT_ID/entity-files/product/custom.png",
           },
         },
       ],
-      actorLogoById,
+      {
+        entityName: "product",
+        targetField: "image",
+        relationField: "vendorId",
+        relatedFileNameById: relatedLogoById,
+      },
     );
 
     expect(readEntityImageFileName(enriched[0]!, "image")).toBe("visa.png");

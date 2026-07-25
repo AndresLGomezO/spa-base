@@ -104,9 +104,7 @@ function buildLocalImportOptionsFromSelection(
     skipOrphanDelete: true,
     runMockGenerator: runMock,
     includeEmailMatchBindings: includeEmail,
-    includeEntityImages:
-      (localEntities?.includes("actor") ?? false) ||
-      (localEntities?.includes("category") ?? false),
+    includeEntityImages: (localEntities?.length ?? 0) > 0,
     dropExisting: selection.drop,
   };
 }

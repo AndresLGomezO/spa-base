@@ -46,36 +46,38 @@ function defaultTenantConfig(): LocalTenantConfig {
   return loadLocalTenantConfig();
 }
 
-const LOCAL_IMPORT_SPECS = [
-  { dirName: "records/category", entityName: "category" },
-  { dirName: "records/categoryExample", entityName: "categoryExample" },
-  { dirName: "records/actor", entityName: "actor" },
-  { dirName: "records/account", entityName: "account" },
-  { dirName: "records/financialItem", entityName: "financialItem" },
-  { dirName: "records/loanDetails", entityName: "loanDetails" },
-  { dirName: "records/loanMonthlyCost", entityName: "loanMonthlyCost" },
-  { dirName: "records/loanUtilization", entityName: "loanUtilization" },
-  { dirName: "records/incomeDetails", entityName: "incomeDetails" },
-  { dirName: "records/investmentDetails", entityName: "investmentDetails" },
-  { dirName: "records/serviceDetails", entityName: "serviceDetails" },
-] as const;
-
-const LOCAL_GENERATED_IMPORT_SPECS = [
-  {
-    dirName: "generated/paymentSchedule",
-    entityName: "paymentSchedule",
-  },
-  { dirName: "generated/transaction", entityName: "transaction" },
-  {
-    dirName: "generated/balanceSnapshot",
-    entityName: "balanceSnapshot",
-  },
-] as const;
-
 const LOCAL_EMAIL_MATCH_BINDINGS_DIR = "email-match-bindings";
 
-type LocalImportSpec = (typeof LOCAL_IMPORT_SPECS)[number];
-type LocalGeneratedImportSpec = (typeof LOCAL_GENERATED_IMPORT_SPECS)[number];
+interface LocalImportSpec {
+  readonly dirName: string;
+  readonly entityName: string;
+}
+
+function listEntitySubdirNames(parentDir: string): string[] {
+  if (!existsSync(parentDir)) {
+    return [];
+  }
+  return readdirSync(parentDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+/** Discover `records/{entity}` (or `generated/{entity}`) dirs that contain JSON. */
+function discoverEntityImportSpecs(
+  importDir: string,
+  kind: "records" | "generated",
+): LocalImportSpec[] {
+  const root = join(importDir, kind);
+  return listEntitySubdirNames(root)
+    .map((entityName) => ({
+      dirName: `${kind}/${entityName}`,
+      entityName,
+    }))
+    .filter(
+      (spec) => listJsonFilesInDir(join(importDir, spec.dirName)).length > 0,
+    );
+}
 
 function fromAddressesKey(addresses: readonly string[]): string {
   return [...addresses]
@@ -304,7 +306,7 @@ export interface LocalTenantImportOptions {
   readonly generatedEntityNames?: readonly string[];
   /** When set, only upsert rows / bindings whose id/recordId is in the set. */
   readonly recordIds?: ReadonlySet<string>;
-  /** Skip orphan paymentSchedule/transaction deletes (default false for full seed). */
+  /** Skip orphan deletes for generated entities (default false for full seed). */
   readonly skipOrphanDelete?: boolean;
   /** Run schedule/payment mock generator (default true for full seed). */
   readonly runMockGenerator?: boolean;
@@ -340,17 +342,13 @@ export function resolveLocalTenantImportOwnerEmail(
 export function listPresentLocalImportSpecs(
   importDir: string = LOCAL_IMPORT_DIR,
 ): LocalImportSpec[] {
-  return LOCAL_IMPORT_SPECS.filter(
-    (spec) => listJsonFilesInDir(join(importDir, spec.dirName)).length > 0,
-  );
+  return discoverEntityImportSpecs(importDir, "records");
 }
 
 export function listPresentLocalGeneratedImportSpecs(
   importDir: string = LOCAL_IMPORT_DIR,
-): LocalGeneratedImportSpec[] {
-  return LOCAL_GENERATED_IMPORT_SPECS.filter(
-    (spec) => listJsonFilesInDir(join(importDir, spec.dirName)).length > 0,
-  );
+): LocalImportSpec[] {
+  return discoverEntityImportSpecs(importDir, "generated");
 }
 
 function assertRecordObject(
@@ -377,7 +375,7 @@ function readImportRecordsDir(dirPath: string): Record<string, unknown>[] {
 }
 
 /**
- * One JSON array per `generated/{entity}/{financialItemId}.json` file;
+ * One JSON array per `generated/{entity}/{groupKey}.json` file;
  * concatenate for import.
  */
 function readGeneratedRecordsDir(dirPath: string): Record<string, unknown>[] {
@@ -436,34 +434,64 @@ export function readEntityImageFileName(
     : null;
 }
 
-const LOCAL_ENTITY_IMAGE_SEED_SPECS = [
-  {
-    entityName: "actor",
-    dirName: "records/actor",
-    fieldName: "logo",
-  },
-  {
-    entityName: "category",
-    dirName: "records/category",
-    fieldName: "image",
-  },
-  {
-    entityName: "financialItem",
-    dirName: "records/financialItem",
-    fieldName: "image",
-  },
-] as const;
+const ENTITY_IMAGE_FIELD_CANDIDATES = ["logo", "image"] as const;
 
-function entityImageFieldName(entityName: string): string | null {
-  switch (entityName) {
-    case "actor":
-      return "logo";
-    case "category":
-    case "financialItem":
-      return "image";
-    default:
-      return null;
+interface EntityImageSeedSpec {
+  readonly entityName: string;
+  readonly dirName: string;
+  readonly fieldName: string;
+}
+
+function resolveConfiguredImageField(
+  entityName: string,
+  config: LocalTenantConfig = defaultTenantConfig(),
+): string | null {
+  const configured = config.recordImageFields[entityName];
+  return typeof configured === "string" && configured.trim().length > 0
+    ? configured.trim()
+    : null;
+}
+
+function discoverImageFieldFromRecords(
+  records: readonly Record<string, unknown>[],
+): string | null {
+  for (const fieldName of ENTITY_IMAGE_FIELD_CANDIDATES) {
+    if (records.some((record) => readEntityImageFileName(record, fieldName))) {
+      return fieldName;
+    }
   }
+  return null;
+}
+
+function listEntityImageSeedSpecs(
+  importDir: string,
+  config: LocalTenantConfig = defaultTenantConfig(),
+): EntityImageSeedSpec[] {
+  const specs: EntityImageSeedSpec[] = [];
+  for (const entityName of listEntitySubdirNames(join(importDir, "records"))) {
+    const dirName = `records/${entityName}`;
+    const records = readImportRecordsDir(join(importDir, dirName));
+    if (records.length === 0) {
+      continue;
+    }
+    const fieldName =
+      resolveConfiguredImageField(entityName, config) ??
+      discoverImageFieldFromRecords(records);
+    if (!fieldName) {
+      continue;
+    }
+    specs.push({ entityName, dirName, fieldName });
+  }
+  return specs;
+}
+
+function entityImageFieldName(
+  entityName: string,
+  imageSpecs: readonly EntityImageSeedSpec[],
+): string | null {
+  return (
+    imageSpecs.find((spec) => spec.entityName === entityName)?.fieldName ?? null
+  );
 }
 
 function buildEntityImageFileRef(
@@ -478,74 +506,93 @@ function buildEntityImageFileRef(
   };
 }
 
-function buildActorLogoFileNameById(
+function buildRelatedImageFileNameById(
   importDir: string,
+  sourceEntity: string,
+  sourceField: string,
 ): ReadonlyMap<string, string> {
-  const actorDir = join(importDir, "records/actor");
-  if (!existsSync(actorDir)) {
+  const sourceDir = join(importDir, `records/${sourceEntity}`);
+  if (!existsSync(sourceDir)) {
     return new Map();
   }
 
-  const actorLogoById = new Map<string, string>();
-  for (const record of readImportRecordsDir(actorDir)) {
+  const byId = new Map<string, string>();
+  for (const record of readImportRecordsDir(sourceDir)) {
     const objectId = record.id;
     if (typeof objectId !== "string" || objectId.trim().length === 0) {
       continue;
     }
 
-    const fileName = readEntityImageFileName(record, "logo");
+    const fileName = readEntityImageFileName(record, sourceField);
     if (fileName) {
-      actorLogoById.set(objectId, fileName);
+      byId.set(objectId, fileName);
     }
   }
 
-  return actorLogoById;
+  return byId;
 }
 
-export function enrichFinancialItemRecordsWithActorLogos(
+export function enrichRecordsWithRelatedEntityImages(
   records: readonly Record<string, unknown>[],
-  actorLogoById: ReadonlyMap<string, string>,
+  options: {
+    readonly entityName: string;
+    readonly targetField: string;
+    readonly relationField: string;
+    readonly relatedFileNameById: ReadonlyMap<string, string>;
+  },
 ): Record<string, unknown>[] {
   return records.map((record) => {
-    if (readEntityImageFileName(record, "image")) {
+    if (readEntityImageFileName(record, options.targetField)) {
       return record;
     }
 
-    const actorId = record.actorId;
-    if (typeof actorId !== "string" || actorId.trim().length === 0) {
+    const relatedId = record[options.relationField];
+    if (typeof relatedId !== "string" || relatedId.trim().length === 0) {
       return record;
     }
 
-    const fileName = actorLogoById.get(actorId);
+    const fileName = options.relatedFileNameById.get(relatedId);
     if (!fileName) {
       return record;
     }
 
     return {
       ...record,
-      image: buildEntityImageFileRef("financialItem", fileName),
+      [options.targetField]: buildEntityImageFileRef(
+        options.entityName,
+        fileName,
+      ),
     };
   });
 }
 
 function resolveEntityImageSeedRecords(
   importDir: string,
-  spec: (typeof LOCAL_ENTITY_IMAGE_SEED_SPECS)[number],
+  spec: EntityImageSeedSpec,
+  config: LocalTenantConfig = defaultTenantConfig(),
 ): Record<string, unknown>[] {
   const entityDir = join(importDir, spec.dirName);
   if (!existsSync(entityDir)) {
     return [];
   }
 
-  const records = readImportRecordsDir(entityDir);
-  if (spec.entityName !== "financialItem") {
-    return records;
+  let records = readImportRecordsDir(entityDir);
+  for (const rule of config.recordImageInheritance) {
+    if (rule.entityName !== spec.entityName) {
+      continue;
+    }
+    records = enrichRecordsWithRelatedEntityImages(records, {
+      entityName: rule.entityName,
+      targetField: rule.targetField,
+      relationField: rule.relationField,
+      relatedFileNameById: buildRelatedImageFileNameById(
+        importDir,
+        rule.sourceEntity,
+        rule.sourceField,
+      ),
+    });
   }
-
-  return enrichFinancialItemRecordsWithActorLogos(
-    records,
-    buildActorLogoFileNameById(importDir),
-  );
+  return records;
 }
 
 const ENTITY_IMAGE_UPLOAD_CONCURRENCY = 8;
@@ -589,13 +636,14 @@ function applyUploadedEntityImage(
   id: string,
   business: Record<string, unknown>,
   uploadedImages: UploadedEntityImages,
+  imageSpecs: readonly EntityImageSeedSpec[],
 ): Record<string, unknown> {
   const uploaded = uploadedImages.get(uploadedEntityImageKey(entityName, id));
   if (!uploaded) {
     return business;
   }
 
-  const fieldName = entityImageFieldName(entityName);
+  const fieldName = entityImageFieldName(entityName, imageSpecs);
   if (!fieldName) {
     return business;
   }
@@ -610,6 +658,8 @@ async function uploadEntityImagesFromLocalFiles(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
   importDir: string,
+  imageSpecs: readonly EntityImageSeedSpec[],
+  config: LocalTenantConfig = defaultTenantConfig(),
 ): Promise<UploadedEntityImages> {
   const logosDir = join(importDir, "logos");
   const uploadedImages = new Map<string, EntityFileReference>();
@@ -617,8 +667,8 @@ async function uploadEntityImagesFromLocalFiles(
     return uploadedImages;
   }
 
-  for (const spec of LOCAL_ENTITY_IMAGE_SEED_SPECS) {
-    const records = resolveEntityImageSeedRecords(importDir, spec);
+  for (const spec of imageSpecs) {
+    const records = resolveEntityImageSeedRecords(importDir, spec, config);
     if (records.length === 0) {
       continue;
     }
@@ -725,15 +775,19 @@ async function runLocalSchedulePaymentMockGenerator(
     if (typeof generator.writeGeneratedArtifacts === "function") {
       generator.writeGeneratedArtifacts(payload);
     } else {
-      writeGeneratedRecordsByFinancialItem(
+      writeGeneratedRecordsGrouped(
         join(importDir, "generated"),
-        payload,
+        payload as Readonly<Record<string, readonly Record<string, unknown>[]>>,
       );
     }
 
+    const counts = Object.entries(payload as Record<string, unknown>)
+      .filter(([, value]) => Array.isArray(value))
+      .map(([key, value]) => `${(value as unknown[]).length} ${key}`)
+      .join(", ");
     console.log(
       `[tenant-import] Generated schedule payment mocks in ${join(importDir, "generated")} ` +
-        `(${payload.paymentSchedule.length} schedules, ${payload.transaction.length} transactions, ${payload.balanceSnapshot.length} snapshots, anchor ${anchorDate}).`,
+        `(${counts}, anchor ${anchorDate}).`,
     );
   } finally {
     if (previousImportDir === undefined) {
@@ -825,47 +879,64 @@ export async function verifyGcpImportOwner(
   return ownerId;
 }
 
-function writeGeneratedRecordsByFinancialItem(
-  outputDir: string,
-  payload: {
-    readonly paymentSchedule: readonly Record<string, unknown>[];
-    readonly transaction: readonly Record<string, unknown>[];
-    readonly balanceSnapshot: readonly Record<string, unknown>[];
-  },
-): void {
-  const groups: Array<{
-    readonly entityName: string;
-    readonly rows: readonly Record<string, unknown>[];
-  }> = [
-    { entityName: "paymentSchedule", rows: payload.paymentSchedule },
-    { entityName: "transaction", rows: payload.transaction },
-    { entityName: "balanceSnapshot", rows: payload.balanceSnapshot },
-  ];
+function inferGeneratedGroupField(
+  rows: readonly Record<string, unknown>[],
+  entityName: string,
+): string {
+  if (rows.length === 0) {
+    return "id";
+  }
+  const sample = rows[0]!;
+  for (const key of Object.keys(sample)) {
+    if (key === "id" || !key.endsWith("Id")) {
+      continue;
+    }
+    if (
+      rows.every(
+        (row) =>
+          typeof row[key] === "string" && String(row[key]).trim().length > 0,
+      )
+    ) {
+      return key;
+    }
+  }
+  throw new Error(
+    `Could not infer group-by *Id field for generated ${entityName} rows.`,
+  );
+}
 
-  for (const group of groups) {
-    const entityDir = join(outputDir, group.entityName);
+function writeGeneratedRecordsGrouped(
+  outputDir: string,
+  payload: Readonly<Record<string, readonly Record<string, unknown>[]>>,
+): void {
+  for (const [entityName, rows] of Object.entries(payload)) {
+    if (!Array.isArray(rows)) {
+      continue;
+    }
+    const entityDir = join(outputDir, entityName);
     if (existsSync(entityDir)) {
       rmSync(entityDir, { recursive: true, force: true });
     }
     mkdirSync(entityDir, { recursive: true });
 
-    const byFi = new Map<string, Record<string, unknown>[]>();
-    for (const row of group.rows) {
-      const fiId = row.financialItemId;
-      if (typeof fiId !== "string" || fiId.trim().length === 0) {
+    const groupField = inferGeneratedGroupField(rows, entityName);
+    const byGroup = new Map<string, Record<string, unknown>[]>();
+    for (const row of rows) {
+      const groupId = row[groupField];
+      if (typeof groupId !== "string" || groupId.trim().length === 0) {
         throw new Error(
-          `Missing financialItemId on generated ${group.entityName} row.`,
+          `Missing ${groupField} on generated ${entityName} row.`,
         );
       }
-      const list = byFi.get(fiId) ?? [];
+      const list = byGroup.get(groupId) ?? [];
       list.push(row);
-      byFi.set(fiId, list);
+      byGroup.set(groupId, list);
     }
 
-    for (const [fiId, rows] of byFi) {
+    for (const [groupId, groupRows] of byGroup) {
       writeFileSync(
-        join(entityDir, `${fiId}.json`),
-        `${JSON.stringify(rows, null, 2)}\n`,
+        join(entityDir, `${groupId}.json`),
+        `${JSON.stringify(groupRows, null, 2)}\n`,
         "utf8",
       );
     }
@@ -875,8 +946,9 @@ function writeGeneratedRecordsByFinancialItem(
 async function importLocalRecords(
   context: ReturnType<typeof createLocalRecordSeedContext>,
   importDir: string,
-  specs: readonly { readonly dirName: string; readonly entityName: string }[],
+  specs: readonly LocalImportSpec[],
   uploadedImages: UploadedEntityImages = new Map(),
+  imageSpecs: readonly EntityImageSeedSpec[] = [],
   options: {
     readonly recordIds?: ReadonlySet<string>;
     readonly skipOrphanDelete?: boolean;
@@ -926,8 +998,7 @@ async function importLocalRecords(
     if (
       !options.dropExisting &&
       !options.skipOrphanDelete &&
-      (spec.entityName === "paymentSchedule" ||
-        spec.entityName === "transaction")
+      options.generated
     ) {
       const keepIds = new Set(
         records
@@ -961,6 +1032,7 @@ async function importLocalRecords(
             id as string,
             business,
             uploadedImages,
+            imageSpecs,
           ),
         };
       }),
@@ -1049,18 +1121,24 @@ export async function seedLocalTenantImportIfPresent(
       `[seed] Importing ${presentSpecs.length} local record dir(s) for ${ownerEmail} from ${importDir}...`,
     );
 
-    const uploadedImages = includeEntityImages
-      ? await uploadEntityImagesFromLocalFiles(
-          tenantId,
-          firebaseAdminConfig,
-          importDir,
-        )
-      : new Map();
+    const imageSpecs = includeEntityImages
+      ? listEntityImageSeedSpecs(importDir)
+      : [];
+    const uploadedImages =
+      imageSpecs.length > 0
+        ? await uploadEntityImagesFromLocalFiles(
+            tenantId,
+            firebaseAdminConfig,
+            importDir,
+            imageSpecs,
+          )
+        : new Map();
     await importLocalRecords(
       context,
       importDir,
       presentSpecs,
       uploadedImages,
+      imageSpecs,
       importRecordOptions,
     );
   }
@@ -1077,10 +1155,17 @@ export async function seedLocalTenantImportIfPresent(
     console.log(
       `[seed] Importing ${generatedSpecs.length} generated local record dir(s)...`,
     );
-    await importLocalRecords(context, importDir, generatedSpecs, new Map(), {
-      ...importRecordOptions,
-      generated: true,
-    });
+    await importLocalRecords(
+      context,
+      importDir,
+      generatedSpecs,
+      new Map(),
+      [],
+      {
+        ...importRecordOptions,
+        generated: true,
+      },
+    );
   }
 
   if (includeEmailMatchBindings) {

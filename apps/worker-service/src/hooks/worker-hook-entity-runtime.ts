@@ -45,7 +45,20 @@ export class WorkerHookEntityRuntime implements WorkerEntityRuntimeForCrudHooks 
     for (const record of records) {
       registerDynamicEntity(tenantId, record);
     }
+    // Drop cached converters so newly registered fields are not stripped on write.
+    // (API EntityRuntimeContext does the same via invalidateTenantRuntime.)
+    this.invalidateTenantRepositories(tenantId);
     this.loadedTenants.add(tenantId);
+  }
+
+  /** Clears per-tenant repository/converter cache after entity defs reload. */
+  invalidateTenantRepositories(tenantId: string): void {
+    const prefix = `${tenantId}:`;
+    for (const key of this.repositoryCache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.repositoryCache.delete(key);
+      }
+    }
   }
 
   resolveEntity(name: string, tenantId: string): AnyDefinedEntity | undefined {

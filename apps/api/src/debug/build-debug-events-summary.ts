@@ -283,6 +283,8 @@ export function buildDebugEventsSummaryPayload(
     emailIngestFinished: stats.emailIngestFinished,
     emailIngestProcessed: stats.emailIngestProcessed,
     emailIngestFailedMessages: stats.emailIngestFailedMessages,
+    totalTokens: stats.totalTokens,
+    estimatedCostUsd: stats.estimatedCostUsd,
     barCharts: stats.barCharts,
     timelineBuckets: stats.timelineBuckets,
     attentionItems: stats.attentionItems.map((event) => ({

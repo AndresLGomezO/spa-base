@@ -1,5 +1,7 @@
 export type {
   UiLayoutDocument,
+  UiLayoutSummary,
+  UiLayoutSummaryTab,
   LayoutRootNode,
   ScreenRootNode,
   ColumnNode,

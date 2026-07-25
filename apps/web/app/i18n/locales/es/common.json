@@ -134,6 +134,7 @@
       "sortTitle": "Título A–Z",
       "filterByStatus": "Estado",
       "filterByTypology": "Tipo de ejecución",
+      "filterByFeature": "Función",
       "showSkipped": "Mostrar omitidos",
       "clearFilters": "Borrar filtros",
       "minWrites": "Mín. escrituras",
@@ -271,6 +272,8 @@
       "writesDeleted": "Eliminados",
       "writesAcrossExecutions": "{{total}} escrituras en {{count}} ejecuciones",
       "totalWrites": "Escrituras totales",
+      "totalTokens": "Tokens totales",
+      "estimatedCostUsd": "Costo estimado",
       "noIssues": "No se detectaron problemas en la muestra actual.",
       "uniqueActors": "Actores únicos",
       "errors": "Errores",
@@ -350,16 +353,45 @@
   },
   "aiDebugger": {
     "selectStep": "Selecciona un paso de la traza.",
-    "noTrace": "No hay traza de pasos para este trabajo. Las trazas están activas fuera de producción si AI_STEP_TRACE_ENABLED no es false.",
+    "noTrace": "No hay traza de pasos para este trabajo. Las trazas están activas cuando AI_TRACE_ENABLED no es false (por defecto fuera de producción).",
     "noTraceEarlyFailure": "Este trabajo falló antes de ejecutar pasos del orquestador, por lo que no hay traza. Revisa la entrada y el registro completo abajo.",
+    "relatedJobs": "Trabajos relacionados",
+    "features": {
+      "chat": "Chat",
+      "uiBuilder": "UI Builder",
+      "dataModelBuilder": "Constructor de modelo",
+      "dataHookCallAi": "Data hook callAi",
+      "dataHookBatchCallAi": "Data hook batch callAi",
+      "dataHookEmbedding": "Data hook embedding",
+      "gmailExtract": "Extracción Gmail"
+    },
     "fields": {
       "feature": "Función",
+      "operation": "Operación",
+      "parentJobId": "Trabajo padre",
       "createdAt": "Creado",
       "updatedAt": "Actualizado",
       "surface": "Superficie",
       "outputMode": "Modo de salida",
       "input": "Entrada",
       "progress": "Progreso"
+    },
+    "usage": {
+      "title": "Uso del modelo",
+      "model": "Modelo",
+      "promptTokens": "Tokens de prompt",
+      "candidatesTokens": "Tokens de salida",
+      "thoughtsTokens": "Tokens de pensamiento",
+      "cachedContentTokens": "Tokens en caché",
+      "totalTokens": "Tokens totales",
+      "finishReason": "Razón de finalización",
+      "outputDimensions": "Dimensiones del embedding",
+      "inputCharacters": "Caracteres de entrada",
+      "imageCount": "Imágenes",
+      "aspectRatio": "Relación de aspecto",
+      "estimatedCostUsd": "Costo estimado",
+      "costTier": "Nivel de costo",
+      "estimateDisclaimer": "Estimación aproximada de una tabla de precios en código — puede no coincidir con la facturación real de Vertex."
     },
     "copyTrace": "Copiar JSON completo de la traza",
     "liveDraft": "Borrador en vivo",
@@ -754,6 +786,28 @@
   "mainViewDesigner": {
     "title": "Diseñador de vista principal",
     "settings": "Configuración",
+    "summary": {
+      "help": "Configura un botón de Resumen en la página principal de la entidad. Carga Markdown desde otra entidad (por ejemplo ajustes del portafolio) y muestra una pestaña por campo.",
+      "sourceEntity": {
+        "label": "Entidad fuente del resumen",
+        "none": "Ninguna"
+      },
+      "sourceRecordId": {
+        "label": "Id del registro fuente (opcional)",
+        "placeholder": "Déjalo vacío para usar el primer registro"
+      },
+      "tabs": {
+        "label": "Pestañas del resumen",
+        "add": "Agregar pestaña",
+        "empty": "Agrega al menos una pestaña con un campo de texto.",
+        "defaultLabel": "General",
+        "id": "Id",
+        "tabLabel": "Etiqueta",
+        "field": "Campo",
+        "fieldNone": "Seleccionar campo",
+        "remove": "Quitar"
+      }
+    },
     "tabs": {
       "settings": "Configuración",
       "layout": "Layout",
@@ -780,6 +834,11 @@
     "title": "Diseñador de vista detallada",
     "settings": "Configuración",
     "previewNoRecords": "Crea al menos un elemento para visualizar la vista previa.",
+    "summaryField": {
+      "label": "Campo de resumen",
+      "none": "Ninguno",
+      "help": "Elige un campo de texto para mostrar como botón Resumen en la vista detallada. El valor se renderiza como Markdown en un panel lateral. Déjalo vacío para ocultar el botón."
+    },
     "tabs": {
       "settings": "Configuración",
       "layout": "Layout",
@@ -1525,6 +1584,16 @@
       "sectionRelatedEmail": "Ingesta de email relacionada",
       "sectionRelatedEmailEmpty": "No hay ejecuciones de hooks de ingesta de email relacionadas en el rango de tiempo seleccionado."
     },
+    "summary": {
+      "button": "Resumen",
+      "title": "Resumen",
+      "copyMarkdown": "Copiar markdown",
+      "copiedMarkdown": "Markdown copiado",
+      "copyMarkdownFailed": "No se pudo copiar el markdown",
+      "tabsAriaLabel": "Secciones del resumen",
+      "emptyTitle": "Resumen en progreso",
+      "emptyDescription": "Esta sección se completará cuando se genere el resumen con IA."
+    },
     "recordsJson": {
       "viewTitle": "JSON de registros exportados",
       "viewDescription": "Copia o revisa los registros exportados. La importación acepta un objeto o un arreglo de objetos con la misma forma.",
@@ -1783,6 +1852,13 @@
       "labelAlignCenter": "Centro",
       "labelAlignRight": "Derecha",
       "showActions": "Mostrar menú de acciones",
+      "summaryField": {
+        "label": "Campo de resumen en fila",
+        "none": "Ninguno (ocultar icono de resumen)",
+        "inherit": "Igual que el detalle ({{field}})",
+        "inheritNone": "Igual que el detalle (sin configurar)",
+        "help": "Muestra un icono de Resumen IA en las acciones de la fila expandible. Abre el panel lateral con el Markdown de ese campo. Deja “Igual que el detalle” para reutilizar el campo de Resumen del detalle."
+      },
       "layoutColumns": "Columnas del diseño",
       "gridGap": "Espacio del grid",
       "gridTemplateColumns": "Plantilla de columnas del grid",
@@ -1993,9 +2069,13 @@
       "saveFailed": "No se pudo actualizar la configuración de observabilidad.",
       "loadFailed": "No se pudo cargar la configuración de observabilidad.",
       "viewLogsPrefix": "Ver registros capturados en",
-      "aiStepTrace": {
-        "title": "Traza de pasos IA",
-        "description": "Registra prompts del orquestador, respuestas del modelo y validación en trabajos de UI Builder."
+      "aiEnabled": {
+        "title": "IA habilitada (interruptor)",
+        "description": "Si está desactivada, toda llamada al modelo se rechaza y se registra como trabajo IA fallido. No se llama a Vertex."
+      },
+      "aiTrace": {
+        "title": "Traza de solicitudes IA",
+        "description": "Registra prompts, respuestas del modelo y validación en todo trabajo IA (chat, UI Builder, data hooks, Gmail)."
       },
       "requestPerfTrace": {
         "title": "Traza de rendimiento de peticiones",

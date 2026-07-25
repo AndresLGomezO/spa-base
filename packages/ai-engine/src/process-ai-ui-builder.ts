@@ -1,10 +1,10 @@
 import type { AiUiBuilderInput } from "./schemas/ai-ui-builder.schema.js";
 import type { AiUiBuilderOutput } from "./schemas/ai-ui-builder.schema.js";
 import {
-  generateModelAnswer,
   UI_BUILDER_MAX_OUTPUT_TOKENS,
   type VertexAiConfig,
 } from "./vertex-ai.client.js";
+import { generateModelAnswer } from "./clients/internal/vertex-ai.client.js";
 
 export interface ProcessAiUiBuilderContext {
   readonly systemInstruction: string;
@@ -19,7 +19,7 @@ export async function processAiUiBuilder(
   input: AiUiBuilderInput,
   context: ProcessAiUiBuilderContext,
 ): Promise<AiUiBuilderOutput> {
-  const answer = await generateModelAnswer(
+  const result = await generateModelAnswer(
     config,
     {
       systemInstruction: context.systemInstruction,
@@ -31,5 +31,5 @@ export async function processAiUiBuilder(
       responseMimeType: "application/json",
     },
   );
-  return { answer };
+  return { answer: result.text };
 }

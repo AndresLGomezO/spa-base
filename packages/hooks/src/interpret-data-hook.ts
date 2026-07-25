@@ -796,6 +796,12 @@ async function runAction(
       const result = await callAi({
         prompt: promptValue.trim(),
         tenantId: context.tenantId,
+        hookId: hookMeta.hookId,
+        hookName: hookMeta.hookName,
+        entityName: context.entityName,
+        ...(typeof context.current.id === "string"
+          ? { recordId: context.current.id }
+          : {}),
         ...(systemInstruction ? { systemInstruction } : {}),
         ...(action.includeEntities && action.includeEntities.length > 0
           ? { includeEntities: action.includeEntities }
@@ -845,7 +851,15 @@ async function runAction(
         context.loaded[action.as] = null;
         return;
       }
-      const values = await computeEmbedding({ text });
+      const values = await computeEmbedding({
+        text,
+        tenantId: context.tenantId,
+        hookId: hookMeta.hookId,
+        entityName: context.entityName,
+        ...(typeof context.current.id === "string"
+          ? { recordId: context.current.id }
+          : {}),
+      });
       context.loaded[action.as] = { values: [...values] };
       return;
     }
@@ -890,7 +904,15 @@ async function runAction(
         context.loaded[action.as] = null;
         return;
       }
-      const query = await computeEmbedding({ text: haystack });
+      const query = await computeEmbedding({
+        text: haystack,
+        tenantId: context.tenantId,
+        hookId: hookMeta.hookId,
+        entityName: context.entityName,
+        ...(typeof context.current.id === "string"
+          ? { recordId: context.current.id }
+          : {}),
+      });
       const minScore = action.minScore ?? DEFAULT_MATCH_SIMILAR_MIN_SCORE;
       const best = pickBestEmbeddingMatch({
         query,

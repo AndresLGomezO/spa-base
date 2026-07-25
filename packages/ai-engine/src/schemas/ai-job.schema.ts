@@ -18,9 +18,29 @@ export const aiJobFeatureSchema = z.enum([
   "chat",
   "uiBuilder",
   "dataModelBuilder",
+  "dataHookCallAi",
+  "dataHookBatchCallAi",
+  "dataHookEmbedding",
+  "gmailExtract",
 ]);
 
 export type AiJobFeature = z.infer<typeof aiJobFeatureSchema>;
+
+export const aiJobOperationSchema = z.enum([
+  "generateText",
+  "generateChat",
+  "generateEmbedding",
+  "generateImage",
+]);
+
+export type AiJobOperation = z.infer<typeof aiJobOperationSchema>;
+
+export const aiJobContextRefSchema = z.object({
+  source: z.enum(["hookExecution", "emailIngestJob"]),
+  id: z.string().trim().min(1),
+});
+
+export type AiJobContextRef = z.infer<typeof aiJobContextRefSchema>;
 
 export const aiChatOutputSchema = z.object({
   answer: z.string().trim().min(1),
@@ -37,9 +57,39 @@ export type AiUiBuilderOrchestratorOutput = z.infer<
   typeof aiUiBuilderOrchestratorOutputSchema
 >;
 
+export const aiTextOutputSchema = z.object({
+  text: z.string(),
+});
+
+export type AiTextOutput = z.infer<typeof aiTextOutputSchema>;
+
+export const aiEmbeddingOutputSchema = z.object({
+  dimensions: z.number().int().min(0),
+  sample: z.array(z.number()).max(32),
+});
+
+export type AiEmbeddingOutput = z.infer<typeof aiEmbeddingOutputSchema>;
+
+export const aiImageOutputSchema = z.object({
+  base64: z.string().min(1),
+  mimeType: z.string().trim().min(1),
+});
+
+export type AiImageOutput = z.infer<typeof aiImageOutputSchema>;
+
+export const aiBatchItemsOutputSchema = z.object({
+  items: z.array(z.record(z.string(), z.unknown())),
+});
+
+export type AiBatchItemsOutput = z.infer<typeof aiBatchItemsOutputSchema>;
+
 export const aiJobOutputSchema = z.union([
   aiChatOutputSchema,
   aiUiBuilderOrchestratorOutputSchema,
+  aiTextOutputSchema,
+  aiEmbeddingOutputSchema,
+  aiImageOutputSchema,
+  aiBatchItemsOutputSchema,
 ]);
 
 export type AiJobOutput = z.infer<typeof aiJobOutputSchema>;
@@ -53,6 +103,24 @@ export const aiJobProgressSchema = z.object({
 });
 
 export type AiJobProgress = z.infer<typeof aiJobProgressSchema>;
+
+export const aiJobModelUsageSchema = z.object({
+  modelId: z.string().trim().min(1),
+  promptTokens: z.number().int().min(0).optional(),
+  candidatesTokens: z.number().int().min(0).optional(),
+  thoughtsTokens: z.number().int().min(0).optional(),
+  cachedContentTokens: z.number().int().min(0).optional(),
+  totalTokens: z.number().int().min(0).optional(),
+  finishReason: z.string().optional(),
+  outputDimensions: z.number().int().min(0).optional(),
+  imageCount: z.number().int().min(0).optional(),
+  aspectRatio: z.string().optional(),
+  inputCharacters: z.number().int().min(0).optional(),
+  estimatedCostUsd: z.number().min(0).optional(),
+  costTier: z.enum(["standard", "longContext"]).optional(),
+});
+
+export type AiJobModelUsage = z.infer<typeof aiJobModelUsageSchema>;
 
 export const aiJobStepTraceContextBlockSchema = z.object({
   id: z.string().trim().min(1),
@@ -74,6 +142,7 @@ export const aiJobStepTraceEntrySchema = z.object({
   durationMs: z.number().int().min(0).optional(),
   draftBeforeStep: z.unknown().optional(),
   draftAfterStep: z.unknown().optional(),
+  modelUsage: aiJobModelUsageSchema.optional(),
 });
 
 export type AiJobStepTraceEntry = z.infer<typeof aiJobStepTraceEntrySchema>;
@@ -86,9 +155,74 @@ export const uiBuilderDraftSchema = z
   .record(z.string(), z.unknown())
   .nullable();
 
+export const aiDataHookCallAiInputSchema = z.object({
+  kind: z.literal("dataHookCallAi"),
+  hookId: z.string().trim().min(1),
+  hookName: z.string().trim().min(1).optional(),
+  hookExecutionId: z.string().trim().min(1).optional(),
+  recordId: z.string().trim().min(1).optional(),
+  entityName: z.string().trim().min(1).optional(),
+  prompt: z.string(),
+  systemInstruction: z.string().optional(),
+  cacheKey: z.string().optional(),
+  includeEntities: z.array(z.string().trim().min(1)).optional(),
+});
+
+export type AiDataHookCallAiInput = z.infer<typeof aiDataHookCallAiInputSchema>;
+
+export const aiDataHookBatchCallAiInputSchema = z.object({
+  kind: z.literal("dataHookBatchCallAi"),
+  hookId: z.string().trim().min(1).optional(),
+  hookName: z.string().trim().min(1).optional(),
+  itemCount: z.number().int().min(0),
+  promptPreview: z.string().optional(),
+});
+
+export type AiDataHookBatchCallAiInput = z.infer<
+  typeof aiDataHookBatchCallAiInputSchema
+>;
+
+export const aiDataHookEmbeddingInputSchema = z.object({
+  kind: z.literal("dataHookEmbedding"),
+  hookId: z.string().trim().min(1).optional(),
+  hookExecutionId: z.string().trim().min(1).optional(),
+  recordId: z.string().trim().min(1).optional(),
+  entityName: z.string().trim().min(1).optional(),
+  text: z.string(),
+});
+
+export type AiDataHookEmbeddingInput = z.infer<
+  typeof aiDataHookEmbeddingInputSchema
+>;
+
+export const aiGmailExtractInputSchema = z.object({
+  kind: z.literal("gmailExtract"),
+  userId: z.string().trim().min(1),
+  messageId: z.string().trim().min(1).optional(),
+  entityName: z.string().trim().min(1),
+  aiInstructions: z.string().optional(),
+});
+
+export type AiGmailExtractInput = z.infer<typeof aiGmailExtractInputSchema>;
+
+export const aiUiBuilderStepInputSchema = z.object({
+  kind: z.literal("uiBuilderStep"),
+  stepId: z.string().trim().min(1),
+  entityName: z.string().trim().min(1).optional(),
+  surface: z.string().trim().min(1).optional(),
+  question: z.string().optional(),
+});
+
+export type AiUiBuilderStepInput = z.infer<typeof aiUiBuilderStepInputSchema>;
+
 export const aiJobInputSchema = z.union([
   aiUiBuilderInputSchema,
   aiChatInputSchema,
+  aiDataHookCallAiInputSchema,
+  aiDataHookBatchCallAiInputSchema,
+  aiDataHookEmbeddingInputSchema,
+  aiGmailExtractInputSchema,
+  aiUiBuilderStepInputSchema,
 ]);
 
 export type AiJobInput = z.infer<typeof aiJobInputSchema>;
@@ -101,9 +235,14 @@ export const aiJobRecordSchema = z.object({
   input: aiJobInputSchema,
   output: aiJobOutputSchema.nullable(),
   error: z.string().nullable(),
+  /** Model operation for controller-driven jobs. Optional for legacy records. */
+  operation: aiJobOperationSchema.optional(),
+  parentJobId: z.string().trim().min(1).optional(),
+  contextRef: aiJobContextRefSchema.optional(),
   progress: aiJobProgressSchema.nullable().optional(),
   draft: uiBuilderDraftSchema.optional(),
   stepTrace: aiJobStepTraceSchema.optional(),
+  modelUsage: aiJobModelUsageSchema.optional(),
   requestedBy: z.string().trim().min(1),
   permission: z.string().trim().min(1),
   createdAt: z.string().trim().min(1),

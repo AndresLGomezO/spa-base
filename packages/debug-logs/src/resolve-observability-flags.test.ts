@@ -10,6 +10,8 @@ import {
 import type { PlatformRuntimeSettings } from "./platform-runtime-settings.js";
 
 const baseSettings: PlatformRuntimeSettings = {
+  aiEnabled: null,
+  aiTraceEnabled: null,
   aiStepTraceEnabled: null,
   requestPerfTraceEnabled: null,
   seedHookObservabilityEnabled: null,
@@ -39,6 +41,8 @@ describe("resolveObservabilityFlags", () => {
         NODE_ENV: "development",
       }),
     ).toEqual({
+      aiEnabled: true,
+      aiTraceEnabled: true,
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
       seedHookObservabilityEnabled: true,
@@ -51,6 +55,12 @@ describe("resolveObservabilityFlags", () => {
       resolveAiStepTraceEnabled(null, {
         NODE_ENV: "production",
         AI_STEP_TRACE_ENABLED: "true",
+      }),
+    ).toBe(true);
+    expect(
+      resolveAiStepTraceEnabled(null, {
+        NODE_ENV: "production",
+        AI_TRACE_ENABLED: "true",
       }),
     ).toBe(true);
     expect(
@@ -78,6 +88,8 @@ describe("resolveObservabilityFlags", () => {
         env,
       ),
     ).toEqual({
+      aiEnabled: true,
+      aiTraceEnabled: true,
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
       seedHookObservabilityEnabled: false,
@@ -96,11 +108,38 @@ describe("resolveObservabilityFlags", () => {
         { NODE_ENV: "development" },
       ),
     ).toEqual({
+      aiEnabled: true,
+      aiTraceEnabled: false,
       aiStepTraceEnabled: false,
       requestPerfTraceEnabled: false,
       seedHookObservabilityEnabled: true,
       gmailIngestDeliveryMode: "poll",
     });
+  });
+
+  it("prefers aiTraceEnabled over legacy aiStepTraceEnabled", () => {
+    expect(
+      resolveEffectiveObservabilityFlags(
+        {
+          ...baseSettings,
+          aiTraceEnabled: true,
+          aiStepTraceEnabled: false,
+        },
+        { NODE_ENV: "production" },
+      ).aiTraceEnabled,
+    ).toBe(true);
+  });
+
+  it("honors aiEnabled kill-switch override", () => {
+    expect(
+      resolveEffectiveObservabilityFlags(
+        {
+          ...baseSettings,
+          aiEnabled: false,
+        },
+        { NODE_ENV: "development" },
+      ).aiEnabled,
+    ).toBe(false);
   });
 
   it("resolves seed hook observability from env and runtime overrides", () => {

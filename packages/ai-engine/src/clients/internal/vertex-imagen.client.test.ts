@@ -17,6 +17,11 @@ describe("generateImagenImage", () => {
     expect(result.mimeType).toBe("image/png");
     expect(result.buffer.length).toBeGreaterThan(0);
     expect(result.buffer.subarray(0, 4).toString("hex")).toBe("89504e47");
+    expect(result.usage).toEqual({
+      modelId: "mock",
+      imageCount: 1,
+      aspectRatio: "16:9",
+    });
   });
 
   it("rejects empty prompt", async () => {

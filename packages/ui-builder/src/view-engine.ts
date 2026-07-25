@@ -182,6 +182,27 @@ export function getExpandableTableShowActions(
   return resolveExpandableTableView(definition, viewName).showActions !== false;
 }
 
+/**
+ * Field used for the expandable-row AI Summary action.
+ * - view.summaryField set to non-empty → that field
+ * - view.summaryField set to `""` → disabled
+ * - omitted → inherit recordDetail / detailLayout summaryField
+ */
+export function getExpandableTableSummaryField(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+): string | undefined {
+  const view = resolveExpandableTableView(definition, viewName);
+  if (view.summaryField !== undefined) {
+    const trimmed = view.summaryField.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  const detailLayout =
+    definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
+  const inherited = detailLayout?.summaryField?.trim();
+  return inherited && inherited.length > 0 ? inherited : undefined;
+}
+
 export function getExpandableTableImageFieldPath(
   definition: SerializableEntityDefinition,
   viewName?: string,

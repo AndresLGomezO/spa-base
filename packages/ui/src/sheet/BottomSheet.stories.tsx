@@ -23,7 +23,9 @@ export const Default: StoryObj = {
       <>
         <Button onClick={() => setOpen(true)}>Open bottom sheet</Button>
         <BottomSheet open={open} onOpenChange={setOpen} title="Select period">
-          <p className="text-muted-foreground text-sm">Sheet content goes here.</p>
+          <p className="text-muted-foreground text-sm">
+            Sheet content goes here.
+          </p>
         </BottomSheet>
       </>
     );

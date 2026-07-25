@@ -2,8 +2,10 @@ import type { ReactNode } from "react";
 
 import { cn } from "@repo/theme/utils";
 
+import { AiSparkIcon } from "../icons/AiSparkIcon";
 import { IconButton } from "../icon-button/IconButton";
 import { Text } from "../typography/Text";
+import type { ThirdRailTone } from "./ThirdRail";
 
 export interface ThirdRailHeaderProps {
   readonly titleId: string;
@@ -12,6 +14,7 @@ export interface ThirdRailHeaderProps {
   readonly headerActions?: ReactNode;
   readonly closeLabel: string;
   readonly onClose: () => void;
+  readonly tone?: ThirdRailTone;
 }
 
 export function ThirdRailHeader({
@@ -21,13 +24,30 @@ export function ThirdRailHeader({
   headerActions,
   closeLabel,
   onClose,
+  tone = "default",
 }: ThirdRailHeaderProps) {
+  const isAiTone = tone === "ai";
+
   return (
-    <div className="border-border flex shrink-0 items-start justify-between gap-3 border-b px-5 py-4">
+    <div
+      className={cn(
+        "border-border flex shrink-0 items-start justify-between gap-3 border-b px-5 py-4",
+        isAiTone && "third-rail-header-ai",
+      )}
+    >
       <div className="min-w-0 flex-1">
-        <h2 id={titleId} className="text-foreground text-lg font-semibold">
-          {title}
-        </h2>
+        <div className="flex items-center gap-2">
+          {isAiTone ? <AiSparkIcon size={22} animated /> : null}
+          <h2
+            id={titleId}
+            className={cn(
+              "text-foreground text-lg font-semibold",
+              isAiTone && "third-rail-title-ai",
+            )}
+          >
+            {title}
+          </h2>
+        </div>
         {subtitle ? (
           <Text variant="muted" className={cn("mt-1 truncate text-sm")}>
             {subtitle}

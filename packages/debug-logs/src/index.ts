@@ -49,8 +49,12 @@ export {
 } from "./create-persisting-hook-logger.js";
 export {
   getObservabilityEnvDefaults,
+  resolveAiEnabled,
+  resolveAiTraceEnabled,
   resolveAiStepTraceEnabled,
   resolveEffectiveObservabilityFlags,
+  resolveEnvAiEnabled,
+  resolveEnvAiTraceEnabled,
   resolveEnvAiStepTraceEnabled,
   resolveEnvGmailIngestDeliveryMode,
   resolveEnvRequestPerfTraceEnabled,

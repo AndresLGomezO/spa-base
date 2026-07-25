@@ -78,12 +78,20 @@ resource "google_cloud_run_v2_service" "worker_service" {
         value = var.region
       }
       env {
+        name  = "VERTEX_LOCATION"
+        value = var.vertex_location
+      }
+      env {
         name  = "GCP_STORAGE_BUCKET"
         value = local.default_storage_bucket
       }
       env {
         name  = "VERTEX_MODEL_ID"
         value = var.vertex_gemini_model_id
+      }
+      env {
+        name  = "VERTEX_REASONING_MODEL_ID"
+        value = var.vertex_gemini_reasoning_model_id
       }
       env {
         name  = "TASKS_SA_EMAIL"

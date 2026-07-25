@@ -17,6 +17,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  AiSparkIcon,
+  IconButton,
   TableCard,
   Text,
 } from "@repo/ui";
@@ -50,6 +52,8 @@ export interface EntityExpandableTableLayoutPreviewProps {
   readonly columns: readonly GroupedTableColumn[];
   readonly rowExpandLayout: UiLayoutDocument;
   readonly showActions?: boolean;
+  /** When set, shows a non-interactive AI summary icon in the preview actions. */
+  readonly summaryField?: string;
   readonly previewItem: Record<string, unknown> | null;
   readonly title: string;
   readonly locale: string;
@@ -66,6 +70,7 @@ export function EntityExpandableTableLayoutPreview({
   columns,
   rowExpandLayout,
   showActions = true,
+  summaryField,
   previewItem,
   title,
   locale,
@@ -94,9 +99,26 @@ export function EntityExpandableTableLayoutPreview({
     columns,
     (column) => shouldRenderGroupedTableColumn(column, atBreakpoint),
   );
-  const previewActions = showActions
+  const showSummaryPreview = Boolean(summaryField?.trim());
+  const crudPreviewActions = showActions
     ? layoutPreviewActions({ ...rowExpandLayout, showActions: true }, t)
     : null;
+  const previewActions =
+    showSummaryPreview || crudPreviewActions ? (
+      <>
+        {showSummaryPreview ? (
+          <IconButton
+            type="button"
+            label={t("entity.summary.button")}
+            disabled
+            className="text-violet-600 dark:text-violet-400"
+          >
+            <AiSparkIcon size={16} className="shrink-0" />
+          </IconButton>
+        ) : null}
+        {crudPreviewActions}
+      </>
+    ) : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -179,8 +201,7 @@ export function EntityExpandableTableLayoutPreview({
                           context={renderContext}
                           {...(getCellLayoutRendererProps?.(columnIndex) ?? {})}
                         />
-                        {showActions &&
-                        previewActions &&
+                        {previewActions &&
                         columnIndex === lastVisibleGroupedColumnIndex ? (
                           <ExpandableTableRowActionsOverlay>
                             {previewActions}

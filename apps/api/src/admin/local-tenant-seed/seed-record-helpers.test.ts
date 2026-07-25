@@ -9,17 +9,17 @@ import {
   importLocalRecordsBatch,
 } from "./seed-record-helpers.js";
 
-const paymentScheduleRecord: EntityDefinitionRecord = {
-  id: "def_payment_schedule",
+const scheduleRecord: EntityDefinitionRecord = {
+  id: "def_schedule",
   tenantId: "tenant_test",
-  name: "paymentSchedule",
-  label: "Payment Schedules",
+  name: "schedule",
+  label: "Schedules",
   version: 1,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
   fields: [
     {
-      name: "financialItemId",
+      name: "parentId",
       type: "string",
       required: true,
     },
@@ -32,22 +32,20 @@ const paymentScheduleRecord: EntityDefinitionRecord = {
 };
 
 describe("createSeedHookEntityRuntime", () => {
-  it("resolves paymentSchedule from seed definition records", () => {
+  it("resolves schedule from seed definition records", () => {
     const context = createLocalRecordSeedContext(
       "tenant_test",
       { projectId: "demo" },
-      [paymentScheduleRecord],
+      [scheduleRecord],
       "owner_123",
     );
     const runtime = createSeedHookEntityRuntime(context);
 
-    expect(runtime.resolveEntity("paymentSchedule", "tenant_test")?.name).toBe(
-      "paymentSchedule",
+    expect(runtime.resolveEntity("schedule", "tenant_test")?.name).toBe(
+      "schedule",
     );
-    expect(
-      runtime.getRepository("tenant_test", "paymentSchedule"),
-    ).toBeDefined();
-    expect(runtime.resolveEntity("paymentSchedule", "other")).toBeUndefined();
+    expect(runtime.getRepository("tenant_test", "schedule")).toBeDefined();
+    expect(runtime.resolveEntity("schedule", "other")).toBeUndefined();
   });
 });
 
@@ -56,12 +54,12 @@ describe("importLocalRecordsBatch", () => {
     const context = createLocalRecordSeedContext(
       "tenant_test",
       { projectId: "demo" },
-      [paymentScheduleRecord],
+      [scheduleRecord],
       "owner_123",
     );
 
     await expect(
-      importLocalRecordsBatch(context, "paymentSchedule", []),
+      importLocalRecordsBatch(context, "schedule", []),
     ).resolves.toBeUndefined();
   });
 
@@ -69,7 +67,7 @@ describe("importLocalRecordsBatch", () => {
     const context = createLocalRecordSeedContext(
       "tenant_test",
       { projectId: "demo" },
-      [paymentScheduleRecord],
+      [scheduleRecord],
       "owner_123",
     );
 
@@ -77,7 +75,7 @@ describe("importLocalRecordsBatch", () => {
       importLocalRecordsBatch(context, "missingEntity", [
         {
           id: "ps_1",
-          business: { financialItemId: "fi_1", dueDate: "2026-01-01" },
+          business: { parentId: "fi_1", dueDate: "2026-01-01" },
         },
       ]),
     ).rejects.toThrow('Entity "missingEntity" is not registered');
@@ -89,7 +87,7 @@ describe("deleteLocalRecordsNotInSet", () => {
     const context = createLocalRecordSeedContext(
       "tenant_test",
       { projectId: "demo" },
-      [paymentScheduleRecord],
+      [scheduleRecord],
       "owner_123",
     );
 

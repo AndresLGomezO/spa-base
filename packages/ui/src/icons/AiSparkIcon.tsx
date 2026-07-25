@@ -1,5 +1,7 @@
 import { cn } from "@repo/theme/utils";
 
+import "../ai/ai-builder-loading.css";
+
 export interface AiSparkIconProps {
   readonly size?: number;
   readonly className?: string;

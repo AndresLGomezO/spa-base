@@ -7,6 +7,7 @@ import {
   type ExpressionNode,
   type ExpressionScope,
 } from "./expression.js";
+import { sha256Hex } from "./sha256.js";
 
 function scope(overrides: Partial<ExpressionScope> = {}): ExpressionScope {
   return {
@@ -702,5 +703,44 @@ describe("normalizeMerchantText", () => {
       args: [{ kind: "literal", value: null }],
     };
     expect(evaluateExpression(node, scope())).toBe("");
+  });
+});
+
+describe("sha256", () => {
+  it("matches NIST empty and abc vectors", () => {
+    expect(sha256Hex("")).toBe(
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    );
+    expect(sha256Hex("abc")).toBe(
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    );
+  });
+
+  it("hashes a string as-is to hex", () => {
+    const payload = '{"loans":[]}';
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "sha256",
+      args: [{ kind: "literal", value: payload }],
+    };
+    expect(evaluateExpression(node, scope())).toBe(sha256Hex(payload));
+  });
+
+  it("hashes null as empty string", () => {
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "sha256",
+      args: [{ kind: "literal", value: null }],
+    };
+    expect(evaluateExpression(node, scope())).toBe(sha256Hex(""));
+  });
+
+  it("coerces non-string values with String()", () => {
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "sha256",
+      args: [{ kind: "literal", value: 42 }],
+    };
+    expect(evaluateExpression(node, scope())).toBe(sha256Hex("42"));
   });
 });

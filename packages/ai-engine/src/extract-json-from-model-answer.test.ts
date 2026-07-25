@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { extractJsonFromModelAnswer } from "./extract-json-from-model-answer.js";
+import {
+  extractJsonFromModelAnswer,
+  INCOMPLETE_JSON_OBJECT_ERROR,
+  isRetriableTruncatedModelAnswerError,
+  MAX_OUTPUT_TOKENS_ERROR,
+} from "./extract-json-from-model-answer.js";
 
 describe("extractJsonFromModelAnswer", () => {
   it("parses raw JSON object", () => {
@@ -33,7 +38,21 @@ describe("extractJsonFromModelAnswer", () => {
   it("throws when JSON is truncated before the root object closes", () => {
     expect(() =>
       extractJsonFromModelAnswer('```json\n{"kind":"design-layout-slice"'),
-    ).toThrow("truncated");
+    ).toThrow(INCOMPLETE_JSON_OBJECT_ERROR);
+  });
+
+  it("marks truncated JSON and max-token errors as retriable", () => {
+    expect(
+      isRetriableTruncatedModelAnswerError(
+        new Error(INCOMPLETE_JSON_OBJECT_ERROR),
+      ),
+    ).toBe(true);
+    expect(
+      isRetriableTruncatedModelAnswerError(new Error(MAX_OUTPUT_TOKENS_ERROR)),
+    ).toBe(true);
+    expect(
+      isRetriableTruncatedModelAnswerError(new Error("No JSON object found")),
+    ).toBe(false);
   });
 
   it("parses the first object when the model appends a second JSON object", () => {

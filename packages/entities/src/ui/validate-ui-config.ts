@@ -99,6 +99,8 @@ const expandableTableViewConfigSchema = z
     columns: z.array(groupedTableColumnSchema).min(1),
     rowExpandLayout: uiLayoutDocumentSchema,
     showActions: z.boolean().optional(),
+    /** Empty string disables; omit inherits detail summaryField. */
+    summaryField: z.string().optional(),
     imageFieldPath: z.string().trim().min(1).optional(),
   })
   .strict();

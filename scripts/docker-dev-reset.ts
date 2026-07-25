@@ -95,7 +95,9 @@ function ensureWorkerEnvDev(): void {
       "USE_REAL_VERTEX=false",
       "GCP_PROJECT_ID=demo-project-base",
       "GCP_REGION=us-central1",
-      "VERTEX_MODEL_ID=gemini-2.5-pro",
+      "VERTEX_LOCATION=global",
+      "VERTEX_MODEL_ID=gemini-3.6-flash",
+      "VERTEX_REASONING_MODEL_ID=gemini-3.1-pro-preview",
       "",
     ].join("\n"),
   );

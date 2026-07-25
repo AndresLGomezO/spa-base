@@ -28,6 +28,8 @@ export function mapWindowSummaryToSourceStats(
     emailIngestFinished: summary.emailIngestFinished,
     emailIngestProcessed: summary.emailIngestProcessed,
     emailIngestFailedMessages: summary.emailIngestFailedMessages,
+    totalTokens: summary.totalTokens ?? null,
+    estimatedCostUsd: summary.estimatedCostUsd ?? null,
     barCharts: summary.barCharts as DebuggerBarChartStats[],
     timelineBuckets: summary.timelineBuckets,
     attentionItems: summary.attentionItems.map((item) => ({

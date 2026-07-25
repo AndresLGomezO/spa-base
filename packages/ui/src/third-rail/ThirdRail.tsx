@@ -12,8 +12,10 @@ import {
   resolveThirdRailWidthClasses,
   type ThirdRailWidthConfig,
 } from "./third-rail-widths";
+import "./third-rail-ai.css";
 
 export type ThirdRailVariant = "push" | "overlay";
+export type ThirdRailTone = "default" | "ai";
 
 export interface ThirdRailProps {
   readonly title: string;
@@ -23,6 +25,7 @@ export interface ThirdRailProps {
   readonly footer?: ReactNode;
   readonly variant: ThirdRailVariant;
   readonly widths?: ThirdRailWidthConfig;
+  readonly tone?: ThirdRailTone;
   readonly closeLabel: string;
   readonly onClose: () => void;
   readonly titleId: string;
@@ -37,6 +40,7 @@ export function ThirdRail({
   footer,
   variant,
   widths,
+  tone = "default",
   closeLabel,
   onClose,
   titleId,
@@ -49,6 +53,7 @@ export function ThirdRail({
   const animate = durationMs > 0;
   const hasFooter = Boolean(footer);
   const widthClasses = resolveThirdRailWidthClasses(widths);
+  const isAiTone = tone === "ai";
 
   return (
     <div
@@ -64,6 +69,7 @@ export function ThirdRail({
         variant === "overlay" && "absolute top-0 right-0",
         animate && (visible ? "translate-x-0" : "translate-x-full"),
         !animate && "translate-x-0",
+        isAiTone && "third-rail-tone-ai",
       )}
       style={overlayTransitionStyle(durationMs, "transform")}
       onClick={(event) => event.stopPropagation()}
@@ -76,8 +82,14 @@ export function ThirdRail({
         headerActions={headerActions}
         closeLabel={closeLabel}
         onClose={onClose}
+        tone={tone}
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-5 py-4">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-5 py-4",
+          isAiTone && "third-rail-body-ai",
+        )}
+      >
         {body}
       </div>
       {hasFooter ? (

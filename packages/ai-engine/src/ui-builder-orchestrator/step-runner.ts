@@ -1,10 +1,10 @@
 import { extractJsonFromModelAnswer } from "../extract-json-from-model-answer.js";
 import type { AiJobStepTraceEntry } from "../schemas/ai-job.schema.js";
-import {
-  generateModelAnswer,
-  type GenerateModelAnswerOptions,
-  type VertexAiConfig,
+import type {
+  GenerateModelAnswerOptions,
+  VertexAiConfig,
 } from "../vertex-ai.client.js";
+import { generateModelAnswer } from "../clients/internal/vertex-ai.client.js";
 import {
   getStepMaxOutputTokens,
   MAX_STEP_RETRIES,
@@ -12,12 +12,27 @@ import {
 } from "./limits.js";
 import type { StepContextInput, StepValidationResult } from "./types.js";
 
+export type GenerateAnswerFn = (
+  config: VertexAiConfig,
+  input: {
+    readonly systemInstruction: string;
+    readonly userText: string;
+    readonly contextBlocks?: readonly {
+      readonly id: string;
+      readonly content: string;
+    }[];
+  },
+  options?: GenerateModelAnswerOptions,
+) => Promise<string>;
+
 export interface RunStepOptions {
   readonly vertexConfig: VertexAiConfig;
   readonly stepContext: StepContextInput;
   readonly stepId: string;
   readonly draftBeforeStep?: unknown;
   readonly onAttempt?: (entry: AiJobStepTraceEntry) => void | Promise<void>;
+  /** When set, used instead of the raw Vertex client (unified AI controller). */
+  readonly generateAnswer?: GenerateAnswerFn;
 }
 
 function isTruncatedResponseError(error: unknown): boolean {
@@ -75,19 +90,36 @@ export async function runStepWithRetries(
     let rawAnswer = "";
 
     try {
-      rawAnswer = await generateModelAnswer(
-        options.vertexConfig,
-        {
-          systemInstruction: options.stepContext.systemInstruction,
-          contextBlocks: options.stepContext.contextBlocks,
-          userText: `${options.stepContext.userText}\n\n${options.stepContext.outputInstruction}${retryHint}`,
-        },
-        {
-          maxOutputTokens: getStepMaxOutputTokens(options.stepId),
-          responseMimeType: "application/json",
-          stepId: options.stepId,
-        } satisfies GenerateModelAnswerOptions,
-      );
+      if (options.generateAnswer) {
+        rawAnswer = await options.generateAnswer(
+          options.vertexConfig,
+          {
+            systemInstruction: options.stepContext.systemInstruction,
+            contextBlocks: options.stepContext.contextBlocks,
+            userText: `${options.stepContext.userText}\n\n${options.stepContext.outputInstruction}${retryHint}`,
+          },
+          {
+            maxOutputTokens: getStepMaxOutputTokens(options.stepId),
+            responseMimeType: "application/json",
+            stepId: options.stepId,
+          } satisfies GenerateModelAnswerOptions,
+        );
+      } else {
+        const result = await generateModelAnswer(
+          options.vertexConfig,
+          {
+            systemInstruction: options.stepContext.systemInstruction,
+            contextBlocks: options.stepContext.contextBlocks,
+            userText: `${options.stepContext.userText}\n\n${options.stepContext.outputInstruction}${retryHint}`,
+          },
+          {
+            maxOutputTokens: getStepMaxOutputTokens(options.stepId),
+            responseMimeType: "application/json",
+            stepId: options.stepId,
+          } satisfies GenerateModelAnswerOptions,
+        );
+        rawAnswer = result.text;
+      }
     } catch (error) {
       if (isTruncatedResponseError(error)) {
         lastErrors = [TRUNCATED_RESPONSE_ERROR];

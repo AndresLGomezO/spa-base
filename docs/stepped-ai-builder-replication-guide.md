@@ -1110,7 +1110,8 @@ Semantic entity UI         validateEntityUIConfig (field paths, kinds, relations
 | `GCP_PROJECT_ID` | Firestore project |
 | `VERTEX_GCP_PROJECT_ID` | Vertex billing project |
 | `GCP_REGION` | Vertex region (default `us-central1`) |
-| `VERTEX_MODEL_ID` | Default model |
+| `VERTEX_MODEL_ID` | Default Flash model (classify / chat / UI builder) |
+| `VERTEX_REASONING_MODEL_ID` | Reasoning model for narrative contract JSON summaries |
 | `FIRESTORE_EMULATOR_HOST` | Local Firestore (`127.0.0.1:8080`) |
 
 ### 12.2 Permissions

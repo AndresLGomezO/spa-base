@@ -12,7 +12,7 @@ import type {
 export async function runOrchestrator(
   options: RunOrchestratorOptions,
 ): Promise<OrchestratorResult> {
-  const { recipe, context, callbacks, vertexConfig } = options;
+  const { recipe, context, callbacks, vertexConfig, generateAnswer } = options;
   let draft = context.draft;
   const queue: UiBuilderStep[] = [
     ...(options.initialSteps ?? recipe.createInitialSteps(context)),
@@ -45,6 +45,7 @@ export async function runOrchestrator(
         stepContext,
         stepId: step.id,
         draftBeforeStep,
+        ...(generateAnswer ? { generateAnswer } : {}),
         ...(callbacks.onStepTrace
           ? {
               onAttempt: async (entry) => {

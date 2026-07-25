@@ -1467,6 +1467,22 @@ export interface UiBuilderJobDraft {
   >;
 }
 
+export interface AiJobModelUsage {
+  readonly modelId: string;
+  readonly promptTokens?: number;
+  readonly candidatesTokens?: number;
+  readonly thoughtsTokens?: number;
+  readonly cachedContentTokens?: number;
+  readonly totalTokens?: number;
+  readonly finishReason?: string;
+  readonly outputDimensions?: number;
+  readonly imageCount?: number;
+  readonly aspectRatio?: string;
+  readonly inputCharacters?: number;
+  readonly estimatedCostUsd?: number;
+  readonly costTier?: "standard" | "longContext";
+}
+
 export interface AiJobStepTraceEntry {
   readonly stepId: string;
   readonly attempt: number;
@@ -1485,6 +1501,7 @@ export interface AiJobStepTraceEntry {
   readonly durationMs?: number;
   readonly draftBeforeStep?: unknown;
   readonly draftAfterStep?: unknown;
+  readonly modelUsage?: AiJobModelUsage;
 }
 
 export interface AiJobUiBuilderInput {
@@ -1500,15 +1517,36 @@ export interface AiJobRecord {
   readonly id: string;
   readonly status: AiJobStatus;
   readonly feature: string;
-  readonly input: AiJobUiBuilderInput | { readonly question: string };
+  readonly operation?: string;
+  readonly parentJobId?: string;
+  readonly modelUsage?: AiJobModelUsage;
+  readonly input:
+    | AiJobUiBuilderInput
+    | { readonly question: string }
+    | Record<string, unknown>;
   readonly output:
     | { readonly answer: string }
     | { readonly summary: string; readonly stepCount: number }
+    | { readonly text: string }
+    | { readonly vector: readonly number[]; readonly dimensions: number }
+    | { readonly base64: string; readonly mimeType: string }
+    | { readonly items: readonly unknown[] }
     | null;
   readonly error: string | null;
   readonly progress?: AiJobProgress | null;
   readonly draft?: UiBuilderJobDraft | null;
   readonly stepTrace?: readonly AiJobStepTraceEntry[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface AiJobChildSummary {
+  readonly id: string;
+  readonly status: AiJobStatus;
+  readonly feature: string;
+  readonly operation?: string;
+  readonly modelUsage?: AiJobModelUsage;
+  readonly error: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -1649,6 +1687,8 @@ export interface DebugEventsSummary {
   readonly emailIngestFinished: number | null;
   readonly emailIngestProcessed: number | null;
   readonly emailIngestFailedMessages: number | null;
+  readonly totalTokens: number | null;
+  readonly estimatedCostUsd: number | null;
   readonly barCharts: readonly {
     readonly id: string;
     readonly titleKey: string;
@@ -1821,6 +1861,13 @@ export async function listDataHookExecutions(
 
 export async function getDebugAiJob(jobId: string): Promise<AiJobRecord> {
   return apiRequest(`/api/debug/ai-jobs/${encodeURIComponent(jobId)}`);
+}
+
+export async function getDebugAiJobChildren(jobId: string): Promise<{
+  readonly parentJobId: string;
+  readonly children: readonly AiJobChildSummary[];
+}> {
+  return apiRequest(`/api/debug/ai-jobs/${encodeURIComponent(jobId)}/children`);
 }
 
 export interface EmailIngestRunMetrics {

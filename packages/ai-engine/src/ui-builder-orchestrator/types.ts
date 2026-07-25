@@ -191,4 +191,5 @@ export interface RunOrchestratorOptions {
   readonly context: SurfaceRecipeContext;
   readonly callbacks: OrchestratorCallbacks;
   readonly initialSteps?: readonly UiBuilderStep[];
+  readonly generateAnswer?: import("./step-runner.js").GenerateAnswerFn;
 }

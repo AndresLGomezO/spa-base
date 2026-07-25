@@ -2,8 +2,6 @@ import { cn } from "@repo/theme/utils";
 
 import type { DatePickerPreset } from "./date-picker.types.js";
 
-export type { DatePickerPreset };
-
 interface DatePickerPresetsProps {
   readonly presets: readonly DatePickerPreset[];
   readonly selectedValue?: string | null;

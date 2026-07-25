@@ -1,15 +1,35 @@
-import { extractJsonFromModelAnswer } from "@repo/ai-engine/extract-json-from-model-answer";
+import type { AiController } from "@repo/ai-engine/controller";
+import {
+  extractJsonFromModelAnswer,
+  isRetriableTruncatedModelAnswerError,
+} from "@repo/ai-engine/extract-json-from-model-answer";
 import {
   DATA_HOOK_AI_BATCH_MAX_OUTPUT_TOKENS,
   DATA_HOOK_AI_MAX_OUTPUT_TOKENS,
+  DATA_HOOK_AI_NARRATIVE_MAX_OUTPUT_TOKENS,
+  DATA_HOOK_AI_NARRATIVE_THINKING_BUDGET,
   DATA_HOOK_AI_THINKING_BUDGET,
-  generateModelAnswer,
   type VertexAiConfig,
 } from "@repo/ai-engine/vertex-ai.client";
 import { HookExecutionError, type DataHookAiRequest } from "@repo/hooks";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 
+import { expandNarrativeCharts } from "./expand-narrative-charts.js";
+
 const INCLUDE_ENTITY_LIMIT = 500;
+/** One compact retry when Gemini returns STOP mid-JSON (seen on narrative summaries). */
+const CALL_AI_TRUNCATION_RETRIES = 1;
+
+const NARRATIVE_TRUNCATION_RETRY_HINT = `
+
+---
+Your previous answer was truncated mid-JSON (incomplete object). Reply again with ONE complete minimal valid JSON object only.
+Keep "text" concise (shorter markdown), at most 2 compact charts, and close every brace/bracket. No markdown fences around the JSON.`;
+
+const CLASSIFY_TRUNCATION_RETRY_HINT = `
+
+---
+Your previous answer was truncated mid-JSON. Reply again with ONE complete minimal valid JSON object only — no markdown fences, no trailing prose.`;
 
 /** Apply a category only when the model is at least this confident. */
 export const CLASSIFY_MIN_CONFIDENCE = 0.95;
@@ -18,6 +38,7 @@ type GenericRecord = { readonly id: string; readonly tenantId: string };
 
 export type CallDataHookAiDeps = {
   readonly vertexAiConfig: VertexAiConfig;
+  readonly aiController: AiController;
   readonly getRepository: (
     tenantId: string,
     entityName: string,
@@ -100,15 +121,10 @@ function buildMockClassificationAnswer(prompt: string): string {
     parentCategoryId: null,
     newCategoryName: null,
     kind: "EXPENSE",
-    // High confidence so local mock paths still apply categories.
     confidence: categoryId ? 0.98 : 0.2,
   });
 }
 
-/**
- * Prefer an existing category when AI tries to create a near-duplicate leaf
- * (e.g. "Italian Food" when "Food" already exists).
- */
 export function coerceNearDuplicateCreateChild(
   result: Record<string, unknown>,
   categories: readonly CompactCategory[],
@@ -158,9 +174,6 @@ export function coerceNearDuplicateCreateChild(
   };
 }
 
-/**
- * Drop category assignment when confidence is missing or below the gate.
- */
 export function applyClassifyConfidenceGate(
   result: Record<string, unknown>,
   minConfidence: number = CLASSIFY_MIN_CONFIDENCE,
@@ -219,14 +232,85 @@ async function buildEntitySections(
 }
 
 const CLASSIFY_GENERATE_OPTIONS = {
-  // Search grounding: skip JSON mime (handled inside generateModelAnswer).
   googleSearch: true,
   responseMimeType: "application/json" as const,
   thinkingBudget: DATA_HOOK_AI_THINKING_BUDGET,
 };
 
+const NARRATIVE_GENERATE_OPTIONS = {
+  googleSearch: false,
+  responseMimeType: "application/json" as const,
+  thinkingBudget: DATA_HOOK_AI_NARRATIVE_THINKING_BUDGET,
+  maxOutputTokens: DATA_HOOK_AI_NARRATIVE_MAX_OUTPUT_TOKENS,
+};
+
+function isClassifyRequest(request: DataHookAiRequest): boolean {
+  return (request.includeEntities?.length ?? 0) > 0;
+}
+
+async function runTrackedText(
+  deps: CallDataHookAiDeps,
+  request: DataHookAiRequest,
+  promptWithContext: string,
+  modelOptions: {
+    readonly modelId?: string;
+    readonly googleSearch?: boolean;
+    readonly responseMimeType?: "text/plain" | "application/json";
+    readonly thinkingBudget?: number;
+    readonly maxOutputTokens?: number;
+  },
+): Promise<string> {
+  const systemInstruction =
+    request.systemInstruction ??
+    "You are a structured data assistant. Reply with JSON only.";
+  const result = await deps.aiController.runAiRequest({
+    tenantId: request.tenantId,
+    feature: "dataHookCallAi",
+    operation: "generateText",
+    requestedBy: "system",
+    permission: "ai.dataHook.run",
+    input: {
+      kind: "dataHookCallAi",
+      hookId: request.hookId ?? "unknown",
+      ...(request.hookName ? { hookName: request.hookName } : {}),
+      ...(request.hookExecutionId
+        ? { hookExecutionId: request.hookExecutionId }
+        : {}),
+      ...(request.recordId ? { recordId: request.recordId } : {}),
+      ...(request.entityName ? { entityName: request.entityName } : {}),
+      prompt: promptWithContext,
+      ...(request.systemInstruction
+        ? { systemInstruction: request.systemInstruction }
+        : {}),
+      ...(request.cacheKey ? { cacheKey: request.cacheKey } : {}),
+      ...(request.includeEntities
+        ? { includeEntities: [...request.includeEntities] }
+        : {}),
+    },
+    ...(request.hookExecutionId
+      ? {
+          contextRef: {
+            source: "hookExecution" as const,
+            id: request.hookExecutionId,
+          },
+        }
+      : {}),
+    params: {
+      operation: "generateText",
+      systemInstruction,
+      userText: promptWithContext,
+      modelOptions,
+    },
+  });
+  if (!("text" in result.output) || typeof result.output.text !== "string") {
+    throw new HookExecutionError("callAi response missing text.");
+  }
+  return result.output.text;
+}
+
 /**
  * Domain-agnostic Vertex AI caller for the data-hook `callAi` action.
+ * Every request is recorded via the unified AI controller.
  */
 export function createCallDataHookAi(
   deps: CallDataHookAiDeps,
@@ -237,50 +321,76 @@ export function createCallDataHookAi(
       sections.length > 0
         ? `${sections.join("\n\n")}\n\n---\n\n${request.prompt}`
         : request.prompt;
-
-    try {
-      if (deps.vertexAiConfig.mockEnabled) {
-        return finalizeClassification(
-          assertJsonObject(
-            extractJsonFromModelAnswer(
-              buildMockClassificationAnswer(promptWithContext),
-            ),
-          ),
-          categories,
-        );
-      }
-
-      const answer = await generateModelAnswer(
-        deps.vertexAiConfig,
-        {
-          systemInstruction:
-            request.systemInstruction ??
-            "You are a structured data assistant. Reply with JSON only.",
-          userText: promptWithContext,
-        },
-        {
+    const classify = isClassifyRequest(request);
+    const reasoningModelId =
+      deps.vertexAiConfig.reasoningModelId ?? deps.vertexAiConfig.modelId;
+    const modelOptions = classify
+      ? {
           ...CLASSIFY_GENERATE_OPTIONS,
           maxOutputTokens: DATA_HOOK_AI_MAX_OUTPUT_TOKENS,
-        },
-      );
+        }
+      : {
+          ...NARRATIVE_GENERATE_OPTIONS,
+          modelId: reasoningModelId,
+        };
+
+    if (deps.vertexAiConfig.mockEnabled && classify) {
       return finalizeClassification(
-        assertJsonObject(extractJsonFromModelAnswer(answer)),
+        assertJsonObject(
+          extractJsonFromModelAnswer(
+            buildMockClassificationAnswer(promptWithContext),
+          ),
+        ),
         categories,
       );
-    } catch (error) {
-      if (error instanceof HookExecutionError) {
-        throw error;
-      }
-      const message =
-        error instanceof Error ? error.message : "callAi request failed.";
-      throw new HookExecutionError(message);
     }
+
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= CALL_AI_TRUNCATION_RETRIES; attempt += 1) {
+      const userText =
+        attempt === 0
+          ? promptWithContext
+          : `${promptWithContext}${
+              classify
+                ? CLASSIFY_TRUNCATION_RETRY_HINT
+                : NARRATIVE_TRUNCATION_RETRY_HINT
+            }`;
+      try {
+        const answer = await runTrackedText(
+          deps,
+          request,
+          userText,
+          modelOptions,
+        );
+        const parsed = assertJsonObject(extractJsonFromModelAnswer(answer));
+        return classify
+          ? finalizeClassification(parsed, categories)
+          : expandNarrativeCharts(parsed);
+      } catch (error) {
+        lastError = error;
+        if (
+          attempt < CALL_AI_TRUNCATION_RETRIES &&
+          isRetriableTruncatedModelAnswerError(error)
+        ) {
+          continue;
+        }
+        if (error instanceof HookExecutionError) {
+          throw error;
+        }
+        const message =
+          error instanceof Error ? error.message : "callAi request failed.";
+        throw new HookExecutionError(message);
+      }
+    }
+
+    const message =
+      lastError instanceof Error ? lastError.message : "callAi request failed.";
+    throw new HookExecutionError(message);
   };
 }
 
 /**
  * Classify multiple callAi requests in one Vertex round-trip.
- * Shared entity catalogs are injected once; each item keeps its own prompt body.
  */
 export function createBatchCallDataHookAi(
   deps: CallDataHookAiDeps,
@@ -317,47 +427,41 @@ ${itemBlocks.join("\n\n")}`;
       "You are a structured data assistant. Reply with JSON only. Be extremely concise.";
 
     try {
-      if (deps.vertexAiConfig.mockEnabled) {
-        return requests.map((request) =>
-          finalizeClassification(
-            assertJsonObject(
-              extractJsonFromModelAnswer(
-                buildMockClassificationAnswer(
-                  `${catalogBlock}${request.prompt}`,
-                ),
-              ),
-            ),
-            categories,
-          ),
-        );
-      }
-
-      let answer: string;
-      try {
-        answer = await generateModelAnswer(
-          deps.vertexAiConfig,
-          {
-            systemInstruction,
-            userText: batchPrompt,
-          },
-          {
+      const parent = await deps.aiController.runAiRequest({
+        tenantId: first.tenantId,
+        feature: "dataHookBatchCallAi",
+        operation: "generateText",
+        requestedBy: "system",
+        permission: "ai.dataHook.run",
+        input: {
+          kind: "dataHookBatchCallAi",
+          itemCount: requests.length,
+          ...(first.hookId ? { hookId: first.hookId } : {}),
+          ...(first.hookName ? { hookName: first.hookName } : {}),
+          promptPreview: batchPrompt.slice(0, 500),
+        },
+        params: {
+          operation: "generateText",
+          systemInstruction,
+          userText: batchPrompt,
+          modelOptions: {
             ...CLASSIFY_GENERATE_OPTIONS,
             maxOutputTokens: DATA_HOOK_AI_BATCH_MAX_OUTPUT_TOKENS,
           },
-        );
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "callAi batch request failed.";
-        if (message.includes("max output tokens")) {
-          return runSequential();
-        }
-        throw error;
+        },
+      });
+
+      if (
+        !("text" in parent.output) ||
+        typeof parent.output.text !== "string"
+      ) {
+        return runSequential();
       }
 
       try {
-        const json = assertJsonObject(extractJsonFromModelAnswer(answer));
+        const json = assertJsonObject(
+          extractJsonFromModelAnswer(parent.output.text),
+        );
         const results = json.results;
         if (!Array.isArray(results) || results.length !== requests.length) {
           return runSequential();

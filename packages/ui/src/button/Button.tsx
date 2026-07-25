@@ -10,6 +10,7 @@ import {
   type ButtonSize,
   type ButtonVariant,
 } from "./button.variants";
+import "./button-ai.css";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   readonly variant?: ButtonVariant;

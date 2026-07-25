@@ -4,6 +4,7 @@ import {
   getExpandableTableColumns,
   getExpandableTableRowExpandLayout,
   getExpandableTableShowActions,
+  getExpandableTableSummaryField,
   getExpandableTableViewConfig,
 } from "@repo/ui-builder";
 import {
@@ -13,6 +14,7 @@ import {
 import {
   Alert,
   CursorPagination,
+  Markdown,
   Pagination,
   Table,
   TableBody,
@@ -22,10 +24,15 @@ import {
   TableRow,
   TableCard,
   Text,
+  useThirdRail,
 } from "@repo/ui";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
+
+import { summaryChartBlockRenderers } from "../../features/entity-summary/summary-chart-renderers";
+import { SummaryCopyMarkdownButton } from "../../features/entity-summary/SummaryCopyMarkdownButton";
+import { formatRecordDisplayLabel } from "./format-record-display-label";
 
 import {
   getEntityLabel,
@@ -98,6 +105,7 @@ export function EntityExpandableTable({
 }: EntityExpandableTableProps) {
   const { t, i18n } = useTranslation("common");
   const { navigateToDetail } = useEntityReturnNavigation(entityName);
+  const { open: openThirdRail } = useThirdRail();
   const definition = useEntityDefinition(entityName);
   const { getDefinition: getDefinitionOrThrow, items: catalogItems } =
     useEntityCatalog();
@@ -173,12 +181,14 @@ export function EntityExpandableTable({
   }
 
   const currentUserId = user?.uid ?? "";
-  const showRowActions =
+  const summaryField = getExpandableTableSummaryField(definition);
+  const showCrudActions =
     getExpandableTableShowActions(definition) &&
     (permissions.canRead ||
       permissions.canUpdate ||
       permissions.canDelete ||
       !!onRequestShare);
+  const showRowActions = showCrudActions || !!summaryField;
   const useCursorPagination =
     hasNextPage !== undefined || hasPreviousPage !== undefined;
 
@@ -203,6 +213,22 @@ export function EntityExpandableTable({
     setExpandedRowIds((current) => toggleExpandedId(current, rowId));
   }
 
+  function openRowSummary(item: Record<string, unknown>, summaryText: string) {
+    const recordLabel = formatRecordDisplayLabel(item, definition.displayField);
+    openThirdRail({
+      title: t("entity.summary.title"),
+      subtitle: recordLabel,
+      headerActions: <SummaryCopyMarkdownButton getText={() => summaryText} />,
+      body: (
+        <Markdown blockRenderers={summaryChartBlockRenderers}>
+          {summaryText}
+        </Markdown>
+      ),
+      widths: { base: "full", md: "1/2", lg: "1/3" },
+      tone: "ai",
+    });
+  }
+
   function renderRowActions(item: Record<string, unknown>) {
     if (!showRowActions) {
       return null;
@@ -210,23 +236,26 @@ export function EntityExpandableTable({
 
     return (
       <ExpandableTableRowActions
-        canRead={permissions.canRead}
-        canUpdate={permissions.canUpdate}
-        canDelete={permissions.canDelete}
+        canRead={showCrudActions && permissions.canRead}
+        canUpdate={showCrudActions && permissions.canUpdate}
+        canDelete={showCrudActions && permissions.canDelete}
         canEditRow={canEditRow(item)}
         canDeleteRow={canDeleteRow(item)}
-        canShareRow={canShareRow(item)}
+        canShareRow={showCrudActions && canShareRow(item)}
         item={item}
+        summaryField={summaryField}
         labels={{
           view: t("entity.view"),
           edit: t("entity.edit"),
           share: t("share.title"),
           delete: t("entity.delete"),
+          summary: t("entity.summary.button"),
         }}
         onView={(id) => navigateToDetail(id)}
-        onEdit={onRequestEdit}
-        onShare={onRequestShare}
-        onDelete={onRequestDelete}
+        onEdit={showCrudActions ? onRequestEdit : undefined}
+        onShare={showCrudActions ? onRequestShare : undefined}
+        onDelete={showCrudActions ? onRequestDelete : undefined}
+        onSummary={summaryField ? openRowSummary : undefined}
       />
     );
   }

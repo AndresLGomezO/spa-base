@@ -21,6 +21,16 @@ export default [
                 "Use API repository modules instead of direct client Firestore access.",
             },
           ],
+          patterns: [
+            {
+              group: [
+                "@repo/ai-engine/clients/internal/*",
+                "@repo/ai-engine/**/clients/internal/**",
+              ],
+              message:
+                "Call AI through createAiController / runAiRequest; do not import internal model clients.",
+            },
+          ],
         },
       ],
     },

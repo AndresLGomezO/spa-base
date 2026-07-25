@@ -56,6 +56,8 @@ function ObservabilityToggleRow({
 function resolveToggleValue(
   settings: PlatformRuntimeSettingsResponse["settings"],
   key:
+    | "aiEnabled"
+    | "aiTraceEnabled"
     | "aiStepTraceEnabled"
     | "requestPerfTraceEnabled"
     | "seedHookObservabilityEnabled",
@@ -105,6 +107,8 @@ export function PlatformObservabilityPanel() {
 
   const patchToggle = (
     key:
+      | "aiEnabled"
+      | "aiTraceEnabled"
       | "aiStepTraceEnabled"
       | "requestPerfTraceEnabled"
       | "seedHookObservabilityEnabled",
@@ -126,19 +130,35 @@ export function PlatformObservabilityPanel() {
   return (
     <div className="space-y-4">
       <ObservabilityToggleRow
-        title={t("platform.observability.aiStepTrace.title")}
-        description={t("platform.observability.aiStepTrace.description")}
-        checked={resolveToggleValue(settings, "aiStepTraceEnabled", effective)}
+        title={t("platform.observability.aiEnabled.title")}
+        description={t("platform.observability.aiEnabled.description")}
+        checked={resolveToggleValue(settings, "aiEnabled", effective)}
         effectiveLabel={`${t("platform.observability.effective")}: ${formatEnabledLabel(
-          effective.aiStepTraceEnabled,
+          effective.aiEnabled,
           enabledLabels,
         )}`}
         envDefaultLabel={`${t("platform.observability.envDefaultLabel")}: ${formatEnabledLabel(
-          envDefaults.aiStepTraceEnabled,
+          envDefaults.aiEnabled,
           enabledLabels,
         )}`}
         disabled={pending}
-        onChange={(checked) => patchToggle("aiStepTraceEnabled", checked)}
+        onChange={(checked) => patchToggle("aiEnabled", checked)}
+      />
+
+      <ObservabilityToggleRow
+        title={t("platform.observability.aiTrace.title")}
+        description={t("platform.observability.aiTrace.description")}
+        checked={resolveToggleValue(settings, "aiTraceEnabled", effective)}
+        effectiveLabel={`${t("platform.observability.effective")}: ${formatEnabledLabel(
+          effective.aiTraceEnabled,
+          enabledLabels,
+        )}`}
+        envDefaultLabel={`${t("platform.observability.envDefaultLabel")}: ${formatEnabledLabel(
+          envDefaults.aiTraceEnabled,
+          enabledLabels,
+        )}`}
+        disabled={pending}
+        onChange={(checked) => patchToggle("aiTraceEnabled", checked)}
       />
 
       <ObservabilityToggleRow

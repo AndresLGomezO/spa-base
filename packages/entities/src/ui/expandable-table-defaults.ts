@@ -191,6 +191,9 @@ export function reconcileExpandableTableView(
     columns,
     rowExpandLayout,
     showActions: view.showActions,
+    ...(view.summaryField !== undefined
+      ? { summaryField: view.summaryField }
+      : {}),
     ...(partition.imageFieldPath
       ? { imageFieldPath: partition.imageFieldPath }
       : { imageFieldPath: undefined }),

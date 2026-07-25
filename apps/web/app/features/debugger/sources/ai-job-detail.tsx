@@ -2,16 +2,22 @@ import { Alert, Button, Heading, Text } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router";
 
 import { useAuth } from "../../../auth/AuthContext";
 import {
   getDebugAiJob,
+  getDebugAiJobChildren,
+  type AiJobChildSummary,
+  type AiJobModelUsage,
   type AiJobRecord,
   type AiJobStepTraceEntry,
   type DebugEvent,
 } from "../../../lib/api-client";
 import { DebuggerJsonBlock } from "../components/DebuggerJsonBlock";
 import { DebuggerTextBlock } from "../components/DebuggerTextBlock";
+import { seedDebuggerDeepLinkEvent } from "../debugger-deep-link-seed";
+import { DebuggerStatusBadge } from "../components/DebuggerStatusBadge";
 
 type InspectorTab = "prompt" | "raw" | "parsed" | "draft";
 
@@ -60,6 +66,36 @@ function formatJson(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function formatEstimatedCostUsd(value: number): string {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  }).format(value);
+}
+
+function formatModelUsageSummary(usage: AiJobModelUsage): string {
+  const parts = [usage.modelId];
+  if (usage.promptTokens != null || usage.candidatesTokens != null) {
+    parts.push(
+      `${usage.promptTokens ?? "—"}/${usage.candidatesTokens ?? "—"} tok`,
+    );
+  } else if (usage.totalTokens != null) {
+    parts.push(`${usage.totalTokens} tok`);
+  } else if (usage.outputDimensions != null) {
+    parts.push(`${usage.outputDimensions}d`);
+  } else if (usage.imageCount != null) {
+    parts.push(
+      `${usage.imageCount} img${usage.aspectRatio ? ` · ${usage.aspectRatio}` : ""}`,
+    );
+  }
+  if (usage.estimatedCostUsd != null) {
+    parts.push(formatEstimatedCostUsd(usage.estimatedCostUsd));
+  }
+  return parts.join(" · ");
 }
 
 function traceStatusLabel(entry: AiJobStepTraceEntry): string {
@@ -121,6 +157,11 @@ function TraceTimeline({
               {traceStatusLabel(entry)}
               {entry.durationMs != null ? ` · ${entry.durationMs}ms` : ""}
             </div>
+            {entry.modelUsage ? (
+              <div className="text-muted-foreground mt-1 truncate text-xs">
+                {formatModelUsageSummary(entry.modelUsage)}
+              </div>
+            ) : null}
           </button>
         </li>
       ))}
@@ -167,6 +208,14 @@ function TraceInspector({
 
       {tab === "prompt" ? (
         <div className="min-h-0 flex-1 space-y-3 overflow-auto">
+          {entry.modelUsage ? (
+            <section>
+              <Heading level={3}>{t("aiDebugger.usage.title")}</Heading>
+              <Text className="text-muted-foreground text-xs">
+                {formatModelUsageSummary(entry.modelUsage)}
+              </Text>
+            </section>
+          ) : null}
           <section>
             <Heading level={3}>{t("aiDebugger.systemInstruction")}</Heading>
             <DebuggerTextBlock value={entry.systemInstruction} />
@@ -245,7 +294,13 @@ function TraceInspector({
   );
 }
 
-function JobOverviewSection({ job }: { readonly job: AiJobRecord }) {
+function JobOverviewSection({
+  job,
+  onOpenRelatedJob,
+}: {
+  readonly job: AiJobRecord;
+  readonly onOpenRelatedJob: (jobId: string) => void;
+}) {
   const { t } = useTranslation("common");
   const input =
     typeof job.input === "object" && job.input != null ? job.input : null;
@@ -271,6 +326,12 @@ function JobOverviewSection({ job }: { readonly job: AiJobRecord }) {
           label={t("aiDebugger.fields.feature")}
           value={job.feature}
         />
+        {job.operation ? (
+          <DetailField
+            label={t("aiDebugger.fields.operation")}
+            value={job.operation}
+          />
+        ) : null}
         <DetailField
           label={t("aiDebugger.fields.createdAt")}
           value={job.createdAt}
@@ -279,6 +340,20 @@ function JobOverviewSection({ job }: { readonly job: AiJobRecord }) {
           label={t("aiDebugger.fields.updatedAt")}
           value={job.updatedAt}
         />
+        {job.parentJobId ? (
+          <div>
+            <Text className="text-muted-foreground text-xs font-medium uppercase">
+              {t("aiDebugger.fields.parentJobId")}
+            </Text>
+            <button
+              type="button"
+              className="text-primary text-sm underline-offset-2 hover:underline"
+              onClick={() => onOpenRelatedJob(job.parentJobId!)}
+            >
+              {job.parentJobId}
+            </button>
+          </div>
+        ) : null}
         {entityName ? (
           <DetailField label={t("debugger.detail.entity")} value={entityName} />
         ) : null}
@@ -292,6 +367,144 @@ function JobOverviewSection({ job }: { readonly job: AiJobRecord }) {
           />
         ) : null}
       </div>
+    </section>
+  );
+}
+
+function ModelUsageSection({ usage }: { readonly usage: AiJobModelUsage }) {
+  const { t } = useTranslation("common");
+
+  return (
+    <section className="space-y-3">
+      <Heading level={3}>{t("aiDebugger.usage.title")}</Heading>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <DetailField
+          label={t("aiDebugger.usage.model")}
+          value={usage.modelId}
+        />
+        {usage.finishReason ? (
+          <DetailField
+            label={t("aiDebugger.usage.finishReason")}
+            value={usage.finishReason}
+          />
+        ) : null}
+        {usage.promptTokens != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.promptTokens")}
+            value={usage.promptTokens}
+          />
+        ) : null}
+        {usage.candidatesTokens != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.candidatesTokens")}
+            value={usage.candidatesTokens}
+          />
+        ) : null}
+        {usage.thoughtsTokens != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.thoughtsTokens")}
+            value={usage.thoughtsTokens}
+          />
+        ) : null}
+        {usage.cachedContentTokens != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.cachedContentTokens")}
+            value={usage.cachedContentTokens}
+          />
+        ) : null}
+        {usage.totalTokens != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.totalTokens")}
+            value={usage.totalTokens}
+          />
+        ) : null}
+        {usage.outputDimensions != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.outputDimensions")}
+            value={usage.outputDimensions}
+          />
+        ) : null}
+        {usage.inputCharacters != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.inputCharacters")}
+            value={usage.inputCharacters}
+          />
+        ) : null}
+        {usage.imageCount != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.imageCount")}
+            value={usage.imageCount}
+          />
+        ) : null}
+        {usage.aspectRatio ? (
+          <DetailField
+            label={t("aiDebugger.usage.aspectRatio")}
+            value={usage.aspectRatio}
+          />
+        ) : null}
+        {usage.costTier ? (
+          <DetailField
+            label={t("aiDebugger.usage.costTier")}
+            value={usage.costTier}
+          />
+        ) : null}
+        {usage.estimatedCostUsd != null ? (
+          <DetailField
+            label={t("aiDebugger.usage.estimatedCostUsd")}
+            value={formatEstimatedCostUsd(usage.estimatedCostUsd)}
+          />
+        ) : null}
+      </div>
+      {usage.estimatedCostUsd != null ? (
+        <Text className="text-muted-foreground text-xs">
+          {t("aiDebugger.usage.estimateDisclaimer")}
+        </Text>
+      ) : null}
+    </section>
+  );
+}
+
+function RelatedJobsSection({
+  relatedJobs,
+  onOpenRelatedJob,
+}: {
+  readonly relatedJobs: readonly AiJobChildSummary[];
+  readonly onOpenRelatedJob: (jobId: string) => void;
+}) {
+  const { t } = useTranslation("common");
+
+  if (relatedJobs.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-3">
+      <Heading level={3}>{t("aiDebugger.relatedJobs")}</Heading>
+      <ul className="space-y-2">
+        {relatedJobs.map((child) => (
+          <li key={child.id}>
+            <button
+              type="button"
+              className="hover:bg-muted/40 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
+              onClick={() => onOpenRelatedJob(child.id)}
+            >
+              <span className="min-w-0">
+                <span className="font-medium">{child.feature}</span>
+                {child.operation ? (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {child.operation}
+                  </span>
+                ) : null}
+                <span className="text-muted-foreground mt-0.5 block truncate text-xs">
+                  {child.id}
+                </span>
+              </span>
+              <DebuggerStatusBadge status={child.status} size="compact" />
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -340,6 +553,7 @@ function JobRecordSection({ job }: { readonly job: AiJobRecord }) {
 export function AiJobDebugDetail({ event }: { readonly event: DebugEvent }) {
   const { t } = useTranslation("common");
   const { tenantId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTraceIndex, setSelectedTraceIndex] = useState(0);
   const [tab, setTab] = useState<InspectorTab>("prompt");
 
@@ -353,9 +567,35 @@ export function AiJobDebugDetail({ event }: { readonly event: DebugEvent }) {
     },
   });
 
+  const childrenQuery = useQuery({
+    queryKey: ["debugger-ai-job-children", tenantId, event.id],
+    queryFn: () => getDebugAiJobChildren(event.id),
+    enabled: Boolean(tenantId),
+    refetchInterval: () => {
+      const status = jobQuery.data?.status;
+      return status === "running" || status === "pending" ? 2000 : false;
+    },
+  });
+
   const job: AiJobRecord | undefined = jobQuery.data ?? undefined;
+  const relatedChildren = childrenQuery.data?.children ?? [];
   const trace = job?.stepTrace ?? [];
   const selectedEntry = trace[selectedTraceIndex] ?? null;
+
+  const openRelatedJob = (jobId: string) => {
+    const recordKey = seedDebuggerDeepLinkEvent({
+      id: jobId,
+      source: "ai",
+      timestamp: new Date().toISOString(),
+      title: jobId,
+      subtitle: "ai",
+      payload: { id: jobId },
+    });
+    const next = new URLSearchParams(searchParams);
+    next.set("record", recordKey);
+    next.delete("index");
+    setSearchParams(next, { replace: true });
+  };
 
   const copyTrace = async () => {
     if (!job?.stepTrace) {
@@ -384,7 +624,12 @@ export function AiJobDebugDetail({ event }: { readonly event: DebugEvent }) {
 
       {job.error ? <Alert>{job.error}</Alert> : null}
 
-      <JobOverviewSection job={job} />
+      <JobOverviewSection job={job} onOpenRelatedJob={openRelatedJob} />
+      {job.modelUsage ? <ModelUsageSection usage={job.modelUsage} /> : null}
+      <RelatedJobsSection
+        relatedJobs={relatedChildren}
+        onOpenRelatedJob={openRelatedJob}
+      />
       <JobInputSection job={job} />
 
       {job.progress ? (

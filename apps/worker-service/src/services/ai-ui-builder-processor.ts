@@ -27,6 +27,9 @@ import type { TenantAiContextRepository } from "@repo/worker-firestore";
 import type { UiBuilderAiSuggestionRepository } from "@repo/worker-firestore";
 import type { WorkerEntityDefinitionRepository } from "@repo/worker-firestore";
 
+import type { AiController } from "@repo/ai-engine/controller";
+import type { GenerateAnswerFn } from "@repo/ai-engine/ui-builder-orchestrator";
+
 import { PermanentTaskError } from "./ai-chat-processor.js";
 import {
   processAiUiBuilder,
@@ -35,6 +38,52 @@ import {
 import { assembleUiBuilderContextFromRecords } from "@repo/ai-context";
 
 export { processAiUiBuilderTaskPayloadSchema };
+
+function createControllerGenerateAnswer(options: {
+  readonly aiController: AiController;
+  readonly tenantId: string;
+  readonly parentJobId: string;
+  readonly requestedBy: string;
+  readonly entityName?: string;
+  readonly surface?: string;
+  readonly question?: string;
+}): GenerateAnswerFn {
+  return async (_config, input, modelOptions) => {
+    const stepId =
+      typeof modelOptions?.stepId === "string" && modelOptions.stepId.length > 0
+        ? modelOptions.stepId
+        : "uiBuilder.step";
+    const result = await options.aiController.runAiRequest({
+      tenantId: options.tenantId,
+      feature: "uiBuilder",
+      operation: "generateText",
+      requestedBy: options.requestedBy,
+      permission: "ai.uiBuilder.run",
+      parentJobId: options.parentJobId,
+      input: {
+        kind: "uiBuilderStep",
+        stepId,
+        ...(options.entityName ? { entityName: options.entityName } : {}),
+        ...(options.surface ? { surface: options.surface } : {}),
+        ...(options.question ? { question: options.question } : {}),
+      },
+      params: {
+        operation: "generateText",
+        systemInstruction: input.systemInstruction,
+        userText: input.userText,
+        ...(input.contextBlocks
+          ? { contextBlocks: [...input.contextBlocks] }
+          : {}),
+        stepId,
+        modelOptions,
+      },
+    });
+    if (!("text" in result.output) || typeof result.output.text !== "string") {
+      throw new Error("UI Builder AI response missing text.");
+    }
+    return result.output.text;
+  };
+}
 
 function extractHtmlFromLegacyRenderBrief(
   renderBrief: string | undefined,
@@ -90,6 +139,7 @@ export interface AiUiBuilderProcessorDeps {
   readonly uiBuilderAiSuggestionRepository: UiBuilderAiSuggestionRepository;
   readonly entityDefinitionRepository: WorkerEntityDefinitionRepository;
   readonly vertexAiConfig: VertexAiConfig;
+  readonly aiController: AiController;
   readonly isAiStepTraceEnabled?: () => Promise<boolean>;
 }
 
@@ -280,6 +330,15 @@ async function processListSurfaceJob(
     entityCurrentFragment: currentFragment,
     entityFieldPaths,
     callbacks: await buildOrchestratorCallbacks(deps, tenantId, jobId),
+    generateAnswer: createControllerGenerateAnswer({
+      aiController: deps.aiController,
+      tenantId,
+      parentJobId: jobId,
+      requestedBy: context.requestedBy,
+      entityName: input.entityName,
+      surface: "list",
+      question: input.question,
+    }),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {
@@ -386,6 +445,15 @@ async function processFormsSurfaceJob(
     entityCurrentFragment: currentFragment,
     entityFieldPaths,
     callbacks: await buildOrchestratorCallbacks(deps, tenantId, jobId),
+    generateAnswer: createControllerGenerateAnswer({
+      aiController: deps.aiController,
+      tenantId,
+      parentJobId: jobId,
+      requestedBy: context.requestedBy,
+      entityName: input.entityName,
+      surface: "forms",
+      question: input.question,
+    }),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {
@@ -504,6 +572,15 @@ async function processFormsRenderSurfaceJob(
     iterationNumber: input.parentSuggestionId ? parentIterationNumber + 1 : 0,
     entityCurrentFragment: currentFragment,
     callbacks: await buildOrchestratorCallbacks(deps, tenantId, jobId),
+    generateAnswer: createControllerGenerateAnswer({
+      aiController: deps.aiController,
+      tenantId,
+      parentJobId: jobId,
+      requestedBy: context.requestedBy,
+      entityName: input.entityName,
+      surface: "forms",
+      question: input.question,
+    }),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {

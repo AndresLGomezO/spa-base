@@ -65,9 +65,11 @@ describe("ThirdRail", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("uses complementary role in push variant", () => {
-    renderThirdRail({ variant: "push" });
+  it("applies ai tone chrome when tone is ai", () => {
+    const { container } = renderThirdRail({ tone: "ai" });
 
-    expect(screen.getByRole("complementary")).toBeInTheDocument();
+    expect(container.querySelector(".third-rail-tone-ai")).not.toBeNull();
+    expect(container.querySelector(".third-rail-header-ai")).not.toBeNull();
+    expect(container.querySelector(".third-rail-title-ai")).not.toBeNull();
   });
 });
