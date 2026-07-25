@@ -1,6 +1,7 @@
 import {
   aiChatSessionRecordSchema,
   type AiChatSessionCreateInput,
+  type AiChatSessionListByUserOptions,
   type AiChatSessionRecord,
   type AiChatSessionRepository,
 } from "./repository-contract.js";
@@ -19,6 +20,21 @@ export function createInMemoryAiChatSessionRepository(): AiChatSessionRepository
   return {
     async get(tenantId, sessionId) {
       return store.get(key(tenantId, sessionId)) ?? null;
+    },
+    async listByUser(
+      tenantId,
+      userId,
+      options?: AiChatSessionListByUserOptions,
+    ) {
+      const exclude = new Set(options?.excludeStatuses ?? []);
+      return [...store.values()]
+        .filter(
+          (session) =>
+            session.tenantId === tenantId &&
+            session.userId === userId &&
+            !exclude.has(session.status),
+        )
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     },
     async create(tenantId, input: AiChatSessionCreateInput) {
       const now = new Date().toISOString();

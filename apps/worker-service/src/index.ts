@@ -185,6 +185,12 @@ const groundedChatDataPorts = createGroundedChatDataPorts({
     return entity?.metadata.tenantWideRead === true;
   },
   metricDefinitionRepository,
+  ...(dataHookProcessorDeps.aggregation?.metricRuntime.metricValueRepository
+    ? {
+        metricValueRepository:
+          dataHookProcessorDeps.aggregation.metricRuntime.metricValueRepository,
+      }
+    : {}),
   entityQueryDefinitionRepository,
   userAiMemoryRepository,
   ...(dataHookProcessorDeps.aiRecordSummaryRepository

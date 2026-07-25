@@ -23,6 +23,7 @@ import { useTenantSidebarLayoutRuntime } from "../features/ui-builder/use-tenant
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import { CreateTenantModal } from "../components/platform/CreateTenantModal";
 import { IndexProvisioningGlobalBanner } from "../components/index-provisioning/IndexProvisioningGlobalBanner";
+import { AiChatFab } from "../features/ai-chat";
 import { NotificationsProvider } from "../features/notifications/notifications-context";
 import { EntitySaveManagerProvider } from "../features/entity-save/entity-save-context";
 
@@ -87,6 +88,7 @@ export default function PrivateLayoutRoute() {
                           </TenantAwareSidebarProvider>
                           <CreateTenantModal />
                           <IndexProvisioningGlobalBanner />
+                          <AiChatFab />
                         </ThirdRailProvider>
                       </CreateTenantModalProvider>
                       <EntityFormModalHost />

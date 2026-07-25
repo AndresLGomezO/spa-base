@@ -186,6 +186,52 @@ export async function registerAiRoutes(
   );
 
   app.get(
+    "/api/ai/chat/sessions",
+    {
+      preHandler: [options.authenticate, requireAiJobRead],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const uid = request.ctx?.uid;
+      if (!uid) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
+      const sessions = await options.aiChatSessionRepository.listByUser(
+        tenantId,
+        uid,
+        { excludeStatuses: ["abandoned"] },
+      );
+
+      return reply.send(
+        successEnvelope({
+          sessions: sessions.map((session) => {
+            const firstUserMessage = session.messages.find(
+              (message) => message.role === "user",
+            );
+            return {
+              id: session.id,
+              status: session.status,
+              preview: firstUserMessage?.content.slice(0, 120) ?? "",
+              messageCount: session.messages.length,
+              lastJobId: session.lastJobId ?? null,
+              createdAt: session.createdAt,
+              updatedAt: session.updatedAt,
+            };
+          }),
+        }),
+      );
+    },
+  );
+
+  app.get(
     "/api/ai/chat/sessions/:sessionId",
     {
       preHandler: [options.authenticate, requireAiJobRead],
@@ -236,6 +282,64 @@ export async function registerAiRoutes(
           lastJobId: session.lastJobId ?? null,
           createdAt: session.createdAt,
           updatedAt: session.updatedAt,
+        }),
+      );
+    },
+  );
+
+  app.delete(
+    "/api/ai/chat/sessions/:sessionId",
+    {
+      preHandler: [options.authenticate, requireAiChatRun],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const uid = request.ctx?.uid;
+      if (!uid) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
+      const sessionId = (request.params as { sessionId?: string }).sessionId;
+      if (!sessionId) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "sessionId is required.",
+        );
+      }
+
+      const session = await options.aiChatSessionRepository.get(
+        tenantId,
+        sessionId,
+      );
+      if (!session || session.userId !== uid) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "AI chat session not found.",
+        );
+      }
+
+      const updated = await options.aiChatSessionRepository.update(
+        tenantId,
+        sessionId,
+        { status: "abandoned" },
+      );
+
+      return reply.send(
+        successEnvelope({
+          id: updated.id,
+          status: updated.status,
+          updatedAt: updated.updatedAt,
         }),
       );
     },

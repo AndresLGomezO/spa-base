@@ -93,6 +93,10 @@ vi.mock(
   }),
 );
 
+vi.mock("../features/ai-chat", () => ({
+  AiChatFab: () => null,
+}));
+
 describe("PrivateLayoutRoute", () => {
   it("uses a fixed viewport shell with scroll contained in the page outlet", () => {
     render(

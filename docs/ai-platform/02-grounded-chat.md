@@ -10,7 +10,8 @@ Related: [Architecture](./01-architecture.md) · [Context / memory / RAG](./04-c
 
 | Layer | Path |
 |---|---|
-| Web | `apps/web/app/routes/ai/chat.tsx` |
+| Web (page) | `apps/web/app/routes/ai/chat.tsx` → `features/ai-chat/AiChatPage` |
+| Web (FAB) | `apps/web/app/features/ai-chat/AiChatFab` (mounted in `private-layout.tsx`) |
 | API | `POST /api/ai/chat` → `register-ai-routes.ts` |
 | Task | `AI_TASK_ROUTES.PROCESS_AI_CHAT` |
 | Worker | `ai-chat-processor.ts` → `process-ai-chat.ts` → `runGroundedChatOrchestrator` |
@@ -118,14 +119,21 @@ Planner may return `citations[]` (`entity` | `metric` | `query` | `memory`).
 
 New tools that surface facts should populate citations so the UI can deep-link.
 
+**Web UI:** `AiChatCitations` renders entity citations as links to `/app/{entityName}/{recordId}` (camelCase entity name). Metric/query/memory citations show as labeled chips.
+
 ---
 
 ## Sessions
 
 - Collection `ai_chat_sessions`
-- Created on first chat turn if `sessionId` omitted
+- Created on first chat turn if `sessionId` omitted; pass `sessionId` to continue
 - Owner-scoped: `userId` must match JWT
-- `GET /api/ai/chat/sessions/:sessionId`
+- `GET /api/ai/chat/sessions` — list (excludes `abandoned`)
+- `GET /api/ai/chat/sessions/:sessionId` — full thread
+- `DELETE /api/ai/chat/sessions/:sessionId` — soft-hide (`abandoned`)
+- Multi-turn UI: floating FAB popup + `/ai/chat` page share `apps/web/app/features/ai-chat/`
+
+Relation traversal: system instruction tells the planner to follow FK fields (`actorId`, `financialItemId`, `paymentScheduleId`, …) via `getRecord` / multi-step search across business entities.
 
 ---
 

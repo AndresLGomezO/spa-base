@@ -161,6 +161,24 @@ Worker services wire these in hook execution (`worker-hook-entity-services`, `co
 
 **Pattern used by current tenant:** mutation hooks update context/RAG with `enqueueNarrative: false`; nightly or user Refresh catches up prose (avoids token spike on every field edit).
 
+### Business-entity RAG coverage (this tenant)
+
+| Entity | Hook | Seeds |
+|---|---|---|
+| `financialItem` | `refresh-{loan\|income\|investment\|service}-ai-summary-json` | Yes (most items) |
+| `portfolioSettings` | portfolio generators | Yes (rollup hub) |
+| `actor` | `refresh-actor-ai-summary-json` | Yes |
+| `account` | `refresh-account-ai-summary-json` | Yes |
+| `transaction` | `refresh-transaction-ai-summary-json` | Sample (recent) |
+| `email` | `refresh-email-ai-summary-json` | When records exist (body omitted from RAG) |
+| `paymentSchedule` | `refresh-payment-schedule-ai-summary-json` | Sample (upcoming/recent) |
+| `statement` | `refresh-statement-ai-summary-json` | When records exist |
+| `balanceSnapshot` | `refresh-balance-snapshot-ai-summary-json` | Sample |
+
+Detail entities (`*Details`, `loanMonthlyCost`, …) continue to write into parent `financialItem` AI docs — they do **not** get their own summary docs. UI overrides / layouts / customization catalogs are out of scope.
+
+Regenerate hooks + capped seeds: `node scripts/ai/generate-business-ai-summaries.mjs`
+
 ### Debug / UI read
 
 `GET /api/ai-record-summaries/:entityName/:recordId`  

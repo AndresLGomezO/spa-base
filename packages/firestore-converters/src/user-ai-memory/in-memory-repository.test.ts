@@ -74,4 +74,26 @@ describe("createInMemoryAiChatSessionRepository", () => {
     });
     expect(updated.messages).toHaveLength(1);
   });
+
+  it("lists by user excluding abandoned sessions", async () => {
+    const repo = createInMemoryAiChatSessionRepository();
+    const active = await repo.create("t1", { userId: "u1" });
+    await repo.update("t1", active.id, {
+      messages: [
+        {
+          role: "user",
+          content: "active question",
+          createdAt: "2026-01-02T00:00:00.000Z",
+        },
+      ],
+    });
+    const abandoned = await repo.create("t1", { userId: "u1" });
+    await repo.update("t1", abandoned.id, { status: "abandoned" });
+    await repo.create("t1", { userId: "u2" });
+
+    const listed = await repo.listByUser("t1", "u1", {
+      excludeStatuses: ["abandoned"],
+    });
+    expect(listed.map((session) => session.id)).toEqual([active.id]);
+  });
 });
