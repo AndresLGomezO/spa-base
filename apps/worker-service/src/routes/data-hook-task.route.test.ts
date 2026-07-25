@@ -5,6 +5,20 @@ import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
 
 const processDataHookJob = vi.fn(async () => undefined);
 
+vi.mock("../config/env.js", () => ({
+  vertexAiConfig: {
+    projectId: "test",
+    region: "us-central1",
+    geminiLocation: "global",
+    modelId: "gemini-flash",
+    mockEnabled: true,
+  },
+  workerEnv: {
+    GCP_PROJECT_ID: "test",
+    AGGREGATION_EVENTS_TOPIC: "",
+  },
+}));
+
 vi.mock("../services/data-hook-processor.js", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../services/data-hook-processor.js")>();

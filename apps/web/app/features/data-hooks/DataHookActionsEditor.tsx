@@ -132,6 +132,9 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "callWebhook",
   "callAi",
   "computeEmbedding",
+  "computeRecordAiSummary",
+  "upsertAiRecordContext",
+  "enqueueAiRecordNarrative",
   "matchSimilarRecord",
 ];
 
@@ -160,13 +163,20 @@ function collectLoadedBindingsBefore(
         action?.type === "matchRelatedRecord" ||
         action?.type === "matchSimilarRecord" ||
         action?.type === "callAi" ||
-        action?.type === "computeEmbedding") &&
+        action?.type === "computeEmbedding" ||
+        action?.type === "computeRecordAiSummary" ||
+        action?.type === "upsertAiRecordContext" ||
+        action?.type === "enqueueAiRecordNarrative") &&
       action.as.trim()
     ) {
       bindings.push({
         alias: action.as,
         entity:
-          action.type === "callAi" || action.type === "computeEmbedding"
+          action.type === "callAi" ||
+          action.type === "computeEmbedding" ||
+          action.type === "computeRecordAiSummary" ||
+          action.type === "upsertAiRecordContext" ||
+          action.type === "enqueueAiRecordNarrative"
             ? ""
             : action.entity,
       });
@@ -529,6 +539,362 @@ function ActionEditor({
                   when.kind === "literal" && when.value === null
                     ? undefined
                     : when,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+        </div>
+      );
+
+    case "computeRecordAiSummary":
+      return (
+        <div className="space-y-3">
+          <Text className="text-muted-foreground text-sm">
+            {t("dataHooks.actions.computeRecordAiSummaryHint")}{" "}
+            <a
+              href="/settings/ai-context/record-summaries"
+              className="text-primary underline-offset-2 hover:underline"
+            >
+              {t("dataHooks.actions.computeRecordAiSummaryLink")}
+            </a>
+          </Text>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.targetEntity")}
+            value={
+              action.entityName ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(entityName) =>
+              onChange({
+                ...action,
+                entityName:
+                  entityName.kind === "literal" && entityName.value === null
+                    ? undefined
+                    : entityName,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiWhen")}
+            value={
+              action.when ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(when) =>
+              onChange({
+                ...action,
+                when:
+                  when.kind === "literal" && when.value === null
+                    ? undefined
+                    : when,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+        </div>
+      );
+
+    case "upsertAiRecordContext":
+      return (
+        <div className="space-y-3">
+          <Text className="text-muted-foreground text-sm">
+            {t("dataHooks.actions.upsertAiRecordContextHint")}
+          </Text>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.targetEntity")}
+            value={
+              action.entityName ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(entityName) =>
+              onChange({
+                ...action,
+                entityName:
+                  entityName.kind === "literal" && entityName.value === null
+                    ? undefined
+                    : entityName,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.recordId")}
+            value={
+              action.recordId ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(recordId) =>
+              onChange({
+                ...action,
+                recordId:
+                  recordId.kind === "literal" && recordId.value === null
+                    ? undefined
+                    : recordId,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.context")}
+            value={action.context}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(context) => onChange({ ...action, context })}
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.ragText")}
+            value={
+              action.ragText ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(ragText) =>
+              onChange({
+                ...action,
+                ragText:
+                  ragText.kind === "literal" && ragText.value === null
+                    ? undefined
+                    : ragText,
+              })
+            }
+          />
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={action.enqueueNarrative !== false}
+              onChange={(event) =>
+                onChange({
+                  ...action,
+                  enqueueNarrative: event.target.checked,
+                })
+              }
+            />
+            <Text className="text-sm">
+              {t("dataHooks.actions.enqueueNarrative")}
+            </Text>
+          </label>
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.narrativeVariant")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.narrativeVariant ?? "default"}
+              onChange={(event) =>
+                onChange({
+                  ...action,
+                  narrativeVariant: event.target.value.trim() || undefined,
+                })
+              }
+            />
+          </label>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.narrativePrompt")}
+            value={
+              action.narrativePrompt ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(narrativePrompt) =>
+              onChange({
+                ...action,
+                narrativePrompt:
+                  narrativePrompt.kind === "literal" &&
+                  narrativePrompt.value === null
+                    ? undefined
+                    : narrativePrompt,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.narrativeSystemInstruction")}
+            value={
+              action.narrativeSystemInstruction ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(narrativeSystemInstruction) =>
+              onChange({
+                ...action,
+                narrativeSystemInstruction:
+                  narrativeSystemInstruction.kind === "literal" &&
+                  narrativeSystemInstruction.value === null
+                    ? undefined
+                    : narrativeSystemInstruction,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+        </div>
+      );
+
+    case "enqueueAiRecordNarrative":
+      return (
+        <div className="space-y-3">
+          <Text className="text-muted-foreground text-sm">
+            {t("dataHooks.actions.enqueueAiRecordNarrativeHint")}
+          </Text>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.targetEntity")}
+            value={
+              action.entityName ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(entityName) =>
+              onChange({
+                ...action,
+                entityName:
+                  entityName.kind === "literal" && entityName.value === null
+                    ? undefined
+                    : entityName,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.recordId")}
+            value={
+              action.recordId ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(recordId) =>
+              onChange({
+                ...action,
+                recordId:
+                  recordId.kind === "literal" && recordId.value === null
+                    ? undefined
+                    : recordId,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.narrativeVariant")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.variant ?? "default"}
+              onChange={(event) =>
+                onChange({
+                  ...action,
+                  variant: event.target.value.trim() || undefined,
+                })
+              }
+            />
+          </label>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiPrompt")}
+            value={
+              action.prompt ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(prompt) =>
+              onChange({
+                ...action,
+                prompt:
+                  prompt.kind === "literal" && prompt.value === null
+                    ? undefined
+                    : prompt,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.aiSystemInstruction")}
+            value={
+              action.systemInstruction ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(systemInstruction) =>
+              onChange({
+                ...action,
+                systemInstruction:
+                  systemInstruction.kind === "literal" &&
+                  systemInstruction.value === null
+                    ? undefined
+                    : systemInstruction,
               })
             }
           />
@@ -1074,6 +1440,22 @@ export function emptyActionOfType(
         type,
         text: literal(),
         as: "embedding",
+      };
+    case "computeRecordAiSummary":
+      return {
+        type,
+        as: "recordAiSummary",
+      };
+    case "upsertAiRecordContext":
+      return {
+        type,
+        context: literal(),
+        as: "aiContext",
+      };
+    case "enqueueAiRecordNarrative":
+      return {
+        type,
+        as: "narrativeJob",
       };
     case "matchSimilarRecord":
       return {

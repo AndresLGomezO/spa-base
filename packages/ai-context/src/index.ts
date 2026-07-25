@@ -102,6 +102,71 @@ export {
 } from "./storage/tenant-ai-context.schema.js";
 
 export {
+  AI_RECORD_SUMMARY_TEMPLATE_FRAGMENT_KEY,
+  aiRecordSummaryTemplateSchema,
+  parseAiRecordSummaryTemplate,
+  type AiRecordSummaryTemplate,
+} from "./storage/ai-record-summary-template.schema.js";
+
+export {
+  AI_RECORD_SUMMARIES_COLLECTION,
+  aiRecordSummaryNarrativeSchema,
+  aiRecordSummaryRagSchema,
+  aiRecordSummaryRecordSchema,
+  buildAiRecordSummaryDocId,
+  type AiRecordSummaryNarrative,
+  type AiRecordSummaryRag,
+  type AiRecordSummaryRecord,
+  type AiRecordSummaryRepository,
+} from "./storage/ai-record-summary.schema.js";
+
+export {
+  USER_AI_MEMORIES_COLLECTION,
+  userAiMemoryFactSchema,
+  userAiMemoryRecordSchema,
+  type UserAiMemoryFact,
+  type UserAiMemoryRecord,
+  type UserAiMemoryRepository,
+} from "./storage/user-ai-memory.schema.js";
+
+export {
+  AI_CHAT_SESSIONS_COLLECTION,
+  aiChatCitationSchema,
+  aiChatSessionMessageSchema,
+  aiChatSessionRecordSchema,
+  aiChatSessionStatusSchema,
+  type AiChatCitation,
+  type AiChatSessionCreateInput,
+  type AiChatSessionMessage,
+  type AiChatSessionRecord,
+  type AiChatSessionRepository,
+  type AiChatSessionStatus,
+} from "./storage/ai-chat-session.schema.js";
+
+export {
+  AI_CONTEXT_SECTIONS_COLLECTION,
+  aiContextSectionBlockSchema,
+  aiContextSectionRecordSchema,
+  aiContextSectionScopeSchema,
+  aiContextSectionsCatalogEnvelopeSchema,
+  createAiContextSectionInputSchema,
+  patchAiContextSectionInputSchema,
+  type AiContextSectionBlock,
+  type AiContextSectionBlockKind,
+  type AiContextSectionRecord,
+  type AiContextSectionRepository,
+  type AiContextSectionScope,
+  type AiContextSectionsCatalogEnvelope,
+  type CreateAiContextSectionInput,
+  type PatchAiContextSectionInput,
+} from "./storage/ai-context-section.schema.js";
+
+export {
+  AI_CONTEXT_SECTION_PERMISSIONS,
+  type AiContextSectionPermission,
+} from "./permissions.js";
+
+export {
   assembleUiBuilderContextForTenant,
   assembleUiBuilderContextFromRecords,
   computeEntityCatalogSourceHash,
@@ -115,6 +180,23 @@ export {
   type BuildEntityContextsInput,
   type TenantAiContextServiceDeps,
 } from "./services/tenant-ai-context.service.js";
+
+export {
+  deleteAiRecordSummaryTemplate,
+  getAiRecordSummaryTemplate,
+  listAiRecordSummaryTemplates,
+  upsertAiRecordSummaryTemplate,
+} from "./services/ai-record-summary-template.service.js";
+
+export {
+  readAiRecordSummaryField,
+  resolvesFromAiRecordSummary,
+  upsertAiRecordContext,
+  upsertAiRecordNarrative,
+  upsertAiRecordRag,
+  type UpsertAiRecordContextInput,
+  type UpsertAiRecordContextResult,
+} from "./services/ai-record-summary.service.js";
 
 export {
   buildTenantAiContextDocId,

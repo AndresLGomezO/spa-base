@@ -59,6 +59,7 @@
     "dataStructure": "Data structure",
     "dataModelBuilder": "Data Entity Builder",
     "automationNav": "Automation",
+    "aiContextNav": "AI Context",
     "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
     "chartsNav": "Charts",
@@ -420,6 +421,21 @@
     "submitError": "Could not submit your question. Try again.",
     "forbidden": "You do not have permission to use AI chat.",
     "status": "Status: {{status}}"
+  },
+  "aiSpend": {
+    "limitReached": "AI usage limit reached for this month.",
+    "approachingLimit": "AI usage is approaching this month’s limit.",
+    "tenantLimitsTitle": "AI monthly limits",
+    "tenantLimitsDescription": "Optional caps for this tenant. Leave blank for unlimited. Role limits apply per user under this ceiling.",
+    "monthlyInputTokens": "Monthly input tokens",
+    "monthlyOutputTokens": "Monthly output tokens",
+    "monthlyBudgetUsd": "Monthly budget (USD)",
+    "unlimitedPlaceholder": "Unlimited",
+    "saveLimits": "Save AI limits",
+    "limitsSaved": "AI limits saved.",
+    "limitsSaveFailed": "Unable to save AI limits.",
+    "roleLimitsTitle": "AI spend limits",
+    "roleLimitsHelp": "Optional per-user caps for members with this role. Effective limit is the stricter of tenant and role."
   },
   "chartComponent": {
     "loading": "Loading chart…",
@@ -1592,7 +1608,13 @@
       "copyMarkdownFailed": "Could not copy markdown",
       "tabsAriaLabel": "Summary sections",
       "emptyTitle": "Summary in progress",
-      "emptyDescription": "This section will fill in once the AI summary is generated."
+      "emptyDescription": "This section will fill in once the AI summary is generated.",
+      "outOfSync": "Out of sync",
+      "outOfSyncDescription": "Data changed. Summary updates nightly or when you refresh.",
+      "refreshSummary": "Refresh summary",
+      "refreshing": "Refreshing…",
+      "refreshQueued": "Summary refresh queued.",
+      "refreshFailed": "Could not refresh summary."
     },
     "recordsJson": {
       "viewTitle": "Exported records JSON",
@@ -2828,6 +2850,160 @@
       }
     }
   },
+  "aiContext": {
+    "navTitle": "AI Context",
+    "description": "Configure memory sections and per-entity record summary templates that feed grounded chat.",
+    "forbidden": "You do not have permission to manage AI context.",
+    "tabForbiddenHint": "Ask an admin for access to this tab, or open the other AI Context tab if available.",
+    "tabs": {
+      "sections": "Sections",
+      "recordSummaries": "Record summaries"
+    }
+  },
+  "recordAiSummaryTemplates": {
+    "forbidden": "You do not have permission to manage record AI summary templates.",
+    "loading": "Loading record summary templates…",
+    "loadError": "Failed to load record summary templates.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Template saved.",
+    "saveError": "Failed to save template.",
+    "clear": "Clear template",
+    "clearing": "Clearing…",
+    "cleared": "Template cleared.",
+    "clearError": "Failed to clear template.",
+    "list": {
+      "title": "Entities",
+      "searchPlaceholder": "Search entities",
+      "searchClear": "Clear search",
+      "empty": "No entities match the search.",
+      "configured": "Configured",
+      "expandPanel": "Expand entities panel",
+      "collapsePanel": "Collapse entities panel"
+    },
+    "settings": {
+      "empty": "Select an entity to edit its summary template.",
+      "description": "Templates drive the computeRecordAiSummary hook: text, JSON payload, embeddings, and PII redaction."
+    },
+    "fields": {
+      "textTemplate": "Text template",
+      "textTemplatePlaceholder": "{{name}} — {{status}}",
+      "jsonFields": "JSON fields",
+      "embeddingFields": "Embedding fields",
+      "embeddingFieldsHint": "Leave empty to embed the rendered text template.",
+      "piiLevel": "PII levels",
+      "piiEmpty": "Add fields via the template or JSON/embedding lists to set PII levels.",
+      "fieldsPlaceholder": "Select fields",
+      "selectedCount": "{{count}} selected",
+      "searchFields": "Search fields",
+      "noFields": "No fields found",
+      "removeField": "Remove {{label}}"
+    },
+    "piiLevels": {
+      "public": "Public",
+      "masked": "Masked",
+      "excluded": "Excluded"
+    }
+  },
+  "userAiContext": {
+    "navTitle": "Sections",
+    "description": "Define ordered sections that feed each user's AI memory cache.",
+    "forbidden": "You do not have permission to manage user AI context sections.",
+    "loading": "Loading user AI context sections…",
+    "deleted": "Section deleted.",
+    "cancel": "Cancel",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "order": "Order",
+      "scope": "Scope",
+      "status": "Status"
+    },
+    "scopes": {
+      "perUser": "Per user",
+      "tenantWide": "Tenant-wide"
+    },
+    "metadata": {
+      "createTitle": "Create section",
+      "editTitle": "Rename section",
+      "create": "Create",
+      "save": "Save",
+      "created": "Section created.",
+      "updated": "Section updated."
+    },
+    "delete": {
+      "title": "Delete section",
+      "confirm": "Delete",
+      "description": "Delete \"{{name}}\"? This clears cached user AI memories on next refresh."
+    },
+    "list": {
+      "title": "Sections",
+      "add": "Add section",
+      "rename": "Rename",
+      "delete": "Delete",
+      "empty": "No sections yet.",
+      "emptyFiltered": "No sections match the current filters.",
+      "searchPlaceholder": "Search sections",
+      "searchClear": "Clear search",
+      "filter": "Filters",
+      "clearFilters": "Clear filters",
+      "removeBadge": "Remove {{label}}",
+      "expandPanel": "Expand sections panel",
+      "collapsePanel": "Collapse sections panel",
+      "sort": "Sort",
+      "sortOrder": "Assembly order",
+      "sortNameAsc": "Name A–Z",
+      "sortNameDesc": "Name Z–A",
+      "sortUpdatedDesc": "Recently updated",
+      "status": "Status",
+      "statusEnabled": "Enabled",
+      "statusDisabled": "Disabled",
+      "rowMeta": "#{{order}} · {{blocks}} blocks · {{scope}} · {{status}}"
+    },
+    "settings": {
+      "empty": "Select a section to edit its blocks.",
+      "save": "Save",
+      "saved": "Section saved.",
+      "sections": {
+        "metadata": "Metadata",
+        "blocks": "Content blocks"
+      }
+    },
+    "blocks": {
+      "title": "Block {{index}}",
+      "add": "Add block",
+      "remove": "Remove",
+      "kind": "Block type",
+      "label": "Label",
+      "content": "Markdown content",
+      "entity": "Entity",
+      "field": "Field",
+      "fieldsCsv": "Fields (comma-separated)",
+      "source": "Source",
+      "recordId": "Record ID",
+      "limit": "Limit",
+      "joinAs": "Format",
+      "joinAsList": "List",
+      "joinAsTable": "Table",
+      "metric": "Metric",
+      "query": "Saved query",
+      "selectEntity": "Select entity",
+      "selectMetric": "Select metric",
+      "selectQuery": "Select query",
+      "kinds": {
+        "staticMarkdown": "Static markdown",
+        "entityField": "Entity field",
+        "entityRecordsSummary": "Entity records summary",
+        "metricValue": "Metric value",
+        "savedQueryTop": "Saved query rows"
+      },
+      "sources": {
+        "singleton": "Singleton / first accessible",
+        "firstMatch": "First match",
+        "recordId": "Specific record"
+      }
+    }
+  },
   "formulas": {
     "title": "Formulas",
     "description": "Reusable expression definitions referenced from data hooks and automation.",
@@ -3960,6 +4136,9 @@
       "callWebhook": "Call webhook",
       "callAi": "Call AI",
       "computeEmbedding": "Compute embedding",
+      "computeRecordAiSummary": "Compute record AI summary",
+      "upsertAiRecordContext": "Upsert AI record context",
+      "enqueueAiRecordNarrative": "Enqueue AI record narrative",
       "matchSimilarRecord": "Match similar record"
     },
     "actions": {
@@ -3985,6 +4164,17 @@
       "embeddingText": "Text to embed",
       "embeddingField": "Embedding field on candidates",
       "matchSimilarHint": "Embeds the haystack and picks the closest candidate by cosine similarity (default minScore 0.82).",
+      "computeRecordAiSummaryHint": "Uses the per-entity template from AI Context → Record summaries.",
+      "computeRecordAiSummaryLink": "Open record summary templates",
+      "upsertAiRecordContextHint": "Writes the rich context snapshot (and optional RAG text) to the AI record summary doc; can enqueue a narrative refresh.",
+      "enqueueAiRecordNarrativeHint": "Enqueues the recordNarrativeRefresh AI job for a variant (default, loans, …).",
+      "enqueueNarrative": "Enqueue narrative when context changes",
+      "narrativeVariant": "Narrative variant",
+      "narrativePrompt": "Narrative prompt (role / objective)",
+      "narrativeSystemInstruction": "Narrative system instruction (chart contract)",
+      "context": "Context snapshot",
+      "ragText": "RAG text (optional)",
+      "recordId": "Record id",
       "targetEntity": "Target entity",
       "selectEntity": "Select entity…",
       "recordData": "Record data",
@@ -3994,7 +4184,6 @@
       "createRecordsQueuedHint": "Queued hooks may create up to {{max}} records per run. For longer horizons, use startIndex with scheduled extension hooks.",
       "matchWhere": "Match records where",
       "matchValue": "Value",
-      "recordId": "Record id",
       "alias": "Alias",
       "aliasPlaceholder": "e.g. parent",
       "getOrCreateRecordHint": "Loads the first matching record into the alias. If none match and the lookup value is non-empty, creates one from Record data. Empty lookup skips create and loads null.",
@@ -4232,6 +4421,9 @@
         "callWebhook": "Call an external webhook",
         "callAi": "Call AI and load the JSON result",
         "computeEmbedding": "Compute a text embedding vector",
+        "computeRecordAiSummary": "Compute record AI summary as \"{{alias}}\"",
+        "upsertAiRecordContext": "Upsert AI record context as \"{{alias}}\"",
+        "enqueueAiRecordNarrative": "Enqueue AI record narrative as \"{{alias}}\"",
         "matchSimilarRecord": "Match {{entity}} by embedding similarity as \"{{alias}}\"",
         "fieldAssignment": "{{field}} = {{value}}"
       },

@@ -78,8 +78,17 @@ export function createInMemoryTenantRepository(
             : input.appearance !== undefined
               ? { ...existing.appearance, ...input.appearance }
               : existing.appearance,
+        aiLimits:
+          input.aiLimits === null
+            ? undefined
+            : input.aiLimits !== undefined
+              ? { ...existing.aiLimits, ...input.aiLimits }
+              : existing.aiLimits,
         updatedAt: nowIso(),
       };
+      if (input.aiLimits === null) {
+        Reflect.deleteProperty(updated, "aiLimits");
+      }
       tenants.set(id, updated);
       return updated;
     },

@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useMemo, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
   getExpandableTableColumns,
@@ -11,6 +12,7 @@ import {
   expandableTableHasExpandFieldContent,
   resolveExpandableTableImageFieldPath,
 } from "@repo/entities";
+import { resolvesFromAiRecordSummary } from "@repo/ai-context/storage";
 import {
   Alert,
   CursorPagination,
@@ -32,6 +34,13 @@ import { useTranslation } from "react-i18next";
 
 import { summaryChartBlockRenderers } from "../../features/entity-summary/summary-chart-renderers";
 import { SummaryCopyMarkdownButton } from "../../features/entity-summary/SummaryCopyMarkdownButton";
+import { SummaryOutOfSyncBanner } from "../../features/entity-summary/SummaryOutOfSyncBanner";
+import {
+  isAiNarrativeStale,
+  narrativeVariantFromSummaryField,
+  resolveSummaryFieldText,
+} from "../../features/entity-summary/resolve-summary-tabs";
+import { getAiRecordSummary } from "../../lib/api-client";
 import { formatRecordDisplayLabel } from "./format-record-display-label";
 
 import {
@@ -150,6 +159,34 @@ export function EntityExpandableTable({
   );
 
   const { items, isLoading, error, listError, totalCount } = entityState;
+  const summaryField = getExpandableTableSummaryField(definition);
+  const needsAiSummary =
+    Boolean(summaryField) && resolvesFromAiRecordSummary(summaryField ?? "");
+  const recordRows = items as readonly Record<string, unknown>[];
+  const aiSummaryQueries = useQueries({
+    queries: recordRows.map((item) => {
+      const recordId = typeof item.id === "string" ? item.id : "";
+      return {
+        queryKey: ["ai-record-summary", entityName, recordId] as const,
+        queryFn: () => getAiRecordSummary(entityName, recordId),
+        enabled: needsAiSummary && recordId.length > 0,
+      };
+    }),
+  });
+  const aiSummaryByRecordId = useMemo(() => {
+    const map = new Map<
+      string,
+      NonNullable<(typeof aiSummaryQueries)[number]["data"]>
+    >();
+    recordRows.forEach((item, index) => {
+      const recordId = typeof item.id === "string" ? item.id : "";
+      const data = aiSummaryQueries[index]?.data;
+      if (recordId && data) {
+        map.set(recordId, data);
+      }
+    });
+    return map;
+  }, [aiSummaryQueries, recordRows]);
   const collection = definition.collection;
   const indexStatus = useIndexProvisioningStatus(collection, {
     entityName,
@@ -181,7 +218,6 @@ export function EntityExpandableTable({
   }
 
   const currentUserId = user?.uid ?? "";
-  const summaryField = getExpandableTableSummaryField(definition);
   const showCrudActions =
     getExpandableTableShowActions(definition) &&
     (permissions.canRead ||
@@ -215,14 +251,34 @@ export function EntityExpandableTable({
 
   function openRowSummary(item: Record<string, unknown>, summaryText: string) {
     const recordLabel = formatRecordDisplayLabel(item, definition.displayField);
+    const recordId = typeof item.id === "string" ? item.id : "";
+    const aiDoc = recordId ? (aiSummaryByRecordId.get(recordId) ?? null) : null;
+    const variant = narrativeVariantFromSummaryField(summaryField);
+    const stale = isAiNarrativeStale(aiDoc, variant);
     openThirdRail({
       title: t("entity.summary.title"),
       subtitle: recordLabel,
       headerActions: <SummaryCopyMarkdownButton getText={() => summaryText} />,
       body: (
-        <Markdown blockRenderers={summaryChartBlockRenderers}>
-          {summaryText}
-        </Markdown>
+        <div className="flex flex-col gap-4">
+          {recordId ? (
+            <SummaryOutOfSyncBanner
+              entityName={entityName}
+              recordId={recordId}
+              variant={variant}
+              stale={stale}
+            />
+          ) : null}
+          {summaryText.length > 0 ? (
+            <Markdown blockRenderers={summaryChartBlockRenderers}>
+              {summaryText}
+            </Markdown>
+          ) : (
+            <Text className="text-muted-foreground text-sm">
+              {t("entity.summary.emptyDescription")}
+            </Text>
+          )}
+        </div>
       ),
       widths: { base: "full", md: "1/2", lg: "1/3" },
       tone: "ai",
@@ -234,6 +290,11 @@ export function EntityExpandableTable({
       return null;
     }
 
+    const recordId = typeof item.id === "string" ? item.id : "";
+    const aiDoc = recordId ? (aiSummaryByRecordId.get(recordId) ?? null) : null;
+    const variant = narrativeVariantFromSummaryField(summaryField);
+    const summaryStale = isAiNarrativeStale(aiDoc, variant);
+
     return (
       <ExpandableTableRowActions
         canRead={showCrudActions && permissions.canRead}
@@ -244,12 +305,15 @@ export function EntityExpandableTable({
         canShareRow={showCrudActions && canShareRow(item)}
         item={item}
         summaryField={summaryField}
+        summaryText={resolveSummaryFieldText(summaryField, item, aiDoc)}
+        summaryStale={summaryStale}
         labels={{
           view: t("entity.view"),
           edit: t("entity.edit"),
           share: t("share.title"),
           delete: t("entity.delete"),
           summary: t("entity.summary.button"),
+          summaryOutOfSync: t("entity.summary.outOfSync"),
         }}
         onView={(id) => navigateToDetail(id)}
         onEdit={showCrudActions ? onRequestEdit : undefined}

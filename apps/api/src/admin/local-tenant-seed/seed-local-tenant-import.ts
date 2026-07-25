@@ -9,9 +9,14 @@ import {
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  aiRecordSummaryRecordSchema,
+  type AiRecordSummaryRecord,
+} from "@repo/ai-context";
 import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
 import type { EntityFileReference } from "@repo/entities";
 import {
+  createFirestoreAdminAiRecordSummaryRepository,
   createFirestoreAdminEmailMatchBindingRepository,
   createFirestoreAdminRegisteredUserRepository,
   getFirebaseUserRecord,
@@ -47,6 +52,7 @@ function defaultTenantConfig(): LocalTenantConfig {
 }
 
 const LOCAL_EMAIL_MATCH_BINDINGS_DIR = "email-match-bindings";
+const LOCAL_AI_RECORD_SUMMARIES_DIR = "ai-record-summaries";
 
 interface LocalImportSpec {
   readonly dirName: string;
@@ -1044,6 +1050,38 @@ async function importLocalRecords(
   }
 }
 
+async function seedLocalAiRecordSummariesIfPresent(
+  tenantId: string,
+  firebaseAdminConfig: FirebaseAdminConfig,
+  importDir: string,
+): Promise<number> {
+  const dirPath = join(importDir, LOCAL_AI_RECORD_SUMMARIES_DIR);
+  const files = listJsonFilesInDir(dirPath);
+  if (files.length === 0) {
+    return 0;
+  }
+
+  const repository =
+    createFirestoreAdminAiRecordSummaryRepository(firebaseAdminConfig);
+  let upserted = 0;
+
+  for (const fileName of files) {
+    const filePath = join(dirPath, fileName);
+    const raw: unknown = JSON.parse(readFileSync(filePath, "utf8"));
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error(`Invalid AI record summary object in ${filePath}.`);
+    }
+    const record = aiRecordSummaryRecordSchema.parse({
+      ...(raw as Record<string, unknown>),
+      tenantId,
+    }) satisfies AiRecordSummaryRecord;
+    await repository.upsert(record);
+    upserted += 1;
+  }
+
+  return upserted;
+}
+
 export async function seedLocalTenantImportIfPresent(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
@@ -1184,6 +1222,17 @@ export async function seedLocalTenantImportIfPresent(
         `[seed] Upserted ${bindingsUpserted} email match binding(s) from ${LOCAL_EMAIL_MATCH_BINDINGS_DIR}.`,
       );
     }
+  }
+
+  const aiSummariesUpserted = await seedLocalAiRecordSummariesIfPresent(
+    tenantId,
+    firebaseAdminConfig,
+    importDir,
+  );
+  if (aiSummariesUpserted > 0) {
+    console.log(
+      `[seed] Upserted ${aiSummariesUpserted} AI record summary doc(s) from ${LOCAL_AI_RECORD_SUMMARIES_DIR}.`,
+    );
   }
 
   console.log(`[seed] Local tenant import complete for ${ownerEmail}.`);

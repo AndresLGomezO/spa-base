@@ -1,4 +1,4 @@
-import type { PlatformRole } from "@repo/shared-types";
+import type { AiSpendLimits, PlatformRole } from "@repo/shared-types";
 
 import { BUILT_IN_ROLES, isBuiltInRoleName } from "./roles.js";
 import type {
@@ -20,6 +20,7 @@ function mergeRoleGrants(
 export interface RoleCatalogEntry {
   readonly grants: readonly string[];
   readonly fieldRules?: readonly EntityFieldRules[];
+  readonly aiSpendLimits?: AiSpendLimits;
 }
 
 export type RoleCatalog = Readonly<Record<string, RoleCatalogEntry>>;
@@ -69,7 +70,8 @@ export function buildTenantRoleCatalog(
   for (const role of tenantRoles) {
     catalog[role.name] = {
       grants: mergeRoleGrants(role.name, role.grants),
-      fieldRules: role.fieldRules ? [...role.fieldRules] : undefined,
+      ...(role.fieldRules ? { fieldRules: [...role.fieldRules] } : {}),
+      ...(role.aiSpendLimits ? { aiSpendLimits: role.aiSpendLimits } : {}),
     };
   }
 

@@ -15,7 +15,11 @@ import type {
   TenantDeletionJobRepository,
   TenantRepository,
 } from "@repo/firestore-converters";
-import { tenantStatusSchema, tenantAppearanceSchema } from "@repo/shared-types";
+import {
+  tenantStatusSchema,
+  tenantAppearanceSchema,
+  aiSpendLimitsSchema,
+} from "@repo/shared-types";
 import {
   tenantBundleExportDocumentSchema,
   validateTenantBundleImport,
@@ -59,6 +63,7 @@ const updateTenantBodySchema = z.object({
   name: z.string().trim().min(1).optional(),
   status: tenantStatusSchema.optional(),
   appearance: tenantAppearanceSchema.nullable().optional(),
+  aiLimits: aiSpendLimitsSchema.nullable().optional(),
 });
 
 const uploadLogoBodySchema = z.object({
@@ -225,11 +230,13 @@ export const adminRoutes: FastifyPluginAsync<{
       if (
         parsedBody.data.name === undefined &&
         parsedBody.data.status === undefined &&
-        parsedBody.data.appearance === undefined
+        parsedBody.data.appearance === undefined &&
+        parsedBody.data.aiLimits === undefined
       ) {
         return reply.status(400).send({
           ok: false,
-          message: "Request body must include name, status, and/or appearance.",
+          message:
+            "Request body must include name, status, appearance, and/or aiLimits.",
         });
       }
 
@@ -237,6 +244,7 @@ export const adminRoutes: FastifyPluginAsync<{
         name: parsedBody.data.name,
         status: parsedBody.data.status,
         appearance: parsedBody.data.appearance,
+        aiLimits: parsedBody.data.aiLimits,
       });
 
       if (!updated) {

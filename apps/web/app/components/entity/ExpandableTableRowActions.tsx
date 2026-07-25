@@ -11,12 +11,17 @@ interface ExpandableTableRowActionsProps {
   readonly canShareRow: boolean;
   readonly item: Record<string, unknown>;
   readonly summaryField?: string;
+  /** Pre-resolved summary markdown (e.g. from AI record summary doc). */
+  readonly summaryText?: string;
+  /** When true, show an out-of-sync badge on the summary action. */
+  readonly summaryStale?: boolean;
   readonly labels: {
     readonly view: string;
     readonly edit: string;
     readonly share: string;
     readonly delete: string;
     readonly summary: string;
+    readonly summaryOutOfSync?: string;
   };
   readonly onView: (id: string) => void;
   readonly onEdit?: (id: string) => void;
@@ -28,8 +33,15 @@ interface ExpandableTableRowActionsProps {
 function resolveRowSummaryText(
   item: Record<string, unknown>,
   summaryField: string | undefined,
+  summaryTextOverride: string | undefined,
 ): string {
+  if (typeof summaryTextOverride === "string") {
+    return summaryTextOverride.trim();
+  }
   if (!summaryField) {
+    return "";
+  }
+  if (summaryField.includes(".")) {
     return "";
   }
   const value = item[summaryField];
@@ -45,6 +57,8 @@ export function ExpandableTableRowActions({
   canShareRow,
   item,
   summaryField,
+  summaryText: summaryTextOverride,
+  summaryStale = false,
   labels,
   onView,
   onEdit,
@@ -55,18 +69,32 @@ export function ExpandableTableRowActions({
   const itemId = String(item.id);
   const sharedWith = item.sharedWith as Record<string, string> | undefined;
   const shareCount = sharedWith ? Object.keys(sharedWith).length : 0;
-  const summaryText = resolveRowSummaryText(item, summaryField);
+  const summaryText = resolveRowSummaryText(
+    item,
+    summaryField,
+    summaryTextOverride,
+  );
+  const summaryLabel =
+    summaryStale && labels.summaryOutOfSync
+      ? `${labels.summary} (${labels.summaryOutOfSync})`
+      : labels.summary;
 
   return (
     <>
-      {summaryText.length > 0 && onSummary ? (
+      {(summaryText.length > 0 || summaryStale) && onSummary ? (
         <IconButton
           type="button"
-          label={labels.summary}
+          label={summaryLabel}
           onClick={() => onSummary(item, summaryText)}
-          className="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+          className="relative text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
         >
           <AiSparkIcon size={16} animated className="shrink-0" />
+          {summaryStale ? (
+            <span
+              aria-hidden
+              className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-amber-500"
+            />
+          ) : null}
         </IconButton>
       ) : null}
       {canRead ? (

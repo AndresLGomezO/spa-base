@@ -169,6 +169,57 @@ export interface DataHookEmbeddingRequest {
   readonly entityName?: string;
 }
 
+export interface DataHookRecordSummaryTemplate {
+  readonly textTemplate: string;
+  readonly jsonFields?: readonly string[];
+  readonly embeddingFields?: readonly string[];
+  readonly piiLevel?: Readonly<
+    Record<string, "public" | "masked" | "excluded">
+  >;
+}
+
+export interface DataHookRecordAiSummaryRequest {
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly record: Readonly<Record<string, unknown>>;
+  readonly template?: DataHookRecordSummaryTemplate;
+}
+
+export interface DataHookRecordAiSummaryResult {
+  readonly ok: true;
+  readonly contextChanged?: boolean;
+  readonly narrativeEnqueued?: boolean;
+}
+
+export interface DataHookUpsertAiRecordContextRequest {
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly record: Readonly<Record<string, unknown>>;
+  readonly context: Readonly<Record<string, unknown>>;
+  readonly ragText?: string;
+  readonly enqueueNarrative?: boolean;
+  readonly narrativeVariant?: string;
+  readonly narrativePrompt?: string;
+  readonly narrativeSystemInstruction?: string;
+}
+
+export interface DataHookUpsertAiRecordContextResult {
+  readonly ok: true;
+  readonly contextChanged: boolean;
+  readonly narrativeEnqueued: boolean;
+}
+
+export interface DataHookEnqueueAiRecordNarrativeRequest {
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly variant?: string;
+  readonly prompt?: string;
+  readonly systemInstruction?: string;
+}
+
 export interface HookServices {
   readonly logger?: HookLogger;
   readonly entities?: HookEntityServices;
@@ -192,6 +243,15 @@ export interface HookServices {
   readonly computeEmbedding?: (
     request: DataHookEmbeddingRequest,
   ) => Promise<readonly number[]>;
+  readonly computeRecordAiSummary?: (
+    request: DataHookRecordAiSummaryRequest,
+  ) => Promise<DataHookRecordAiSummaryResult | null>;
+  readonly upsertAiRecordContext?: (
+    request: DataHookUpsertAiRecordContextRequest,
+  ) => Promise<DataHookUpsertAiRecordContextResult | null>;
+  readonly enqueueAiRecordNarrative?: (
+    request: DataHookEnqueueAiRecordNarrativeRequest,
+  ) => Promise<{ readonly ok: true } | null>;
   readonly sendUserNotification?: (
     input: CreateUserNotificationInput,
   ) => Promise<void>;

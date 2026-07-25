@@ -16,6 +16,11 @@ interface AdminTenant {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly appearance?: TenantAppearance;
+  readonly aiLimits?: {
+    readonly monthlyInputTokens?: number;
+    readonly monthlyOutputTokens?: number;
+    readonly monthlyBudgetUsd?: number;
+  };
 }
 
 async function getAuthHeaders() {
@@ -87,6 +92,7 @@ export async function updateAdminTenant(
     readonly name?: string;
     readonly status?: "active" | "suspended";
     readonly appearance?: TenantAppearance | null;
+    readonly aiLimits?: AdminTenant["aiLimits"] | null;
   },
 ): Promise<AdminTenant> {
   const payload = await adminFetch<{ tenant: AdminTenant }>(

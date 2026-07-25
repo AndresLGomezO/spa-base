@@ -12,19 +12,31 @@ import {
   uiBuilderDraftSchema,
 } from "@repo/ai-engine/schemas";
 import { AI_TASK_ROUTES } from "@repo/ai-engine/task-routes";
-import type { AiJobRepository } from "@repo/firestore-converters";
+import type {
+  AiChatSessionRepository,
+  AiJobRepository,
+} from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import { createRequireAnyPermission } from "../rbac/create-require-any-permission.js";
-import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import {
+  loadRequestPermissions,
+  type LoadRequestPermissionsDeps,
+} from "../rbac/load-request-permissions.js";
 import {
   buildDeterministicTaskId,
   createCloudTasksClient,
   type CloudTasksClientConfig,
 } from "./cloud-tasks.client.js";
+import {
+  assertAiSpendAllowedForRequest,
+  getAiSpendStatusForUser,
+  type AiSpendGuardDeps,
+} from "./ai-spend-guard.js";
+import { replyWithAiSpendLimit } from "./reply-with-ai-spend-limit.js";
 import {
   ensureUiBuilderAiContexts,
   type SyncTenantAiContextsDeps,
@@ -34,8 +46,10 @@ interface RegisterAiRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly aiJobRepository: AiJobRepository;
+  readonly aiChatSessionRepository: AiChatSessionRepository;
   readonly cloudTasksConfig: CloudTasksClientConfig;
   readonly tenantAiContextDeps?: SyncTenantAiContextsDeps;
+  readonly aiSpendGuardDeps?: AiSpendGuardDeps;
 }
 
 export async function registerAiRoutes(
@@ -90,9 +104,53 @@ export async function registerAiRoutes(
         );
       }
 
+      if (options.aiSpendGuardDeps) {
+        try {
+          const ctx = await loadRequestPermissions(
+            request,
+            options.permissionDeps,
+          );
+          await assertAiSpendAllowedForRequest(options.aiSpendGuardDeps, {
+            tenantId,
+            userId: uid,
+            roleCatalog: ctx.roleCatalog,
+            tenantRoleNames: ctx.tenantRoleNames,
+          });
+        } catch (error) {
+          const spendReply = replyWithAiSpendLimit(reply, error);
+          if (spendReply) return spendReply;
+          throw error;
+        }
+      }
+
+      let sessionId = parsedBody.data.sessionId;
+      if (sessionId) {
+        const existing = await options.aiChatSessionRepository.get(
+          tenantId,
+          sessionId,
+        );
+        if (!existing || existing.userId !== uid) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "AI chat session not found.",
+          );
+        }
+      } else {
+        const created = await options.aiChatSessionRepository.create(tenantId, {
+          userId: uid,
+        });
+        sessionId = created.id;
+      }
+
       const job = await options.aiJobRepository.create(tenantId, {
         feature: "chat",
-        input: { question: parsedBody.data.question },
+        input: {
+          question: parsedBody.data.question,
+          sessionId,
+          userPermissions: [...(request.ctx?.permissions ?? [])],
+        },
         requestedBy: uid,
         permission: AI_FEATURE_RUN_PERMISSION.chat,
       });
@@ -123,7 +181,63 @@ export async function registerAiRoutes(
         );
       }
 
-      return reply.send(successEnvelope({ jobId: job.id }));
+      return reply.send(successEnvelope({ jobId: job.id, sessionId }));
+    },
+  );
+
+  app.get(
+    "/api/ai/chat/sessions/:sessionId",
+    {
+      preHandler: [options.authenticate, requireAiJobRead],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const uid = request.ctx?.uid;
+      if (!uid) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
+      const sessionId = (request.params as { sessionId?: string }).sessionId;
+      if (!sessionId) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "sessionId is required.",
+        );
+      }
+
+      const session = await options.aiChatSessionRepository.get(
+        tenantId,
+        sessionId,
+      );
+      if (!session || session.userId !== uid) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "AI chat session not found.",
+        );
+      }
+
+      return reply.send(
+        successEnvelope({
+          id: session.id,
+          status: session.status,
+          messages: session.messages,
+          citations: session.citations,
+          lastJobId: session.lastJobId ?? null,
+          createdAt: session.createdAt,
+          updatedAt: session.updatedAt,
+        }),
+      );
     },
   );
 
@@ -155,6 +269,25 @@ export async function registerAiRoutes(
           ApiErrorCode.UNAUTHORIZED,
           "Authentication required.",
         );
+      }
+
+      if (options.aiSpendGuardDeps) {
+        try {
+          const ctx = await loadRequestPermissions(
+            request,
+            options.permissionDeps,
+          );
+          await assertAiSpendAllowedForRequest(options.aiSpendGuardDeps, {
+            tenantId,
+            userId: uid,
+            roleCatalog: ctx.roleCatalog,
+            tenantRoleNames: ctx.tenantRoleNames,
+          });
+        } catch (error) {
+          const spendReply = replyWithAiSpendLimit(reply, error);
+          if (spendReply) return spendReply;
+          throw error;
+        }
       }
 
       if (options.tenantAiContextDeps) {
@@ -311,6 +444,46 @@ export async function registerAiRoutes(
           })),
         }),
       );
+    },
+  );
+
+  app.get(
+    "/api/ai/spend-status",
+    {
+      preHandler: [options.authenticate, requireAiJobRead],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const uid = request.ctx?.uid;
+      if (!uid) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
+      if (!options.aiSpendGuardDeps) {
+        return replyWithError(
+          reply,
+          503,
+          ApiErrorCode.INTERNAL_ERROR,
+          "AI spend status is not configured.",
+        );
+      }
+
+      const ctx = await loadRequestPermissions(request, options.permissionDeps);
+      const status = await getAiSpendStatusForUser(options.aiSpendGuardDeps, {
+        tenantId,
+        userId: uid,
+        roleCatalog: ctx.roleCatalog,
+        tenantRoleNames: ctx.tenantRoleNames,
+      });
+
+      return reply.send(successEnvelope(status));
     },
   );
 }

@@ -864,6 +864,217 @@ async function runAction(
       return;
     }
 
+    case "computeRecordAiSummary": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const computeSummary = context.services.computeRecordAiSummary;
+      if (!computeSummary) {
+        throw new HookExecutionError(
+          "computeRecordAiSummary service is not available for this hook execution.",
+        );
+      }
+      const entityValue = action.entityName
+        ? evaluateExpression(action.entityName, scope)
+        : context.entityName;
+      if (typeof entityValue !== "string" || entityValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "computeRecordAiSummary entityName must evaluate to a non-empty string.",
+        );
+      }
+      if (
+        typeof context.current.id !== "string" ||
+        context.current.id.trim().length === 0
+      ) {
+        throw new HookExecutionError(
+          "computeRecordAiSummary requires a current record id.",
+        );
+      }
+
+      const result = await computeSummary({
+        tenantId: context.tenantId,
+        entityName: entityValue.trim(),
+        recordId: context.current.id,
+        record: context.current,
+      });
+      context.loaded[action.as] = result ? { ...result } : null;
+      return;
+    }
+
+    case "upsertAiRecordContext": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const upsertContext = context.services.upsertAiRecordContext;
+      if (!upsertContext) {
+        throw new HookExecutionError(
+          "upsertAiRecordContext service is not available for this hook execution.",
+        );
+      }
+      const entityValue = action.entityName
+        ? evaluateExpression(action.entityName, scope)
+        : context.entityName;
+      if (typeof entityValue !== "string" || entityValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "upsertAiRecordContext entityName must evaluate to a non-empty string.",
+        );
+      }
+      const recordIdValue = action.recordId
+        ? evaluateExpression(action.recordId, scope)
+        : context.current.id;
+      if (
+        typeof recordIdValue !== "string" ||
+        recordIdValue.trim().length === 0
+      ) {
+        throw new HookExecutionError(
+          "upsertAiRecordContext requires a record id.",
+        );
+      }
+      const rawContext = evaluateExpression(action.context, scope);
+      let contextObject: Record<string, unknown>;
+      if (
+        rawContext != null &&
+        typeof rawContext === "object" &&
+        !Array.isArray(rawContext)
+      ) {
+        contextObject = {
+          ...(rawContext as unknown as Record<string, unknown>),
+        };
+      } else if (typeof rawContext === "string" && rawContext.trim()) {
+        try {
+          const parsed: unknown = JSON.parse(rawContext);
+          if (
+            parsed == null ||
+            typeof parsed !== "object" ||
+            Array.isArray(parsed)
+          ) {
+            throw new Error("not an object");
+          }
+          contextObject = parsed as Record<string, unknown>;
+        } catch {
+          throw new HookExecutionError(
+            "upsertAiRecordContext context string must be JSON object.",
+          );
+        }
+      } else {
+        throw new HookExecutionError(
+          "upsertAiRecordContext context must evaluate to an object or JSON object string.",
+        );
+      }
+      const ragTextValue = action.ragText
+        ? evaluateExpression(action.ragText, scope)
+        : undefined;
+      const narrativePromptValue = action.narrativePrompt
+        ? evaluateExpression(action.narrativePrompt, scope)
+        : undefined;
+      const narrativeSystemValue = action.narrativeSystemInstruction
+        ? evaluateExpression(action.narrativeSystemInstruction, scope)
+        : undefined;
+      let targetRecord: Record<string, unknown> = context.current;
+      if (action.recordId || entityValue.trim() !== context.entityName) {
+        const entities = context.services.entities;
+        if (entities?.get) {
+          const loaded = await entities.get(
+            entityValue.trim(),
+            recordIdValue.trim(),
+          );
+          if (loaded) {
+            targetRecord = loaded as Record<string, unknown>;
+          }
+        }
+      }
+      const result = await upsertContext({
+        tenantId: context.tenantId,
+        entityName: entityValue.trim(),
+        recordId: recordIdValue.trim(),
+        record: targetRecord,
+        context: contextObject,
+        ...(typeof ragTextValue === "string" ? { ragText: ragTextValue } : {}),
+        enqueueNarrative: action.enqueueNarrative !== false,
+        ...(action.narrativeVariant
+          ? { narrativeVariant: action.narrativeVariant }
+          : {}),
+        ...(typeof narrativePromptValue === "string"
+          ? { narrativePrompt: narrativePromptValue }
+          : {}),
+        ...(typeof narrativeSystemValue === "string"
+          ? { narrativeSystemInstruction: narrativeSystemValue }
+          : {}),
+      });
+      context.loaded[action.as] = result ? { ...result } : null;
+      return;
+    }
+
+    case "enqueueAiRecordNarrative": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const enqueueNarrative = context.services.enqueueAiRecordNarrative;
+      if (!enqueueNarrative) {
+        throw new HookExecutionError(
+          "enqueueAiRecordNarrative service is not available for this hook execution.",
+        );
+      }
+      const entityValue = action.entityName
+        ? evaluateExpression(action.entityName, scope)
+        : context.entityName;
+      if (typeof entityValue !== "string" || entityValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "enqueueAiRecordNarrative entityName must evaluate to a non-empty string.",
+        );
+      }
+      const recordIdValue = action.recordId
+        ? evaluateExpression(action.recordId, scope)
+        : context.current.id;
+      if (
+        typeof recordIdValue !== "string" ||
+        recordIdValue.trim().length === 0
+      ) {
+        throw new HookExecutionError(
+          "enqueueAiRecordNarrative requires a record id.",
+        );
+      }
+      const promptValue = action.prompt
+        ? evaluateExpression(action.prompt, scope)
+        : undefined;
+      const systemValue = action.systemInstruction
+        ? evaluateExpression(action.systemInstruction, scope)
+        : undefined;
+      const result = await enqueueNarrative({
+        tenantId: context.tenantId,
+        entityName: entityValue.trim(),
+        recordId: recordIdValue.trim(),
+        ...(action.variant ? { variant: action.variant } : {}),
+        ...(typeof promptValue === "string" ? { prompt: promptValue } : {}),
+        ...(typeof systemValue === "string"
+          ? { systemInstruction: systemValue }
+          : {}),
+      });
+      context.loaded[action.as] = result ? { ...result } : null;
+      return;
+    }
+
     case "matchSimilarRecord": {
       if (!context.loaded) {
         context.loaded = {};

@@ -10,6 +10,7 @@ export {
 } from "./permissions.js";
 export {
   AI_JOBS_COLLECTION,
+  aiChatCitationSchema,
   aiChatOutputSchema,
   aiJobFeatureSchema,
   aiJobModelUsageSchema,
@@ -17,6 +18,7 @@ export {
   aiJobRecordSchema,
   aiJobStatusSchema,
   processAiChatTaskPayloadSchema,
+  type AiChatCitation,
   type AiChatOutput,
   type AiJobFeature,
   type AiJobModelUsage,
@@ -42,3 +44,58 @@ export {
   type SubmitAiChatRequest,
 } from "./schemas/ai-chat.schema.js";
 export { AI_TASK_ROUTES } from "./task-routes.js";
+export {
+  assembleGroundedChatPrefix,
+  createMockVertexCachedContentClient,
+  createRestVertexCachedContentClient,
+  ensureVertexCacheForUserMemory,
+  executeGroundedChatTool,
+  invalidateUserAiMemoryCachesForTenant,
+  redactForPrompt,
+  refreshUserAiMemory,
+  runGroundedChatOrchestrator,
+  type GroundedChatDataPorts,
+  type GroundedChatOrchestratorMetrics,
+  type GroundedChatOrchestratorResult,
+  type RunGroundedChatOrchestratorDeps,
+  type UserAiMemoryRefreshSource,
+  type VertexCachedContentClient,
+} from "./grounded-chat/index.js";
+export {
+  resolveModelForPurpose,
+  type AiModelPurpose,
+  type ModelRouterDefaults,
+  type ResolveModelForPurposeInput,
+  type ResolvedModel,
+} from "./model-router.js";
+export {
+  AI_SUMMARY_FIELD_KEYS,
+  computeRecordAiSummary,
+  readAiRecordSummaryFields,
+  writeAiRecordSummaryFields,
+  type AiRecordSummaryFields,
+  type AiSummaryFieldKey,
+  type ComputeRecordAiSummaryInput,
+  type ComputedRecordAiSummary,
+  type RecordAiSummaryRedactFn,
+} from "./record-ai-summary/index.js";
+export {
+  AI_SPEND_COLLECTION,
+  AI_SPEND_USERS_COLLECTION,
+  AiSpendLimitError,
+  aiSpendPeriodKey,
+  assertAiSpendAllowed,
+  buildAiSpendStatus,
+  emptyAiSpendCounters,
+  evaluateAiSpend,
+  isAttributableAiUserId,
+  mergeStrictestAiSpendLimits,
+  recordAiSpendUsage,
+  resolveRoleAiSpendLimits,
+  spendDeltaFromModelUsage,
+  type AiSpendCounters,
+  type AiSpendDelta,
+  type AiSpendRecord,
+  type AiSpendRepository,
+  type AiSpendStatus,
+} from "./spend/index.js";

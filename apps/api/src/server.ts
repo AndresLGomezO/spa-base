@@ -18,6 +18,12 @@ import type {
   AggregationEventRepository,
   BackfillJobRepository,
   AiJobRepository,
+  AiChatSessionRepository,
+  AiContextSectionRepository,
+  AiRecordSummaryRepository,
+  AiSpendRepository,
+  TenantAiContextRepository,
+  UserAiMemoryRepository,
   UiBuilderAiSuggestionRepository,
   DataHookRepository,
   DataHookExecutionRepository,
@@ -43,6 +49,11 @@ import {
   createInMemoryAggregationEventRepository,
   createInMemoryBackfillJobRepository,
   createInMemoryAiJobRepository,
+  createInMemoryAiSpendRepository,
+  createInMemoryAiChatSessionRepository,
+  createInMemoryAiContextSectionRepository,
+  createInMemoryAiRecordSummaryRepository,
+  createInMemoryUserAiMemoryRepository,
   createInMemoryUiBuilderAiSuggestionRepository,
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
@@ -76,6 +87,11 @@ import {
   createFirestoreAdminAggregationEventRepository,
   createFirestoreAdminBackfillJobRepository,
   createFirestoreAdminAiJobRepository,
+  createFirestoreAdminAiSpendRepository,
+  createFirestoreAdminAiChatSessionRepository,
+  createFirestoreAdminAiContextSectionRepository,
+  createFirestoreAdminAiRecordSummaryRepository,
+  createFirestoreAdminUserAiMemoryRepository,
   createFirestoreAdminUiBuilderAiSuggestionRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
@@ -167,7 +183,11 @@ import { createTenantDeletionTasksClient } from "./admin/tenant-deletion-tasks.c
 import { parseProtectedTenantIds } from "./admin/enqueue-tenant-deletion.js";
 import { callDataHookWebhook } from "./hooks/call-data-hook-webhook.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
+import { createInMemoryTenantRepository } from "./test/mock-tenant-repository.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
+import { registerAiContextSectionRoutes } from "./ai-context-sections/register-ai-context-section-routes.js";
+import { registerAiRecordSummaryTemplateRoutes } from "./ai-record-summary-templates/register-ai-record-summary-template-routes.js";
+import { registerAiRecordSummaryRoutes } from "./ai-record-summaries/register-ai-record-summary-routes.js";
 import { registerDebugRoutes } from "./debug/register-debug-routes.js";
 import { registerNotificationRoutes } from "./notifications/register-notification-routes.js";
 import { registerPushTokenRoutes } from "./notifications/register-push-token-routes.js";
@@ -232,6 +252,13 @@ interface BuildServerOptions {
   readonly metricContributionRepository?: MetricContributionRepository;
   readonly backfillJobRepository?: BackfillJobRepository;
   readonly aiJobRepository?: AiJobRepository;
+  readonly aiSpendRepository?: AiSpendRepository;
+  readonly tenantRepository?: import("@repo/firestore-converters").TenantRepository;
+  readonly aiChatSessionRepository?: AiChatSessionRepository;
+  readonly aiContextSectionRepository?: AiContextSectionRepository;
+  readonly aiRecordSummaryRepository?: AiRecordSummaryRepository;
+  readonly userAiMemoryRepository?: UserAiMemoryRepository;
+  readonly tenantAiContextRepository?: TenantAiContextRepository;
   readonly uiBuilderAiSuggestionRepository?: UiBuilderAiSuggestionRepository;
   readonly getUserAccessProfile?: (
     uid: string,
@@ -568,6 +595,36 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createInMemoryAiJobRepository()
       : createFirestoreAdminAiJobRepository(firebaseAdminConfig));
 
+  const aiSpendRepository =
+    options.aiSpendRepository ??
+    (options.repositories
+      ? createInMemoryAiSpendRepository()
+      : createFirestoreAdminAiSpendRepository(firebaseAdminConfig));
+
+  const aiChatSessionRepository =
+    options.aiChatSessionRepository ??
+    (options.repositories
+      ? createInMemoryAiChatSessionRepository()
+      : createFirestoreAdminAiChatSessionRepository(firebaseAdminConfig));
+
+  const userAiMemoryRepository =
+    options.userAiMemoryRepository ??
+    (options.repositories
+      ? createInMemoryUserAiMemoryRepository()
+      : createFirestoreAdminUserAiMemoryRepository(firebaseAdminConfig));
+
+  const aiContextSectionRepository =
+    options.aiContextSectionRepository ??
+    (options.repositories
+      ? createInMemoryAiContextSectionRepository()
+      : createFirestoreAdminAiContextSectionRepository(firebaseAdminConfig));
+
+  const aiRecordSummaryRepository =
+    options.aiRecordSummaryRepository ??
+    (options.repositories
+      ? createInMemoryAiRecordSummaryRepository()
+      : createFirestoreAdminAiRecordSummaryRepository(firebaseAdminConfig));
+
   const uiBuilderAiSuggestionRepository =
     options.uiBuilderAiSuggestionRepository ??
     (options.repositories
@@ -576,13 +633,21 @@ export async function buildServer(options: BuildServerOptions = {}) {
           firebaseAdminConfig,
         ));
 
-  const tenantAiContextRepository = options.repositories
-    ? createInMemoryTenantAiContextRepository()
-    : createFirestoreAdminTenantAiContextRepository(firebaseAdminConfig);
+  const tenantAiContextRepository =
+    options.tenantAiContextRepository ??
+    (options.repositories
+      ? createInMemoryTenantAiContextRepository()
+      : createFirestoreAdminTenantAiContextRepository(firebaseAdminConfig));
 
   const tenantRepositoryForAiContext = options.repositories
-    ? null
-    : createFirestoreAdminTenantRepository(firebaseAdminConfig);
+    ? (options.tenantRepository ?? null)
+    : (options.tenantRepository ??
+      createFirestoreAdminTenantRepository(firebaseAdminConfig));
+
+  const tenantRepositoryForSpend =
+    options.tenantRepository ??
+    tenantRepositoryForAiContext ??
+    createInMemoryTenantRepository();
 
   const metricContributionRepository =
     options.metricContributionRepository ??
@@ -725,6 +790,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
           tenantRepository: tenantRepositoryForAiContext,
           entityCategoryRepository,
           entityRuntime,
+          userAiMemoryRepository,
         }
       : undefined;
 
@@ -944,7 +1010,49 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     aiJobRepository,
+    aiChatSessionRepository,
     tenantAiContextDeps: tenantAiContextSync,
+    aiSpendGuardDeps: {
+      tenantRepository: tenantRepositoryForSpend,
+      aiSpendRepository,
+      getRoleCatalog: loadRoleCatalog,
+      registeredUserRepository,
+    },
+    cloudTasksConfig: {
+      projectId: apiEnv.GCP_PROJECT_ID,
+      region: apiEnv.GCP_REGION,
+      queueName: apiEnv.CLOUD_TASKS_QUEUE_NAME,
+      workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+      serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+      localDispatch: apiEnv.AI_TASKS_LOCAL_DISPATCH,
+    },
+  });
+
+  await registerAiContextSectionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    aiContextSectionRepository,
+    userAiMemoryRepository,
+  });
+
+  await registerAiRecordSummaryTemplateRoutes(server, {
+    authenticate,
+    permissionDeps,
+    tenantAiContextRepository,
+    entityDefinitionRepository,
+    userAiMemoryRepository,
+  });
+
+  await registerAiRecordSummaryRoutes(server, {
+    authenticate,
+    permissionDeps,
+    aiRecordSummaryRepository,
+    aiSpendGuardDeps: {
+      tenantRepository: tenantRepositoryForSpend,
+      aiSpendRepository,
+      getRoleCatalog: loadRoleCatalog,
+      registeredUserRepository,
+    },
     cloudTasksConfig: {
       projectId: apiEnv.GCP_PROJECT_ID,
       region: apiEnv.GCP_REGION,

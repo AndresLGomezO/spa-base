@@ -11,16 +11,24 @@ import {
   useThirdRail,
 } from "@repo/ui";
 
-import { getEntity, listEntity } from "../../lib/api-client";
+import {
+  getEntity,
+  getAiRecordSummary,
+  listEntity,
+} from "../../lib/api-client";
 import {
   entityListQueryKey,
   entityRecordQueryKey,
 } from "../../query/query-client";
 import { summaryChartBlockRenderers } from "./summary-chart-renderers";
 import { SummaryCopyMarkdownButton } from "./SummaryCopyMarkdownButton";
+import { SummaryOutOfSyncBanner } from "./SummaryOutOfSyncBanner";
 import {
+  isAiNarrativeStale,
+  narrativeVariantFromSummaryField,
   resolveSummaryTabsFromRecord,
   type ResolvedSummaryTab,
+  type SummaryAiDoc,
 } from "./resolve-summary-tabs";
 
 interface EntityMainPageSummaryButtonProps {
@@ -65,13 +73,21 @@ function SummaryEmptyTabState() {
 function EntityMainSummaryRailBody({
   tabs,
   activeTextRef,
+  entityName,
+  recordId,
+  aiDoc,
 }: {
   readonly tabs: readonly ResolvedSummaryTab[];
   readonly activeTextRef: { current: string };
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly aiDoc: SummaryAiDoc;
 }) {
   const { t } = useTranslation("common");
   const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? "");
   const active = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0] ?? null;
+  const variant = narrativeVariantFromSummaryField(active?.field);
+  const stale = isAiNarrativeStale(aiDoc, variant);
 
   useEffect(() => {
     activeTextRef.current = active?.text ?? "";
@@ -106,6 +122,12 @@ function EntityMainSummaryRailBody({
           />
         </div>
       ) : null}
+      <SummaryOutOfSyncBanner
+        entityName={entityName}
+        recordId={recordId}
+        variant={variant}
+        stale={stale}
+      />
       {active.text.length > 0 ? (
         <Markdown blockRenderers={summaryChartBlockRenderers}>
           {active.text}
@@ -144,10 +166,32 @@ export function EntityMainPageSummaryButton({
     enabled: sourceEntity.length > 0,
   });
 
+  const resolvedRecordId =
+    sourceRecordId ||
+    (typeof recordQuery.data?.id === "string" ? recordQuery.data.id : "");
+
+  const aiSummaryQuery = useQuery({
+    queryKey: ["ai-record-summary", sourceEntity, resolvedRecordId] as const,
+    queryFn: () => getAiRecordSummary(sourceEntity, resolvedRecordId),
+    enabled: sourceEntity.length > 0 && resolvedRecordId.length > 0,
+  });
+
   const tabs = useMemo(
-    () => resolveSummaryTabsFromRecord(summary, recordQuery.data ?? null),
-    [summary, recordQuery.data],
+    () =>
+      resolveSummaryTabsFromRecord(
+        summary,
+        recordQuery.data ?? null,
+        aiSummaryQuery.data ?? null,
+      ),
+    [summary, recordQuery.data, aiSummaryQuery.data],
   );
+
+  const anyTabStale = useMemo(() => {
+    const aiDoc = aiSummaryQuery.data ?? null;
+    return tabs.some((tab) =>
+      isAiNarrativeStale(aiDoc, narrativeVariantFromSummaryField(tab.field)),
+    );
+  }, [tabs, aiSummaryQuery.data]);
 
   const activeTextRef = useRef("");
 
@@ -172,6 +216,9 @@ export function EntityMainPageSummaryButton({
             <EntityMainSummaryRailBody
               tabs={tabs}
               activeTextRef={activeTextRef}
+              entityName={sourceEntity}
+              recordId={resolvedRecordId}
+              aiDoc={aiSummaryQuery.data ?? null}
             />
           ),
           widths: { base: "full", md: "1/2", lg: "1/3" },
@@ -181,6 +228,11 @@ export function EntityMainPageSummaryButton({
     >
       <AiSparkIcon size={16} animated className="shrink-0" />
       {t("entity.summary.button")}
+      {anyTabStale ? (
+        <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+          {t("entity.summary.outOfSync")}
+        </span>
+      ) : null}
     </Button>
   );
 }

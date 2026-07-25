@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   LayoutTemplate,
   LineChart,
+  BookText,
   Mail,
   Palette,
   Rows3,
@@ -42,6 +43,7 @@ export type NavLabelKey =
   | "dataStructure"
   | "dataModelBuilder"
   | "automationNav"
+  | "aiContextNav"
   | "analytics"
   | "metricsNav"
   | "chartsNav"
@@ -203,6 +205,14 @@ export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
   to: "/settings/automation",
   matchPath: "/settings/automation",
   icon: Workflow,
+};
+
+export const SETTINGS_AI_CONTEXT_NAV_ITEM: NavLinkConfig = {
+  id: "aiContext",
+  labelKey: "aiContextNav",
+  to: "/settings/ai-context",
+  matchPath: "/settings/ai-context",
+  icon: BookText,
 };
 
 export const SETTINGS_EMAIL_MATCHING_NAV_ITEM: NavLinkConfig = {

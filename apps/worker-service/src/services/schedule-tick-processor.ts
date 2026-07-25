@@ -172,6 +172,15 @@ async function processTenantScheduleTick(
     ...(deps.computeEmbedding
       ? { computeEmbedding: deps.computeEmbedding }
       : {}),
+    ...(deps.computeRecordAiSummary
+      ? { computeRecordAiSummary: deps.computeRecordAiSummary }
+      : {}),
+    ...(deps.upsertAiRecordContext
+      ? { upsertAiRecordContext: deps.upsertAiRecordContext }
+      : {}),
+    ...(deps.enqueueAiRecordNarrative
+      ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
+      : {}),
   };
 
   const withFormulaResolver = (

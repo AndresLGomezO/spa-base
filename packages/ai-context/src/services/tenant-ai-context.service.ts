@@ -19,6 +19,7 @@ import {
   type EntityTenantSummaryInput,
 } from "../builders/build-entity-context.js";
 import { buildTenantAiContextDocId, hashSourceValue } from "../utils/hash.js";
+import { AI_RECORD_SUMMARY_TEMPLATE_FRAGMENT_KEY } from "../storage/ai-record-summary-template.schema.js";
 import type {
   TenantAiContextRecord,
   TenantAiContextRepository,
@@ -107,15 +108,24 @@ export async function upsertEntityAiContext(
     formFieldPaths,
     entityFieldSelectorPaths,
   });
+  const id = buildTenantAiContextDocId("entity", entity.name);
+  const existing = await deps.repository.get(input.tenant.tenantId, id);
+  const summaryTemplate =
+    existing?.fragments[AI_RECORD_SUMMARY_TEMPLATE_FRAGMENT_KEY];
 
   const record: TenantAiContextRecord = {
-    id: buildTenantAiContextDocId("entity", entity.name),
+    id,
     tenantId: input.tenant.tenantId,
     kind: "entity",
     scopeKey: entity.name,
     sourceHash,
     fragments: {
       "entity.current": currentFragment,
+      ...(summaryTemplate
+        ? {
+            [AI_RECORD_SUMMARY_TEMPLATE_FRAGMENT_KEY]: summaryTemplate,
+          }
+        : {}),
     },
     assembled: currentFragment,
     updatedAt: new Date().toISOString(),

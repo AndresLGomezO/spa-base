@@ -30,6 +30,7 @@ import {
   SETTINGS_CHARTS_NAV_ITEM,
   SETTINGS_FORMULAS_NAV_ITEM,
   SETTINGS_AUTOMATION_NAV_ITEM,
+  SETTINGS_AI_CONTEXT_NAV_ITEM,
   SETTINGS_EMAIL_MATCHING_NAV_ITEM,
   SETTINGS_QUERY_BUILDER_NAV_ITEM,
   SETTINGS_CUSTOM_VIEWS_NAV_ITEM,
@@ -242,6 +243,15 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     if (hasPermission("hook.read", permissions, { isSuperAdmin })) {
       analyticsChildren.push(SETTINGS_AUTOMATION_NAV_ITEM);
+    }
+
+    if (
+      hasPermission("aiContextSection.read", permissions, { isSuperAdmin }) ||
+      hasPermission("aiRecordSummaryTemplate.read", permissions, {
+        isSuperAdmin,
+      })
+    ) {
+      analyticsChildren.push(SETTINGS_AI_CONTEXT_NAV_ITEM);
     }
 
     if (tenantId) {

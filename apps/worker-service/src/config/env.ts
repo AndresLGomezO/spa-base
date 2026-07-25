@@ -11,6 +11,12 @@ const workerEnvSchema = z.object({
   GCP_PROJECT_ID: z.string().trim().min(1),
   VERTEX_GCP_PROJECT_ID: z.string().trim().optional(),
   GCP_REGION: z.string().trim().min(1).default("us-central1"),
+  VERTEX_VECTOR_INDEX_ID: z.string().trim().optional(),
+  VERTEX_VECTOR_INDEX_ENDPOINT_ID: z.string().trim().optional(),
+  VERTEX_VECTOR_DIM: z.coerce.number().int().positive().default(768),
+  VERTEX_VECTOR_REGION: z.string().trim().optional(),
+  VERTEX_VECTOR_DEPLOYED_INDEX_ID: z.string().trim().optional(),
+  VERTEX_VECTOR_PUBLIC_ENDPOINT_DOMAIN: z.string().trim().optional(),
   /**
    * Vertex location for Gemini generateContent.
    * Gemini 3.x preview models (incl. gemini-3.1-pro-preview) are global-only.
@@ -52,6 +58,7 @@ const workerEnvSchema = z.object({
   GMAIL_INGEST_DELIVERY_MODE: z.enum(["poll", "push"]).default("poll"),
   WORKER_SERVICE_URL: z.string().trim().default("http://127.0.0.1:3001"),
   GMAIL_TASKS_QUEUE_NAME: z.string().trim().default("gmail-jobs"),
+  AI_EMBED_TASKS_QUEUE_NAME: z.string().trim().default("ai-embed"),
   GMAIL_TASKS_LOCAL_DISPATCH: z
     .enum(["true", "false"])
     .default("true")
@@ -87,6 +94,20 @@ export const vertexAiConfig = {
   reasoningModelId: workerEnv.VERTEX_REASONING_MODEL_ID,
   imagenModelId: workerEnv.VERTEX_IMAGEN_MODEL_ID,
   mockEnabled: workerEnv.IS_LOCAL && !workerEnv.USE_REAL_VERTEX,
+};
+
+export const vertexVectorConfig = {
+  projectId: workerEnv.VERTEX_GCP_PROJECT_ID ?? workerEnv.GCP_PROJECT_ID,
+  region: workerEnv.VERTEX_VECTOR_REGION ?? workerEnv.GCP_REGION,
+  dimensions: workerEnv.VERTEX_VECTOR_DIM,
+  indexId: workerEnv.VERTEX_VECTOR_INDEX_ID,
+  indexEndpointId: workerEnv.VERTEX_VECTOR_INDEX_ENDPOINT_ID,
+  deployedIndexId: workerEnv.VERTEX_VECTOR_DEPLOYED_INDEX_ID,
+  publicEndpointDomain: workerEnv.VERTEX_VECTOR_PUBLIC_ENDPOINT_DOMAIN,
+  useInMemory:
+    (workerEnv.IS_LOCAL && !workerEnv.USE_REAL_VERTEX) ||
+    !workerEnv.VERTEX_VECTOR_INDEX_ID ||
+    !workerEnv.VERTEX_VECTOR_INDEX_ENDPOINT_ID,
 };
 
 export const authConfig = {

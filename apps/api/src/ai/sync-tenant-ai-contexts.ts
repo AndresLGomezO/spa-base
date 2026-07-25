@@ -12,6 +12,8 @@ import {
   upsertThemeAiContext,
   type TenantAiContextServiceDeps,
 } from "@repo/ai-context";
+import { invalidateUserAiMemoryCachesForTenant } from "@repo/ai-engine/grounded-chat/refresh-user-ai-memory";
+import type { UserAiMemoryRepository } from "@repo/firestore-converters";
 
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 
@@ -19,6 +21,7 @@ export interface SyncTenantAiContextsDeps extends TenantAiContextServiceDeps {
   readonly tenantRepository: TenantRepository;
   readonly entityCategoryRepository: EntityCategoryRepository;
   readonly entityRuntime: EntityRuntimeContext;
+  readonly userAiMemoryRepository?: UserAiMemoryRepository;
 }
 
 function buildEntityLookup(
@@ -119,6 +122,13 @@ export async function syncEntityAiContextsForTenant(
     },
     sourceHash,
   );
+
+  if (deps.userAiMemoryRepository) {
+    await invalidateUserAiMemoryCachesForTenant(
+      deps.userAiMemoryRepository,
+      tenantId,
+    );
+  }
 }
 
 export async function ensureUiBuilderAiContexts(

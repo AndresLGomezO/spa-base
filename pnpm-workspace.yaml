@@ -15,6 +15,7 @@ catalog:
   "@google-cloud/vertexai": ^1.9.0
   "@google-cloud/aiplatform": ^3.35.0
   "@google/genai": ^1.52.0
+  google-auth-library: ^9.15.1
   fastify: ^5.6.1
   "@fastify/cors": ^11.0.0
   "@fastify/compress": ^8.1.0

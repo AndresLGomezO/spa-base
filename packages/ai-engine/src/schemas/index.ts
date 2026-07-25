@@ -1,6 +1,7 @@
 export {
   AI_JOBS_COLLECTION,
   aiBatchItemsOutputSchema,
+  aiChatCitationSchema,
   aiChatOutputSchema,
   aiDataHookBatchCallAiInputSchema,
   aiDataHookCallAiInputSchema,
@@ -25,6 +26,7 @@ export {
   processAiChatTaskPayloadSchema,
   uiBuilderDraftSchema,
   type AiBatchItemsOutput,
+  type AiChatCitation,
   type AiChatOutput,
   type AiDataHookBatchCallAiInput,
   type AiDataHookCallAiInput,

@@ -6,7 +6,7 @@ import type {
 import { tenantConverter } from "@repo/firestore-converters";
 import {
   TENANTS_COLLECTION,
-  tenantSchemaV2,
+  tenantSchemaV3,
   type Tenant,
 } from "@repo/shared-types";
 
@@ -77,7 +77,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
       }
 
       const nowIso = new Date().toISOString();
-      const tenant = tenantSchemaV2.parse({
+      const tenant = tenantSchemaV3.parse({
         id,
         name,
         status: "active",
@@ -105,7 +105,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
       }
 
       const existing = tenantConverter.read(existingSnapshot.data());
-      const nextTenant = tenantSchemaV2.parse({
+      const nextTenant = tenantSchemaV3.parse({
         ...existing,
         name: input.name !== undefined ? input.name.trim() : existing.name,
         status: input.status ?? existing.status,
@@ -115,6 +115,12 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
             : input.appearance !== undefined
               ? { ...existing.appearance, ...input.appearance }
               : existing.appearance,
+        aiLimits:
+          input.aiLimits === null
+            ? undefined
+            : input.aiLimits !== undefined
+              ? { ...existing.aiLimits, ...input.aiLimits }
+              : existing.aiLimits,
         updatedAt: new Date().toISOString(),
       });
 
@@ -144,7 +150,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
       }
 
       const nowIso = new Date().toISOString();
-      const tenant = tenantSchemaV2.parse({
+      const tenant = tenantSchemaV3.parse({
         id: parsedId,
         name: parsedName,
         status: "active",

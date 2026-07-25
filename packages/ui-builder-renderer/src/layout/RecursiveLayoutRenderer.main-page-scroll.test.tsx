@@ -2,6 +2,7 @@
 
 import {
   createDefaultMainPageLayout,
+  createDefaultSidebarNavComponent,
   ensureStandardRoot,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -65,5 +66,32 @@ describe("RecursiveLayoutRenderer main page list scroll", () => {
     expect(html).toContain("toolbar");
     expect(html).toContain("metrics");
     expect(html).toContain("list");
+  });
+
+  it("does not height-fill app-shell chrome without page-list (sidebar nav scroll)", () => {
+    const sidebarNavSection: UiLayoutDocument = {
+      root: {
+        type: "screen-root",
+        id: "sidebar-nav-section-root",
+        gridTemplateColumns: "1fr",
+        rows: [
+          {
+            type: "component",
+            id: "sidebar-nav",
+            component: createDefaultSidebarNavComponent(),
+          },
+        ],
+      },
+      showActions: false,
+    };
+
+    const html = renderToStaticMarkup(
+      <RecursiveLayoutRenderer layout={sidebarNavSection} context={context} />,
+    );
+
+    expect(html).not.toContain(
+      "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+    );
+    expect(html).toContain("flex w-full min-w-0 max-w-full flex-col");
   });
 });

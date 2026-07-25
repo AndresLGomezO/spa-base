@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 import { tenantAppearanceSchema } from "./tenant-appearance.js";
+import { aiSpendLimitsSchema } from "./ai-spend-limits.js";
 
 export const TENANTS_COLLECTION = "tenants";
-export const TENANT_SCHEMA_VERSION = 2 as const;
+export const TENANT_SCHEMA_VERSION = 3 as const;
 
 const isoDatetimeStringSchema = z
   .string()
@@ -31,6 +32,12 @@ export const tenantSchemaV2 = tenantSchemaV1
   })
   .strict();
 
+export const tenantSchemaV3 = tenantSchemaV2
+  .extend({
+    aiLimits: aiSpendLimitsSchema.optional(),
+  })
+  .strict();
+
 export const persistedTenantSchemaV1 = tenantSchemaV1
   .extend({
     _schemaVersion: z.literal(1),
@@ -39,13 +46,19 @@ export const persistedTenantSchemaV1 = tenantSchemaV1
 
 export const persistedTenantSchemaV2 = tenantSchemaV2
   .extend({
+    _schemaVersion: z.literal(2),
+  })
+  .strict();
+
+export const persistedTenantSchemaV3 = tenantSchemaV3
+  .extend({
     _schemaVersion: z.literal(TENANT_SCHEMA_VERSION),
   })
   .strict();
 
 export type TenantStatus = z.infer<typeof tenantStatusSchema>;
-export type Tenant = z.infer<typeof tenantSchemaV2>;
-export type PersistedTenant = z.infer<typeof persistedTenantSchemaV2>;
+export type Tenant = z.infer<typeof tenantSchemaV3>;
+export type PersistedTenant = z.infer<typeof persistedTenantSchemaV3>;
 
 export interface TenantOption {
   readonly id: string;

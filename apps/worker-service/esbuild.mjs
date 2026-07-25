@@ -12,6 +12,7 @@ const npmExternals = [
   "@google-cloud/pubsub",
   "@google-cloud/vertexai",
   "@google/genai",
+  "google-auth-library",
   "cron-parser",
   "firebase-admin",
   "fastify",
@@ -23,6 +24,7 @@ const forceExternalPlugin = {
     const markExternal = (args) => ({ path: args.path, external: true });
     build.onResolve({ filter: /^@google-cloud\// }, markExternal);
     build.onResolve({ filter: /^@google\/genai/ }, markExternal);
+    build.onResolve({ filter: /^google-auth-library/ }, markExternal);
     build.onResolve({ filter: /^cron-parser/ }, markExternal);
   },
 };
@@ -72,8 +74,9 @@ if (size > maxBundleBytes) {
 }
 
 const bundle = await readFile("dist/index.js", "utf8");
-if (bundle.includes("__require2") || bundle.includes("google-auth-library")) {
+// Dynamic `import("google-auth-library")` remains as an external string; fail only on CJS inlining.
+if (bundle.includes("__require2")) {
   throw new Error(
-    "worker-service bundle contains inlined google-auth-library — check esbuild externals.",
+    "worker-service bundle contains inlined CJS GCP client code — check esbuild externals.",
   );
 }

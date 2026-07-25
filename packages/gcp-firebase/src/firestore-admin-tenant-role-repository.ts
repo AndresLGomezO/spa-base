@@ -75,6 +75,9 @@ export function createFirestoreAdminTenantRoleRepository(
         ...(parsed.fieldRules !== undefined
           ? { fieldRules: parsed.fieldRules }
           : {}),
+        ...(parsed.aiSpendLimits !== undefined
+          ? { aiSpendLimits: parsed.aiSpendLimits }
+          : {}),
       });
 
       await collection(tenantId).doc(id).set(record);
@@ -88,7 +91,7 @@ export function createFirestoreAdminTenantRoleRepository(
 
       patchTenantRoleInputSchema.parse(input);
       const now = new Date().toISOString();
-      const next = tenantRoleRecordSchema.parse({
+      const nextBase: TenantRoleRecord = {
         ...current,
         ...(input.description !== undefined
           ? { description: input.description }
@@ -98,7 +101,13 @@ export function createFirestoreAdminTenantRoleRepository(
           ? { fieldRules: input.fieldRules }
           : {}),
         updatedAt: now,
-      });
+      };
+      if (input.aiSpendLimits === null) {
+        Reflect.deleteProperty(nextBase, "aiSpendLimits");
+      } else if (input.aiSpendLimits !== undefined) {
+        nextBase.aiSpendLimits = input.aiSpendLimits;
+      }
+      const next = tenantRoleRecordSchema.parse(nextBase);
 
       await collection(tenantId).doc(id).set(next);
       return next;

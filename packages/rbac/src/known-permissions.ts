@@ -1,3 +1,5 @@
+import { AI_CONTEXT_SECTION_PERMISSIONS } from "@repo/ai-context/permissions";
+import { AI_RECORD_SUMMARY_TEMPLATE_PERMISSIONS } from "@repo/ai-context/permissions";
 import { AI_PERMISSIONS } from "@repo/ai-engine/permissions";
 import { DEBUG_PERMISSIONS } from "@repo/debug-logs/permissions";
 import { ENTITY_CATEGORY_PERMISSIONS } from "@repo/entity-categories";
@@ -38,6 +40,8 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
     ...CUSTOM_VIEW_PERMISSIONS,
     ...DEBUG_PERMISSIONS,
     ...AI_PERMISSIONS,
+    ...AI_CONTEXT_SECTION_PERMISSIONS,
+    ...AI_RECORD_SUMMARY_TEMPLATE_PERMISSIONS,
     ...ROLE_PERMISSIONS,
     ...TENANT_USER_PERMISSIONS,
     ...(tenantId ? getDynamicPermissionsForTenant(tenantId) : []),

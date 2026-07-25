@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { usePermission } from "../../auth/usePermission";
+import { AiSpendLimitBanner } from "../ai-spend/AiSpendLimitBanner";
+import { useAiSpendStatus } from "../ai-spend/use-ai-spend-status";
 import { appConfig } from "../../config/app-config";
 import type {
   AiJobRecord,
@@ -68,6 +70,7 @@ export function FormDesignerAiControls({
   const { tenantId } = useAuth();
   const canRun = usePermission("ai.uiBuilder.run");
   const canRead = usePermission("ai.uiBuilder.read");
+  const { blocked, softWarn } = useAiSpendStatus(canRun || canRead);
 
   const [requestOpen, setRequestOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
@@ -355,7 +358,7 @@ export function FormDesignerAiControls({
             "bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary",
           )}
           onClick={() => {
-            if (!hasActiveJob) {
+            if (!hasActiveJob && !blocked) {
               setRequestOpen(true);
             }
           }}
@@ -375,6 +378,7 @@ export function FormDesignerAiControls({
     ),
     [
       aiButtonLabel,
+      blocked,
       canRun,
       hasActiveJob,
       isWorking,
@@ -401,87 +405,90 @@ export function FormDesignerAiControls({
 
   return (
     <>
-      <div className="flex items-end gap-1">
-        {canRead ? (
-          <UiBuilderAiSuggestionsPopover
-            open={historyOpen}
-            onOpenChange={setHistoryOpen}
-            trigger={historyButton}
-            suggestions={suggestionsQuery.data ?? []}
-            isLoading={suggestionsQuery.isLoading}
-            onApply={applySuggestion}
-            onView={openRenderView}
-            translationPrefix={TRANSLATION_PREFIX}
-          />
-        ) : null}
-        {canRun ? (
-          <>
-            {isWorking ? (
-              <UiBuilderAiProgressPopover
-                open={progressOpen}
-                onOpenChange={onProgressOpenChange}
-                hoverable
-                onHoverOpenChange={onProgressHoverOpenChange}
-                trigger={<span className="inline-flex">{aiButton}</span>}
-                timeline={progressTimeline}
-                progress={job?.progress}
-                jobError={job?.status === "failed" ? job.error : null}
-              />
-            ) : (
-              <UiBuilderAiResultPopover
-                open={previewOpen}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setResultOpen(false);
-                    setHoverOpen(false);
+      <div className="flex flex-col items-end gap-1">
+        <AiSpendLimitBanner blocked={blocked} softWarn={softWarn} />
+        <div className="flex items-end gap-1">
+          {canRead ? (
+            <UiBuilderAiSuggestionsPopover
+              open={historyOpen}
+              onOpenChange={setHistoryOpen}
+              trigger={historyButton}
+              suggestions={suggestionsQuery.data ?? []}
+              isLoading={suggestionsQuery.isLoading}
+              onApply={applySuggestion}
+              onView={openRenderView}
+              translationPrefix={TRANSLATION_PREFIX}
+            />
+          ) : null}
+          {canRun ? (
+            <>
+              {isWorking ? (
+                <UiBuilderAiProgressPopover
+                  open={progressOpen}
+                  onOpenChange={onProgressOpenChange}
+                  hoverable
+                  onHoverOpenChange={onProgressHoverOpenChange}
+                  trigger={<span className="inline-flex">{aiButton}</span>}
+                  timeline={progressTimeline}
+                  progress={job?.progress}
+                  jobError={job?.status === "failed" ? job.error : null}
+                />
+              ) : (
+                <UiBuilderAiResultPopover
+                  open={previewOpen}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setResultOpen(false);
+                      setHoverOpen(false);
+                    }
+                  }}
+                  hoverable={lastRunDisplay != null && !isWorking}
+                  openOnClick={false}
+                  onHoverOpenChange={setHoverOpen}
+                  trigger={aiButton}
+                  suggestion={
+                    resultSuggestion ?? lastRunDisplay?.suggestion ?? null
                   }
-                }}
-                hoverable={lastRunDisplay != null && !isWorking}
-                openOnClick={false}
-                onHoverOpenChange={setHoverOpen}
-                trigger={aiButton}
-                suggestion={
-                  resultSuggestion ?? lastRunDisplay?.suggestion ?? null
-                }
-                jobError={previewJobError}
-                finishedAt={lastRunDisplay?.finishedAt ?? null}
-                onApply={applySuggestion}
-                onView={openRenderView}
+                  jobError={previewJobError}
+                  finishedAt={lastRunDisplay?.finishedAt ?? null}
+                  onApply={applySuggestion}
+                  onView={openRenderView}
+                  translationPrefix={TRANSLATION_PREFIX}
+                />
+              )}
+              <UiBuilderAiRequestModal
+                open={requestOpen}
+                onOpenChange={setRequestOpen}
+                entityLabel={entityLabel}
+                isSubmitting={submitMutation.isPending || isWorking}
+                jobInProgress={hasActiveJob}
+                modes={requestModes}
                 translationPrefix={TRANSLATION_PREFIX}
+                onSubmit={(userContext, mode) => {
+                  submitAiJob(mode, userContext);
+                }}
               />
-            )}
-            <UiBuilderAiRequestModal
-              open={requestOpen}
-              onOpenChange={setRequestOpen}
-              entityLabel={entityLabel}
-              isSubmitting={submitMutation.isPending || isWorking}
-              jobInProgress={hasActiveJob}
-              modes={requestModes}
-              translationPrefix={TRANSLATION_PREFIX}
-              onSubmit={(userContext, mode) => {
-                submitAiJob(mode, userContext);
-              }}
-            />
-            <UiBuilderAiRenderViewModal
-              open={renderViewOpen}
-              onOpenChange={setRenderViewOpen}
-              suggestion={viewSuggestion}
-              entityLabel={entityLabel}
-              isRefining={renderJob.isWorking || submitMutation.isPending}
-              translationPrefix={TRANSLATION_PREFIX}
-              onRefine={(modificationRequest) => {
-                if (!viewSuggestion) {
-                  return;
-                }
-                submitAiJob("render", modificationRequest, {
-                  parentSuggestionId: viewSuggestion.id,
-                  modificationRequest,
-                  keepRenderViewOpen: true,
-                });
-              }}
-            />
-          </>
-        ) : null}
+              <UiBuilderAiRenderViewModal
+                open={renderViewOpen}
+                onOpenChange={setRenderViewOpen}
+                suggestion={viewSuggestion}
+                entityLabel={entityLabel}
+                isRefining={renderJob.isWorking || submitMutation.isPending}
+                translationPrefix={TRANSLATION_PREFIX}
+                onRefine={(modificationRequest) => {
+                  if (!viewSuggestion) {
+                    return;
+                  }
+                  submitAiJob("render", modificationRequest, {
+                    parentSuggestionId: viewSuggestion.id,
+                    modificationRequest,
+                    keepRenderViewOpen: true,
+                  });
+                }}
+              />
+            </>
+          ) : null}
+        </div>
       </div>
     </>
   );

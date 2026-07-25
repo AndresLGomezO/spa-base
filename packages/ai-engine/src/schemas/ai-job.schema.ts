@@ -22,6 +22,8 @@ export const aiJobFeatureSchema = z.enum([
   "dataHookBatchCallAi",
   "dataHookEmbedding",
   "gmailExtract",
+  "userAiMemoryRefresh",
+  "recordNarrativeRefresh",
 ]);
 
 export type AiJobFeature = z.infer<typeof aiJobFeatureSchema>;
@@ -42,8 +44,22 @@ export const aiJobContextRefSchema = z.object({
 
 export type AiJobContextRef = z.infer<typeof aiJobContextRefSchema>;
 
+export const aiChatCitationSchema = z.object({
+  kind: z.enum(["entity", "metric", "query", "memory"]),
+  entityName: z.string().trim().min(1).optional(),
+  recordId: z.string().trim().min(1).optional(),
+  metricId: z.string().trim().min(1).optional(),
+  queryId: z.string().trim().min(1).optional(),
+  label: z.string().trim().min(1).max(500),
+});
+
+export type AiChatCitation = z.infer<typeof aiChatCitationSchema>;
+
 export const aiChatOutputSchema = z.object({
   answer: z.string().trim().min(1),
+  citations: z.array(aiChatCitationSchema).max(50).optional(),
+  clarifyingQuestion: z.string().trim().min(1).max(2000).optional(),
+  sessionId: z.string().trim().min(1).optional(),
 });
 
 export type AiChatOutput = z.infer<typeof aiChatOutputSchema>;
@@ -195,6 +211,19 @@ export type AiDataHookEmbeddingInput = z.infer<
   typeof aiDataHookEmbeddingInputSchema
 >;
 
+export const aiRecordNarrativeRefreshInputSchema = z.object({
+  kind: z.literal("recordNarrativeRefresh"),
+  entityName: z.string().trim().min(1),
+  recordId: z.string().trim().min(1),
+  variant: z.string().trim().min(1).default("default"),
+  prompt: z.string().optional(),
+  systemInstruction: z.string().optional(),
+});
+
+export type AiRecordNarrativeRefreshInput = z.infer<
+  typeof aiRecordNarrativeRefreshInputSchema
+>;
+
 export const aiGmailExtractInputSchema = z.object({
   kind: z.literal("gmailExtract"),
   userId: z.string().trim().min(1),
@@ -221,6 +250,7 @@ export const aiJobInputSchema = z.union([
   aiDataHookCallAiInputSchema,
   aiDataHookBatchCallAiInputSchema,
   aiDataHookEmbeddingInputSchema,
+  aiRecordNarrativeRefreshInputSchema,
   aiGmailExtractInputSchema,
   aiUiBuilderStepInputSchema,
 ]);
@@ -243,6 +273,21 @@ export const aiJobRecordSchema = z.object({
   draft: uiBuilderDraftSchema.optional(),
   stepTrace: aiJobStepTraceSchema.optional(),
   modelUsage: aiJobModelUsageSchema.optional(),
+  metrics: z
+    .object({
+      stepCount: z.number().int().min(0).optional(),
+      toolCallCount: z.number().int().min(0).optional(),
+      cacheHitRatio: z.number().min(0).max(1).optional(),
+      retrievalTop1Score: z.number().optional(),
+      confidence: z.number().min(0).max(1).optional(),
+      parseRetryCount: z.number().int().min(0).optional(),
+      promptTokens: z.number().int().min(0).optional(),
+      candidatesTokens: z.number().int().min(0).optional(),
+      cachedContentTokens: z.number().int().min(0).optional(),
+      totalTokens: z.number().int().min(0).optional(),
+      estimatedCostUsd: z.number().min(0).optional(),
+    })
+    .optional(),
   requestedBy: z.string().trim().min(1),
   permission: z.string().trim().min(1),
   createdAt: z.string().trim().min(1),

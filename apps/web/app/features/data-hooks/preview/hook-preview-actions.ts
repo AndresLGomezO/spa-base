@@ -343,6 +343,41 @@ function buildActionStep(
       ];
       break;
     }
+    case "computeRecordAiSummary": {
+      summary = context.t("dataHooks.preview.actions.computeRecordAiSummary", {
+        alias: action.as,
+      });
+      if (action.entityName) {
+        bullets = [
+          humanizeExpression(action.entityName, context, {
+            ...exprOptions,
+            preferStory: false,
+          }).text,
+        ];
+      }
+      break;
+    }
+    case "upsertAiRecordContext": {
+      summary = context.t("dataHooks.preview.actions.upsertAiRecordContext", {
+        alias: action.as,
+      });
+      bullets = [
+        humanizeExpression(action.context, context, {
+          ...exprOptions,
+          preferStory: false,
+        }).text,
+      ];
+      break;
+    }
+    case "enqueueAiRecordNarrative": {
+      summary = context.t(
+        "dataHooks.preview.actions.enqueueAiRecordNarrative",
+        {
+          alias: action.as,
+        },
+      );
+      break;
+    }
     case "matchSimilarRecord": {
       summary = context.t("dataHooks.preview.actions.matchSimilarRecord", {
         entity: action.entity,
@@ -369,12 +404,19 @@ function buildActionStep(
     action.type === "matchRelatedRecord" ||
     action.type === "matchSimilarRecord" ||
     action.type === "callAi" ||
-    action.type === "computeEmbedding"
+    action.type === "computeEmbedding" ||
+    action.type === "computeRecordAiSummary" ||
+    action.type === "upsertAiRecordContext" ||
+    action.type === "enqueueAiRecordNarrative"
   ) {
     const loaded = new Map(pipeline.loadedAliases);
     loaded.set(
       action.as,
-      action.type === "callAi" || action.type === "computeEmbedding"
+      action.type === "callAi" ||
+        action.type === "computeEmbedding" ||
+        action.type === "computeRecordAiSummary" ||
+        action.type === "upsertAiRecordContext" ||
+        action.type === "enqueueAiRecordNarrative"
         ? "__ai__"
         : action.entity,
     );

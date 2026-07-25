@@ -50,6 +50,10 @@ export function createAiController(deps: AiControllerDeps) {
       throw new AiDisabledError(`AI job ${failed.id} rejected: ai.disabled`);
     }
 
+    if (deps.assertSpendAllowed) {
+      await deps.assertSpendAllowed(request);
+    }
+
     const job = await deps.repository.create(request.tenantId, {
       feature: request.feature,
       input: request.input,
@@ -184,6 +188,18 @@ export function createAiController(deps: AiControllerDeps) {
         error: null,
         ...(modelUsage ? { modelUsage } : {}),
       });
+
+      if (modelUsage && deps.recordSpendUsage) {
+        try {
+          await deps.recordSpendUsage({
+            tenantId: request.tenantId,
+            requestedBy: request.requestedBy,
+            modelUsage,
+          });
+        } catch {
+          // Spend ledger failures must not fail the completed AI job.
+        }
+      }
 
       return {
         jobId: job.id,

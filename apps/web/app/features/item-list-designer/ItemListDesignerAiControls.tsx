@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { usePermission } from "../../auth/usePermission";
+import { AiSpendLimitBanner } from "../ai-spend/AiSpendLimitBanner";
+import { useAiSpendStatus } from "../ai-spend/use-ai-spend-status";
 import type { UiBuilderSuggestionRecord } from "../../lib/api-client";
 import type { UseEntityListLayoutEditorResult } from "../ui-builder/use-entity-list-layout-editor";
 import { toValidationEntity } from "../ui-builder/to-validation-entity";
@@ -49,6 +51,7 @@ export function ItemListDesignerAiControls({
   const { tenantId } = useAuth();
   const canRun = usePermission("ai.uiBuilder.run");
   const canRead = usePermission("ai.uiBuilder.read");
+  const { blocked, softWarn } = useAiSpendStatus(canRun || canRead);
 
   const [requestOpen, setRequestOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
@@ -170,7 +173,7 @@ export function ItemListDesignerAiControls({
             "bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary",
           )}
           onClick={() => {
-            if (!hasActiveJob) {
+            if (!hasActiveJob && !blocked) {
               setRequestOpen(true);
             }
           }}
@@ -190,6 +193,7 @@ export function ItemListDesignerAiControls({
     ),
     [
       aiButtonLabel,
+      blocked,
       canRun,
       hasActiveJob,
       isWorking,
@@ -216,89 +220,92 @@ export function ItemListDesignerAiControls({
 
   return (
     <>
-      <div className="flex items-end gap-1">
-        {canRead ? (
-          <UiBuilderAiSuggestionsPopover
-            open={historyOpen}
-            onOpenChange={setHistoryOpen}
-            trigger={historyButton}
-            suggestions={suggestionsQuery.data ?? []}
-            isLoading={suggestionsQuery.isLoading}
-            onApply={applySuggestion}
-          />
-        ) : null}
-        {canRun ? (
-          <>
-            {isWorking ? (
-              <UiBuilderAiProgressPopover
-                open={progressOpen}
-                onOpenChange={onProgressOpenChange}
-                hoverable
-                onHoverOpenChange={onProgressHoverOpenChange}
-                trigger={<span className="inline-flex">{aiButton}</span>}
-                timeline={progressTimeline}
-                progress={job?.progress}
-                jobError={job?.status === "failed" ? job.error : null}
-              />
-            ) : (
-              <UiBuilderAiResultPopover
-                open={previewOpen}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setResultOpen(false);
-                    setHoverOpen(false);
-                  }
-                }}
-                hoverable={lastRunDisplay != null && !isWorking}
-                openOnClick={false}
-                onHoverOpenChange={setHoverOpen}
-                trigger={aiButton}
-                suggestion={
-                  resultSuggestion ?? lastRunDisplay?.suggestion ?? null
-                }
-                jobError={previewJobError}
-                finishedAt={lastRunDisplay?.finishedAt ?? null}
-                onApply={applySuggestion}
-              />
-            )}
-            <UiBuilderAiRequestModal
-              open={requestOpen}
-              onOpenChange={setRequestOpen}
-              entityLabel={entityLabel}
-              isSubmitting={submitMutation.isPending || isWorking}
-              jobInProgress={hasActiveJob}
-              onSubmit={(userContext) => {
-                const question =
-                  userContext.length > 0
-                    ? userContext
-                    : t("itemListDesigner.ai.defaultPrompt");
-                submitMutation.mutate(
-                  {
-                    entityName,
-                    surface: "list",
-                    currentLayoutJson: JSON.stringify(
-                      createDesignLayoutSliceEnvelope(
-                        "list",
-                        editor.exportSlice(),
-                      ),
-                    ),
-                    question,
-                  },
-                  {
-                    onSuccess: (data) => {
-                      setRequestOpen(false);
-                      setActiveJobId(data.jobId);
-                      handledJobIdRef.current = null;
-                      setResultSuggestion(null);
+      <div className="flex flex-col items-end gap-1">
+        <AiSpendLimitBanner blocked={blocked} softWarn={softWarn} />
+        <div className="flex items-end gap-1">
+          {canRead ? (
+            <UiBuilderAiSuggestionsPopover
+              open={historyOpen}
+              onOpenChange={setHistoryOpen}
+              trigger={historyButton}
+              suggestions={suggestionsQuery.data ?? []}
+              isLoading={suggestionsQuery.isLoading}
+              onApply={applySuggestion}
+            />
+          ) : null}
+          {canRun ? (
+            <>
+              {isWorking ? (
+                <UiBuilderAiProgressPopover
+                  open={progressOpen}
+                  onOpenChange={onProgressOpenChange}
+                  hoverable
+                  onHoverOpenChange={onProgressHoverOpenChange}
+                  trigger={<span className="inline-flex">{aiButton}</span>}
+                  timeline={progressTimeline}
+                  progress={job?.progress}
+                  jobError={job?.status === "failed" ? job.error : null}
+                />
+              ) : (
+                <UiBuilderAiResultPopover
+                  open={previewOpen}
+                  onOpenChange={(open) => {
+                    if (!open) {
                       setResultOpen(false);
                       setHoverOpen(false);
+                    }
+                  }}
+                  hoverable={lastRunDisplay != null && !isWorking}
+                  openOnClick={false}
+                  onHoverOpenChange={setHoverOpen}
+                  trigger={aiButton}
+                  suggestion={
+                    resultSuggestion ?? lastRunDisplay?.suggestion ?? null
+                  }
+                  jobError={previewJobError}
+                  finishedAt={lastRunDisplay?.finishedAt ?? null}
+                  onApply={applySuggestion}
+                />
+              )}
+              <UiBuilderAiRequestModal
+                open={requestOpen}
+                onOpenChange={setRequestOpen}
+                entityLabel={entityLabel}
+                isSubmitting={submitMutation.isPending || isWorking}
+                jobInProgress={hasActiveJob}
+                onSubmit={(userContext) => {
+                  const question =
+                    userContext.length > 0
+                      ? userContext
+                      : t("itemListDesigner.ai.defaultPrompt");
+                  submitMutation.mutate(
+                    {
+                      entityName,
+                      surface: "list",
+                      currentLayoutJson: JSON.stringify(
+                        createDesignLayoutSliceEnvelope(
+                          "list",
+                          editor.exportSlice(),
+                        ),
+                      ),
+                      question,
                     },
-                  },
-                );
-              }}
-            />
-          </>
-        ) : null}
+                    {
+                      onSuccess: (data) => {
+                        setRequestOpen(false);
+                        setActiveJobId(data.jobId);
+                        handledJobIdRef.current = null;
+                        setResultSuggestion(null);
+                        setResultOpen(false);
+                        setHoverOpen(false);
+                      },
+                    },
+                  );
+                }}
+              />
+            </>
+          ) : null}
+        </div>
       </div>
     </>
   );

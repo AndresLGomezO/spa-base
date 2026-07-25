@@ -23,6 +23,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
     "@repo/entity-categories": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",

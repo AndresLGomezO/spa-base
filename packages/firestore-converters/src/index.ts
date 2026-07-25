@@ -153,6 +153,15 @@ export {
 } from "./ai-job/repository-contract.js";
 export { createInMemoryAiJobRepository } from "./ai-job/in-memory-repository.js";
 export {
+  AI_SPEND_COLLECTION,
+  AI_SPEND_USERS_COLLECTION,
+  aiSpendRecordSchema,
+  type AiSpendDelta,
+  type AiSpendRecord,
+  type AiSpendRepository,
+} from "./ai-spend/repository-contract.js";
+export { createInMemoryAiSpendRepository } from "./ai-spend/in-memory-repository.js";
+export {
   type UiBuilderAiSuggestionRepository,
   createInMemoryUiBuilderAiSuggestionRepository,
 } from "./ui-builder-ai-suggestion/index.js";
@@ -172,6 +181,44 @@ export {
   type TenantAiContextRecord,
 } from "./tenant-ai-context/repository-contract.js";
 export { createInMemoryTenantAiContextRepository } from "./tenant-ai-context/in-memory-repository.js";
+export {
+  USER_AI_MEMORIES_COLLECTION,
+  type UserAiMemoryFact,
+  type UserAiMemoryRecord,
+  type UserAiMemoryRepository,
+} from "./user-ai-memory/repository-contract.js";
+export { createInMemoryUserAiMemoryRepository } from "./user-ai-memory/in-memory-repository.js";
+export {
+  AI_CHAT_SESSIONS_COLLECTION,
+  type AiChatCitation,
+  type AiChatSessionCreateInput,
+  type AiChatSessionMessage,
+  type AiChatSessionRecord,
+  type AiChatSessionRepository,
+  type AiChatSessionStatus,
+} from "./ai-chat-session/repository-contract.js";
+export { createInMemoryAiChatSessionRepository } from "./ai-chat-session/in-memory-repository.js";
+export {
+  AI_CONTEXT_SECTIONS_COLLECTION,
+  type AiContextSectionBlock,
+  type AiContextSectionBlockKind,
+  type AiContextSectionRecord,
+  type AiContextSectionRepository,
+  type AiContextSectionScope,
+  type AiContextSectionsCatalogEnvelope,
+  type CreateAiContextSectionInput,
+  type PatchAiContextSectionInput,
+} from "./ai-context-section/repository-contract.js";
+export { createInMemoryAiContextSectionRepository } from "./ai-context-section/in-memory-repository.js";
+export {
+  AI_RECORD_SUMMARIES_COLLECTION,
+  buildAiRecordSummaryDocId,
+  type AiRecordSummaryNarrative,
+  type AiRecordSummaryRag,
+  type AiRecordSummaryRecord,
+  type AiRecordSummaryRepository,
+} from "./ai-record-summary/repository-contract.js";
+export { createInMemoryAiRecordSummaryRepository } from "./ai-record-summary/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

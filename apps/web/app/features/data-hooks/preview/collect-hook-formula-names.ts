@@ -97,6 +97,52 @@ export function collectFormulaNamesInAction(
     case "computeEmbedding":
       names.push(...collectFormulaNames(action.text));
       break;
+    case "computeRecordAiSummary":
+      if (action.entityName) {
+        names.push(...collectFormulaNames(action.entityName));
+      }
+      if (action.when) {
+        names.push(...collectFormulaNames(action.when));
+      }
+      break;
+    case "upsertAiRecordContext":
+      if (action.entityName) {
+        names.push(...collectFormulaNames(action.entityName));
+      }
+      if (action.recordId) {
+        names.push(...collectFormulaNames(action.recordId));
+      }
+      names.push(...collectFormulaNames(action.context));
+      if (action.ragText) {
+        names.push(...collectFormulaNames(action.ragText));
+      }
+      if (action.narrativePrompt) {
+        names.push(...collectFormulaNames(action.narrativePrompt));
+      }
+      if (action.narrativeSystemInstruction) {
+        names.push(...collectFormulaNames(action.narrativeSystemInstruction));
+      }
+      if (action.when) {
+        names.push(...collectFormulaNames(action.when));
+      }
+      break;
+    case "enqueueAiRecordNarrative":
+      if (action.entityName) {
+        names.push(...collectFormulaNames(action.entityName));
+      }
+      if (action.recordId) {
+        names.push(...collectFormulaNames(action.recordId));
+      }
+      if (action.prompt) {
+        names.push(...collectFormulaNames(action.prompt));
+      }
+      if (action.systemInstruction) {
+        names.push(...collectFormulaNames(action.systemInstruction));
+      }
+      if (action.when) {
+        names.push(...collectFormulaNames(action.when));
+      }
+      break;
     case "matchSimilarRecord":
       names.push(...collectFormulaNames(action.haystack));
       break;

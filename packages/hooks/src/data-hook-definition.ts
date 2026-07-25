@@ -324,7 +324,7 @@ export type DataHookUpdateMatchingWhereInput =
 
 const expressionRecordSchema = z.record(z.string(), expressionNodeSchema);
 
-/** Max `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` / `callAi` / `computeEmbedding` / `matchSimilarRecord` actions per hook definition. */
+/** Max actions that load a result under an alias per hook definition. */
 export const MAX_LOADED_RECORDS = 8;
 
 /** Alias pattern for loaded field references. */
@@ -504,6 +504,52 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
   }),
   z.object({
+    type: z.literal("computeRecordAiSummary"),
+    /** Optional entity-name expression; defaults to the hook's entity. */
+    entityName: expressionNodeSchema.optional(),
+    /** Skip summary computation when this expression is falsey. */
+    when: expressionNodeSchema.optional(),
+    /** Alias for `{ ok: true }` or null when skipped/unconfigured. */
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
+    type: z.literal("upsertAiRecordContext"),
+    /** Optional entity-name expression; defaults to the hook's entity. */
+    entityName: expressionNodeSchema.optional(),
+    /**
+     * Optional record-id expression; defaults to `current.id`.
+     * Use when writing an AI doc for a related record (e.g. parent financialItem).
+     */
+    recordId: expressionNodeSchema.optional(),
+    /** Expression evaluating to a JSON object (or JSON string) snapshot. */
+    context: expressionNodeSchema,
+    /** Optional compact RAG text; defaults to JSON.stringify(context). */
+    ragText: expressionNodeSchema.optional(),
+    /** When true (default), enqueue narrative refresh if context hash changed. */
+    enqueueNarrative: z.boolean().optional(),
+    narrativeVariant: z.string().trim().min(1).optional(),
+    /**
+     * Optional role/objective prompt for the narrative job.
+     * Processor always appends the AI-doc context snapshot as **Data:**.
+     */
+    narrativePrompt: expressionNodeSchema.optional(),
+    /** Optional chart/markdown contract for the narrative job. */
+    narrativeSystemInstruction: expressionNodeSchema.optional(),
+    when: expressionNodeSchema.optional(),
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
+    type: z.literal("enqueueAiRecordNarrative"),
+    entityName: expressionNodeSchema.optional(),
+    /** Optional record-id expression; defaults to `current.id`. */
+    recordId: expressionNodeSchema.optional(),
+    variant: z.string().trim().min(1).optional(),
+    prompt: expressionNodeSchema.optional(),
+    systemInstruction: expressionNodeSchema.optional(),
+    when: expressionNodeSchema.optional(),
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
     type: z.literal("matchSimilarRecord"),
     entity: z.string().trim().min(1),
     where: dataHookUpdateMatchingWhereSchema,
@@ -614,6 +660,9 @@ export function actionTargetEntities(
     case "sendNotification":
     case "callWebhook":
     case "computeEmbedding":
+    case "computeRecordAiSummary":
+    case "upsertAiRecordContext":
+    case "enqueueAiRecordNarrative":
       return [];
     case "callAi":
       return action.includeEntities ?? [];

@@ -2,9 +2,106 @@ import { describe, expect, it } from "vitest";
 
 import {
   createEmptySummaryTab,
+  hasAiSummarySurface,
+  isAiNarrativeStale,
+  narrativeVariantFromSummaryField,
   normalizeSummaryConfig,
   resolveSummaryTabsFromRecord,
 } from "./resolve-summary-tabs";
+
+describe("isAiNarrativeStale", () => {
+  it("is false without a contextHash", () => {
+    expect(isAiNarrativeStale(null)).toBe(false);
+    expect(
+      isAiNarrativeStale({
+        narratives: {
+          default: {
+            text: "x",
+            sourceHash: "a",
+            updatedAt: "2026-07-25T00:00:00.000Z",
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it("is true when narrative is missing or sourceHash mismatches", () => {
+    expect(
+      isAiNarrativeStale({
+        contextHash: "ctx1",
+        narratives: {},
+      }),
+    ).toBe(true);
+    expect(
+      isAiNarrativeStale({
+        contextHash: "ctx1",
+        narratives: {
+          default: {
+            text: "old",
+            sourceHash: "ctx0",
+            updatedAt: "2026-07-25T00:00:00.000Z",
+          },
+        },
+      }),
+    ).toBe(true);
+    expect(
+      isAiNarrativeStale(
+        {
+          contextHash: "ctx1",
+          narratives: {
+            loans: {
+              text: "old",
+              sourceHash: "ctx0",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+          },
+        },
+        "loans",
+      ),
+    ).toBe(true);
+  });
+
+  it("is false when sourceHash matches contextHash", () => {
+    expect(
+      isAiNarrativeStale({
+        contextHash: "ctx1",
+        narratives: {
+          default: {
+            text: "ok",
+            sourceHash: "ctx1",
+            updatedAt: "2026-07-25T00:00:00.000Z",
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("narrativeVariantFromSummaryField", () => {
+  it("parses narratives.<variant>.text and defaults otherwise", () => {
+    expect(narrativeVariantFromSummaryField("narratives.loans.text")).toBe(
+      "loans",
+    );
+    expect(narrativeVariantFromSummaryField("narratives.default.text")).toBe(
+      "default",
+    );
+    expect(narrativeVariantFromSummaryField("rag.text")).toBe("default");
+    expect(narrativeVariantFromSummaryField(undefined)).toBe("default");
+  });
+});
+
+describe("hasAiSummarySurface", () => {
+  it("is true with text or context", () => {
+    expect(hasAiSummarySurface(null, "hello")).toBe(true);
+    expect(hasAiSummarySurface({ contextHash: "h", narratives: {} }, "")).toBe(
+      true,
+    );
+    expect(hasAiSummarySurface({ context: { a: 1 }, narratives: {} }, "")).toBe(
+      true,
+    );
+    expect(hasAiSummarySurface(null, "")).toBe(false);
+  });
+});
 
 describe("resolveSummaryTabsFromRecord", () => {
   it("returns empty when summary is missing", () => {
@@ -66,21 +163,58 @@ describe("resolveSummaryTabsFromRecord", () => {
     ]);
   });
 
-  it("still lists tabs when the source record has not loaded yet", () => {
+  it("prefers AI record summary doc over inline record fields", () => {
     expect(
       resolveSummaryTabsFromRecord(
         {
           sourceEntity: "portfolioSettings",
-          tabs: [{ id: "overview", label: "General", field: "aiSummaryText" }],
+          tabs: [
+            { id: "overview", label: "General", field: "aiSummaryText" },
+            { id: "loans", label: "Préstamos", field: "loansAiSummaryText" },
+            {
+              id: "narr",
+              label: "Narr",
+              field: "narratives.default.text",
+            },
+          ],
         },
-        null,
+        {
+          aiSummaryText: "stale inline",
+          loansAiSummaryText: "stale loans",
+        },
+        {
+          narratives: {
+            default: {
+              text: "  Fresh overview  ",
+              sourceHash: "h1",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+            loans: {
+              text: "Fresh loans",
+              sourceHash: "h1",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+          },
+        },
       ),
     ).toEqual([
       {
         id: "overview",
         label: "General",
         field: "aiSummaryText",
-        text: "",
+        text: "Fresh overview",
+      },
+      {
+        id: "loans",
+        label: "Préstamos",
+        field: "loansAiSummaryText",
+        text: "Fresh loans",
+      },
+      {
+        id: "narr",
+        label: "Narr",
+        field: "narratives.default.text",
+        text: "Fresh overview",
       },
     ]);
   });

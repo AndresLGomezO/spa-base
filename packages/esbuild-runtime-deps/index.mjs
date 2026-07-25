@@ -1,4 +1,10 @@
 import { readFileSync } from "node:fs";
+import { builtinModules } from "node:module";
+
+const NODE_BUILTINS = new Set([
+  ...builtinModules,
+  ...builtinModules.map((name) => `node:${name}`),
+]);
 
 /**
  * Map a module specifier to its npm package name.
@@ -8,7 +14,8 @@ export function npmPackageName(specifier) {
   if (
     specifier.startsWith("./") ||
     specifier.startsWith("../") ||
-    specifier.startsWith("node:")
+    specifier.startsWith("node:") ||
+    NODE_BUILTINS.has(specifier)
   ) {
     return null;
   }
@@ -23,6 +30,9 @@ export function npmPackageName(specifier) {
     return null;
   }
   if (!/^(@[a-z0-9][\w.-]*\/[a-z0-9][\w.-]*|[a-z0-9][\w.-]*)$/i.test(name)) {
+    return null;
+  }
+  if (NODE_BUILTINS.has(name)) {
     return null;
   }
   return name;

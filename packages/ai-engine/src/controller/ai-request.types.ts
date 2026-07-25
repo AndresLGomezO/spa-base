@@ -53,6 +53,7 @@ export interface AiJobRepositoryPort {
         | "draft"
         | "stepTrace"
         | "modelUsage"
+        | "metrics"
       >
     >,
   ): Promise<AiJobRecord>;
@@ -157,4 +158,12 @@ export interface AiControllerDeps {
   readonly clients: AiControllerClients;
   readonly flags: AiControllerFlags;
   readonly now?: () => Date;
+  /** Called before model invocation; throw to reject (e.g. spend limit). */
+  readonly assertSpendAllowed?: (request: AiRequest) => Promise<void>;
+  /** Called after a successful model run with usage (failed jobs skip this). */
+  readonly recordSpendUsage?: (input: {
+    readonly tenantId: string;
+    readonly requestedBy: string;
+    readonly modelUsage: AiJobModelUsage;
+  }) => Promise<void>;
 }
