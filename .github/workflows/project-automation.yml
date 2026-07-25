@@ -1,0 +1,290 @@
+# Keep ESP Platform — Delivery (user project #6) in sync with issue/PR activity.
+#
+# Requires repo secret PROJECTS_TOKEN: classic PAT with `project` + `repo` scopes
+# (GITHUB_TOKEN cannot write to user-owned Projects). See project README.
+#
+# Automations:
+# - issue/PR opened or reopened → add to project
+# - issue opened → Status = Backlog
+# - PR opened / converted to draft → Status = In Progress
+# - PR ready_for_review → Status = In Review
+# - issue/PR closed or PR merged → Status = Done
+# - label changes → sync Priority / Type / App / Area project fields
+
+name: Project automation
+
+on:
+  issues:
+    types: [opened, reopened, closed, labeled, unlabeled]
+  pull_request:
+    types:
+      [
+        opened,
+        reopened,
+        ready_for_review,
+        converted_to_draft,
+        closed,
+        labeled,
+        unlabeled,
+      ]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: project-automation-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_OWNER: AndresLGomezO
+  PROJECT_NUMBER: "6"
+  PROJECT_URL: https://github.com/users/AndresLGomezO/projects/6
+
+jobs:
+  sync:
+    name: Sync project board
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require PROJECTS_TOKEN
+        id: auth
+        env:
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+        run: |
+          if [[ -z "${PROJECTS_TOKEN}" ]]; then
+            echo "::warning::PROJECTS_TOKEN secret is not set. Add a classic PAT with project+repo scopes so project automation can run. See ESP Platform — Delivery project README."
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve event payload
+        if: steps.auth.outputs.has_token == 'true'
+        id: meta
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isIssue = !!context.payload.issue;
+            const entity = isIssue ? context.payload.issue : context.payload.pull_request;
+            const action = context.payload.action;
+            const merged = !isIssue && !!entity.merged;
+            core.setOutput("is_issue", String(isIssue));
+            core.setOutput("node_id", entity.node_id);
+            core.setOutput("number", String(entity.number));
+            core.setOutput("action", action);
+            core.setOutput("merged", String(merged));
+            core.setOutput("draft", String(!isIssue && !!entity.draft));
+            core.setOutput("labels", JSON.stringify((entity.labels || []).map((l) => l.name)));
+
+      - name: Add to project
+        if: steps.auth.outputs.has_token == 'true'
+        id: add
+        uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: ${{ env.PROJECT_URL }}
+          github-token: ${{ secrets.PROJECTS_TOKEN }}
+
+      - name: Load project field map
+        if: steps.auth.outputs.has_token == 'true'
+        id: fields
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api graphql -f query='
+            query($login: String!, $number: Int!) {
+              user(login: $login) {
+                projectV2(number: $number) {
+                  id
+                  fields(first: 30) {
+                    nodes {
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options { id name }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f login="$PROJECT_OWNER" -F number="$PROJECT_NUMBER" > project.json
+
+          echo "project_id=$(jq -r '.data.user.projectV2.id' project.json)" >> "$GITHUB_OUTPUT"
+
+          jq -c '
+            .data.user.projectV2.fields.nodes
+            | map(select(.name != null))
+            | map({key: .name, value: {id: .id, options: (.options // [] | map({key: .name, value: .id}) | from_entries)}})
+            | from_entries
+          ' project.json > field-map.json
+
+          {
+            echo "field_map<<EOF"
+            cat field-map.json
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Resolve project item id
+        if: steps.auth.outputs.has_token == 'true'
+        id: item
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          CONTENT_ID: ${{ steps.meta.outputs.node_id }}
+          PROJECT_ID: ${{ steps.fields.outputs.project_id }}
+        run: |
+          set -euo pipefail
+          ITEM_ID=$(gh api graphql -f query='
+            query($id: ID!) {
+              node(id: $id) {
+                ... on Issue {
+                  projectItems(first: 50) {
+                    nodes { id project { id } }
+                  }
+                }
+                ... on PullRequest {
+                  projectItems(first: 50) {
+                    nodes { id project { id } }
+                  }
+                }
+              }
+            }' -f id="$CONTENT_ID" \
+            --jq "[.data.node.projectItems.nodes[] | select(.project.id == \"$PROJECT_ID\") | .id] | first // empty")
+
+          if [[ -z "$ITEM_ID" ]]; then
+            echo "Item not found on project after add-to-project; skipping field updates."
+            echo "item_id=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "item_id=$ITEM_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Set Status and label-mapped fields
+        if: steps.auth.outputs.has_token == 'true' && steps.item.outputs.item_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          PROJECT_ID: ${{ steps.fields.outputs.project_id }}
+          ITEM_ID: ${{ steps.item.outputs.item_id }}
+          FIELD_MAP: ${{ steps.fields.outputs.field_map }}
+          ACTION: ${{ steps.meta.outputs.action }}
+          IS_ISSUE: ${{ steps.meta.outputs.is_issue }}
+          MERGED: ${{ steps.meta.outputs.merged }}
+          LABELS_JSON: ${{ steps.meta.outputs.labels }}
+        run: |
+          set -euo pipefail
+
+          set_single_select() {
+            local field_name="$1"
+            local option_name="$2"
+            local target_item="${3:-$ITEM_ID}"
+            local field_id option_id
+            field_id=$(jq -r --arg n "$field_name" '.[$n].id // empty' <<<"$FIELD_MAP")
+            option_id=$(jq -r --arg n "$field_name" --arg o "$option_name" '.[$n].options[$o] // empty' <<<"$FIELD_MAP")
+            if [[ -z "$field_id" || -z "$option_id" ]]; then
+              echo "Skip field '$field_name'='$option_name' (missing map entry)"
+              return 0
+            fi
+            gh api graphql -f query='
+              mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $project
+                  itemId: $item
+                  fieldId: $field
+                  value: { singleSelectOptionId: $option }
+                }) { projectV2Item { id } }
+              }' \
+              -f project="$PROJECT_ID" \
+              -f item="$target_item" \
+              -f field="$field_id" \
+              -f option="$option_id" >/dev/null
+            echo "Set $field_name=$option_name on $target_item"
+          }
+
+          STATUS=""
+          if [[ "$ACTION" == "closed" || "$MERGED" == "true" ]]; then
+            STATUS="Done"
+          elif [[ "$IS_ISSUE" == "true" && ( "$ACTION" == "opened" || "$ACTION" == "reopened" ) ]]; then
+            STATUS="Backlog"
+          elif [[ "$IS_ISSUE" == "false" && "$ACTION" == "ready_for_review" ]]; then
+            STATUS="In Review"
+          elif [[ "$IS_ISSUE" == "false" && ( "$ACTION" == "opened" || "$ACTION" == "reopened" || "$ACTION" == "converted_to_draft" ) ]]; then
+            STATUS="In Progress"
+          fi
+
+          if [[ -n "$STATUS" ]]; then
+            set_single_select "Status" "$STATUS"
+          fi
+
+          # priority:P1 → Priority=P1; type:feature → Type=Feature; app:web → App=web; area:ai → Area=ai
+          map_prefixed_label() {
+            local prefix="$1"
+            local field_name="$2"
+            local title_case="${3:-false}"
+            local label value
+            label=$(jq -r --arg p "$prefix" '[.[] | select(startswith($p))] | first // empty' <<<"$LABELS_JSON")
+            [[ -z "$label" ]] && return 0
+            value="${label#"$prefix"}"
+            if [[ "$title_case" == "true" ]]; then
+              value="$(printf '%s' "$value" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')"
+            fi
+            set_single_select "$field_name" "$value"
+          }
+
+          map_prefixed_label "priority:" "Priority" false
+          map_prefixed_label "type:" "Type" true
+          map_prefixed_label "app:" "App" false
+          map_prefixed_label "area:" "Area" false
+
+      - name: Move linked issues to In Progress when PR opens
+        if: steps.auth.outputs.has_token == 'true' && steps.meta.outputs.is_issue == 'false' && (steps.meta.outputs.action == 'opened' || steps.meta.outputs.action == 'reopened' || steps.meta.outputs.action == 'ready_for_review')
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          PROJECT_ID: ${{ steps.fields.outputs.project_id }}
+          FIELD_MAP: ${{ steps.fields.outputs.field_map }}
+          PR_NUMBER: ${{ steps.meta.outputs.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          STATUS_FIELD=$(jq -r '.Status.id // empty' <<<"$FIELD_MAP")
+          IN_PROGRESS=$(jq -r '.Status.options["In Progress"] // empty' <<<"$FIELD_MAP")
+          [[ -z "$STATUS_FIELD" || -z "$IN_PROGRESS" ]] && exit 0
+
+          # Closing keywords in PR body → linked issue numbers
+          BODY=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.body // ""')
+          mapfile -t ISSUE_NUMS < <(printf '%s\n' "$BODY" | grep -Eio '(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#?[0-9]+' | grep -Eo '[0-9]+' | sort -u || true)
+          if [[ ${#ISSUE_NUMS[@]} -eq 0 ]]; then
+            echo "No linked issues found in PR body"
+            exit 0
+          fi
+
+          for num in "${ISSUE_NUMS[@]}"; do
+            NODE_ID=$(gh api "repos/$REPO/issues/$num" --jq .node_id)
+            ITEM_ID=$(gh api graphql -f query='
+              query($id: ID!) {
+                node(id: $id) {
+                  ... on Issue {
+                    projectItems(first: 50) {
+                      nodes { id project { id } }
+                    }
+                  }
+                }
+              }' -f id="$NODE_ID" \
+              --jq "[.data.node.projectItems.nodes[] | select(.project.id == \"$PROJECT_ID\") | .id] | first // empty")
+            if [[ -z "$ITEM_ID" ]]; then
+              echo "Issue #$num not on project; skip"
+              continue
+            fi
+            gh api graphql -f query='
+              mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $project
+                  itemId: $item
+                  fieldId: $field
+                  value: { singleSelectOptionId: $option }
+                }) { projectV2Item { id } }
+              }' \
+              -f project="$PROJECT_ID" \
+              -f item="$ITEM_ID" \
+              -f field="$STATUS_FIELD" \
+              -f option="$IN_PROGRESS" >/dev/null
+            echo "Linked issue #$num → In Progress"
+          done
