@@ -6,6 +6,7 @@ import {
   expandRelationFiltersInTree,
   applyRelationSortToItems,
   isRelationSortField,
+  resolveQueryExecutionNow,
   ENTITY_QUERY_RELATION_LIST_MAX_ITEMS,
 } from "@repo/entity-queries/browser";
 
@@ -23,48 +24,8 @@ import {
 import { resolveQueryExpansionCatalog } from "../../lib/resolve-query-expansion-catalog";
 import type { PageFilterContext } from "../../lib/metric-binding-resolution";
 
-/** Anchor temporal presets to the dashboard date filter when present. */
-export function resolveQueryExecutionNow(context?: PageFilterContext): Date {
-  const filter = context?.dashboardDateFilter;
-  if (!filter?.value) {
-    return new Date();
-  }
-
-  const value = filter.value.trim();
-
-  switch (filter.granularity) {
-    case "month": {
-      const match = /^(\d{4})-(\d{2})$/.exec(value);
-      if (match) {
-        return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 15));
-      }
-      break;
-    }
-    case "year": {
-      const match = /^(\d{4})$/.exec(value);
-      if (match) {
-        return new Date(Date.UTC(Number(match[1]), 6, 15));
-      }
-      break;
-    }
-    case "day": {
-      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-      if (match) {
-        return new Date(
-          Date.UTC(
-            Number(match[1]),
-            Number(match[2]) - 1,
-            Number(match[3]),
-            12,
-          ),
-        );
-      }
-      break;
-    }
-  }
-
-  return new Date();
-}
+/** Re-export shared temporal anchor for dashboard date filters. */
+export { resolveQueryExecutionNow };
 
 export function isAggregatedEntityQueryDefinition(
   definition: Pick<

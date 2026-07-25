@@ -75,4 +75,36 @@ describe("buildMetricParameterValuesFromBindings", () => {
       ),
     ).toEqual({ currentPeriod: "2026-06" });
   });
+
+  it("resolves dashboardDateFilter into period for week KPIs", () => {
+    const weekDefinition: MetricDefinitionRecord = {
+      ...computedDefinition,
+      id: "metric_upcoming_week",
+      metricId: "upcoming_this_week_count",
+      name: "Upcoming This Week Count",
+      parameters: [
+        {
+          name: "period",
+          valueType: "dateBucket",
+          granularity: "month",
+        },
+      ],
+    };
+
+    expect(
+      buildMetricParameterValuesFromBindings(
+        weekDefinition,
+        {
+          period: { type: "dashboardDateFilter" },
+        },
+        {
+          dashboardDateFilter: {
+            value: "2024-01",
+            granularity: "month",
+            param: "month",
+          },
+        },
+      ),
+    ).toEqual({ period: "2024-01" });
+  });
 });
