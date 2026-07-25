@@ -2,8 +2,11 @@ import type {
   UiLayoutSummary,
   UiLayoutSummaryTab,
 } from "@repo/ui-builder-core";
-import { readAiRecordSummaryField } from "@repo/ai-context/storage";
-import type { AiRecordSummaryRecord } from "@repo/ai-context/storage";
+import {
+  isAiRecordNarrativeStale,
+  readAiRecordSummaryField,
+  type AiRecordSummaryRecord,
+} from "@repo/ai-context/storage";
 
 export interface ResolvedSummaryTab {
   readonly id: string;
@@ -16,6 +19,7 @@ export interface ResolvedSummaryTab {
 /** Minimal AI-doc shape accepted by summary tab resolution (API or full record). */
 export type SummaryAiDoc = {
   readonly contextHash?: string;
+  readonly variantContextHashes?: Readonly<Record<string, string>>;
   readonly narratives?: AiRecordSummaryRecord["narratives"];
   readonly rag?: {
     readonly text?: string;
@@ -39,19 +43,24 @@ export function narrativeVariantFromSummaryField(
 }
 
 /**
- * True when the AI doc has a contextHash and the given narrative variant is
- * missing or its sourceHash does not match (out of sync / pending rebuild).
+ * True when the AI doc has a contextHash (or per-variant hash) and the given
+ * narrative variant is missing or its sourceHash does not match.
  */
 export function isAiNarrativeStale(
   aiDoc: SummaryAiDoc | undefined,
   variant = "default",
 ): boolean {
   if (!aiDoc) return false;
-  const contextHash = aiDoc.contextHash?.trim();
-  if (!contextHash) return false;
-  const narrative = aiDoc.narratives?.[variant];
-  if (!narrative) return true;
-  return narrative.sourceHash.trim() !== contextHash;
+  return isAiRecordNarrativeStale(
+    {
+      contextHash: aiDoc.contextHash,
+      ...(aiDoc.variantContextHashes
+        ? { variantContextHashes: { ...aiDoc.variantContextHashes } }
+        : {}),
+      narratives: aiDoc.narratives ?? {},
+    },
+    variant,
+  );
 }
 
 /**

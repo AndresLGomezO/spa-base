@@ -143,6 +143,17 @@ export function collectFormulaNamesInAction(
         names.push(...collectFormulaNames(action.when));
       }
       break;
+    case "invalidateAiRecordNarratives":
+      if (action.entityName) {
+        names.push(...collectFormulaNames(action.entityName));
+      }
+      if (action.recordId) {
+        names.push(...collectFormulaNames(action.recordId));
+      }
+      if (action.when) {
+        names.push(...collectFormulaNames(action.when));
+      }
+      break;
     case "matchSimilarRecord":
       names.push(...collectFormulaNames(action.haystack));
       break;

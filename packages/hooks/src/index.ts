@@ -274,6 +274,7 @@ export type {
   DataHookUpsertAiRecordContextRequest,
   DataHookUpsertAiRecordContextResult,
   DataHookEnqueueAiRecordNarrativeRequest,
+  DataHookInvalidateAiRecordNarrativesRequest,
   DataHookRecordSummaryTemplate,
   HookHandler,
   RegisteredSystemHook,

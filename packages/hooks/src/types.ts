@@ -220,6 +220,13 @@ export interface DataHookEnqueueAiRecordNarrativeRequest {
   readonly systemInstruction?: string;
 }
 
+export interface DataHookInvalidateAiRecordNarrativesRequest {
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly variants: readonly string[];
+}
+
 export interface HookServices {
   readonly logger?: HookLogger;
   readonly entities?: HookEntityServices;
@@ -251,6 +258,9 @@ export interface HookServices {
   ) => Promise<DataHookUpsertAiRecordContextResult | null>;
   readonly enqueueAiRecordNarrative?: (
     request: DataHookEnqueueAiRecordNarrativeRequest,
+  ) => Promise<{ readonly ok: true } | null>;
+  readonly invalidateAiRecordNarratives?: (
+    request: DataHookInvalidateAiRecordNarrativesRequest,
   ) => Promise<{ readonly ok: true } | null>;
   readonly sendUserNotification?: (
     input: CreateUserNotificationInput,

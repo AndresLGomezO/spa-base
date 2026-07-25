@@ -1,6 +1,7 @@
 import {
   aiRecordSummaryTemplateSchema,
   getAiRecordSummaryTemplate,
+  invalidateAiRecordNarrativeVariants,
   upsertAiRecordContext,
   upsertAiRecordRag,
   type TenantAiContextRepository,
@@ -14,6 +15,7 @@ import type {
   DataHookUpsertAiRecordContextRequest,
   DataHookUpsertAiRecordContextResult,
   DataHookEnqueueAiRecordNarrativeRequest,
+  DataHookInvalidateAiRecordNarrativesRequest,
 } from "@repo/hooks";
 import type { VectorIndexService } from "@repo/ai-retrieval";
 
@@ -156,6 +158,9 @@ export function createUpsertAiRecordContext(
       context: request.context,
       ragText,
       ...auth,
+      ...(request.narrativeVariant
+        ? { narrativeVariant: request.narrativeVariant }
+        : {}),
     });
 
     let narrativeEnqueued = false;
@@ -250,6 +255,26 @@ export function createEnqueueAiRecordNarrative(
         ? { systemInstruction: request.systemInstruction }
         : {}),
     });
+    return { ok: true };
+  };
+}
+
+export function createInvalidateAiRecordNarratives(
+  deps: ComputeRecordAiSummaryDeps,
+): (
+  request: DataHookInvalidateAiRecordNarrativesRequest,
+) => Promise<{ readonly ok: true } | null> {
+  return async (request) => {
+    const updated = await invalidateAiRecordNarrativeVariants(
+      deps.aiRecordSummaryRepository,
+      {
+        tenantId: request.tenantId,
+        entityName: request.entityName,
+        recordId: request.recordId,
+        variants: request.variants,
+      },
+    );
+    if (!updated) return null;
     return { ok: true };
   };
 }

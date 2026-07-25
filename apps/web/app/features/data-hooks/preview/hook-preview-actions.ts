@@ -378,6 +378,16 @@ function buildActionStep(
       );
       break;
     }
+    case "invalidateAiRecordNarratives": {
+      summary = context.t(
+        "dataHooks.preview.actions.invalidateAiRecordNarratives",
+        {
+          alias: action.as,
+        },
+      );
+      bullets = [action.variants.join(", ")];
+      break;
+    }
     case "matchSimilarRecord": {
       summary = context.t("dataHooks.preview.actions.matchSimilarRecord", {
         entity: action.entity,
@@ -407,7 +417,8 @@ function buildActionStep(
     action.type === "computeEmbedding" ||
     action.type === "computeRecordAiSummary" ||
     action.type === "upsertAiRecordContext" ||
-    action.type === "enqueueAiRecordNarrative"
+    action.type === "enqueueAiRecordNarrative" ||
+    action.type === "invalidateAiRecordNarratives"
   ) {
     const loaded = new Map(pipeline.loadedAliases);
     loaded.set(
@@ -416,7 +427,8 @@ function buildActionStep(
         action.type === "computeEmbedding" ||
         action.type === "computeRecordAiSummary" ||
         action.type === "upsertAiRecordContext" ||
-        action.type === "enqueueAiRecordNarrative"
+        action.type === "enqueueAiRecordNarrative" ||
+        action.type === "invalidateAiRecordNarratives"
         ? "__ai__"
         : action.entity,
     );

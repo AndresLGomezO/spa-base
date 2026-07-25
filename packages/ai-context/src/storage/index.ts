@@ -31,6 +31,8 @@ export {
   resolvesFromAiRecordSummary,
 } from "./read-ai-record-summary-field.js";
 
+export { isAiRecordNarrativeStale } from "./is-ai-record-narrative-stale.js";
+
 export {
   USER_AI_MEMORIES_COLLECTION,
   userAiMemoryFactSchema,

@@ -840,6 +840,12 @@ export async function processGmailProcessMessage(
             ...(deps.enqueueAiRecordNarrative
               ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
               : {}),
+            ...(deps.invalidateAiRecordNarratives
+              ? {
+                  invalidateAiRecordNarratives:
+                    deps.invalidateAiRecordNarratives,
+                }
+              : {}),
             ...(deps.userNotificationRepository
               ? {
                   sendUserNotification: createSendUserNotificationWithPush({

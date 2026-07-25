@@ -66,6 +66,9 @@ export interface WorkerCrudHookDeps {
   readonly enqueueAiRecordNarrative?: (
     request: import("@repo/hooks").DataHookEnqueueAiRecordNarrativeRequest,
   ) => Promise<{ readonly ok: true } | null>;
+  readonly invalidateAiRecordNarratives?: (
+    request: import("@repo/hooks").DataHookInvalidateAiRecordNarrativesRequest,
+  ) => Promise<{ readonly ok: true } | null>;
   readonly refreshNarrative?: import("../services/record-narrative-refresh-processor.js").RecordNarrativeRefreshProcessor;
   readonly aiRecordSummaryRepository?: import("@repo/firestore-converters").AiRecordSummaryRepository;
   readonly aggregation?: AggregationEmitterDeps;
@@ -168,6 +171,9 @@ async function dispatchChainedEntityHooks(options: {
   readonly enqueueAiRecordNarrative?: (
     request: import("@repo/hooks").DataHookEnqueueAiRecordNarrativeRequest,
   ) => Promise<{ readonly ok: true } | null>;
+  readonly invalidateAiRecordNarratives?: (
+    request: import("@repo/hooks").DataHookInvalidateAiRecordNarrativesRequest,
+  ) => Promise<{ readonly ok: true } | null>;
   readonly sendUserNotification?: (
     input: import("@repo/firestore-converters").CreateUserNotificationInput,
   ) => Promise<void>;
@@ -214,6 +220,9 @@ async function dispatchChainedEntityHooks(options: {
         : {}),
       ...(options.enqueueAiRecordNarrative
         ? { enqueueAiRecordNarrative: options.enqueueAiRecordNarrative }
+        : {}),
+      ...(options.invalidateAiRecordNarratives
+        ? { invalidateAiRecordNarratives: options.invalidateAiRecordNarratives }
         : {}),
       ...(options.sendUserNotification
         ? { sendUserNotification: options.sendUserNotification }
@@ -315,6 +324,9 @@ export function buildHookEntityServices(options: {
           : {}),
         ...(deps.enqueueAiRecordNarrative
           ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
+          : {}),
+        ...(deps.invalidateAiRecordNarratives
+          ? { invalidateAiRecordNarratives: deps.invalidateAiRecordNarratives }
           : {}),
         ...(deps.userNotificationRepository
           ? {

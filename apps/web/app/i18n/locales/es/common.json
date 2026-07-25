@@ -4145,6 +4145,7 @@
       "computeRecordAiSummary": "Calcular resumen de IA del registro",
       "upsertAiRecordContext": "Actualizar contexto de IA del registro",
       "enqueueAiRecordNarrative": "Encolar narrativa de IA del registro",
+      "invalidateAiRecordNarratives": "Invalidar narrativas de IA del registro",
       "matchSimilarRecord": "Emparejar registro similar"
     },
     "actions": {
@@ -4174,6 +4175,7 @@
       "computeRecordAiSummaryLink": "Abrir plantillas de resumen",
       "upsertAiRecordContextHint": "Escribe el snapshot de contexto (y texto RAG opcional) en el documento de resumen AI; puede encolar un refresco de narrativa.",
       "enqueueAiRecordNarrativeHint": "Encola el job recordNarrativeRefresh para una variante (default, loans, …).",
+      "invalidateAiRecordNarrativesHint": "Marca variantes de narrativa como desactualizadas sin reescribir el contexto (p. ej. loans + default tras editar un préstamo).",
       "enqueueNarrative": "Encolar narrativa cuando cambie el contexto",
       "narrativeVariant": "Variante de narrativa",
       "narrativePrompt": "Prompt de narrativa (rol / objetivo)",
@@ -4430,6 +4432,7 @@
         "computeRecordAiSummary": "Calcular resumen de IA del registro como \"{{alias}}\"",
         "upsertAiRecordContext": "Actualizar contexto de IA del registro como \"{{alias}}\"",
         "enqueueAiRecordNarrative": "Encolar narrativa de IA del registro como \"{{alias}}\"",
+        "invalidateAiRecordNarratives": "Invalidar narrativas de IA del registro como \"{{alias}}\"",
         "matchSimilarRecord": "Emparejar {{entity}} por similitud de embedding como \"{{alias}}\"",
         "fieldAssignment": "{{field}} = {{value}}"
       },

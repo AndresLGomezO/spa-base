@@ -135,6 +135,7 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "computeRecordAiSummary",
   "upsertAiRecordContext",
   "enqueueAiRecordNarrative",
+  "invalidateAiRecordNarratives",
   "matchSimilarRecord",
 ];
 
@@ -166,7 +167,8 @@ function collectLoadedBindingsBefore(
         action?.type === "computeEmbedding" ||
         action?.type === "computeRecordAiSummary" ||
         action?.type === "upsertAiRecordContext" ||
-        action?.type === "enqueueAiRecordNarrative") &&
+        action?.type === "enqueueAiRecordNarrative" ||
+        action?.type === "invalidateAiRecordNarratives") &&
       action.as.trim()
     ) {
       bindings.push({
@@ -176,7 +178,8 @@ function collectLoadedBindingsBefore(
           action.type === "computeEmbedding" ||
           action.type === "computeRecordAiSummary" ||
           action.type === "upsertAiRecordContext" ||
-          action.type === "enqueueAiRecordNarrative"
+          action.type === "enqueueAiRecordNarrative" ||
+          action.type === "invalidateAiRecordNarratives"
             ? ""
             : action.entity,
       });
@@ -913,6 +916,87 @@ function ActionEditor({
         </div>
       );
 
+    case "invalidateAiRecordNarratives":
+      return (
+        <div className="space-y-3">
+          <Text className="text-muted-foreground text-sm">
+            {t("dataHooks.actions.invalidateAiRecordNarrativesHint")}
+          </Text>
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.targetEntity")}
+            value={
+              action.entityName ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(entityName) =>
+              onChange({
+                ...action,
+                entityName:
+                  entityName.kind === "literal" && entityName.value === null
+                    ? undefined
+                    : entityName,
+              })
+            }
+          />
+          <CollapsibleExpressionEditor
+            label={t("dataHooks.actions.recordId")}
+            value={
+              action.recordId ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(recordId) =>
+              onChange({
+                ...action,
+                recordId:
+                  recordId.kind === "literal" && recordId.value === null
+                    ? undefined
+                    : recordId,
+              })
+            }
+          />
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.narrativeVariant")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.variants.join(", ")}
+              onChange={(event) =>
+                onChange({
+                  ...action,
+                  variants: event.target.value
+                    .split(",")
+                    .map((part) => part.trim())
+                    .filter((part) => part.length > 0),
+                })
+              }
+            />
+          </label>
+          <label className="block space-y-1">
+            <Text className="text-sm font-medium">
+              {t("dataHooks.actions.aiAs")}
+            </Text>
+            <Input
+              className={controlClassName}
+              value={action.as}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </label>
+        </div>
+      );
+
     case "matchSimilarRecord":
       return (
         <div className="space-y-3">
@@ -1456,6 +1540,12 @@ export function emptyActionOfType(
       return {
         type,
         as: "narrativeJob",
+      };
+    case "invalidateAiRecordNarratives":
+      return {
+        type,
+        variants: ["default"],
+        as: "narrativeInvalidate",
       };
     case "matchSimilarRecord":
       return {

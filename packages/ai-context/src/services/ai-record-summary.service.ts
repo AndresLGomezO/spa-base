@@ -5,12 +5,14 @@ import {
   type AiRecordSummaryRecord,
   type AiRecordSummaryRepository,
 } from "../storage/ai-record-summary.schema.js";
+import { isAiRecordNarrativeStale } from "../storage/is-ai-record-narrative-stale.js";
 import { hashSourceValue } from "../utils/hash.js";
 
 export {
   readAiRecordSummaryField,
   resolvesFromAiRecordSummary,
 } from "../storage/read-ai-record-summary-field.js";
+export { isAiRecordNarrativeStale } from "../storage/is-ai-record-narrative-stale.js";
 
 export interface UpsertAiRecordContextInput {
   readonly tenantId: string;
@@ -22,6 +24,11 @@ export interface UpsertAiRecordContextInput {
   readonly tenantWideRead?: boolean;
   /** When set, updates rag.text/hash/sourceHash (embedding left to caller). */
   readonly ragText?: string;
+  /**
+   * When set, stamps `variantContextHashes[variant]` so only that narrative
+   * is considered stale vs siblings on multi-variant docs.
+   */
+  readonly narrativeVariant?: string;
 }
 
 export interface UpsertAiRecordContextResult {
@@ -43,6 +50,7 @@ export async function upsertAiRecordContext(
   );
   const contextHash = hashSourceValue(input.context);
   const contextChanged = existing?.contextHash !== contextHash;
+  const variant = input.narrativeVariant?.trim() || "default";
 
   let rag: AiRecordSummaryRag | undefined = existing?.rag;
   if (input.ragText !== undefined) {
@@ -65,11 +73,18 @@ export async function upsertAiRecordContext(
   }
 
   const narratives = existing?.narratives ?? {};
-  const defaultNarrative = narratives.default;
-  const narrativeStale =
-    !defaultNarrative || defaultNarrative.sourceHash !== contextHash;
+  const variantContextHashes: Record<string, string> = {
+    ...(existing?.variantContextHashes ?? {}),
+  };
+  if (input.narrativeVariant?.trim()) {
+    variantContextHashes[variant] = contextHash;
+  } else if (Object.keys(variantContextHashes).length === 0) {
+    // Single-variant / classic docs keep top-level contextHash as the gate.
+  } else {
+    variantContextHashes[variant] = contextHash;
+  }
 
-  const record = await repository.upsert({
+  const nextRecordBase = {
     id,
     tenantId: input.tenantId,
     entityName: input.entityName,
@@ -83,13 +98,69 @@ export async function upsertAiRecordContext(
     tenantWideRead: input.tenantWideRead ?? existing?.tenantWideRead ?? false,
     context: { ...input.context },
     contextHash,
+    ...(Object.keys(variantContextHashes).length > 0
+      ? { variantContextHashes }
+      : {}),
     ...(rag ? { rag } : {}),
     narratives,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
-  });
+  } satisfies AiRecordSummaryRecord;
+
+  const narrativeStale = isAiRecordNarrativeStale(nextRecordBase, variant);
+
+  const record = await repository.upsert(nextRecordBase);
 
   return { record, contextChanged, narrativeStale };
+}
+
+export async function invalidateAiRecordNarrativeVariants(
+  repository: AiRecordSummaryRepository,
+  input: {
+    readonly tenantId: string;
+    readonly entityName: string;
+    readonly recordId: string;
+    readonly variants: readonly string[];
+  },
+): Promise<AiRecordSummaryRecord | null> {
+  const existing = await repository.get(
+    input.tenantId,
+    input.entityName,
+    input.recordId,
+  );
+  if (!existing) return null;
+
+  const variants = [
+    ...new Set(
+      input.variants
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    ),
+  ];
+  if (variants.length === 0) return existing;
+
+  const now = new Date().toISOString();
+  const variantContextHashes: Record<string, string> = {
+    ...(existing.variantContextHashes ?? {}),
+  };
+  for (const variant of variants) {
+    const previous =
+      variantContextHashes[variant] ??
+      existing.contextHash ??
+      existing.narratives?.[variant]?.sourceHash ??
+      "none";
+    variantContextHashes[variant] = hashSourceValue({
+      invalidatedAt: now,
+      previous,
+      variant,
+    });
+  }
+
+  return repository.upsert({
+    ...existing,
+    variantContextHashes,
+    updatedAt: now,
+  });
 }
 
 export async function upsertAiRecordRag(
@@ -135,6 +206,9 @@ export async function upsertAiRecordRag(
     tenantWideRead: input.tenantWideRead ?? existing?.tenantWideRead ?? false,
     ...(existing?.context ? { context: existing.context } : {}),
     ...(existing?.contextHash ? { contextHash: existing.contextHash } : {}),
+    ...(existing?.variantContextHashes
+      ? { variantContextHashes: existing.variantContextHashes }
+      : {}),
     rag,
     narratives: existing?.narratives ?? {},
     createdAt: existing?.createdAt ?? now,

@@ -108,6 +108,7 @@ Doc id: `{entityName}__{recordId}` via `buildAiRecordSummaryDocId`.
 | Field | Role |
 |---|---|
 | `context` / `contextHash` | Rich relational JSON snapshot |
+| `variantContextHashes` | Optional per-narrative expected hashes (portfolio tabs) |
 | `rag` | `{ text, hash, embedding?, sourceHash, updatedAt, … }` compact embeddable text |
 | `narratives` | Map of variant → `{ text, sourceHash, model?, updatedAt }` LLM markdown |
 | `ownerId` / `accessUserIds` / `tenantWideRead` | Auth denorm for chat/RAG |
@@ -136,9 +137,10 @@ UI: `RecordAiSummaryTemplatesView.tsx`
 
 | Action | Effect |
 |---|---|
-| `upsertAiRecordContext` | Write/merge `context` (+ optional ragText); hash-gated |
+| `upsertAiRecordContext` | Write/merge `context` (+ optional ragText); hash-gated; optional `narrativeVariant` stamps that variant’s hash |
 | `computeRecordAiSummary` | Run template compute (load result; may feed RAG) |
-| `enqueueAiRecordNarrative` | Cloud Task when narrative stale vs `contextHash` |
+| `enqueueAiRecordNarrative` | Cloud Task when narrative stale vs expected hash |
+| `invalidateAiRecordNarratives` | Bump selected `variantContextHashes` so tabs show out of sync without rewriting context |
 | `callAi` | General structured LLM call (feature `dataHookCallAi`) |
 
 Worker services wire these in hook execution (`worker-hook-entity-services`, `compute-record-ai-summary.ts`).
@@ -149,7 +151,13 @@ Worker services wire these in hook execution (`worker-hook-entity-services`, `co
 - Processor: `record-narrative-refresh-processor.ts`
 - Feature: `recordNarrativeRefresh`
 - API on-demand: `POST /api/ai-record-summaries/:entity/:recordId/refresh` (spend-guarded)
-- UI: `SummaryOutOfSyncBanner` when `narratives.*.sourceHash !== contextHash`
+- UI: `SummaryOutOfSyncBanner` when `narratives.*.sourceHash` does not match
+  `variantContextHashes[variant]` (preferred) or top-level `contextHash`
+- Multi-variant docs (portfolio): each tab has its own expected hash so updating
+  `loans` does not mark `incomes` / `investments` / `services` stale
+- Mutation cascade: domain `refresh-*-ai-summary-json` hooks call
+  `invalidateAiRecordNarratives` on portfolio `loans|incomes|…` + `default`
+  when the item context actually changes
 
 **Pattern used by current tenant:** mutation hooks update context/RAG with `enqueueNarrative: false`; nightly or user Refresh catches up prose (avoids token spike on every field edit).
 

@@ -2242,6 +2242,7 @@ interface AiRecordSummaryDoc {
   readonly tenantWideRead?: boolean;
   readonly context?: Readonly<Record<string, unknown>>;
   readonly contextHash?: string;
+  readonly variantContextHashes?: Readonly<Record<string, string>>;
   readonly rag?: {
     readonly text: string;
     readonly hash: string;
