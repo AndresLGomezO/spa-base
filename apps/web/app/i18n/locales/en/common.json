@@ -423,8 +423,13 @@
     "status": "Status: {{status}}"
   },
   "aiSpend": {
-    "limitReached": "AI usage limit reached for this month.",
-    "approachingLimit": "AI usage is approaching this month’s limit.",
+    "notice": {
+      "blockedTitle": "Monthly AI allowance used",
+      "blockedBody": "AI actions pause until next month. Ask an admin if you need a higher limit.",
+      "approachingTitle": "Nearing this month’s AI allowance",
+      "approachingBody": "You can continue for now. The allowance resets next month.",
+      "dismiss": "Dismiss"
+    },
     "tenantLimitsTitle": "AI monthly limits",
     "tenantLimitsDescription": "Optional caps for this tenant. Leave blank for unlimited. Role limits apply per user under this ceiling.",
     "monthlyInputTokens": "Monthly input tokens",
@@ -1609,12 +1614,13 @@
       "tabsAriaLabel": "Summary sections",
       "emptyTitle": "Summary in progress",
       "emptyDescription": "This section will fill in once the AI summary is generated.",
-      "outOfSync": "Out of sync",
-      "outOfSyncDescription": "Data changed. Summary updates nightly or when you refresh.",
-      "refreshSummary": "Refresh summary",
-      "refreshing": "Refreshing…",
-      "refreshQueued": "Summary refresh queued.",
-      "refreshFailed": "Could not refresh summary."
+      "outOfSyncHint": "Summary needs an update",
+      "outOfSyncTitle": "Underlying data changed",
+      "outOfSyncDescription": "This narrative is behind the latest record context. It will catch up overnight, or you can update it now.",
+      "refreshAction": "Update now",
+      "refreshing": "Updating…",
+      "refreshQueued": "Update queued.",
+      "refreshFailed": "Could not start the update."
     },
     "recordsJson": {
       "viewTitle": "Exported records JSON",

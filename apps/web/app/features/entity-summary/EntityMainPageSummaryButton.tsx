@@ -23,6 +23,7 @@ import {
 import { summaryChartBlockRenderers } from "./summary-chart-renderers";
 import { SummaryCopyMarkdownButton } from "./SummaryCopyMarkdownButton";
 import { SummaryOutOfSyncBanner } from "./SummaryOutOfSyncBanner";
+import { SummaryStaleIndicator } from "./SummaryStaleIndicator";
 import {
   isAiNarrativeStale,
   narrativeVariantFromSummaryField,
@@ -104,7 +105,7 @@ function EntityMainSummaryRailBody({
           className="rounded-xl p-1"
           style={{
             backgroundImage:
-              "linear-gradient(90deg, color-mix(in oklab, hsl(var(--primary)) 12%, transparent), color-mix(in oklab, #8b5cf6 14%, transparent), color-mix(in oklab, #22d3ee 12%, transparent))",
+              "linear-gradient(90deg, color-mix(in oklab, var(--color-primary) 12%, transparent), color-mix(in oklab, #8b5cf6 14%, transparent), color-mix(in oklab, #22d3ee 12%, transparent))",
             boxShadow:
               "0 0 0 1px color-mix(in oklab, #8b5cf6 18%, var(--color-border))",
           }}
@@ -228,11 +229,7 @@ export function EntityMainPageSummaryButton({
     >
       <AiSparkIcon size={16} animated className="shrink-0" />
       {t("entity.summary.button")}
-      {anyTabStale ? (
-        <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-          {t("entity.summary.outOfSync")}
-        </span>
-      ) : null}
+      {anyTabStale ? <SummaryStaleIndicator className="ml-1" /> : null}
     </Button>
   );
 }

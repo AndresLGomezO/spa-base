@@ -423,8 +423,13 @@
     "status": "Estado: {{status}}"
   },
   "aiSpend": {
-    "limitReached": "Se alcanzó el límite de uso de IA de este mes.",
-    "approachingLimit": "El uso de IA se acerca al límite de este mes.",
+    "notice": {
+      "blockedTitle": "Cuota mensual de IA agotada",
+      "blockedBody": "Las acciones de IA se pausan hasta el mes que viene. Pide a un administrador subir el límite si lo necesitas.",
+      "approachingTitle": "Te acercas a la cuota mensual de IA",
+      "approachingBody": "Puedes continuar por ahora. La cuota se reinicia el mes que viene.",
+      "dismiss": "Cerrar"
+    },
     "tenantLimitsTitle": "Límites mensuales de IA",
     "tenantLimitsDescription": "Tope opcional para este tenant. Déjalo vacío para ilimitado. Los límites de rol aplican por usuario bajo este techo.",
     "monthlyInputTokens": "Tokens de entrada mensuales",
@@ -1609,12 +1614,13 @@
       "tabsAriaLabel": "Secciones del resumen",
       "emptyTitle": "Resumen en progreso",
       "emptyDescription": "Esta sección se completará cuando se genere el resumen con IA.",
-      "outOfSync": "Desactualizado",
-      "outOfSyncDescription": "Los datos cambiaron. El resumen se actualiza de noche o al refrescar.",
-      "refreshSummary": "Actualizar resumen",
+      "outOfSyncHint": "El resumen necesita una actualización",
+      "outOfSyncTitle": "Los datos subyacentes cambiaron",
+      "outOfSyncDescription": "Esta narrativa va detrás del contexto actual del registro. Se pondrá al día por la noche, o puedes actualizarla ahora.",
+      "refreshAction": "Actualizar",
       "refreshing": "Actualizando…",
-      "refreshQueued": "Actualización del resumen en cola.",
-      "refreshFailed": "No se pudo actualizar el resumen."
+      "refreshQueued": "Actualización en cola.",
+      "refreshFailed": "No se pudo iniciar la actualización."
     },
     "recordsJson": {
       "viewTitle": "JSON de registros exportados",

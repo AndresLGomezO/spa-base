@@ -5,8 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { usePermission } from "../../auth/usePermission";
-import { AiSpendLimitBanner } from "../../features/ai-spend/AiSpendLimitBanner";
-import { useAiSpendStatus } from "../../features/ai-spend/use-ai-spend-status";
+import { useAiSpendActionGuard } from "../../features/ai-spend/use-ai-spend-action-guard";
 import {
   getAiJob,
   isAiSpendLimitError,
@@ -23,7 +22,9 @@ export default function AiChatRoute() {
   const { isReady, tenantId } = useAuth();
   const canRun = usePermission("ai.chat.run");
   const canRead = usePermission("ai.chat.read");
-  const { blocked, softWarn } = useAiSpendStatus(canRun || canRead);
+  const { beforeAiAction, handleAiActionError } = useAiSpendActionGuard(
+    canRun || canRead,
+  );
   const [question, setQuestion] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
 
@@ -31,6 +32,9 @@ export default function AiChatRoute() {
     mutationFn: (nextQuestion: string) => submitAiChat(nextQuestion),
     onSuccess: (data) => {
       setJobId(data.jobId);
+    },
+    onError: (error) => {
+      handleAiActionError(error);
     },
   });
 
@@ -77,7 +81,6 @@ export default function AiChatRoute() {
   const job = jobQuery.data;
   const isPending =
     submitMutation.isPending || (job != null && !isTerminalStatus(job.status));
-  const controlsDisabled = isPending || blocked;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
@@ -86,14 +89,15 @@ export default function AiChatRoute() {
         <Text>{t("aiChat.description")}</Text>
       </div>
 
-      <AiSpendLimitBanner blocked={blocked} softWarn={softWarn} />
-
       <form
         className="space-y-3"
         onSubmit={(event) => {
           event.preventDefault();
           const trimmed = question.trim();
-          if (!trimmed || controlsDisabled) {
+          if (!trimmed || isPending) {
+            return;
+          }
+          if (!beforeAiAction()) {
             return;
           }
           submitMutation.mutate(trimmed);
@@ -104,22 +108,18 @@ export default function AiChatRoute() {
           onChange={(event) => setQuestion(event.target.value)}
           rows={5}
           placeholder={t("aiChat.questionPlaceholder")}
-          disabled={controlsDisabled}
+          disabled={isPending}
         />
         <Button
           type="submit"
-          disabled={controlsDisabled || question.trim().length === 0}
+          disabled={isPending || question.trim().length === 0}
         >
           {isPending ? t("aiChat.submitting") : t("aiChat.submit")}
         </Button>
       </form>
 
-      {submitMutation.isError ? (
-        <Alert>
-          {isAiSpendLimitError(submitMutation.error)
-            ? t("aiSpend.limitReached")
-            : t("aiChat.submitError")}
-        </Alert>
+      {submitMutation.isError && !isAiSpendLimitError(submitMutation.error) ? (
+        <Alert>{t("aiChat.submitError")}</Alert>
       ) : null}
 
       {job ? (

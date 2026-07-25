@@ -13,8 +13,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { usePermission } from "../../auth/usePermission";
-import { AiSpendLimitBanner } from "../ai-spend/AiSpendLimitBanner";
-import { useAiSpendStatus } from "../ai-spend/use-ai-spend-status";
+import { useAiSpendActionGuard } from "../ai-spend/use-ai-spend-action-guard";
 import type { UiBuilderSuggestionRecord } from "../../lib/api-client";
 import type { UseEntityListLayoutEditorResult } from "../ui-builder/use-entity-list-layout-editor";
 import { toValidationEntity } from "../ui-builder/to-validation-entity";
@@ -51,7 +50,8 @@ export function ItemListDesignerAiControls({
   const { tenantId } = useAuth();
   const canRun = usePermission("ai.uiBuilder.run");
   const canRead = usePermission("ai.uiBuilder.read");
-  const { blocked, softWarn } = useAiSpendStatus(canRun || canRead);
+  const { assertAiNotBlocked, beforeAiAction, handleAiActionError } =
+    useAiSpendActionGuard(canRun || canRead);
 
   const [requestOpen, setRequestOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
@@ -173,9 +173,13 @@ export function ItemListDesignerAiControls({
             "bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary",
           )}
           onClick={() => {
-            if (!hasActiveJob && !blocked) {
-              setRequestOpen(true);
+            if (hasActiveJob) {
+              return;
             }
+            if (!assertAiNotBlocked()) {
+              return;
+            }
+            setRequestOpen(true);
           }}
         >
           {isWorking ? (
@@ -193,7 +197,7 @@ export function ItemListDesignerAiControls({
     ),
     [
       aiButtonLabel,
-      blocked,
+      assertAiNotBlocked,
       canRun,
       hasActiveJob,
       isWorking,
@@ -221,7 +225,6 @@ export function ItemListDesignerAiControls({
   return (
     <>
       <div className="flex flex-col items-end gap-1">
-        <AiSpendLimitBanner blocked={blocked} softWarn={softWarn} />
         <div className="flex items-end gap-1">
           {canRead ? (
             <UiBuilderAiSuggestionsPopover
@@ -274,6 +277,9 @@ export function ItemListDesignerAiControls({
                 isSubmitting={submitMutation.isPending || isWorking}
                 jobInProgress={hasActiveJob}
                 onSubmit={(userContext) => {
+                  if (!beforeAiAction()) {
+                    return;
+                  }
                   const question =
                     userContext.length > 0
                       ? userContext
@@ -298,6 +304,9 @@ export function ItemListDesignerAiControls({
                         setResultSuggestion(null);
                         setResultOpen(false);
                         setHoverOpen(false);
+                      },
+                      onError: (error) => {
+                        handleAiActionError(error);
                       },
                     },
                   );

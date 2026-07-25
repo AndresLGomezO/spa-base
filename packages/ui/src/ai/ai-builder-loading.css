@@ -18,7 +18,7 @@
 
 .ai-builder-loading-ring {
   border: 2px solid transparent;
-  border-top-color: hsl(var(--primary));
+  border-top-color: var(--color-primary);
   border-right-color: #8b5cf6;
   animation: ai-builder-spin 1s linear infinite;
 }

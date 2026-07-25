@@ -72,6 +72,20 @@ After validation ([e2e-validation-runbook.md](./e2e-validation-runbook.md)), pla
 
 ---
 
+## AI platform (#5a)
+
+| Document | Description |
+|----------|-------------|
+| [ai-platform/README.md](./ai-platform/README.md) | **AI platform index** — system map, invariants, doc map |
+| [ai-platform/01-architecture.md](./ai-platform/01-architecture.md) | Packages, job lifecycle, storage, controller, invariants |
+| [ai-platform/02-grounded-chat.md](./ai-platform/02-grounded-chat.md) | L0–L2 prefix, Vertex cache, planner/tools, ports |
+| [ai-platform/03-cost-guards.md](./ai-platform/03-cost-guards.md) | Tenant/role spend limits, attribution, API/UI enforcement |
+| [ai-platform/04-context-memory-rag.md](./ai-platform/04-context-memory-rag.md) | Sections, user memory, record summaries, vectors |
+| [ai-platform/05-api-worker-ui.md](./ai-platform/05-api-worker-ui.md) | Routes, worker tasks, UI surfaces, env, Terraform |
+| [ai-platform/06-integrating-new-features.md](./ai-platform/06-integrating-new-features.md) | **Cookbook** — insights, benchmarks, advice without breaking the stack |
+
+---
+
 ## Phase 2 — Capabilities
 
 | ID | Document | Description |

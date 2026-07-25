@@ -25,7 +25,7 @@ export function AiSparkIcon({
     >
       <defs>
         <linearGradient id="aiSparkGradient" x1="4" y1="4" x2="20" y2="20">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
+          <stop offset="0%" stopColor="var(--color-primary)" />
           <stop offset="55%" stopColor="#8b5cf6" />
           <stop offset="100%" stopColor="#22d3ee" />
         </linearGradient>
