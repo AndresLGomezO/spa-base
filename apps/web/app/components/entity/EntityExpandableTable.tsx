@@ -313,7 +313,7 @@ export function EntityExpandableTable({
           share: t("share.title"),
           delete: t("entity.delete"),
           summary: t("entity.summary.button"),
-          summaryOutOfSync: t("entity.summary.outOfSync"),
+          summaryOutOfSync: t("entity.summary.outOfSyncHint"),
         }}
         onView={(id) => navigateToDetail(id)}
         onEdit={showCrudActions ? onRequestEdit : undefined}

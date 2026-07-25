@@ -13,8 +13,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { usePermission } from "../../auth/usePermission";
-import { AiSpendLimitBanner } from "../ai-spend/AiSpendLimitBanner";
-import { useAiSpendStatus } from "../ai-spend/use-ai-spend-status";
+import { useAiSpendActionGuard } from "../ai-spend/use-ai-spend-action-guard";
 import { appConfig } from "../../config/app-config";
 import type {
   AiJobRecord,
@@ -70,7 +69,8 @@ export function FormDesignerAiControls({
   const { tenantId } = useAuth();
   const canRun = usePermission("ai.uiBuilder.run");
   const canRead = usePermission("ai.uiBuilder.read");
-  const { blocked, softWarn } = useAiSpendStatus(canRun || canRead);
+  const { assertAiNotBlocked, beforeAiAction, handleAiActionError } =
+    useAiSpendActionGuard(canRun || canRead);
 
   const [requestOpen, setRequestOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
@@ -192,6 +192,9 @@ export function FormDesignerAiControls({
         readonly keepRenderViewOpen?: boolean;
       },
     ) => {
+      if (!beforeAiAction()) {
+        return;
+      }
       const defaultPromptKey =
         mode === "render"
           ? `${TRANSLATION_PREFIX}.renderDefaultPrompt`
@@ -238,12 +241,17 @@ export function FormDesignerAiControls({
               setRefineParentId(options.parentSuggestionId);
             }
           },
+          onError: (error) => {
+            handleAiActionError(error);
+          },
         },
       );
     },
     [
+      beforeAiAction,
       editor,
       entityName,
+      handleAiActionError,
       renderJob.setActiveJobId,
       structureJob.setActiveJobId,
       submitMutation,
@@ -358,9 +366,13 @@ export function FormDesignerAiControls({
             "bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary",
           )}
           onClick={() => {
-            if (!hasActiveJob && !blocked) {
-              setRequestOpen(true);
+            if (hasActiveJob) {
+              return;
             }
+            if (!assertAiNotBlocked()) {
+              return;
+            }
+            setRequestOpen(true);
           }}
         >
           {isWorking ? (
@@ -378,7 +390,7 @@ export function FormDesignerAiControls({
     ),
     [
       aiButtonLabel,
-      blocked,
+      assertAiNotBlocked,
       canRun,
       hasActiveJob,
       isWorking,
@@ -406,7 +418,6 @@ export function FormDesignerAiControls({
   return (
     <>
       <div className="flex flex-col items-end gap-1">
-        <AiSpendLimitBanner blocked={blocked} softWarn={softWarn} />
         <div className="flex items-end gap-1">
           {canRead ? (
             <UiBuilderAiSuggestionsPopover

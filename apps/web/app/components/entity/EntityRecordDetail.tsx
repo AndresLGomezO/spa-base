@@ -29,6 +29,8 @@ import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { RecordHookExecutionsThirdRailPanel } from "../../features/debugger/RecordHookExecutionsThirdRailPanel";
 import { summaryChartBlockRenderers } from "../../features/entity-summary/summary-chart-renderers";
 import { SummaryCopyMarkdownButton } from "../../features/entity-summary/SummaryCopyMarkdownButton";
+import { SummaryOutOfSyncBanner } from "../../features/entity-summary/SummaryOutOfSyncBanner";
+import { SummaryStaleIndicator } from "../../features/entity-summary/SummaryStaleIndicator";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { EntityLayoutDetailView } from "./EntityLayoutDetailView";
 import {
@@ -59,7 +61,6 @@ import {
   narrativeVariantFromSummaryField,
   resolveSummaryFieldText,
 } from "../../features/entity-summary/resolve-summary-tabs";
-import { SummaryOutOfSyncBanner } from "../../features/entity-summary/SummaryOutOfSyncBanner";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -254,11 +255,7 @@ export function EntityRecordDetail({
             >
               <AiSparkIcon size={16} animated className="shrink-0" />
               {t("entity.summary.button")}
-              {summaryStale ? (
-                <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                  {t("entity.summary.outOfSync")}
-                </span>
-              ) : null}
+              {summaryStale ? <SummaryStaleIndicator className="ml-1" /> : null}
             </Button>
           ) : null}
           {isSuperAdmin ? (

@@ -2,6 +2,8 @@ import { AiSparkIcon, IconButton } from "@repo/ui";
 import { Eye, Pencil, Share2, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { SummaryStaleIndicator } from "../../features/entity-summary/SummaryStaleIndicator";
+
 interface ExpandableTableRowActionsProps {
   readonly canRead: boolean;
   readonly canUpdate: boolean;
@@ -13,7 +15,7 @@ interface ExpandableTableRowActionsProps {
   readonly summaryField?: string;
   /** Pre-resolved summary markdown (e.g. from AI record summary doc). */
   readonly summaryText?: string;
-  /** When true, show an out-of-sync badge on the summary action. */
+  /** When true, show a discreet stale icon on the summary action. */
   readonly summaryStale?: boolean;
   readonly labels: {
     readonly view: string;
@@ -76,7 +78,7 @@ export function ExpandableTableRowActions({
   );
   const summaryLabel =
     summaryStale && labels.summaryOutOfSync
-      ? `${labels.summary} (${labels.summaryOutOfSync})`
+      ? `${labels.summary} — ${labels.summaryOutOfSync}`
       : labels.summary;
 
   return (
@@ -88,13 +90,12 @@ export function ExpandableTableRowActions({
           onClick={() => onSummary(item, summaryText)}
           className="relative text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
         >
-          <AiSparkIcon size={16} animated className="shrink-0" />
-          {summaryStale ? (
-            <span
-              aria-hidden
-              className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-amber-500"
-            />
-          ) : null}
+          <span className="relative inline-flex items-center">
+            <AiSparkIcon size={16} animated className="shrink-0" />
+            {summaryStale ? (
+              <SummaryStaleIndicator className="absolute -right-2 -top-2 rounded-full bg-background/90 p-px shadow-sm" />
+            ) : null}
+          </span>
         </IconButton>
       ) : null}
       {canRead ? (

@@ -1,7 +1,7 @@
 .third-rail-tone-ai {
   --third-rail-ai-line: linear-gradient(
     90deg,
-    hsl(var(--primary)) 0%,
+    var(--color-primary) 0%,
     #8b5cf6 40%,
     #22d3ee 70%,
     #8b5cf6 100%
@@ -51,7 +51,7 @@
 .third-rail-tone-ai .third-rail-title-ai {
   background: linear-gradient(
     90deg,
-    hsl(var(--primary)),
+    var(--color-primary),
     #8b5cf6 45%,
     #0891b2 75%,
     #8b5cf6
@@ -60,7 +60,16 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  -webkit-text-fill-color: transparent;
   animation: third-rail-ai-title 5s ease-in-out infinite;
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .third-rail-tone-ai .third-rail-title-ai {
+    background: none;
+    color: var(--color-primary);
+    -webkit-text-fill-color: currentColor;
+  }
 }
 
 .third-rail-tone-ai .third-rail-body-ai {
