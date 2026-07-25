@@ -16,6 +16,7 @@ import {
 import { useAiSpendActionGuard } from "../ai-spend/use-ai-spend-action-guard";
 
 const SESSIONS_QUERY_KEY = ["ai-chat-sessions"] as const;
+const RUNNING_POLL_MS = 300;
 
 function isTerminalStatus(status: AiJobRecord["status"]): boolean {
   return status === "completed" || status === "failed";
@@ -23,6 +24,21 @@ function isTerminalStatus(status: AiJobRecord["status"]): boolean {
 
 function sessionQueryKey(sessionId: string) {
   return ["ai-chat-session", sessionId] as const;
+}
+
+function readPartialAnswer(job: AiJobRecord | undefined): string | null {
+  const draft = job?.draft;
+  if (!draft || typeof draft !== "object") return null;
+  const partial = (draft as { partialAnswer?: unknown }).partialAnswer;
+  return typeof partial === "string" && partial.trim().length > 0
+    ? partial
+    : null;
+}
+
+function readIsStreaming(job: AiJobRecord | undefined): boolean {
+  const draft = job?.draft;
+  if (!draft || typeof draft !== "object") return false;
+  return (draft as { streaming?: unknown }).streaming === true;
 }
 
 export function useAiChatSession(options: {
@@ -76,13 +92,18 @@ export function useAiChatSession(options: {
       if (!status || isTerminalStatus(status)) {
         return false;
       }
-      return 1000;
+      return RUNNING_POLL_MS;
     },
   });
 
   const job = jobQuery.data;
   const isPending =
     Boolean(jobId) && (job == null || !isTerminalStatus(job.status));
+  const partialAnswer = readPartialAnswer(job);
+  const isStreaming =
+    isPending && (readIsStreaming(job) || Boolean(partialAnswer));
+  const progressLabel =
+    isPending && job?.progress?.stepLabel ? job.progress.stepLabel : null;
 
   useEffect(() => {
     if (!job || !isTerminalStatus(job.status) || !activeSessionId) {
@@ -204,6 +225,9 @@ export function useAiChatSession(options: {
     job,
     jobError,
     isPending: isPending || submitMutation.isPending,
+    isStreaming,
+    partialAnswer,
+    progressLabel,
     submitError,
     ask,
     startNewChat,

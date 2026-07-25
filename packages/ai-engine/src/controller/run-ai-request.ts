@@ -104,17 +104,28 @@ export function createAiController(deps: AiControllerDeps) {
       let embeddingVector: readonly number[] | undefined;
 
       if (params.operation === "generateText") {
-        const result = await deps.clients.generateModelAnswer(
-          deps.vertexAiConfig,
-          {
-            systemInstruction: params.systemInstruction,
-            userText: params.userText,
-            ...(params.contextBlocks
-              ? { contextBlocks: [...params.contextBlocks] }
-              : {}),
-          },
-          params.modelOptions,
-        );
+        const modelInput = {
+          systemInstruction: params.systemInstruction,
+          userText: params.userText,
+          ...(params.contextBlocks
+            ? { contextBlocks: [...params.contextBlocks] }
+            : {}),
+        };
+        const result =
+          request.onTextChunk && deps.clients.generateModelAnswerStream
+            ? await deps.clients.generateModelAnswerStream(
+                deps.vertexAiConfig,
+                modelInput,
+                {
+                  ...params.modelOptions,
+                  onChunk: request.onTextChunk,
+                },
+              )
+            : await deps.clients.generateModelAnswer(
+                deps.vertexAiConfig,
+                modelInput,
+                params.modelOptions,
+              );
         rawModelAnswer = result.text;
         modelUsage = withEstimatedCost(result.usage);
         output = { text: rawModelAnswer } satisfies AiTextOutput;

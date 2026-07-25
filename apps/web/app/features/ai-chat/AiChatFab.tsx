@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
@@ -9,6 +10,7 @@ import "./ai-chat.css";
 
 export function AiChatFab() {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   const { isReady, tenantId } = useAuth();
   const canRun = usePermission("ai.chat.run");
   const canRead = usePermission("ai.chat.read");
@@ -34,6 +36,16 @@ export function AiChatFab() {
             canRun={canRun}
             layout="popup"
             animateEnter
+            onMinimize={() => setOpen(false)}
+            onExpand={() => {
+              const sessionId = chat.activeSessionId;
+              setOpen(false);
+              void navigate(
+                sessionId
+                  ? `/ai/chat?sessionId=${encodeURIComponent(sessionId)}`
+                  : "/ai/chat",
+              );
+            }}
           />
         </div>
       ) : null}

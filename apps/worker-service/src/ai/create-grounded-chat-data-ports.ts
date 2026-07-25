@@ -54,17 +54,7 @@ export interface CreateGroundedChatDataPortsDeps {
   >;
 }
 
-function recordLabel(
-  record: GenericRecord,
-  aiDoc: Parameters<typeof readAiRecordSummaryField>[0],
-): string {
-  const fromAi =
-    readAiRecordSummaryField(aiDoc, "narratives.default.text") ??
-    readAiRecordSummaryField(aiDoc, "rag.text") ??
-    readAiRecordSummaryField(aiDoc, "aiSummaryText");
-  if (typeof fromAi === "string" && fromAi.trim().length > 0) {
-    return fromAi.trim().slice(0, 200);
-  }
+function recordLabel(record: GenericRecord): string {
   for (const key of ["name", "title", "label", "description"] as const) {
     const value = record[key];
     if (typeof value === "string" && value.trim().length > 0) {
@@ -119,7 +109,7 @@ async function toHit(
   return {
     entityName,
     recordId: record.id,
-    label: recordLabel(record, aiDoc),
+    label: recordLabel(record),
     fields,
     ...(score != null ? { score } : {}),
   };

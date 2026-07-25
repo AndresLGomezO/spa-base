@@ -4,12 +4,17 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { cn } from "@repo/theme/utils";
 
 export type MarkdownBlockRenderer = (raw: string) => ReactNode;
+
+export type MarkdownLinkRenderer = (props: {
+  readonly href: string;
+  readonly children: ReactNode;
+}) => ReactNode;
 
 export interface MarkdownProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
@@ -23,6 +28,13 @@ export interface MarkdownProps extends Omit<
    * ```chart-pie). Renderer failures or `null` omit the block silently.
    */
   readonly blockRenderers?: Readonly<Record<string, MarkdownBlockRenderer>>;
+  /** Optional custom anchor renderer (e.g. in-app record hits). */
+  readonly renderLink?: MarkdownLinkRenderer;
+  /**
+   * Extra URL schemes allowed through the sanitizer (in addition to the
+   * react-markdown defaults). Example: `["record"]` for chat record hits.
+   */
+  readonly allowedLinkSchemes?: readonly string[];
 }
 
 function escapeRegExp(value: string): string {
@@ -105,12 +117,23 @@ export function Markdown({
   children,
   className,
   blockRenderers,
+  renderLink,
+  allowedLinkSchemes,
   ...props
 }: MarkdownProps) {
   const source =
     blockRenderers && Object.keys(blockRenderers).length > 0
       ? ensureBlockRendererFences(children, Object.keys(blockRenderers))
       : children;
+
+  const urlTransform = (value: string) => {
+    const trimmed = value.trim();
+    const scheme = trimmed.split(":", 1)[0]?.toLowerCase() ?? "";
+    if (allowedLinkSchemes?.some((entry) => entry.toLowerCase() === scheme)) {
+      return trimmed;
+    }
+    return defaultUrlTransform(value);
+  };
 
   return (
     <div
@@ -122,7 +145,29 @@ export function Markdown({
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        urlTransform={urlTransform}
         components={{
+          a: ({ href, children: linkChildren }) => {
+            const target = typeof href === "string" ? href : "";
+            if (renderLink && target) {
+              return (
+                <>{renderLink({ href: target, children: linkChildren })}</>
+              );
+            }
+            if (!target) {
+              return <span>{linkChildren}</span>;
+            }
+            return (
+              <a
+                href={target}
+                className="text-primary underline underline-offset-2"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {linkChildren}
+              </a>
+            );
+          },
           h1: ({ children: heading }) => (
             <h1 className="text-foreground mt-5 text-lg font-semibold tracking-tight first:mt-0">
               {heading}

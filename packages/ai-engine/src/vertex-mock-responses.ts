@@ -139,6 +139,14 @@ export function buildMockGroundedChatAnswer(userText: string): string {
   });
 }
 
+/** Deterministic prose answer for grounded chat synthesis (mock Vertex). */
+export function buildMockGroundedChatSynthesisAnswer(userText: string): string {
+  if (userText.includes("financialItem") || userText.includes("Amount")) {
+    return "Your largest product by amount is [Alpha](record:financialItem/p1) (**$9,999**).\n\n- Highlighted from tool findings (mock synthesis).";
+  }
+  return "Based on the tool findings above:\n\n- Here is a concise grounded answer (**mock synthesis**).";
+}
+
 function extractFieldNamesFromEntityBlock(content: string): readonly string[] {
   const fields = [...content.matchAll(/`([^`]+)`/g)]
     .map((match) => match[1]?.trim())

@@ -152,6 +152,19 @@ export async function processAiChatJob(
           ? { isAiTraceEnabled: deps.isAiTraceEnabled }
           : {}),
         memoryRefreshSource,
+        callbacks: {
+          onProgress: async (progress) => {
+            await deps.aiJobRepository.update(tenantId, jobId, { progress });
+          },
+          onPartialAnswer: async (partialAnswer) => {
+            await deps.aiJobRepository.update(tenantId, jobId, {
+              draft: {
+                partialAnswer,
+                streaming: true,
+              },
+            });
+          },
+        },
       },
     );
 
@@ -187,6 +200,11 @@ export async function processAiChatJob(
       status: "completed",
       output: chatOutput,
       error: null,
+      progress: null,
+      draft: {
+        partialAnswer: chatOutput.answer,
+        streaming: false,
+      },
       metrics: {
         stepCount: orchestratorMetrics.stepCount,
         toolCallCount: orchestratorMetrics.toolCallCount,
@@ -225,6 +243,10 @@ export async function processAiChatJob(
       status: "failed",
       output: null,
       error: message,
+      progress: null,
+      draft: {
+        streaming: false,
+      },
     });
     emitAiErrorMetric({ tenantId, feature: "chat" });
     throw new PermanentTaskError("PROCESSING_FAILED");

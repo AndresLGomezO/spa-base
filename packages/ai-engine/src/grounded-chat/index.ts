@@ -2,10 +2,16 @@ export {
   GROUNDED_CHAT_MAX_STEPS,
   GROUNDED_CHAT_SYSTEM_INSTRUCTION,
   GROUNDED_CHAT_PLANNER_OUTPUT_INSTRUCTION,
+  GROUNDED_CHAT_SYNTHESIS_INSTRUCTION,
+  GROUNDED_CHAT_EXCLUDED_ENTITY_CITATIONS,
+  GROUNDED_CHAT_MAX_CITATIONS,
   groundedChatPlannerResponseSchema,
   groundedChatToolCallSchema,
   groundedChatToolNameSchema,
   groundedChatCitationSchema,
+  filterBusinessEntityCitations,
+  selectRelevantCitations,
+  topSearchHitCitations,
   type GroundedChatCitation,
   type GroundedChatPlannerResponse,
   type GroundedChatToolCall,
@@ -64,7 +70,20 @@ export {
 } from "./ensure-vertex-cache.js";
 
 export {
+  formatGroundedChatRecordLink,
+  parseGroundedChatRecordHref,
+  extractGroundedChatRecordRefs,
+  rewriteBareEntityIdsInAnswer,
+  sanitizeGroundedChatRecordLinks,
+  normalizeGroundedChatAnswerLinks,
+  GROUNDED_CHAT_RECORD_HREF_PREFIX,
+  type GroundedChatRecordRef,
+  type GroundedChatRecordCitationLike,
+} from "./record-ref.js";
+
+export {
   runGroundedChatOrchestrator,
+  type GroundedChatOrchestratorCallbacks,
   type GroundedChatOrchestratorMetrics,
   type GroundedChatOrchestratorResult,
   type RunGroundedChatOrchestratorDeps,

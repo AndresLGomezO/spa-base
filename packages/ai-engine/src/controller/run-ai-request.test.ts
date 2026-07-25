@@ -83,6 +83,20 @@ function createDeps(overrides?: {
       finishReason: "STOP",
     },
   }));
+  const generateModelAnswerStream = vi.fn(async (_config, _input, options) => {
+    await options?.onChunk?.('{"ok":');
+    await options?.onChunk?.('{"ok":true}');
+    return {
+      text: '{"ok":true}',
+      usage: {
+        modelId: "gemini-3.6-flash",
+        promptTokens: 100,
+        candidatesTokens: 20,
+        totalTokens: 120,
+        finishReason: "STOP",
+      },
+    };
+  });
   const generateChatAnswer = vi.fn(async () => ({
     text: "hello",
     usage: {
@@ -112,6 +126,7 @@ function createDeps(overrides?: {
     },
     clients: {
       generateModelAnswer,
+      generateModelAnswerStream,
       generateChatAnswer,
       generateTextEmbedding,
     },
@@ -124,6 +139,7 @@ function createDeps(overrides?: {
     controller,
     repository,
     generateModelAnswer,
+    generateModelAnswerStream,
     generateChatAnswer,
     generateTextEmbedding,
   };
@@ -271,5 +287,34 @@ describe("createAiController", () => {
 
     const job = repository.byId.get(result.jobId);
     expect(job?.parentJobId).toBe("aijob_parent");
+  });
+
+  it("uses generateModelAnswerStream when onTextChunk is provided", async () => {
+    const { controller, generateModelAnswer, generateModelAnswerStream } =
+      createDeps();
+    const chunks: string[] = [];
+
+    const result = await controller.runAiRequest({
+      tenantId: "t1",
+      feature: "chat",
+      operation: "generateText",
+      requestedBy: "user_1",
+      permission: "ai.chat.run",
+      input: { question: "hi" },
+      onTextChunk: async (text) => {
+        chunks.push(text);
+      },
+      params: {
+        operation: "generateText",
+        systemInstruction: "sys",
+        userText: "hi",
+        stepId: "groundedChat.synthesis",
+      },
+    });
+
+    expect(generateModelAnswerStream).toHaveBeenCalled();
+    expect(generateModelAnswer).not.toHaveBeenCalled();
+    expect(chunks).toEqual(['{"ok":', '{"ok":true}']);
+    expect(result.output).toEqual({ text: '{"ok":true}' });
   });
 });

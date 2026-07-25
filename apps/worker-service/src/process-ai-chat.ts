@@ -7,6 +7,7 @@ import {
   refreshUserAiMemory,
   runGroundedChatOrchestrator,
   type GroundedChatDataPorts,
+  type GroundedChatOrchestratorCallbacks,
   type GroundedChatOrchestratorMetrics,
 } from "@repo/ai-engine/grounded-chat";
 import type {
@@ -26,6 +27,7 @@ export interface ProcessAiChatOptions {
   readonly dataPorts: GroundedChatDataPorts;
   readonly sessionId?: string;
   readonly isAiTraceEnabled?: () => boolean | Promise<boolean>;
+  readonly callbacks?: GroundedChatOrchestratorCallbacks;
   /** Optional catalog source for L2 refresh before answering. */
   readonly memoryRefreshSource?: {
     readonly entitySummaries: readonly {
@@ -119,6 +121,7 @@ export async function processAiChat(
       ...(options.isAiTraceEnabled
         ? { isAiTraceEnabled: options.isAiTraceEnabled }
         : {}),
+      ...(options.callbacks ? { callbacks: options.callbacks } : {}),
     },
     {
       tenantId: options.tenantId,

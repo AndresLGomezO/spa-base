@@ -1,17 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const generateContentMock = vi.fn();
+const generateContentStreamMock = vi.fn();
 
 vi.mock("@google-cloud/vertexai", () => ({
   VertexAI: vi.fn().mockImplementation(() => ({
     getGenerativeModel: vi.fn().mockReturnValue({
       generateContent: generateContentMock,
+      generateContentStream: generateContentStreamMock,
     }),
   })),
 }));
 
 import {
   generateModelAnswer,
+  generateModelAnswerStream,
   resetVertexClientsForTests,
   resolveGeminiLocation,
   resolveVertexApiEndpoint,
@@ -183,5 +186,78 @@ describe("generateModelAnswer rate limit retries", () => {
         }),
       }),
     );
+  });
+});
+
+describe("generateModelAnswerStream", () => {
+  beforeEach(() => {
+    generateContentMock.mockReset();
+    generateContentStreamMock.mockReset();
+    resetVertexClientsForTests();
+    vi.mocked(VertexAI).mockClear();
+  });
+
+  it("emits mock chunks when mockEnabled", async () => {
+    const chunks: string[] = [];
+    const result = await generateModelAnswerStream(
+      { ...vertexConfig, mockEnabled: true },
+      {
+        systemInstruction: "synth",
+        userText: "## Scratchpad / tool findings\nTool getRecord (ok): {}",
+      },
+      {
+        stepId: "groundedChat.synthesis",
+        onChunk: async (textSoFar) => {
+          chunks.push(textSoFar);
+        },
+      },
+    );
+
+    expect(result.text.length).toBeGreaterThan(0);
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.at(-1)).toBe(result.text);
+  });
+
+  it("streams Vertex deltas and returns final usage", async () => {
+    async function* stream() {
+      yield {
+        candidates: [{ content: { parts: [{ text: "Hello " }] } }],
+      };
+      yield {
+        candidates: [{ content: { parts: [{ text: "world" }] } }],
+      };
+    }
+
+    generateContentStreamMock.mockResolvedValueOnce({
+      stream: stream(),
+      response: Promise.resolve({
+        candidates: [
+          {
+            finishReason: "STOP",
+            content: { parts: [{ text: "Hello world" }] },
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 3,
+          candidatesTokenCount: 2,
+          totalTokenCount: 5,
+        },
+      }),
+    });
+
+    const chunks: string[] = [];
+    const result = await generateModelAnswerStream(
+      vertexConfig,
+      { systemInstruction: "sys", userText: "hi" },
+      {
+        onChunk: async (textSoFar) => {
+          chunks.push(textSoFar);
+        },
+      },
+    );
+
+    expect(chunks).toEqual(["Hello ", "Hello world"]);
+    expect(result.text).toBe("Hello world");
+    expect(result.usage.promptTokens).toBe(3);
   });
 });

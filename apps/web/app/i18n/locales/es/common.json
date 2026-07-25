@@ -422,6 +422,8 @@
     "forbidden": "No tienes permiso para usar el chat IA.",
     "openFab": "Abrir chat IA",
     "closeFab": "Cerrar chat IA",
+    "minimize": "Minimizar chat",
+    "expandToPage": "Abrir chat IA completo",
     "sessionsTitle": "Chats",
     "sessionsLoading": "Cargando chats…",
     "sessionsEmpty": "Aún no hay chats. Empieza una conversación nueva.",
@@ -434,7 +436,13 @@
     "backToSessions": "Volver a chats",
     "conversation": "Conversación",
     "emptyThread": "Pregunta por pagos próximos, gastos, actores, transacciones y más.",
-    "citations": "Fuentes"
+    "sourcesCount": "Fuentes ({{count}})",
+    "sourcesLoading": "Cargando fuente…",
+    "hitPreviewLoading": "Cargando vista previa…",
+    "hitPreviewUnavailable": "No se pudo cargar este registro.",
+    "hitPreviewOpen": "Abrir",
+    "dayToday": "Hoy",
+    "dayYesterday": "Ayer"
   },
   "aiSpend": {
     "notice": {

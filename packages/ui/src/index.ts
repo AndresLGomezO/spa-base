@@ -173,6 +173,7 @@ export {
   Markdown,
   ensureBlockRendererFences,
   type MarkdownBlockRenderer,
+  type MarkdownLinkRenderer,
   type MarkdownProps,
 } from "./markdown";
 export { PageLoader, type PageLoaderProps } from "./loading/PageLoader";

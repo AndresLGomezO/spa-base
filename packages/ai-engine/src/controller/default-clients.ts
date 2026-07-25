@@ -1,6 +1,7 @@
 import {
   generateChatAnswer,
   generateModelAnswer,
+  generateModelAnswerStream,
   type VertexAiConfig,
 } from "../clients/internal/vertex-ai.client.js";
 import { generateTextEmbedding } from "../clients/internal/text-embedding.js";
@@ -13,6 +14,7 @@ import type { AiControllerClients } from "./ai-request.types.js";
 export function createDefaultAiClients(): AiControllerClients {
   return {
     generateModelAnswer,
+    generateModelAnswerStream,
     generateChatAnswer,
     generateTextEmbedding: async (config: VertexAiConfig, text: string) =>
       generateTextEmbedding(config, text),

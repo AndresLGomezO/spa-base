@@ -7,7 +7,11 @@ const WEB_APP_ROOT = process.cwd();
 const AI_CONTEXT_IMPORT_PATTERN =
   /from\s+["']@repo\/ai-context(\/[^"']+)?["']/g;
 
-const ALLOWED_SUBPATHS = new Set(["/storage", "/permissions"]);
+const ALLOWED_SUBPATHS = new Set([
+  "/storage",
+  "/permissions",
+  "/grounded-chat-record-ref",
+]);
 
 function collectSourceFiles(directory: string): string[] {
   const entries = readdirSync(directory);
