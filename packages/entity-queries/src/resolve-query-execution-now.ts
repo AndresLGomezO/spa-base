@@ -51,9 +51,7 @@ export function resolveQueryExecutionNowFromDateFilter(
 }
 
 /** Anchor temporal presets from page/dashboard filter context. */
-export function resolveQueryExecutionNow(
-  context?: PageFilterContext,
-): Date {
+export function resolveQueryExecutionNow(context?: PageFilterContext): Date {
   return resolveQueryExecutionNowFromDateFilter(context?.dashboardDateFilter);
 }
 
