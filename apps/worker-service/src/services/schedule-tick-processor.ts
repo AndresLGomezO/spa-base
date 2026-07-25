@@ -181,6 +181,9 @@ async function processTenantScheduleTick(
     ...(deps.enqueueAiRecordNarrative
       ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
       : {}),
+    ...(deps.invalidateAiRecordNarratives
+      ? { invalidateAiRecordNarratives: deps.invalidateAiRecordNarratives }
+      : {}),
   };
 
   const withFormulaResolver = (

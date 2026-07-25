@@ -4145,6 +4145,7 @@
       "computeRecordAiSummary": "Compute record AI summary",
       "upsertAiRecordContext": "Upsert AI record context",
       "enqueueAiRecordNarrative": "Enqueue AI record narrative",
+      "invalidateAiRecordNarratives": "Invalidate AI record narratives",
       "matchSimilarRecord": "Match similar record"
     },
     "actions": {
@@ -4174,6 +4175,7 @@
       "computeRecordAiSummaryLink": "Open record summary templates",
       "upsertAiRecordContextHint": "Writes the rich context snapshot (and optional RAG text) to the AI record summary doc; can enqueue a narrative refresh.",
       "enqueueAiRecordNarrativeHint": "Enqueues the recordNarrativeRefresh AI job for a variant (default, loans, …).",
+      "invalidateAiRecordNarrativesHint": "Marks selected narrative variants out of sync without rewriting context (e.g. loans + default after a loan edit).",
       "enqueueNarrative": "Enqueue narrative when context changes",
       "narrativeVariant": "Narrative variant",
       "narrativePrompt": "Narrative prompt (role / objective)",
@@ -4430,6 +4432,7 @@
         "computeRecordAiSummary": "Compute record AI summary as \"{{alias}}\"",
         "upsertAiRecordContext": "Upsert AI record context as \"{{alias}}\"",
         "enqueueAiRecordNarrative": "Enqueue AI record narrative as \"{{alias}}\"",
+        "invalidateAiRecordNarratives": "Invalidate AI record narratives as \"{{alias}}\"",
         "matchSimilarRecord": "Match {{entity}} by embedding similarity as \"{{alias}}\"",
         "fieldAssignment": "{{field}} = {{value}}"
       },

@@ -435,6 +435,32 @@ function validateActionExpressions(
         );
       }
       return;
+    case "invalidateAiRecordNarratives":
+      if (action.entityName) {
+        validateExpressionReferences(
+          action.entityName,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.recordId) {
+        validateExpressionReferences(
+          action.recordId,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.when) {
+        validateExpressionReferences(
+          action.when,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      return;
     case "matchSimilarRecord":
       validateExpressionReferences(
         action.haystack,
@@ -524,7 +550,8 @@ export function validateDataHookActions(
       action.type === "computeEmbedding" ||
       action.type === "computeRecordAiSummary" ||
       action.type === "upsertAiRecordContext" ||
-      action.type === "enqueueAiRecordNarrative"
+      action.type === "enqueueAiRecordNarrative" ||
+      action.type === "invalidateAiRecordNarratives"
     ) {
       // Alias-producing actions always register bindings; only entity/AI loads
       // that pull records or model payloads count toward MAX_LOADED_RECORDS.

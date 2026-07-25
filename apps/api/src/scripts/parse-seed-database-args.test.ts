@@ -71,21 +71,19 @@ describe("parseSeedDatabaseArgs", () => {
   it("parses --only components", () => {
     const result = parseSeedDatabaseArgs([
       "--only",
-      "financialItem,emailMatchBindings",
+      "hooks,emailMatchBindings",
     ]);
-    expect(result.components).toEqual(
-      new Set(["financialItem", "emailMatchBindings"]),
-    );
+    expect(result.components).toEqual(new Set(["hooks", "emailMatchBindings"]));
     expect(result.ids).toBeNull();
     expect(result.drop).toBe(false);
   });
 
   it("parses --only= and --ids=", () => {
     const result = parseSeedDatabaseArgs([
-      "--only=hooks,financialItem",
+      "--only=hooks,emailMatchBindings",
       "--ids=7c2e9f11-2518-4b3a-9d4e-030cd8568c15",
     ]);
-    expect(result.components).toEqual(new Set(["hooks", "financialItem"]));
+    expect(result.components).toEqual(new Set(["hooks", "emailMatchBindings"]));
     expect(result.ids).toEqual(
       new Set(["7c2e9f11-2518-4b3a-9d4e-030cd8568c15"]),
     );

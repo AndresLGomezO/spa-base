@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { hasPermission } from "@repo/rbac";
 import { AI_TASK_ROUTES } from "@repo/ai-engine/task-routes";
+import { isAiRecordNarrativeStale } from "@repo/ai-context";
 import type { AiRecordSummaryRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
@@ -211,8 +212,7 @@ export async function registerAiRecordSummaryRoutes(
       if (!access) return;
 
       const variant = parsedBody.data?.variant?.trim() || "default";
-      const contextHash = access.record.contextHash?.trim();
-      if (!contextHash || !access.record.context) {
+      if (!access.record.contextHash?.trim() || !access.record.context) {
         return replyWithError(
           reply,
           409,
@@ -221,8 +221,7 @@ export async function registerAiRecordSummaryRoutes(
         );
       }
 
-      const existing = access.record.narratives[variant];
-      if (existing && existing.sourceHash === contextHash) {
+      if (!isAiRecordNarrativeStale(access.record, variant)) {
         return reply.send(
           successEnvelope({
             enqueued: false,
@@ -254,6 +253,10 @@ export async function registerAiRecordSummaryRoutes(
         }
       }
 
+      const expectedHash =
+        access.record.variantContextHashes?.[variant]?.trim() ||
+        access.record.contextHash!.trim();
+
       try {
         await cloudTasks.enqueueTask({
           path: AI_TASK_ROUTES.REFRESH_RECORD_NARRATIVE,
@@ -265,7 +268,7 @@ export async function registerAiRecordSummaryRoutes(
           },
           taskId: buildDeterministicTaskId(
             "ai-narrative",
-            `${tenantId}:${entityName}:${recordId}:${variant}:${contextHash}`,
+            `${tenantId}:${entityName}:${recordId}:${variant}:${expectedHash}`,
             `${tenantId}:${entityName}:${recordId}:${variant}`,
           ),
         });

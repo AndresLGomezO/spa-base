@@ -40,6 +40,14 @@ export const aiRecordSummaryRecordSchema = z.object({
   tenantWideRead: z.boolean().default(false),
   context: z.record(z.string(), z.unknown()).optional(),
   contextHash: z.string().trim().min(1).optional(),
+  /**
+   * Per-narrative expected context hash. Portfolio (and other multi-variant)
+   * docs use this so updating one variant does not mark sibling tabs stale.
+   * When present, UI/runtime prefer these over the top-level `contextHash`.
+   */
+  variantContextHashes: z
+    .record(z.string(), z.string().trim().min(1))
+    .optional(),
   rag: aiRecordSummaryRagSchema.optional(),
   narratives: z.record(z.string(), aiRecordSummaryNarrativeSchema).default({}),
   createdAt: z.string().trim().min(1),

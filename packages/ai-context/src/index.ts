@@ -189,6 +189,8 @@ export {
 } from "./services/ai-record-summary-template.service.js";
 
 export {
+  invalidateAiRecordNarrativeVariants,
+  isAiRecordNarrativeStale,
   readAiRecordSummaryField,
   resolvesFromAiRecordSummary,
   upsertAiRecordContext,

@@ -550,6 +550,17 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
   }),
   z.object({
+    type: z.literal("invalidateAiRecordNarratives"),
+    /** Optional entity-name expression; defaults to the hook's entity. */
+    entityName: expressionNodeSchema.optional(),
+    /** Optional record-id expression; defaults to `current.id`. */
+    recordId: expressionNodeSchema.optional(),
+    /** Narrative variants to mark out of sync (e.g. loans + default). */
+    variants: z.array(z.string().trim().min(1)).min(1),
+    when: expressionNodeSchema.optional(),
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
     type: z.literal("matchSimilarRecord"),
     entity: z.string().trim().min(1),
     where: dataHookUpdateMatchingWhereSchema,
@@ -663,6 +674,7 @@ export function actionTargetEntities(
     case "computeRecordAiSummary":
     case "upsertAiRecordContext":
     case "enqueueAiRecordNarrative":
+    case "invalidateAiRecordNarratives":
       return [];
     case "callAi":
       return action.includeEntities ?? [];

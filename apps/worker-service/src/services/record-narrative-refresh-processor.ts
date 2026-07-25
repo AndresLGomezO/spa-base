@@ -1,4 +1,7 @@
-import { upsertAiRecordNarrative } from "@repo/ai-context";
+import {
+  upsertAiRecordNarrative,
+  isAiRecordNarrativeStale,
+} from "@repo/ai-context";
 import type { AiController } from "@repo/ai-engine/controller";
 import { extractJsonFromModelAnswer } from "@repo/ai-engine/extract-json-from-model-answer";
 import {
@@ -65,10 +68,12 @@ export function createRecordNarrativeRefreshProcessor(
       return;
     }
 
-    const existing = summary.narratives[variant];
-    if (existing && existing.sourceHash === summary.contextHash) {
+    if (!isAiRecordNarrativeStale(summary, variant)) {
       return;
     }
+
+    const expectedSourceHash =
+      summary.variantContextHashes?.[variant]?.trim() || summary.contextHash;
 
     const contextJson = JSON.stringify(summary.context);
     const userPrompt = buildUserPrompt(input, contextJson);
@@ -136,7 +141,7 @@ export function createRecordNarrativeRefreshProcessor(
       recordId: input.recordId,
       variant,
       text: narrativeText,
-      sourceHash: summary.contextHash,
+      sourceHash: expectedSourceHash,
     });
   };
 }

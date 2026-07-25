@@ -75,6 +75,57 @@ describe("isAiNarrativeStale", () => {
       }),
     ).toBe(false);
   });
+
+  it("uses per-variant hashes so sibling tabs stay current", () => {
+    expect(
+      isAiNarrativeStale(
+        {
+          contextHash: "loans-ctx",
+          variantContextHashes: {
+            loans: "loans-ctx",
+            incomes: "incomes-ctx",
+          },
+          narratives: {
+            loans: {
+              text: "old loans",
+              sourceHash: "older",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+            incomes: {
+              text: "ok incomes",
+              sourceHash: "incomes-ctx",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+          },
+        },
+        "loans",
+      ),
+    ).toBe(true);
+    expect(
+      isAiNarrativeStale(
+        {
+          contextHash: "loans-ctx",
+          variantContextHashes: {
+            loans: "loans-ctx",
+            incomes: "incomes-ctx",
+          },
+          narratives: {
+            loans: {
+              text: "old loans",
+              sourceHash: "older",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+            incomes: {
+              text: "ok incomes",
+              sourceHash: "incomes-ctx",
+              updatedAt: "2026-07-25T00:00:00.000Z",
+            },
+          },
+        },
+        "incomes",
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("narrativeVariantFromSummaryField", () => {

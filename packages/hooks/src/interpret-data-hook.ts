@@ -1075,6 +1075,52 @@ async function runAction(
       return;
     }
 
+    case "invalidateAiRecordNarratives": {
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      if (action.when) {
+        const whenValue = evaluateExpression(action.when, scope);
+        if (!isTruthyExpressionValue(whenValue)) {
+          context.loaded[action.as] = null;
+          return;
+        }
+      }
+      const invalidate = context.services.invalidateAiRecordNarratives;
+      if (!invalidate) {
+        throw new HookExecutionError(
+          "invalidateAiRecordNarratives service is not available for this hook execution.",
+        );
+      }
+      const entityValue = action.entityName
+        ? evaluateExpression(action.entityName, scope)
+        : context.entityName;
+      if (typeof entityValue !== "string" || entityValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "invalidateAiRecordNarratives entityName must evaluate to a non-empty string.",
+        );
+      }
+      const recordIdValue = action.recordId
+        ? evaluateExpression(action.recordId, scope)
+        : context.current.id;
+      if (
+        typeof recordIdValue !== "string" ||
+        recordIdValue.trim().length === 0
+      ) {
+        throw new HookExecutionError(
+          "invalidateAiRecordNarratives requires a record id.",
+        );
+      }
+      const result = await invalidate({
+        tenantId: context.tenantId,
+        entityName: entityValue.trim(),
+        recordId: recordIdValue.trim(),
+        variants: action.variants,
+      });
+      context.loaded[action.as] = result ? { ...result } : null;
+      return;
+    }
+
     case "matchSimilarRecord": {
       if (!context.loaded) {
         context.loaded = {};

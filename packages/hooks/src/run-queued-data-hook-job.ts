@@ -26,6 +26,7 @@ export async function runQueuedDataHookJob(
     readonly computeRecordAiSummary?: HookServices["computeRecordAiSummary"];
     readonly upsertAiRecordContext?: HookServices["upsertAiRecordContext"];
     readonly enqueueAiRecordNarrative?: HookServices["enqueueAiRecordNarrative"];
+    readonly invalidateAiRecordNarratives?: HookServices["invalidateAiRecordNarratives"];
     readonly sendUserNotification?: HookServices["sendUserNotification"];
     readonly formulaResolver?: FormulaResolver;
   },
@@ -70,6 +71,11 @@ export async function runQueuedDataHookJob(
         : {}),
       ...(services.enqueueAiRecordNarrative
         ? { enqueueAiRecordNarrative: services.enqueueAiRecordNarrative }
+        : {}),
+      ...(services.invalidateAiRecordNarratives
+        ? {
+            invalidateAiRecordNarratives: services.invalidateAiRecordNarratives,
+          }
         : {}),
       ...(services.sendUserNotification
         ? { sendUserNotification: services.sendUserNotification }

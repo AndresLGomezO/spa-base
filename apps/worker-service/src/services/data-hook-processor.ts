@@ -45,6 +45,7 @@ import { createComputeDataHookEmbedding } from "../hooks/compute-data-hook-embed
 import {
   createComputeRecordAiSummary,
   createEnqueueAiRecordNarrative,
+  createInvalidateAiRecordNarratives,
   createUpsertAiRecordContext,
 } from "../ai/compute-record-ai-summary.js";
 import { createRecordNarrativeRefreshProcessor } from "./record-narrative-refresh-processor.js";
@@ -205,6 +206,9 @@ export function createDataHookProcessorDeps(
     enqueueAiRecordNarrative: createEnqueueAiRecordNarrative(
       computeRecordAiSummaryDeps,
     ),
+    invalidateAiRecordNarratives: createInvalidateAiRecordNarratives(
+      computeRecordAiSummaryDeps,
+    ),
     refreshNarrative,
     aiRecordSummaryRepository,
     aiController: options.aiController,
@@ -336,6 +340,9 @@ export async function processDataHookJob(
       : {}),
     ...(deps.enqueueAiRecordNarrative
       ? { enqueueAiRecordNarrative: deps.enqueueAiRecordNarrative }
+      : {}),
+    ...(deps.invalidateAiRecordNarratives
+      ? { invalidateAiRecordNarratives: deps.invalidateAiRecordNarratives }
       : {}),
     ...(deps.userNotificationRepository
       ? {
