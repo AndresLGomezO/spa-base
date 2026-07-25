@@ -55,7 +55,10 @@ function AppShellColumn() {
     !runtime.exists || appShellLayoutHasContent(runtime.config.headerLayout);
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <div
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      data-app-shell-column
+    >
       <NavigationProgressBar />
       <AppHeader />
       <MainOutlet padTopSafeArea={!hasHeaderChrome} />

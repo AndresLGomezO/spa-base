@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 
@@ -21,6 +21,7 @@ import { createRuntimeAppShellChromeRenderContext } from "../../features/ui-buil
 import { resolveAppShellChromeDisplayClassName } from "./app-shell-chrome-display";
 import { appShellLayoutHasContent } from "./app-shell-layout-has-content";
 import { resolveAppShellRootContainerRow } from "./app-shell-root-container";
+import { usePublishAppShellFooterOffset } from "./use-publish-app-shell-footer-offset";
 
 interface AppFooterProps {
   readonly layout: UiLayoutDocument;
@@ -39,6 +40,10 @@ export function AppFooter({ layout }: AppFooterProps) {
   const { user } = useAuth();
   const { pathname } = useLocation();
   const atBreakpoint = usePreviewBreakpoint();
+  const hostRef = useRef<HTMLElement>(null);
+  const hasContent = appShellLayoutHasContent(layout);
+
+  usePublishAppShellFooterOffset(hostRef, hasContent);
 
   const layoutUser = useMemo<LayoutUserInfo | null>(() => {
     if (!user) {
@@ -62,7 +67,7 @@ export function AppFooter({ layout }: AppFooterProps) {
     [i18n.language, layoutUser, pathname, t],
   );
 
-  if (!appShellLayoutHasContent(layout)) {
+  if (!hasContent) {
     return null;
   }
 
@@ -79,6 +84,7 @@ export function AppFooter({ layout }: AppFooterProps) {
 
     return (
       <footer
+        ref={hostRef}
         className={cn(
           FOOTER_HOST_STRUCTURAL_CLASS_NAME,
           stackDirection === "row" ? "flex-row items-center" : "flex-col",
@@ -88,6 +94,7 @@ export function AppFooter({ layout }: AppFooterProps) {
         )}
         style={containerStyles.style}
         data-layout-row-id={rootContainer.id}
+        data-testid="app-shell-footer"
       >
         <ResponsiveStyleTag cssText={containerStyles.cssText} />
         <RecursiveLayoutRenderer
@@ -102,10 +109,12 @@ export function AppFooter({ layout }: AppFooterProps) {
 
   return (
     <footer
+      ref={hostRef}
       className={cn(
         FOOTER_HOST_DEFAULT_CHROME_CLASS_NAME,
         chromeDisplayClassName,
       )}
+      data-testid="app-shell-footer"
     >
       <RecursiveLayoutRenderer layout={layout} context={context} />
     </footer>

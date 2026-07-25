@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
@@ -11,6 +11,7 @@ import "./ai-chat.css";
 export function AiChatFab() {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { isReady, tenantId } = useAuth();
   const canRun = usePermission("ai.chat.run");
   const canRead = usePermission("ai.chat.read");
@@ -27,8 +28,19 @@ export function AiChatFab() {
     return null;
   }
 
+  // Full page chat already owns the conversation chrome.
+  if (pathname.startsWith("/ai/chat")) {
+    return null;
+  }
+
   return (
-    <div className="pointer-events-none fixed right-4 bottom-4 z-[60] flex flex-col items-end gap-3">
+    <div
+      className="pointer-events-none fixed right-4 z-[60] flex flex-col items-end gap-3"
+      style={{
+        bottom: "calc(1rem + var(--app-shell-footer-offset, 0px))",
+      }}
+      data-testid="ai-chat-fab-anchor"
+    >
       {open ? (
         <div className="pointer-events-auto">
           <AiChatPanel
