@@ -8,8 +8,10 @@ import { assertDirectRuntimeDependencies } from "@repo/esbuild-runtime-deps";
 
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
 const npmExternals = [
+  "@google-cloud/aiplatform",
   "@google-cloud/firestore",
   "@google-cloud/pubsub",
+  "@google-cloud/tasks",
   "@google-cloud/vertexai",
   "@google/genai",
   "google-auth-library",

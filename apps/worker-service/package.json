@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@app/platform": "workspace:*",
+    "@google-cloud/aiplatform": "catalog:",
     "@google-cloud/firestore": "catalog:",
     "@google-cloud/pubsub": "catalog:",
     "@google-cloud/tasks": "catalog:",
