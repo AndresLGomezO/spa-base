@@ -193,6 +193,7 @@ Tenant `admin` role (`*` grant) includes all hook permissions. Hook actions that
 
 ## Related
 
+- [browser-push-notifications.md](./browser-push-notifications.md) — web push architecture + deploy QA runbook
 - [data-hook-definition-json.md](./data-hook-definition-json.md) — **full Data Hooks specification**
 - [data-hooks.md](./data-hooks.md) — product overview
 - [module-extension-guide.md](./module-extension-guide.md)

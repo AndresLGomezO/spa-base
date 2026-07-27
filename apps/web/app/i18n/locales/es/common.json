@@ -1549,7 +1549,16 @@
     "fromHook": "De {{hook}}",
     "onEntity": "en {{entity}}",
     "newFromHook": "De {{hook}}",
-    "viewRecord": "Ver registro"
+    "viewRecord": "Ver registro",
+    "view": "Ver"
+  },
+  "push": {
+    "softAsk": {
+      "title": "Mantente al día",
+      "body": "Activa las notificaciones del navegador para recibir alertas aunque esta pestaña esté en segundo plano.",
+      "enable": "Activar",
+      "notNow": "Ahora no"
+    }
   },
   "indexProvisioning": {
     "environmentBlocked": {

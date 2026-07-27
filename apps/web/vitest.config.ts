@@ -5,6 +5,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "~": path.resolve(__dirname, "app"),
+      "virtual:pwa-register": path.resolve(
+        __dirname,
+        "test-stubs/virtual-pwa-register.ts",
+      ),
     },
   },
   test: {

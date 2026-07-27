@@ -3,6 +3,8 @@ import {
   getToken,
   isSupported,
   deleteToken,
+  onMessage,
+  type MessagePayload,
   type Messaging,
 } from "firebase/messaging";
 
@@ -221,6 +223,47 @@ export async function requestPushPermissionAndRegisterToken(): Promise<PushRegis
     console.error("[push] Failed to register token:", error);
     return { status: "error", message };
   }
+}
+
+type ForegroundPushPayload = {
+  readonly title: string;
+  readonly body?: string;
+  readonly level: "info" | "error";
+  readonly url: string;
+  readonly raw: MessagePayload;
+};
+
+/**
+ * Subscribe to FCM messages delivered while this tab is focused.
+ * Returns an unsubscribe function. No-ops when messaging is unsupported.
+ */
+export async function subscribeToForegroundMessages(
+  onPush: (payload: ForegroundPushPayload) => void,
+): Promise<() => void> {
+  const messaging = await getMessagingIfSupported();
+  if (!messaging) {
+    return () => {};
+  }
+
+  return onMessage(messaging, (payload) => {
+    const title =
+      (typeof payload.data?.title === "string" ? payload.data.title : null) ??
+      payload.notification?.title ??
+      "Notification";
+    const body =
+      (typeof payload.data?.body === "string" ? payload.data.body : null) ??
+      payload.notification?.body ??
+      undefined;
+    const level =
+      payload.data?.level === "error" || payload.data?.level === "info"
+        ? payload.data.level
+        : "info";
+    const url =
+      typeof payload.data?.url === "string"
+        ? payload.data.url
+        : "/notifications";
+    onPush({ title, body, level, url, raw: payload });
+  });
 }
 
 export async function clearLocalPushRegistration(): Promise<ClearPushRegistrationResult> {

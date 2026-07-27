@@ -5,6 +5,11 @@ import { afterEach, vi } from "vitest";
 
 import "./app/i18n";
 
+// Vite PWA virtual module — only exists when the VitePWA plugin is active.
+vi.mock("virtual:pwa-register", () => ({
+  registerSW: () => () => {},
+}));
+
 vi.mock("./app/hooks/useTenantIndexReadiness", () => ({
   useTenantIndexReadiness: () => ({
     isEnvironmentReady: true,

@@ -1549,7 +1549,16 @@
     "fromHook": "From {{hook}}",
     "onEntity": "on {{entity}}",
     "newFromHook": "From {{hook}}",
-    "viewRecord": "View record"
+    "viewRecord": "View record",
+    "view": "View"
+  },
+  "push": {
+    "softAsk": {
+      "title": "Stay up to date",
+      "body": "Enable browser notifications to get alerts even when this tab is in the background.",
+      "enable": "Enable",
+      "notNow": "Not now"
+    }
   },
   "indexProvisioning": {
     "environmentBlocked": {

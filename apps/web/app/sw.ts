@@ -80,6 +80,11 @@ try {
   const messaging = getMessaging(firebaseApp);
 
   onBackgroundMessage(messaging, (payload) => {
+    if (payload.notification) {
+      console.warn(
+        "[sw] FCM payload includes `notification`; prefer data-only so foreground tabs control UX.",
+      );
+    }
     const title =
       payload.notification?.title ??
       (typeof payload.data?.title === "string" ? payload.data.title : null) ??

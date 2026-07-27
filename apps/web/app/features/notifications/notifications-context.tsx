@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 import { toast } from "@repo/ui";
 
@@ -21,7 +22,9 @@ import {
   markNotificationRead,
   type UserNotificationRecord,
 } from "../../lib/api-client";
+import { subscribeToForegroundMessages } from "../../lib/firebase-messaging";
 import { invalidateLivePageData } from "../../query/invalidate-live-page-data";
+import { PushOptInPrompt } from "./PushOptInPrompt";
 import {
   invalidateNotificationQueries,
   NOTIFICATIONS_PREVIEW_LIMIT,
@@ -73,12 +76,49 @@ export function NotificationsProvider({
 }) {
   const { t } = useTranslation("common");
   const { isReady, tenantId } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isPanelOpen, setPanelOpen] = useState(false);
   const seenNotificationIdsRef = useRef<Set<string>>(new Set());
   const initializedSeenRef = useRef(false);
+  /** After a foreground FCM toast, skip poll toasts briefly to avoid duplicates. */
+  const suppressPollToastUntilRef = useRef(0);
 
   useSilentHookExecutionRefresh();
+
+  useEffect(() => {
+    if (!isReady || !tenantId) {
+      return;
+    }
+
+    let dispose: (() => void) | undefined;
+    let cancelled = false;
+
+    void subscribeToForegroundMessages((payload) => {
+      suppressPollToastUntilRef.current = Date.now() + 15_000;
+      const message = payload.body?.trim() || payload.title;
+      (payload.level === "error" ? toast.error : toast.info)(message, {
+        action: {
+          label: t("notifications.view"),
+          onClick: () => {
+            void navigate(payload.url);
+          },
+        },
+      });
+      invalidateNotificationQueries(queryClient, tenantId);
+    }).then((unsubscribe) => {
+      if (cancelled) {
+        unsubscribe();
+        return;
+      }
+      dispose = unsubscribe;
+    });
+
+    return () => {
+      cancelled = true;
+      dispose?.();
+    };
+  }, [isReady, tenantId, queryClient, navigate, t]);
 
   const notificationsQuery = useQuery({
     queryKey: notificationsQueryKeys.preview(tenantId),
@@ -118,12 +158,16 @@ export function NotificationsProvider({
       return;
     }
 
-    for (const item of unseen) {
-      toast.info(item.message, {
-        description: item.hookName
-          ? t("notifications.newFromHook", { hook: item.hookName })
-          : undefined,
-      });
+    const suppressPollToasts = Date.now() < suppressPollToastUntilRef.current;
+
+    if (!suppressPollToasts) {
+      for (const item of unseen) {
+        toast.info(item.message, {
+          description: item.hookName
+            ? t("notifications.newFromHook", { hook: item.hookName })
+            : undefined,
+        });
+      }
     }
 
     if (unseen.length > 0) {
@@ -173,6 +217,7 @@ export function NotificationsProvider({
 
   return (
     <NotificationsContext.Provider value={value}>
+      <PushOptInPrompt />
       {children}
     </NotificationsContext.Provider>
   );

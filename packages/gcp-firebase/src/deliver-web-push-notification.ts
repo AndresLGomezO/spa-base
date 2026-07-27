@@ -69,12 +69,15 @@ export function createDeliverWebPushNotification(
       offset += FCM_MULTICAST_LIMIT
     ) {
       const chunk = records.slice(offset, offset + FCM_MULTICAST_LIMIT);
+      // Data-only: Chrome auto-shows an OS toast for `notification` even in a
+      // focused tab, which would duplicate the client `onMessage` in-app toast.
+      // The service worker and foreground handler both render from `data`.
       const response = await messaging.sendEachForMulticast({
         tokens: chunk.map((record) => record.token),
-        notification: { title, body },
         data,
         webpush: {
           fcmOptions: { link: "/notifications" },
+          headers: { Urgency: "high" },
         },
       });
 

@@ -78,11 +78,17 @@ describe("createDeliverWebPushNotification", () => {
     expect(payload.tokens).toEqual(
       expect.arrayContaining(["token-a", "token-b"]),
     );
-    expect(payload.notification).toEqual({
+    expect(payload.notification).toBeUndefined();
+    expect(payload.data).toEqual({
+      url: "/notifications",
       title: "Notification",
       body: "Payment due",
+      level: "info",
     });
-    expect(payload.data.url).toBe("/notifications");
+    expect(payload.webpush).toEqual({
+      fcmOptions: { link: "/notifications" },
+      headers: { Urgency: "high" },
+    });
   });
 
   it("prunes invalid tokens without failing the send", async () => {
