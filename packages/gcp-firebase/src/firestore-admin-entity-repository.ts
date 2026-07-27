@@ -12,7 +12,9 @@ import { runFirestoreTransactionWithRetry } from "./firestore-transaction-retry.
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 100;
+/** Max docs returned from a single Firestore round-trip. Callers that need more must paginate via `nextCursor`. */
+export const FIND_BY_FIELD_PAGE_SIZE = 100;
+const MAX_LIMIT = FIND_BY_FIELD_PAGE_SIZE;
 const FIRESTORE_BATCH_LIMIT = 400;
 
 function normalizeLimit(limit: number | undefined): number {
@@ -174,17 +176,13 @@ class FirestoreAdminEntityRepository<
     const limit = normalizeLimit(params.limit);
     const collectionRef = this.getCollection(params.tenantId);
     const fieldEquals = collectionRef.where(params.field, "==", params.value);
-    const useCursorPagination = Boolean(params.cursor);
 
     // Equality-only queries use Firestore automatic single-field indexes, so
     // hook lookups (getOrCreateRecord / updateMatching / relations) work for
     // any tenant and any entity field without per-field composite indexes.
-    // orderBy("id") is only required for stable cursor pagination and needs a
-    // composite (field ASC, id ASC) that production enforces and the emulator
-    // does not — keep it gated on cursor so local/prod behave the same.
-    let query = useCursorPagination
-      ? fieldEquals.orderBy("id").limit(limit)
-      : fieldEquals.limit(limit);
+    // Paginate with startAfter(snapshot) on the equality query — do not
+    // orderBy("id"), which would require a (field, id) composite index.
+    let query = fieldEquals.limit(limit);
 
     if (params.cursor) {
       const cursorDoc = await collectionRef.doc(params.cursor).get();
@@ -202,11 +200,8 @@ class FirestoreAdminEntityRepository<
     );
 
     const hasMore = items.length === limit;
-    // Without orderBy, page tokens are not stable across requests.
     const nextCursor =
-      useCursorPagination && hasMore && items.length > 0
-        ? items[items.length - 1]!.id
-        : null;
+      hasMore && items.length > 0 ? items[items.length - 1]!.id : null;
 
     return {
       items,

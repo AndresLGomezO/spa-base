@@ -16,7 +16,10 @@ export {
   verifyFirebaseIdToken,
 } from "./auth.js";
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
-export { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
+export {
+  createFirestoreAdminEntityRepository,
+  FIND_BY_FIELD_PAGE_SIZE,
+} from "./firestore-admin-entity-repository.js";
 export {
   createFirestoreEntityQueryExecutor,
   isMissingIndexError,

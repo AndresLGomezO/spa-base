@@ -210,6 +210,7 @@ export {
   MAX_SWITCH_CASES,
   MAX_FORMULA_DEPTH,
   MAX_ARRAY_LITERAL_ITEMS,
+  MAX_CALL_ARGS,
   expressionNodeSchema,
   evaluateExpression,
   walkExpressionNodes,

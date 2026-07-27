@@ -110,6 +110,9 @@ export type ExpressionValue = ExpressionLiteralValue;
 /** Max items per array literal on a `literal` expression node. */
 export const MAX_ARRAY_LITERAL_ITEMS = 32;
 
+/** Max arguments per expression `call` node (e.g. long `concat` JSON builders). */
+export const MAX_CALL_ARGS = 32;
+
 /** Max case rows per `switch` expression node. */
 export const MAX_SWITCH_CASES = 32;
 
@@ -251,7 +254,7 @@ export const expressionNodeSchema: z.ZodType<ExpressionNode> = z.lazy(() =>
     z.object({
       kind: z.literal("call"),
       fn: z.enum(enumValues(EXPRESSION_FUNCTIONS)),
-      args: z.array(expressionNodeSchema).max(16),
+      args: z.array(expressionNodeSchema).max(MAX_CALL_ARGS),
     }),
     z.object({
       kind: z.literal("switch"),

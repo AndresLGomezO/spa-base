@@ -661,7 +661,7 @@ describe("runDataHook", () => {
     expect(list).toHaveBeenCalledWith("commitment", {
       field: "contractId",
       value: "loan_1",
-      limit: 500,
+      limit: 10_000,
     });
     expect(update).toHaveBeenCalledTimes(2);
     expect(update.mock.calls[0]?.[2]).toEqual({ isActive: false });
@@ -932,7 +932,7 @@ describe("runDataHook", () => {
     expect(list).toHaveBeenCalledWith("paymentSchedule", {
       field: "contractId",
       value: "loan_1",
-      limit: 500,
+      limit: 10_000,
     });
     expect(update).toHaveBeenCalledTimes(2);
     expect(update.mock.calls.map((call) => call[1])).toEqual(["ps_1", "ps_3"]);
@@ -1063,7 +1063,7 @@ describe("runDataHook", () => {
     expect(list).toHaveBeenCalledWith("paymentSchedule", {
       field: "financialItemId",
       value: "fi_1",
-      limit: 500,
+      limit: 10_000,
     });
     expect(deleteFn).toHaveBeenCalledTimes(2);
     expect(deleteFn.mock.calls.map((call) => call[1])).toEqual([

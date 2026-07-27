@@ -322,17 +322,24 @@ export function createCallDataHookAi(
         ? `${sections.join("\n\n")}\n\n---\n\n${request.prompt}`
         : request.prompt;
     const classify = isClassifyRequest(request);
+    const useReasoning = request.model === "reasoning";
     const reasoningModelId =
       deps.vertexAiConfig.reasoningModelId ?? deps.vertexAiConfig.modelId;
+    const flashModelId = deps.vertexAiConfig.modelId;
     const modelOptions = classify
       ? {
           ...CLASSIFY_GENERATE_OPTIONS,
           maxOutputTokens: DATA_HOOK_AI_MAX_OUTPUT_TOKENS,
         }
-      : {
-          ...NARRATIVE_GENERATE_OPTIONS,
-          modelId: reasoningModelId,
-        };
+      : useReasoning
+        ? {
+            ...NARRATIVE_GENERATE_OPTIONS,
+            modelId: reasoningModelId,
+          }
+        : {
+            ...NARRATIVE_GENERATE_OPTIONS,
+            modelId: flashModelId,
+          };
 
     if (deps.vertexAiConfig.mockEnabled && classify) {
       return finalizeClassification(

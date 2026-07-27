@@ -806,6 +806,7 @@ async function runAction(
         ...(action.includeEntities && action.includeEntities.length > 0
           ? { includeEntities: action.includeEntities }
           : {}),
+        ...(action.model ? { model: action.model } : {}),
         ...(action.cacheKey
           ? (() => {
               const keyValue = evaluateExpression(action.cacheKey, scope);

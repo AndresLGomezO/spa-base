@@ -112,7 +112,7 @@ describe("update matching utils", () => {
     expect(list).toHaveBeenCalledWith("transaction", {
       field: "amount",
       value: 726300,
-      limit: 500,
+      limit: 10_000,
     });
     expect(matches).toHaveLength(1);
     expect(matches[0]?.id).toBe("txn_1");

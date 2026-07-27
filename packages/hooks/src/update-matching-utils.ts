@@ -15,7 +15,12 @@ import type {
 } from "./types.js";
 import { HookExecutionError } from "./types.js";
 
-export const MAX_MATCHING_RECORDS = 500;
+/**
+ * Safety ceiling for `updateMatching` / `deleteMatching` / scheduled
+ * `eachRecord` fan-out. Repository pages are smaller; hook list services
+ * follow `nextCursor` until this many matches are collected (or exhausted).
+ */
+export const MAX_MATCHING_RECORDS = 10_000;
 
 export function normalizeUpdateMatchingWhere(
   node: DataHookConditionNode | DataHookCondition,

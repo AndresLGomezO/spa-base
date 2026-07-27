@@ -484,6 +484,11 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
       .max(MAX_CALL_AI_INCLUDE_ENTITIES)
       .optional(),
     /**
+     * Model tier. Omit or `flash` = default Flash model. `reasoning` = Pro /
+     * reasoning model (long-form narrative JSON only).
+     */
+    model: z.enum(["flash", "reasoning"]).optional(),
+    /**
      * Optional expression → string used to memoize/batch identical callAi
      * requests within a schedule tick (e.g. normalizeMatchText(description)).
      */

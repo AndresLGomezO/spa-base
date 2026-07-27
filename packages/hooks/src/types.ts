@@ -85,7 +85,11 @@ export interface HookEntityRepository {
     field: string;
     value: HookEntityListQueryValue;
     limit?: number;
-  }): Promise<{ readonly items: readonly HookEntityRepositoryRecord[] }>;
+    cursor?: string;
+  }): Promise<{
+    readonly items: readonly HookEntityRepositoryRecord[];
+    readonly nextCursor: string | null;
+  }>;
 }
 
 export interface HookEntityRuntime {
@@ -146,6 +150,11 @@ export interface DataHookAiRequest {
   readonly prompt: string;
   readonly systemInstruction?: string;
   readonly includeEntities?: readonly string[];
+  /**
+   * Model tier for this call. Default `flash`. Use `reasoning` only for
+   * long-form narrative JSON that needs the Pro/reasoning model.
+   */
+  readonly model?: "flash" | "reasoning";
   readonly tenantId: string;
   /**
    * Optional memo/batch key (e.g. normalizeMatchText output). Identical keys

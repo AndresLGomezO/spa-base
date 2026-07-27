@@ -1,7 +1,9 @@
 /**
- * Generates business-entity AI summary data-hooks and local seed docs for
- * grounded chat RAG (actor, account, transaction, email, paymentSchedule,
- * statement, balanceSnapshot).
+ * Generates low-volume business-entity AI summary data-hooks and local seed
+ * docs for grounded chat RAG (actor, account).
+ *
+ * High-volume series (paymentSchedule, email, balanceSnapshot, statement) are
+ * intentionally omitted — chat reaches them via insight surfaces + getRecord.
  *
  * Usage: node scripts/ai/generate-business-ai-summaries.mjs
  */
@@ -34,7 +36,7 @@ function concat(...args) {
   return { kind: "call", fn: "concat", args };
 }
 
-/** Nest concat calls so each stays within the expression engine's 16-arg limit. */
+/** Nest concat calls so each stays within the expression engine's call-arg limit. */
 function concatSafe(...parts) {
   const MAX = 12;
   if (parts.length <= MAX) {
@@ -149,94 +151,6 @@ const HOOK_SPECS = [
       "currentBalance",
     ],
   },
-  {
-    file: "refresh-email-ai-summary-json.json",
-    name: "Refresh email AI summary JSON",
-    description:
-      "Upsert ai_record_summaries for emails (subject/from/status/match; body omitted for PII) for grounded chat RAG.",
-    entity: "email",
-    order: 93,
-    fields: [
-      ["id", field("id")],
-      ["subject", field("subject")],
-      ["fromAddress", field("fromAddress")],
-      ["receivedAt", field("receivedAt")],
-      ["status", field("status")],
-      ["matchRecordId", field("matchRecordId")],
-      ["snippet", field("snippet")],
-    ],
-    updateFields: [
-      "subject",
-      "fromAddress",
-      "receivedAt",
-      "status",
-      "matchRecordId",
-      "snippet",
-    ],
-  },
-  {
-    file: "refresh-payment-schedule-ai-summary-json.json",
-    name: "Refresh payment schedule AI summary JSON",
-    description:
-      "Upsert ai_record_summaries for payment schedules for grounded chat RAG.",
-    entity: "paymentSchedule",
-    order: 94,
-    fields: [
-      ["id", field("id")],
-      ["financialItemId", field("financialItemId")],
-      ["dueDate", field("dueDate")],
-      ["expectedAmount", field("expectedAmount")],
-      ["status", field("status")],
-      ["sequence", field("sequence")],
-      ["paidTransactionId", field("paidTransactionId")],
-    ],
-    updateFields: [
-      "financialItemId",
-      "dueDate",
-      "expectedAmount",
-      "status",
-      "sequence",
-      "paidTransactionId",
-    ],
-  },
-  {
-    file: "refresh-statement-ai-summary-json.json",
-    name: "Refresh statement AI summary JSON",
-    description:
-      "Upsert ai_record_summaries for statements for grounded chat RAG.",
-    entity: "statement",
-    order: 95,
-    fields: [
-      ["id", field("id")],
-      ["accountId", field("accountId")],
-      ["periodStart", field("periodStart")],
-      ["periodEnd", field("periodEnd")],
-      ["openingBalance", field("openingBalance")],
-      ["closingBalance", field("closingBalance")],
-    ],
-    updateFields: [
-      "accountId",
-      "periodStart",
-      "periodEnd",
-      "openingBalance",
-      "closingBalance",
-    ],
-  },
-  {
-    file: "refresh-balance-snapshot-ai-summary-json.json",
-    name: "Refresh balance snapshot AI summary JSON",
-    description:
-      "Upsert ai_record_summaries for balance snapshots for grounded chat RAG.",
-    entity: "balanceSnapshot",
-    order: 96,
-    fields: [
-      ["id", field("id")],
-      ["financialItemId", field("financialItemId")],
-      ["date", field("date")],
-      ["balance", field("balance")],
-    ],
-    updateFields: ["financialItemId", "date", "balance"],
-  },
 ];
 
 function loadRecords(entity) {
@@ -277,54 +191,6 @@ function pickContext(entity, record) {
         actorId: record.actorId ?? "",
         currency: record.currency ?? "",
         currentBalance: record.currentBalance ?? "",
-      };
-    case "transaction":
-      return {
-        id: record.id,
-        type: record.type ?? "",
-        amount: record.amount ?? "",
-        date: record.date ?? "",
-        description: record.description ?? "",
-        accountId: record.accountId ?? "",
-        financialItemId: record.financialItemId ?? "",
-        paymentScheduleId: record.paymentScheduleId ?? "",
-        categoryId: record.categoryId ?? "",
-      };
-    case "email":
-      return {
-        id: record.id,
-        subject: record.subject ?? "",
-        fromAddress: record.fromAddress ?? "",
-        receivedAt: record.receivedAt ?? "",
-        status: record.status ?? "",
-        matchRecordId: record.matchRecordId ?? "",
-        snippet: record.snippet ?? "",
-      };
-    case "paymentSchedule":
-      return {
-        id: record.id,
-        financialItemId: record.financialItemId ?? "",
-        dueDate: record.dueDate ?? "",
-        expectedAmount: record.expectedAmount ?? "",
-        status: record.status ?? "",
-        sequence: record.sequence ?? "",
-        paidTransactionId: record.paidTransactionId ?? "",
-      };
-    case "statement":
-      return {
-        id: record.id,
-        accountId: record.accountId ?? "",
-        periodStart: record.periodStart ?? "",
-        periodEnd: record.periodEnd ?? "",
-        openingBalance: record.openingBalance ?? "",
-        closingBalance: record.closingBalance ?? "",
-      };
-    case "balanceSnapshot":
-      return {
-        id: record.id,
-        financialItemId: record.financialItemId ?? "",
-        date: record.date ?? "",
-        balance: record.balance ?? "",
       };
     default:
       return { id: record.id };
@@ -376,38 +242,10 @@ for (const spec of HOOK_SPECS) {
   console.log(`wrote hook ${spec.file}`);
 }
 
-const SEED_ENTITIES = [
-  "actor",
-  "account",
-  "transaction",
-  "email",
-  "paymentSchedule",
-  "statement",
-  "balanceSnapshot",
-];
-
-// Cap high-volume entities to keep seed size reasonable while covering Q&A.
-const CAPS = {
-  transaction: 120,
-  paymentSchedule: 120,
-  balanceSnapshot: 80,
-};
+const SEED_ENTITIES = ["actor", "account"];
 
 for (const entity of SEED_ENTITIES) {
-  let records = loadRecords(entity);
-  if (entity === "paymentSchedule") {
-    records = [...records].sort((a, b) =>
-      String(b.dueDate ?? "").localeCompare(String(a.dueDate ?? "")),
-    );
-  } else if (entity === "transaction" || entity === "balanceSnapshot") {
-    records = [...records].sort((a, b) =>
-      String(b.date ?? "").localeCompare(String(a.date ?? "")),
-    );
-  }
-  const cap = CAPS[entity];
-  if (cap != null) {
-    records = records.slice(0, cap);
-  }
+  const records = loadRecords(entity);
   for (const record of records) {
     writeSeed(entity, record);
   }

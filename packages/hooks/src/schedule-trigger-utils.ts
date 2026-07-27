@@ -9,7 +9,8 @@ import { formatHookEvent } from "./event.js";
 import type { HookContext, HookUser } from "./types.js";
 import { HookExecutionError } from "./types.js";
 
-export const MAX_SCHEDULED_RECORDS_PER_RUN = 500;
+/** Safety ceiling for `eachRecord` schedule fan-out per hook per tick. */
+export const MAX_SCHEDULED_RECORDS_PER_RUN = 10_000;
 
 export const SCHEDULED_HOOK_SENTINEL_ID = "__scheduled__" as const;
 

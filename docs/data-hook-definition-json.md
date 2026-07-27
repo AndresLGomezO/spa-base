@@ -147,8 +147,8 @@ When `chainHooks: true`, entity writes and deletes from this hook's actions (`cr
 |-------|-------|------------|
 | Max `createRecords` (sync) | 1,000 (`MAX_CREATE_RECORDS`) | `before` phase; `after` + `sync` or `deferred` |
 | Max `createRecords` (queued) | 5,000 (`MAX_CREATE_RECORDS_QUEUED`) | `after` + `execution: "queued"` only |
-| Max matching records | 500 | `updateMatching` / `deleteMatching` / scheduled `eachRecord` fan-out |
-| Max scheduled records per tick | 500 | `eachRecord` scope per hook per tick |
+| Max matching records | 10,000 | `updateMatching` / `deleteMatching` / scheduled `eachRecord` fan-out |
+| Max scheduled records per tick | 10,000 | `eachRecord` scope per hook per tick |
 | Max loaded records | 8 | `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` / `callAi` actions per hook |
 | Max aggregate actions | 8 | `aggregateMatching` actions per hook |
 | Max hook depth | 5 | Chained dispatch |
@@ -253,7 +253,7 @@ Time-based hooks run on a cron schedule via worker-service (`POST /tasks/schedul
 
 - `phase` must be `after` (before-phase scheduled hooks are rejected).
 - `scope: "once"` runs the hook once per tick with a synthetic trigger record (`id: "__scheduled__"`). Use batch actions such as `updateMatching`, `deleteMatching`, or `aggregateMatching`.
-- `scope: "eachRecord"` lists up to 500 matching entity rows per tick and runs the hook once per row (`current` = record). Use for per-row `setField`, notifications, etc.
+- `scope: "eachRecord"` lists up to 10,000 matching entity rows per tick and runs the hook once per row (`current` = record). Use for per-row `setField`, notifications, etc.
 - Scheduled hooks do not fire on CRUD events (`{entity}.afterSchedule` is separate from `{entity}.afterUpdate`).
 - Design hooks to be **idempotent** — the same cron minute may be evaluated more than once during deploys or retries.
 - `execution: "queued"` is recommended for long-running scheduled hooks; the tick runner invokes `runDataHook` directly on worker-service (no re-enqueue loop).
@@ -554,7 +554,7 @@ Find records on another entity and apply field updates.
 | `set` | Field map; expressions see **matched record** as `current`, **trigger** as `previous` |
 | `ifNoMatches` | Optional. `continue` (default): empty match set is a no-op and the hook can still finish **success**. `skip`: end the whole hook run as **skipped** with reason `No matching records.` (use when the update is the hook’s real purpose, e.g. complete one-time item / replan loan). |
 
-The runtime uses the first `==` leaf (depth-first) for `findByField`, then post-filters up to 500 candidates with the full `where` tree.
+The runtime uses the first `==` leaf (depth-first) for `findByField`, then post-filters up to 10,000 candidates with the full `where` tree (repository pages are followed via `nextCursor`).
 
 ### `deleteMatching`
 
@@ -779,7 +779,7 @@ Compute a scalar over records matching a compound `where` tree (same shape as `u
 ```
 
 - `entity` (required): target entity name
-- `where` (required): condition tree with at least one `==` lookup leaf (max 500 matched rows)
+- `where` (required): condition tree with at least one `==` lookup leaf (max 10,000 matched rows)
 - `op` (required): `count` | `sum` | `min` | `max` | `avg`
 - `field` (required when `op` is not `count`): field name on matched records to reduce
 - `as` (required): alias for the result; unique among all `getRecord` / `getOrCreateRecord` / `matchRelatedRecord` / `aggregateMatching` actions in the hook
@@ -894,7 +894,9 @@ Invoke Vertex AI (worker-service) with a prompt, parse the JSON object response,
 - `prompt` (required): expression → non-empty string
 - `systemInstruction` (optional): expression → string; defaults in the worker caller
 - `when` (optional): expression; when falsey, skips the model call and loads `null` at `as`
-- `includeEntities` (optional): up to 3 entity names; worker loads up to 500 compact records each into the prompt
+- `includeEntities` (optional): up to 3 entity names; worker loads up to 500 compact records each into the prompt (classify path; Flash)
+- `model` (optional): `"flash"` (default) or `"reasoning"`. Use `reasoning` only for long-form narrative JSON that needs the Pro model. Enrichment / tagging should stay on Flash.
+- `cacheKey` (optional): expression → string; identical keys within a schedule tick share one model call
 - `as` (required): loaded alias for the parsed JSON object (or `null` when skipped)
 - Requires the `callAi` service (wired on worker-service). Sync API runs without Vertex will throw if this action executes.
 - **Every `callAi` / batch / embedding request is recorded** to `ai_jobs` via the unified AI controller and appears under `/debugger/ai-jobs` (feature `dataHookCallAi`, `dataHookBatchCallAi`, or `dataHookEmbedding`). Platform Observability exposes the AI kill-switch (`aiEnabled`) and trace toggle (`aiTraceEnabled`).
@@ -1083,7 +1085,7 @@ Division/modulo by zero throws `ExpressionEvaluationError`.
 }
 ```
 
-Max 16 arguments per call.
+Max 32 arguments per call.
 
 #### `switch`
 

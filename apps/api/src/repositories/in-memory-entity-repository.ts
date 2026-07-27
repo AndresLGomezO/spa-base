@@ -7,6 +7,7 @@ import type {
 } from "@repo/firestore-converters";
 
 const DEFAULT_LIMIT = 20;
+/** Max docs returned from a single page. Callers that need more must paginate via `nextCursor`. */
 const MAX_LIMIT = 100;
 
 function storageKey(tenantId: string, id: string): string {
@@ -29,6 +30,15 @@ function filterTenantRecords<
   return [...store.values()]
     .filter((record) => record.tenantId === tenantId)
     .sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function fieldEquals(
+  record: Record<string, unknown>,
+  field: string,
+  value: string | number | boolean,
+): boolean {
+  // Preserve typed Firestore equality (boolean/number); do not String()-coerce.
+  return record[field] === value;
 }
 
 function paginateRecords<TRecord extends { readonly id: string }>(
@@ -122,8 +132,11 @@ export function createInMemoryEntityRepository<
       const limit = normalizeLimit(params.limit);
       const tenantRecords = filterTenantRecords(store, params.tenantId).filter(
         (record) =>
-          String((record as Record<string, unknown>)[params.field]) ===
-          params.value,
+          fieldEquals(
+            record as Record<string, unknown>,
+            params.field,
+            params.value,
+          ),
       );
       return paginateRecords(tenantRecords, limit, params.cursor);
     },

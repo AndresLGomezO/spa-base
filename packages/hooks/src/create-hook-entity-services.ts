@@ -1,6 +1,7 @@
 import { prepareRecordSearchFields } from "@repo/entities";
 import { nanoid } from "nanoid";
 import type {
+  HookEntityRepositoryRecord,
   HookEntityRuntime,
   HookEntityServices,
   HookEntityWriteOptions,
@@ -498,14 +499,39 @@ export function createHookEntityServices(options: {
         "read",
       );
 
-      const result = await repository.findByField({
-        tenantId: options.tenantId,
-        field: query.field,
-        value: query.value,
-        ...(query.limit !== undefined ? { limit: query.limit } : {}),
-      });
+      // Repository pages are capped (e.g. 100). Follow nextCursor until the
+      // requested limit is satisfied or matches are exhausted so scheduled
+      // eachRecord / updateMatching can scale past a single page.
+      const targetLimit = query.limit;
+      const collected: HookEntityRepositoryRecord[] = [];
+      let cursor: string | undefined;
 
-      return result.items.map((item) => {
+      for (;;) {
+        const remaining =
+          targetLimit === undefined
+            ? undefined
+            : targetLimit - collected.length;
+        if (remaining !== undefined && remaining <= 0) {
+          break;
+        }
+
+        const result = await repository.findByField({
+          tenantId: options.tenantId,
+          field: query.field,
+          value: query.value,
+          ...(remaining !== undefined ? { limit: remaining } : {}),
+          ...(cursor ? { cursor } : {}),
+        });
+
+        collected.push(...result.items);
+
+        if (!result.nextCursor || result.items.length === 0) {
+          break;
+        }
+        cursor = result.nextCursor;
+      }
+
+      return collected.map((item) => {
         const record = item as Record<string, unknown>;
         const filtered = accessControl.filterFields(
           record,

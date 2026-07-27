@@ -149,7 +149,7 @@ Hooks with `trigger.kind: "schedule"` register on `{entity}.afterSchedule` and *
 | `setField` | Mutate trigger record (before: in place; after: service update) |
 | `createRecord` | Create one related record |
 | `createRecords` | Loop create (max 1,000) |
-| `updateMatching` | Find and update related records (max 500 matches) |
+| `updateMatching` | Find and update related records (max 10,000 matches) |
 | `sendNotification` | In-app bell for the acting user; optional browser push when enabled in Account → General |
 | `callWebhook` | POST JSON to an HTTPS URL (optional expression-driven body) |
 

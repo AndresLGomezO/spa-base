@@ -72,7 +72,7 @@ export const EXPRESSION_FUNCTION_SPECS: Record<
   },
   concat: {
     minArgs: 1,
-    maxArgs: 8,
+    maxArgs: 32,
     args: [{ kind: "expression" }],
     variadic: true,
   },

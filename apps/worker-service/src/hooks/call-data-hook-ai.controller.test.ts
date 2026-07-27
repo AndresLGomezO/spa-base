@@ -18,7 +18,101 @@ function textResult(text: string, modelId = "gemini-3.6-flash") {
 }
 
 describe("createCallDataHookAi via controller", () => {
-  it("records an ai_jobs entry with feature/operation/input/output", async () => {
+  it("records an ai_jobs entry with feature/operation/input/output on Flash by default", async () => {
+    const repository = createInMemoryAiJobRepository();
+    const generateModelAnswer = vi.fn(async () =>
+      textResult(
+        JSON.stringify({ summary: "ok", confidence: 1 }),
+        "gemini-3.6-flash",
+      ),
+    );
+    const aiController = createAiController({
+      repository,
+      vertexAiConfig: {
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        reasoningModelId: "gemini-3.1-pro-preview",
+        mockEnabled: false,
+      },
+      clients: {
+        generateModelAnswer,
+        generateChatAnswer: vi.fn(async () => textResult("unused")),
+        generateTextEmbedding: vi.fn(async () => ({
+          vector: [0.1],
+          usage: { modelId: "text-embedding-005", outputDimensions: 1 },
+        })),
+      },
+      flags: {
+        isAiEnabled: () => true,
+        isAiTraceEnabled: () => true,
+      },
+    });
+
+    const callAi = createCallDataHookAi({
+      vertexAiConfig: {
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        reasoningModelId: "gemini-3.1-pro-preview",
+        mockEnabled: false,
+      },
+      aiController,
+      getRepository: () => undefined,
+    });
+
+    const result = await callAi({
+      tenantId: "tenant_a",
+      hookId: "hook_enrich",
+      hookName: "Enrich transactions",
+      hookExecutionId: "exec_1",
+      recordId: "txn_1",
+      entityName: "transaction",
+      prompt: "Enrich this transaction",
+      systemInstruction: "Reply with JSON only.",
+    });
+
+    expect(result).toMatchObject({ summary: "ok" });
+    expect(generateModelAnswer).toHaveBeenCalledOnce();
+    expect(generateModelAnswer).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        modelId: "gemini-3.6-flash",
+        responseMimeType: "application/json",
+      }),
+    );
+
+    const jobs = await repository.listRecent("tenant_a", { limit: 10 });
+    expect(jobs).toHaveLength(1);
+    const job = jobs[0]!;
+    expect(job.feature).toBe("dataHookCallAi");
+    expect(job.operation).toBe("generateText");
+    expect(job.status).toBe("completed");
+    expect(job.contextRef).toEqual({
+      source: "hookExecution",
+      id: "exec_1",
+    });
+    expect(job.input).toMatchObject({
+      kind: "dataHookCallAi",
+      hookId: "hook_enrich",
+      prompt: "Enrich this transaction",
+    });
+    expect(job.output).toEqual({
+      text: JSON.stringify({ summary: "ok", confidence: 1 }),
+    });
+    expect(job.stepTrace?.length).toBe(1);
+    expect(job.stepTrace?.[0]?.durationMs).toBeTypeOf("number");
+    expect(job.modelUsage).toMatchObject({
+      modelId: "gemini-3.6-flash",
+      promptTokens: 100,
+      candidatesTokens: 40,
+    });
+    expect(job.modelUsage?.estimatedCostUsd).toBeTypeOf("number");
+    expect(job.stepTrace?.[0]?.modelUsage?.modelId).toBe("gemini-3.6-flash");
+  });
+
+  it("uses the reasoning model when model is reasoning", async () => {
     const repository = createInMemoryAiJobRepository();
     const generateModelAnswer = vi.fn(async () =>
       textResult(
@@ -61,57 +155,22 @@ describe("createCallDataHookAi via controller", () => {
       getRepository: () => undefined,
     });
 
-    const result = await callAi({
+    await callAi({
       tenantId: "tenant_a",
       hookId: "hook_summary",
-      hookName: "Generate portfolio AI summary text",
-      hookExecutionId: "exec_1",
-      recordId: "portfolio_1",
-      entityName: "portfolioSettings",
       prompt: "Summarize portfolio",
-      systemInstruction: "Reply with JSON only.",
+      model: "reasoning",
     });
 
-    expect(result).toMatchObject({ summary: "ok" });
-    expect(generateModelAnswer).toHaveBeenCalledOnce();
     expect(generateModelAnswer).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       expect.objectContaining({
         modelId: "gemini-3.1-pro-preview",
-        responseMimeType: "application/json",
       }),
     );
-
     const jobs = await repository.listRecent("tenant_a", { limit: 10 });
-    expect(jobs).toHaveLength(1);
-    const job = jobs[0]!;
-    expect(job.feature).toBe("dataHookCallAi");
-    expect(job.operation).toBe("generateText");
-    expect(job.status).toBe("completed");
-    expect(job.contextRef).toEqual({
-      source: "hookExecution",
-      id: "exec_1",
-    });
-    expect(job.input).toMatchObject({
-      kind: "dataHookCallAi",
-      hookId: "hook_summary",
-      prompt: "Summarize portfolio",
-    });
-    expect(job.output).toEqual({
-      text: JSON.stringify({ summary: "ok", confidence: 1 }),
-    });
-    expect(job.stepTrace?.length).toBe(1);
-    expect(job.stepTrace?.[0]?.durationMs).toBeTypeOf("number");
-    expect(job.modelUsage).toMatchObject({
-      modelId: "gemini-3.1-pro-preview",
-      promptTokens: 100,
-      candidatesTokens: 40,
-    });
-    expect(job.modelUsage?.estimatedCostUsd).toBeTypeOf("number");
-    expect(job.stepTrace?.[0]?.modelUsage?.modelId).toBe(
-      "gemini-3.1-pro-preview",
-    );
+    expect(jobs[0]?.modelUsage?.modelId).toBe("gemini-3.1-pro-preview");
   });
 
   it("omits reasoning modelId for classify requests with includeEntities", async () => {

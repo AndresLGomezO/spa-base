@@ -65,7 +65,7 @@ function buildEntityRuntime() {
           },
         ),
         findById: vi.fn(async (id: string) => records.get(id) ?? null),
-        findByField: vi.fn(async () => ({ items: [] })),
+        findByField: vi.fn(async () => ({ items: [], nextCursor: null })),
         delete: vi.fn(async (id: string) => {
           if (!records.has(id)) return false;
           records.delete(id);
@@ -85,6 +85,85 @@ const openAccess = {
   assertWritableFields: () => undefined,
   filterFields: (record: Record<string, unknown>) => record,
 };
+
+describe("createHookEntityServices list pagination", () => {
+  it("follows nextCursor until the requested limit is satisfied", async () => {
+    const page1 = Array.from({ length: 100 }, (_, i) => ({
+      id: `sp_${String(i).padStart(3, "0")}`,
+      tenantId: "tenant_a",
+      active: true,
+      amount: String(i),
+    }));
+    const page2 = Array.from({ length: 74 }, (_, i) => ({
+      id: `sp_${String(i + 100).padStart(3, "0")}`,
+      tenantId: "tenant_a",
+      active: true,
+      amount: String(i + 100),
+    }));
+
+    const findByField = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: page1,
+        nextCursor: page1[page1.length - 1]!.id,
+      })
+      .mockResolvedValueOnce({ items: page2, nextCursor: null });
+
+    const services = createHookEntityServices({
+      entityRuntime: {
+        resolveEntity: () => ({
+          metadata: {
+            fields: { ...businessFields, active: { type: "boolean" } },
+          },
+          createSchema: z.object({}),
+          updateSchema: z.object({}),
+          schema: z.object({ id: z.string(), tenantId: z.string() }),
+        }),
+        getRepository: () => ({
+          create: vi.fn(),
+          createMany: vi.fn(),
+          update: vi.fn(),
+          findById: vi.fn(),
+          findByField,
+          delete: vi.fn(),
+        }),
+      } as never,
+      accessControl: {
+        ...openAccess,
+        resolveFieldAccess: () => ({
+          amount: "read",
+          note: "read",
+          active: "read",
+        }),
+      },
+      tenantId: "tenant_a",
+    });
+
+    const listed = await services.list("spendingPattern", {
+      field: "active",
+      value: true,
+      limit: 10_000,
+    });
+
+    expect(listed).toHaveLength(174);
+    expect(findByField).toHaveBeenCalledTimes(2);
+    expect(findByField).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        field: "active",
+        value: true,
+        limit: 10_000,
+      }),
+    );
+    expect(findByField).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        cursor: "sp_099",
+        limit: 9_900,
+      }),
+    );
+  });
+});
 
 describe("createHookEntityServices onRecordMutated", () => {
   beforeEach(() => {

@@ -111,4 +111,33 @@ describe("createInMemoryEntityRepository", () => {
 
     expect(matches.items.map((record) => record.id)).toEqual(["1", "2"]);
   });
+
+  it("paginates findByField past the page size and matches boolean fields", async () => {
+    const initialData = Array.from({ length: 174 }, (_, i) => ({
+      ...makeRecord(String(i).padStart(3, "0"), "tenant_a", `Row ${i}`),
+      active: true as const,
+    }));
+    const repo = createInMemoryEntityRepository<
+      TestRecord & { readonly active: boolean }
+    >({ initialData });
+
+    const first = await repo.findByField({
+      tenantId: "tenant_a",
+      field: "active",
+      value: true,
+      limit: 100,
+    });
+    expect(first.items).toHaveLength(100);
+    expect(first.nextCursor).toBe("099");
+
+    const second = await repo.findByField({
+      tenantId: "tenant_a",
+      field: "active",
+      value: true,
+      limit: 100,
+      cursor: first.nextCursor!,
+    });
+    expect(second.items).toHaveLength(74);
+    expect(second.nextCursor).toBeNull();
+  });
 });
