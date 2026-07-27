@@ -59,15 +59,23 @@ export async function processScheduleTick(
     throw new PermanentHookTaskError("SCHEDULED_HOOK_USER_UID_MISSING");
   }
 
-  const purgeResult = await processExpiredTenantArchivePurge({
-    firebaseAdminConfig: options.firebaseAdminConfig,
-    indexProjectId: deps.indexProjectId,
-    indexDatabaseId: deps.indexDatabaseId,
-  });
-  if (purgeResult.purged > 0 || purgeResult.failed > 0) {
-    options.logger.info("Tenant archive purge tick completed.", {
-      purged: purgeResult.purged,
-      failed: purgeResult.failed,
+  // Purge is best-effort: a missing Firestore index (or other purge failure)
+  // must not block scheduled data hooks (categorize / insights).
+  try {
+    const purgeResult = await processExpiredTenantArchivePurge({
+      firebaseAdminConfig: options.firebaseAdminConfig,
+      indexProjectId: deps.indexProjectId,
+      indexDatabaseId: deps.indexDatabaseId,
+    });
+    if (purgeResult.purged > 0 || purgeResult.failed > 0) {
+      options.logger.info("Tenant archive purge tick completed.", {
+        purged: purgeResult.purged,
+        failed: purgeResult.failed,
+      });
+    }
+  } catch (error) {
+    options.logger.error("Tenant archive purge tick failed; continuing schedule hooks.", {
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 
