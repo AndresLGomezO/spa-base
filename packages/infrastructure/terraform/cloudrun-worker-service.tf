@@ -99,6 +99,14 @@ resource "google_cloud_run_v2_service" "worker_service" {
         value = google_service_account.tasks_sa[0].email
       }
       env {
+        name  = "SCHEDULED_HOOK_USER_UID"
+        value = local.environment_config.scheduled_hook_user_uid
+      }
+      env {
+        name  = "SCHEDULE_TICK_ALLOW_FORCE"
+        value = local.environment_config.schedule_tick_allow_force ? "true" : "false"
+      }
+      env {
         name = "TENANT_ENCRYPTION_MASTER_KEY"
         value_source {
           secret_key_ref {

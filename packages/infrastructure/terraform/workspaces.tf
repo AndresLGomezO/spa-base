@@ -1,6 +1,10 @@
 locals {
   app_name = "es"
 
+  # Rates demo owner (Firebase Auth uid) — acting user for /tasks/schedule-tick.
+  # Must be a tenant admin (or equivalent) in each tenant where scheduled hooks run.
+  demo_scheduled_hook_user_uid = "bq8nxIpwrFhrmM1KjaVfdBzqTyC3"
+
   # Canonical GCP project per Terraform workspace (project-per-environment).
   # Optional: set -var='project_id=...' to override for local testing only.
   env_base = {
@@ -13,6 +17,9 @@ locals {
       enable_aggregation_pubsub   = false
       enable_ai_worker            = true
       enable_observability_traces = true
+      scheduled_hook_user_uid     = local.demo_scheduled_hook_user_uid
+      # Allow ?force=true / body force for one-shot cascades (non-prod only).
+      schedule_tick_allow_force = true
     }
     dev = {
       env_suffix               = "dev"
@@ -23,6 +30,8 @@ locals {
       enable_aggregation_pubsub   = false
       enable_ai_worker            = true
       enable_observability_traces = true
+      scheduled_hook_user_uid     = local.demo_scheduled_hook_user_uid
+      schedule_tick_allow_force   = true
     }
     staging = {
       env_suffix                  = "stg"
@@ -32,6 +41,8 @@ locals {
       enable_aggregation_pubsub   = true
       enable_ai_worker            = true
       enable_observability_traces = false
+      scheduled_hook_user_uid     = local.demo_scheduled_hook_user_uid
+      schedule_tick_allow_force   = true
     }
     prod = {
       env_suffix                  = "prod"
@@ -41,6 +52,8 @@ locals {
       enable_aggregation_pubsub   = true
       enable_ai_worker            = true
       enable_observability_traces = false
+      scheduled_hook_user_uid     = local.demo_scheduled_hook_user_uid
+      schedule_tick_allow_force   = false
     }
   }
 

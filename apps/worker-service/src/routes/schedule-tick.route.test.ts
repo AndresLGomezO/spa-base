@@ -11,7 +11,10 @@ vi.mock("../services/schedule-tick-processor.js", () => ({
 }));
 
 vi.mock("../config/env.js", () => ({
-  scheduleTickConfig: { scheduledHookUserUid: "scheduler_user" },
+  scheduleTickConfig: {
+    scheduledHookUserUid: "scheduler_user",
+    allowForce: true,
+  },
   authConfig: {
     authEnabled: false,
     allowLocalTaskBypass: true,

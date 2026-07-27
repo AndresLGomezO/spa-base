@@ -211,3 +211,39 @@ resource "google_cloud_scheduler_job" "gmail_poll" {
   ]
 }
 
+# ---------------------------------------------------------------------------
+# Schedule tick (Cloud Scheduler → worker /tasks/schedule-tick every minute)
+# Runs due cron data-hooks: categorize, enrich, evaluate, generate insights, …
+# ---------------------------------------------------------------------------
+
+resource "google_cloud_scheduler_job" "schedule_tick" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  name             = "${local.app_name}-schedule-tick-${local.prefix}"
+  description      = "Run due scheduled data hooks (every minute)"
+  schedule         = "* * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "320s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.worker_service_url_full}/tasks/schedule-tick"
+    headers = {
+      "Content-Type" = "application/json"
+    }
+    body = base64encode("{}")
+
+    oidc_token {
+      service_account_email = google_service_account.tasks_sa[0].email
+      audience              = local.worker_service_url_full
+    }
+  }
+
+  depends_on = [
+    google_project_service.cloudscheduler_api,
+    google_cloud_run_v2_service.worker_service[0],
+    google_service_account_iam_member.scheduler_act_as_tasks_sa[0],
+    google_cloud_run_v2_service_iam_member.tasks_sa_worker_invoker[0],
+  ]
+}
+
