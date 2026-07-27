@@ -93,8 +93,17 @@ export function createBatchedCallAi(options: {
 
     const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
       pending.push({ request, resolve, reject });
+      // Flush when full. Also schedule a microtask drain so a chunk where
+      // fewer than batchSize records call callAi cannot deadlock the
+      // schedule-tick loop (it awaits the chunk before the explicit flush).
       if (pending.length >= batchSize) {
         scheduleFlush();
+      } else {
+        queueMicrotask(() => {
+          if (pending.length > 0) {
+            scheduleFlush();
+          }
+        });
       }
     });
     memo.set(key, promise);

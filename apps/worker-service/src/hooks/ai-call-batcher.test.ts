@@ -70,6 +70,28 @@ describe("createBatchedCallAi", () => {
     expect(result.categoryId).toBe("solo");
     expect(callAi).toHaveBeenCalledTimes(1);
   });
+
+  it("microtask-drains a partial batch so schedule-tick chunks cannot deadlock", async () => {
+    const callAi = vi.fn(async () => ({
+      action: "useExisting",
+      categoryId: "partial",
+    }));
+    const batcher = createBatchedCallAi({
+      callAi: callAi as never,
+      batchSize: 2,
+    });
+
+    // Only one waiter — same as a concurrency-2 chunk where one record
+    // matched embeddings and the other needs callAi.
+    const result = await batcher.callAi({
+      prompt: "needs-llm",
+      tenantId: "tenant_test",
+      cacheKey: "NEEDS_LLM",
+    });
+
+    expect(result.categoryId).toBe("partial");
+    expect(callAi).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("coerceNearDuplicateCreateChild", () => {
