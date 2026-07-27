@@ -163,6 +163,7 @@ const FOOTER_LAYOUT_KINDS: readonly UiComponentKind[] = [
   "text",
   "user",
   "nav-tab",
+  "ai-chat",
 ];
 
 const FORM_MODAL_FOOTER_KINDS = mergeComponentKinds(

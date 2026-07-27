@@ -81,6 +81,7 @@ export function formDesignerComponentsLabels(
     "notification-bell": t(
       "dashboardLayoutDesigner.components.notificationBell",
     ),
+    "ai-chat": t("sidebarLayoutDesigner.components.aiChat"),
     "sidebar-nav": t("sidebarLayoutDesigner.components.sidebarNav"),
     "sidebar-collapse": t("sidebarLayoutDesigner.components.sidebarCollapse"),
     "sidebar-trigger": t("sidebarLayoutDesigner.components.sidebarTrigger"),

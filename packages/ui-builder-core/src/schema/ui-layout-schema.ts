@@ -790,6 +790,17 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
       .strict(),
     z
       .object({
+        kind: z.literal("ai-chat"),
+        iconName: z.string().trim().min(1).optional(),
+        iconSize: z.number().int().min(12).max(96).optional(),
+        busyIndicator: z.boolean().optional(),
+        label: labelConfigSchema.optional(),
+        styles: z.array(styleRuleSchema).optional(),
+        ...optionalConditionalStylesSchema,
+      })
+      .strict(),
+    z
+      .object({
         kind: z.literal("sidebar-collapse"),
         iconName: z.string().trim().min(1).optional(),
         expandIconName: z.string().trim().min(1).optional(),

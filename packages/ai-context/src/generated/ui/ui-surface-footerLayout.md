@@ -10,6 +10,7 @@ Part of App shell → Footer tab. Use nav-tab components for icon+label route li
 - `text`
 - `user`
 - `nav-tab`
+- `ai-chat`
 
 ## Slice envelope example
 ```json

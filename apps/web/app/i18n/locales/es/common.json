@@ -1130,7 +1130,14 @@
       "sidebarNav": "Navegación de la barra lateral",
       "sidebarCollapse": "Colapso de la barra lateral",
       "sidebarTrigger": "Botón de menú",
-      "navTab": "Pestaña de navegación"
+      "navTab": "Pestaña de navegación",
+      "aiChat": "Chat de IA"
+    },
+    "aiChatComponent": {
+      "iconName": "Icono (nombre Lucide)",
+      "iconNameHint": "Nombre Lucide en PascalCase, p. ej. Bot",
+      "iconSize": "Tamaño del icono (px)",
+      "busyIndicator": "Mostrar pulso de ocupación mientras chatea"
     },
     "collapseComponent": {
       "iconName": "Icono cuando está expandida",

@@ -450,6 +450,27 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       2,
     ),
   },
+  "ai-chat": {
+    summary:
+      "Interactive AI chat trigger that opens the grounded chat popup panel. Intended for footerLayout (and other chrome surfaces that allow it).",
+    properties: [
+      "iconName?: string (default Bot)",
+      "iconSize?",
+      "busyIndicator?",
+      "label?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "ai-chat",
+        iconName: "Bot",
+        iconSize: 24,
+        busyIndicator: true,
+      },
+      null,
+      2,
+    ),
+  },
   "sidebar-nav": {
     summary:
       "Sidebar navigation items container with shared templates for group, subgroup, and raw items.",

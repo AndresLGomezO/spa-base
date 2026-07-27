@@ -151,6 +151,10 @@ export function createDefaultComponent(
     return { kind: "notification-bell", iconName: "Bell" };
   }
 
+  if (kind === "ai-chat") {
+    return { kind: "ai-chat", iconName: "Bot" };
+  }
+
   if (kind === "sidebar-nav") {
     return createDefaultSidebarNavComponent();
   }
@@ -310,6 +314,10 @@ export function createDefaultStaticComponent(
 
   if (kind === "notification-bell") {
     return { kind: "notification-bell", iconName: "Bell" };
+  }
+
+  if (kind === "ai-chat") {
+    return { kind: "ai-chat", iconName: "Bot" };
   }
 
   if (kind === "sidebar-nav") {

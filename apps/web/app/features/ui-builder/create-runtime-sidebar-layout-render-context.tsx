@@ -12,6 +12,7 @@ import {
   applyStyleRules,
   type NavTabComponentConfig,
   type NotificationBellComponentConfig,
+  type AiChatComponentConfig,
   type SidebarCollapseComponentConfig,
   type SidebarNavComponentConfig,
   type SidebarTriggerComponentConfig,
@@ -25,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@repo/theme/utils";
 
 import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
+import { LayoutAiChatButton } from "../../components/entity/LayoutAiChatButton";
 import { LayoutNotificationBell } from "../../components/entity/LayoutNotificationBell";
 import {
   LayoutUserDisplay,
@@ -386,6 +388,9 @@ export function createRuntimeSidebarLayoutRenderContext(
           sidebarChrome={sidebarChrome}
         />
       </>
+    ),
+    aiChatRenderer: (config: AiChatComponentConfig) => (
+      <LayoutAiChatButton config={config} />
     ),
     sidebarCollapseRenderer: (config: SidebarCollapseComponentConfig) => (
       <RuntimeSidebarCollapse config={config} label={t("nav.collapse")} />

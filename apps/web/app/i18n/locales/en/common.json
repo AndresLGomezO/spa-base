@@ -1130,7 +1130,14 @@
       "sidebarNav": "Sidebar navigation",
       "sidebarCollapse": "Sidebar collapse",
       "sidebarTrigger": "Menu button",
-      "navTab": "Nav tab"
+      "navTab": "Nav tab",
+      "aiChat": "AI chat"
+    },
+    "aiChatComponent": {
+      "iconName": "Icon (Lucide name)",
+      "iconNameHint": "PascalCase Lucide icon name, e.g. Bot",
+      "iconSize": "Icon size (px)",
+      "busyIndicator": "Show busy pulse while chatting"
     },
     "collapseComponent": {
       "iconName": "Icon when expanded",

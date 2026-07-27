@@ -56,7 +56,7 @@ Pick the preset first, then customize layout inside the envelope. Do not set `pr
 | Metric row | Display kinds, `metric-widget` |
 | App shell — Sidebar | `image`, `icon`, `text`, `user`, `notification-bell`, `sidebar-nav`, `sidebar-collapse`, `container`, `grid` |
 | App shell — Header | `image`, `icon`, `text`, `user`, `sidebar-trigger`, `container`, `grid` |
-| App shell — Footer | `image`, `icon`, `text`, `user`, `nav-tab`, `container`, `grid` |
+| App shell — Footer | `image`, `icon`, `text`, `user`, `nav-tab`, `ai-chat`, `container`, `grid` |
 
 ---
 

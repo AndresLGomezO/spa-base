@@ -83,7 +83,7 @@ Display kinds: `text`, `image`, `icon`, `date`, `numeric`, `badge`, `metric-kpi`
 |---------|------------------------------------------|
 | `sidebarLayout` | `image`, `icon`, `text`, `user`, `notification-bell`, `sidebar-nav`, `sidebar-collapse` |
 | `headerLayout` | `image`, `icon`, `text`, `user`, `sidebar-trigger` |
-| `footerLayout` | `image`, `icon`, `text`, `user`, `nav-tab` |
+| `footerLayout` | `image`, `icon`, `text`, `user`, `nav-tab`, `ai-chat` |
 
 ---
 

@@ -17,6 +17,7 @@ export type UiComponentKind =
   | "icon"
   | "user"
   | "notification-bell"
+  | "ai-chat"
   | "sidebar-nav"
   | "sidebar-collapse"
   | "sidebar-trigger"
@@ -403,6 +404,17 @@ export interface NotificationBellComponentConfig {
   readonly conditionalStyles?: readonly ConditionalStyleRule[];
 }
 
+export interface AiChatComponentConfig {
+  readonly kind: "ai-chat";
+  readonly iconName?: string;
+  readonly iconSize?: number;
+  /** When true (default), pulse the trigger while a chat request is pending. */
+  readonly busyIndicator?: boolean;
+  readonly label?: LabelConfig;
+  readonly styles?: readonly StyleRule[];
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+}
+
 export interface UserComponentConfig {
   readonly kind: "user";
   readonly display: UserDisplayMode;
@@ -682,6 +694,7 @@ export type UiComponentConfig =
   | ChartComponentConfig
   | IconComponentConfig
   | NotificationBellComponentConfig
+  | AiChatComponentConfig
   | UserComponentConfig
   | SidebarNavComponentConfig
   | SidebarCollapseComponentConfig
@@ -778,6 +791,12 @@ export function isNotificationBellComponent(
   config: UiComponentConfig,
 ): config is NotificationBellComponentConfig {
   return config.kind === "notification-bell";
+}
+
+export function isAiChatComponent(
+  config: UiComponentConfig,
+): config is AiChatComponentConfig {
+  return config.kind === "ai-chat";
 }
 
 export function isUserComponent(

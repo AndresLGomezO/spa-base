@@ -9,6 +9,7 @@ import {
   isMetricWidgetComponent,
   isUserComponent,
   isNotificationBellComponent,
+  isAiChatComponent,
   isSidebarNavComponent,
   isSidebarCollapseComponent,
   isSidebarTriggerComponent,
@@ -179,6 +180,7 @@ function collectComponentPaths(
     isDashboardSectionComponent(component) ||
     isUserComponent(component) ||
     isNotificationBellComponent(component) ||
+    isAiChatComponent(component) ||
     isSidebarNavComponent(component) ||
     isSidebarCollapseComponent(component) ||
     isSidebarTriggerComponent(component) ||

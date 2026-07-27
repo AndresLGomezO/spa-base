@@ -29,6 +29,7 @@ export const ENTITY_BOUND_CONDITIONAL_STYLE_KINDS = [
   "query-viewer",
   "user",
   "notification-bell",
+  "ai-chat",
   "form-field",
   "entity-field-selector",
   "form-section",

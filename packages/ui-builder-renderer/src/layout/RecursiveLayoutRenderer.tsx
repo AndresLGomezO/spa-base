@@ -670,10 +670,11 @@ function rowWrapperStyleClassName(
     parts.push("overflow-visible");
   }
 
-  // Compact chrome (avatars, icons, bell) must hug content — no default gutter.
+  // Compact chrome (avatars, icons, bell, AI chat) must hug content — no default gutter.
   const skipVerticalGutter =
     component?.kind === "user" ||
     component?.kind === "notification-bell" ||
+    component?.kind === "ai-chat" ||
     component?.kind === "icon";
   if (!skipVerticalGutter) {
     parts.push("py-0.5");

@@ -25,6 +25,7 @@ import {
   Type,
   UserRound,
   Bell,
+  Bot,
   LayoutPanelTop,
 } from "lucide-react";
 import {
@@ -195,6 +196,7 @@ export function getFilteredComponentCatalog(
                 ? [
                     { kind: "user" as const, icon: UserRound },
                     { kind: "nav-tab" as const, icon: LayoutPanelTop },
+                    { kind: "ai-chat" as const, icon: Bot },
                   ]
                 : designSurface === "metricWidget"
                   ? [
@@ -214,6 +216,7 @@ export function getFilteredComponentCatalog(
 const SURFACE_EXTRA_ICONS: Partial<Record<CatalogEntryKind, LucideIcon>> = {
   user: UserRound,
   "notification-bell": Bell,
+  "ai-chat": Bot,
   "sidebar-nav": PanelLeft,
   "sidebar-collapse": PanelLeftClose,
   "sidebar-trigger": Menu,

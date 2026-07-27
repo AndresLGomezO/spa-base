@@ -1,10 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AiChatFab } from "./AiChatFab";
+import { AiChatFooterButton } from "./AiChatFooterButton";
 import { AiChatPanel } from "./AiChatPanel";
 import type { UseAiChatSessionResult } from "./use-ai-chat-session";
+
+const usePermissionMock = vi.fn(() => true);
 
 vi.mock("../../auth/AuthContext", () => ({
   useAuth: () => ({
@@ -14,7 +16,7 @@ vi.mock("../../auth/AuthContext", () => ({
 }));
 
 vi.mock("../../auth/usePermission", () => ({
-  usePermission: () => true,
+  usePermission: () => usePermissionMock(),
 }));
 
 const ask = vi.fn(() => false);
@@ -56,33 +58,80 @@ vi.mock("./use-ai-chat-session", () => ({
   useAiChatSession: () => createChat(),
 }));
 
-describe("AiChatFab mobile shell", () => {
+describe("AiChatFooterButton", () => {
   beforeEach(() => {
     Element.prototype.scrollIntoView = vi.fn();
+    usePermissionMock.mockReturnValue(true);
     vi.clearAllMocks();
   });
 
-  it("offsets the FAB above the footer CSS variable", () => {
+  it("renders the chat trigger button", () => {
     render(
       <MemoryRouter>
-        <AiChatFab />
+        <AiChatFooterButton />
       </MemoryRouter>,
     );
 
-    const anchor = screen.getByTestId("ai-chat-fab-anchor");
-    expect(anchor.style.bottom).toBe(
-      "calc(1rem + var(--app-shell-footer-offset, 0px))",
-    );
+    expect(screen.getByTestId("ai-chat-fab-button")).toBeInTheDocument();
   });
 
-  it("hides the FAB on the full AI chat page", () => {
+  it("opens the popup panel on click", () => {
     render(
-      <MemoryRouter initialEntries={["/ai/chat"]}>
-        <AiChatFab />
+      <MemoryRouter>
+        <AiChatFooterButton />
       </MemoryRouter>,
     );
 
-    expect(screen.queryByTestId("ai-chat-fab-anchor")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("ai-chat-fab-button"));
+
+    expect(screen.getByTestId("ai-chat-footer-panel")).toBeInTheDocument();
+  });
+
+  it("sizes the portal panel to the chat content for top-end placement", () => {
+    render(
+      <MemoryRouter>
+        <AiChatFooterButton />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByTestId("ai-chat-fab-button"));
+
+    const panel = document.querySelector("[data-popover-panel]");
+    expect(panel).toBeTruthy();
+    expect(panel).toHaveClass("w-auto", "max-w-none");
+  });
+
+  it("keeps overflow visible and padding around the trigger for scale/shadow", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AiChatFooterButton />
+      </MemoryRouter>,
+    );
+
+    const root = container.firstElementChild;
+    expect(root).toHaveClass("overflow-visible", "p-1.5");
+  });
+
+  it("hides the button without ai.chat.run permission", () => {
+    usePermissionMock.mockReturnValue(false);
+
+    render(
+      <MemoryRouter>
+        <AiChatFooterButton />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByTestId("ai-chat-fab-button")).not.toBeInTheDocument();
+  });
+
+  it("hides the button on the full AI chat page", () => {
+    render(
+      <MemoryRouter initialEntries={["/ai/chat"]}>
+        <AiChatFooterButton />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByTestId("ai-chat-fab-button")).not.toBeInTheDocument();
   });
 });
 

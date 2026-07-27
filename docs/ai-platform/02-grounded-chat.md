@@ -11,7 +11,7 @@ Related: [Architecture](./01-architecture.md) · [Context / memory / RAG](./04-c
 | Layer | Path |
 |---|---|
 | Web (page) | `apps/web/app/routes/ai/chat.tsx` → `features/ai-chat/AiChatPage` |
-| Web (FAB) | `apps/web/app/features/ai-chat/AiChatFab` (mounted in `private-layout.tsx`) |
+| Web (footer) | `apps/web/app/features/ai-chat/AiChatFooterButton` (UI Builder `ai-chat` component on `footerLayout`) |
 | API | `POST /api/ai/chat` → `register-ai-routes.ts` |
 | Task | `AI_TASK_ROUTES.PROCESS_AI_CHAT` |
 | Worker | `ai-chat-processor.ts` → `process-ai-chat.ts` → `runGroundedChatOrchestrator` |
@@ -141,7 +141,7 @@ Only **relevant business entity records** are persisted for the product UI:
 - `GET /api/ai/chat/sessions` — list (excludes `abandoned`)
 - `GET /api/ai/chat/sessions/:sessionId` — full thread
 - `DELETE /api/ai/chat/sessions/:sessionId` — soft-hide (`abandoned`)
-- Multi-turn UI: floating FAB popup + `/ai/chat` page share `apps/web/app/features/ai-chat/`
+- Multi-turn UI: footer-placed chat popup + `/ai/chat` page share `apps/web/app/features/ai-chat/`
 
 Relation traversal: system instruction tells the planner to follow FK fields (`actorId`, `financialItemId`, `paymentScheduleId`, …) via `getRecord` / multi-step search across business entities.
 

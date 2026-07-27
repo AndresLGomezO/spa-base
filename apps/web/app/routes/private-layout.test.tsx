@@ -93,8 +93,10 @@ vi.mock(
   }),
 );
 
-vi.mock("../features/ai-chat", () => ({
-  AiChatFab: () => null,
+vi.mock("../features/notifications/notifications-context", () => ({
+  NotificationsProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 describe("PrivateLayoutRoute", () => {

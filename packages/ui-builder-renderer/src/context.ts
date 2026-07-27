@@ -7,6 +7,7 @@ import type {
   FormFieldComponentConfig,
   IconComponentConfig,
   NotificationBellComponentConfig,
+  AiChatComponentConfig,
   MetricDerivedKpiComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
@@ -99,6 +100,7 @@ export interface LayoutRenderContext {
   readonly notificationBellRenderer?: (
     config: NotificationBellComponentConfig,
   ) => ReactNode;
+  readonly aiChatRenderer?: (config: AiChatComponentConfig) => ReactNode;
   readonly sidebarNavRenderer?: (
     config: SidebarNavComponentConfig,
   ) => ReactNode;

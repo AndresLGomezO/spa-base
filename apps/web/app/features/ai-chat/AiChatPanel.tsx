@@ -5,6 +5,7 @@ import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { useMdUpMediaQuery } from "../../hooks/use-md-up-media-query";
+import { resolveLucideIcon } from "../../lib/resolve-lucide-icon";
 import { AiChatSessionList } from "./AiChatSessionList";
 import { AiChatThread } from "./AiChatThread";
 import type { UseAiChatSessionResult } from "./use-ai-chat-session";
@@ -163,28 +164,42 @@ export function AiChatFabButton({
   busy,
   onClick,
   label,
+  iconName = "Bot",
+  iconSize,
 }: {
   readonly open: boolean;
   readonly busy: boolean;
-  readonly onClick: () => void;
+  readonly onClick?: () => void;
   readonly label: string;
+  readonly iconName?: string;
+  readonly iconSize?: number;
 }) {
+  const BotIcon = resolveLucideIcon(iconName);
+  const iconClassName = cn(
+    "ai-chat-fab-icon ai-chat-fab-icon-bot",
+    iconSize == null ? "size-6" : undefined,
+  );
+  const iconStyle =
+    iconSize == null ? undefined : { width: iconSize, height: iconSize };
+
   return (
     <button
       type="button"
       className="ai-chat-fab"
       data-open={open ? "true" : "false"}
       data-busy={busy && !open ? "true" : "false"}
+      data-testid="ai-chat-fab-button"
       aria-label={label}
       aria-expanded={open}
       onClick={onClick}
     >
-      <Bot
-        className="ai-chat-fab-icon ai-chat-fab-icon-bot size-6"
-        aria-hidden
-      />
+      <BotIcon className={iconClassName} style={iconStyle} aria-hidden />
       <X
-        className="ai-chat-fab-icon ai-chat-fab-icon-close size-6"
+        className={cn(
+          "ai-chat-fab-icon ai-chat-fab-icon-close",
+          iconSize == null ? "size-6" : undefined,
+        )}
+        style={iconStyle}
         aria-hidden
       />
     </button>

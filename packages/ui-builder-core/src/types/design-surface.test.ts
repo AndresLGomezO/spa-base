@@ -106,12 +106,20 @@ describe("footerLayout surface", () => {
       "text",
       "user",
       "nav-tab",
+      "ai-chat",
       "container",
       "grid",
     ] as const) {
       expect(isComponentKindAllowedOnSurface(kind, "footerLayout")).toBe(true);
     }
-    for (const kind of ["image", "icon", "text", "user", "nav-tab"] as const) {
+    for (const kind of [
+      "image",
+      "icon",
+      "text",
+      "user",
+      "nav-tab",
+      "ai-chat",
+    ] as const) {
       expect(componentKindsForSurface("footerLayout")).toContain(kind);
     }
   });

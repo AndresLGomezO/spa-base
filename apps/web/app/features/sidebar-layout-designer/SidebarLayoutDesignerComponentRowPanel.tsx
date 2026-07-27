@@ -10,6 +10,7 @@ import {
   componentKindsForSurface,
   isContainerComponent,
   isGridComponent,
+  isAiChatComponent,
   isNavTabComponent,
   isNotificationBellComponent,
   isSidebarCollapseComponent,
@@ -34,6 +35,7 @@ import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { UserComponentEditor } from "../dashboard-layout-designer/UserComponentEditor";
 import { NotificationBellComponentEditor } from "../dashboard-layout-designer/NotificationBellComponentEditor";
+import { AiChatComponentEditor } from "./AiChatComponentEditor";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 import { ComponentRowConditionalStylesPanelSection } from "../ui-builder/ComponentRowConditionalStylesPanelSection.js";
 import { appShellDesignFocusToSurface } from "./app-shell-designer-tabs";
@@ -147,6 +149,11 @@ export function SidebarLayoutDesignerComponentRowPanel({
           />
         ) : isNotificationBellComponent(row.component) ? (
           <NotificationBellComponentEditor
+            config={row.component}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        ) : isAiChatComponent(row.component) ? (
+          <AiChatComponentEditor
             config={row.component}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />

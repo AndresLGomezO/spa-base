@@ -698,6 +698,7 @@ export function inlineFlexGrowStretchClassName(
     component.kind !== "text" &&
     component.kind !== "user" &&
     component.kind !== "notification-bell" &&
+    component.kind !== "ai-chat" &&
     component.kind !== "image" &&
     component.kind !== "metric-kpi" &&
     component.kind !== "metric-derived-kpi"
@@ -847,6 +848,7 @@ export function prefersInlineContentWidth(component: {
     component.kind !== "text" &&
     component.kind !== "user" &&
     component.kind !== "notification-bell" &&
+    component.kind !== "ai-chat" &&
     component.kind !== "image" &&
     component.kind !== "icon" &&
     component.kind !== "metric-kpi" &&

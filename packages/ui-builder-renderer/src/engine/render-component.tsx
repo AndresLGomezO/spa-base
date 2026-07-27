@@ -5,6 +5,7 @@ import {
   isFieldUiComponent,
   isIconComponent,
   isNotificationBellComponent,
+  isAiChatComponent,
   isUserComponent,
   isSidebarCollapseComponent,
   isSidebarNavComponent,
@@ -517,6 +518,15 @@ export function renderUiComponent(
       atBreakpoint,
     );
     return context.notificationBellRenderer?.(styledConfig) ?? null;
+  }
+
+  if (isAiChatComponent(config)) {
+    const styledConfig = mergeComponentStylesWithConditionalOverrides(
+      config,
+      context,
+      atBreakpoint,
+    );
+    return context.aiChatRenderer?.(styledConfig) ?? null;
   }
 
   if (isSidebarNavComponent(config)) {
