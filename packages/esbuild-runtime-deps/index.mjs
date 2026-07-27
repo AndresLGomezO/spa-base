@@ -39,13 +39,23 @@ export function npmPackageName(specifier) {
 }
 
 /**
- * Collect npm package names from static import/export specifiers in bundled output.
+ * Collect npm package names from static import/export and dynamic
+ * import()/require() string-literal specifiers in bundled output.
  */
 export function collectNpmImports(bundleSource) {
   const imports = new Set();
   const importRe =
     /\b(?:import|export)\s+(?:[\s\S]*?\sfrom\s+)?["']([^"']+)["']/g;
   for (const match of bundleSource.matchAll(importRe)) {
+    const pkg = npmPackageName(match[1]);
+    if (pkg) {
+      imports.add(pkg);
+    }
+  }
+  // Dynamic `await import("pkg")` / `require("pkg")` (esbuild may leave these
+  // as externals for native/CJS GCP clients). Static-only regex misses them.
+  const dynamicRe = /\b(?:import|require)\(\s*["']([^"']+)["']\s*\)/g;
+  for (const match of bundleSource.matchAll(dynamicRe)) {
     const pkg = npmPackageName(match[1]);
     if (pkg) {
       imports.add(pkg);
