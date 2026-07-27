@@ -131,3 +131,29 @@ resource "google_service_account_iam_member" "ci_deployer_act_as_tasks_sa" {
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${var.ci_deployer_sa_email}"
 }
+
+# Non-prod only: ops principals can impersonate tasks_sa to POST forced schedule-tick.
+# (schedule_tick_allow_force is false in prod — for_each is empty there.)
+resource "google_service_account_iam_member" "ops_act_as_tasks_sa_for_force" {
+  for_each = (
+    local.enable_ai_worker && local.environment_config.schedule_tick_allow_force
+    ? toset(local.schedule_tick_force_ops_members)
+    : toset([])
+  )
+
+  service_account_id = google_service_account.tasks_sa[0].name
+  role               = "roles/iam.serviceAccountUser"
+  member             = each.value
+}
+
+resource "google_service_account_iam_member" "ops_token_creator_tasks_sa_for_force" {
+  for_each = (
+    local.enable_ai_worker && local.environment_config.schedule_tick_allow_force
+    ? toset(local.schedule_tick_force_ops_members)
+    : toset([])
+  )
+
+  service_account_id = google_service_account.tasks_sa[0].name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = each.value
+}
