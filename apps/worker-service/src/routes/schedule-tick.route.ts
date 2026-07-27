@@ -7,7 +7,7 @@ import { processScheduleTick } from "../services/schedule-tick-processor.js";
 import type { DataHookProcessorDeps } from "../services/data-hook-processor.js";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
-import { scheduleTickConfig, workerEnv } from "../config/env.js";
+import { scheduleTickConfig } from "../config/env.js";
 
 export type ScheduleTickRouteDeps = DataHookProcessorDeps & {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
@@ -51,12 +51,16 @@ export async function scheduleTickRoute(
       );
 
       const forceRequested = parseForceFlag(request);
-      const force = forceRequested && workerEnv.IS_LOCAL;
-      if (forceRequested && !workerEnv.IS_LOCAL) {
-        request.log.warn("Ignoring schedule-tick force flag outside IS_LOCAL.");
+      const force = forceRequested && scheduleTickConfig.allowForce;
+      if (forceRequested && !scheduleTickConfig.allowForce) {
+        request.log.warn(
+          "Ignoring schedule-tick force flag (SCHEDULE_TICK_ALLOW_FORCE=false).",
+        );
       }
       const hookFilter =
-        force || workerEnv.IS_LOCAL ? parseHookFilter(request) : undefined;
+        force || scheduleTickConfig.allowForce
+          ? parseHookFilter(request)
+          : undefined;
 
       return dispatchHookTaskAsync({
         request,

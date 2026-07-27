@@ -50,6 +50,11 @@ const workerEnvSchema = z.object({
     .default("false")
     .transform((value) => value === "true"),
   SCHEDULED_HOOK_USER_UID: z.string().trim().optional(),
+  /** When true, honor force=true / hook= filter on /tasks/schedule-tick (non-prod GCP). */
+  SCHEDULE_TICK_ALLOW_FORCE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
   TENANT_ENCRYPTION_MASTER_KEY: z.string().trim().optional(),
   GMAIL_OAUTH_CLIENT_ID: z.string().trim().optional(),
   GMAIL_OAUTH_CLIENT_SECRET: z.string().trim().optional(),
@@ -121,4 +126,5 @@ export const authConfig = {
 
 export const scheduleTickConfig = {
   scheduledHookUserUid: workerEnv.SCHEDULED_HOOK_USER_UID ?? "",
+  allowForce: workerEnv.IS_LOCAL || workerEnv.SCHEDULE_TICK_ALLOW_FORCE,
 };
