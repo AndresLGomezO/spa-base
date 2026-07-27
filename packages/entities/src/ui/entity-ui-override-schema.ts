@@ -118,8 +118,12 @@ export const putEntityUiOverrideInputSchema = z
     metricRowLayout: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
     formDesigns: z.array(formDesignDefinitionSchema).optional(),
-    entityPageCreateFormDesignId: z.string().trim().min(1).optional(),
-    entityPageEditFormDesignId: z.string().trim().min(1).optional(),
+    entityPageCreateFormDesignId: z
+      .union([z.string().trim().min(1), z.null()])
+      .optional(),
+    entityPageEditFormDesignId: z
+      .union([z.string().trim().min(1), z.null()])
+      .optional(),
   })
   .strict();
 
@@ -133,8 +137,10 @@ export interface PutEntityUiOverrideInput {
   readonly metricRowLayout?: UiLayoutDocument;
   readonly forms?: EntityUiOverrideForms;
   readonly formDesigns?: readonly FormDesignDefinition[];
-  readonly entityPageCreateFormDesignId?: string;
-  readonly entityPageEditFormDesignId?: string;
+  /** `null` clears a previously saved entity-page default. */
+  readonly entityPageCreateFormDesignId?: string | null;
+  /** `null` clears a previously saved entity-page default. */
+  readonly entityPageEditFormDesignId?: string | null;
 }
 
 function toRecordInput(

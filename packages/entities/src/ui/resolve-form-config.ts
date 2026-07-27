@@ -131,16 +131,73 @@ export function listFormDesignOptions(
   ];
 }
 
+function resolveExistingFormDesignId(
+  definition: SerializableEntityDefinition,
+  formDesignId: string | undefined,
+): string | undefined {
+  if (!formDesignId) {
+    return undefined;
+  }
+  return findFormDesignDefinition(definition, formDesignId)?.id;
+}
+
 export function resolveEntityPageCreateFormDesignId(
   definition: SerializableEntityDefinition,
 ): string | undefined {
-  return definition.ui.entityPageCreateFormDesignId;
+  return resolveExistingFormDesignId(
+    definition,
+    definition.ui.entityPageCreateFormDesignId,
+  );
 }
 
 export function resolveEntityPageEditFormDesignId(
   definition: SerializableEntityDefinition,
 ): string | undefined {
-  return definition.ui.entityPageEditFormDesignId;
+  return resolveExistingFormDesignId(
+    definition,
+    definition.ui.entityPageEditFormDesignId,
+  );
+}
+
+export interface EntityPageFormDesignSlotSummary {
+  readonly formDesignId?: string;
+  readonly label: string;
+  readonly presentation: FormPresentation;
+  readonly missing: boolean;
+  readonly isDefault: boolean;
+}
+
+export function summarizeEntityPageFormDesignSlot(
+  definition: SerializableEntityDefinition,
+  storedFormDesignId: string | undefined,
+): EntityPageFormDesignSlotSummary {
+  if (!storedFormDesignId) {
+    return {
+      label: "Default",
+      presentation: resolveFormPresentation(definition),
+      missing: false,
+      isDefault: true,
+    };
+  }
+
+  const design = findFormDesignDefinition(definition, storedFormDesignId);
+  if (!design) {
+    return {
+      formDesignId: storedFormDesignId,
+      label: storedFormDesignId,
+      presentation: resolveFormPresentation(definition),
+      missing: true,
+      isDefault: false,
+    };
+  }
+
+  return {
+    formDesignId: design.id,
+    label: design.label,
+    presentation: resolveFormPresentation(definition, design.id),
+    missing: false,
+    isDefault: false,
+  };
 }
 
 export interface ResolvedFormModalChrome {

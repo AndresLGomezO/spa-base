@@ -7,6 +7,8 @@ import {
   resolveFormConfigForDesign,
   resolvePlainFormLayout,
   resolveEntityPageCreateFormDesignId,
+  resolveEntityPageEditFormDesignId,
+  summarizeEntityPageFormDesignSlot,
 } from "./resolve-form-config.js";
 
 function buildDefinition(): SerializableEntityDefinition {
@@ -41,6 +43,12 @@ function buildDefinition(): SerializableEntityDefinition {
           presentation: "plain",
           layout: createDefaultFormLayout(["amount"]),
         },
+        {
+          id: "edit-payment",
+          label: "Edit payment",
+          presentation: "wizard",
+          layout: createDefaultFormLayout(["amount", "note"]),
+        },
       ],
       entityPageCreateFormDesignId: "register-payment",
     },
@@ -73,6 +81,7 @@ describe("listFormDesignOptions", () => {
     expect(listFormDesignOptions(definition)).toEqual([
       { id: undefined, label: "Default" },
       { id: "register-payment", label: "Register payment" },
+      { id: "edit-payment", label: "Edit payment" },
     ]);
   });
 });
@@ -83,5 +92,87 @@ describe("resolveEntityPageCreateFormDesignId", () => {
     expect(resolveEntityPageCreateFormDesignId(definition)).toBe(
       "register-payment",
     );
+  });
+
+  it("returns undefined when the stored create design was deleted", () => {
+    const definition = buildDefinition();
+    expect(
+      resolveEntityPageCreateFormDesignId({
+        ...definition,
+        ui: { ...definition.ui, entityPageCreateFormDesignId: "gone" },
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns undefined when create default is unset", () => {
+    const definition = buildDefinition();
+    const { entityPageCreateFormDesignId: _removed, ...ui } = definition.ui;
+    void _removed;
+    expect(
+      resolveEntityPageCreateFormDesignId({ ...definition, ui }),
+    ).toBeUndefined();
+  });
+});
+
+describe("resolveEntityPageEditFormDesignId", () => {
+  it("returns undefined when edit default is unset (only create set)", () => {
+    const definition = buildDefinition();
+    expect(resolveEntityPageEditFormDesignId(definition)).toBeUndefined();
+  });
+
+  it("reads edit default when set", () => {
+    const definition = buildDefinition();
+    expect(
+      resolveEntityPageEditFormDesignId({
+        ...definition,
+        ui: { ...definition.ui, entityPageEditFormDesignId: "edit-payment" },
+      }),
+    ).toBe("edit-payment");
+  });
+
+  it("returns undefined when the stored edit design was deleted", () => {
+    const definition = buildDefinition();
+    expect(
+      resolveEntityPageEditFormDesignId({
+        ...definition,
+        ui: { ...definition.ui, entityPageEditFormDesignId: "missing-edit" },
+      }),
+    ).toBeUndefined();
+  });
+});
+
+describe("summarizeEntityPageFormDesignSlot", () => {
+  it("summarizes the default slot", () => {
+    const definition = buildDefinition();
+    expect(summarizeEntityPageFormDesignSlot(definition, undefined)).toEqual({
+      label: "Default",
+      presentation: "plain",
+      missing: false,
+      isDefault: true,
+    });
+  });
+
+  it("summarizes a named design", () => {
+    const definition = buildDefinition();
+    expect(
+      summarizeEntityPageFormDesignSlot(definition, "edit-payment"),
+    ).toEqual({
+      formDesignId: "edit-payment",
+      label: "Edit payment",
+      presentation: "wizard",
+      missing: false,
+      isDefault: false,
+    });
+  });
+
+  it("flags missing designs", () => {
+    const definition = buildDefinition();
+    expect(summarizeEntityPageFormDesignSlot(definition, "gone")).toEqual({
+      formDesignId: "gone",
+      label: "gone",
+      presentation: "plain",
+      missing: true,
+      isDefault: false,
+    });
   });
 });

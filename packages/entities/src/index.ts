@@ -320,6 +320,8 @@ export {
   listFormDesignOptions,
   resolveEntityPageCreateFormDesignId,
   resolveEntityPageEditFormDesignId,
+  summarizeEntityPageFormDesignSlot,
+  type EntityPageFormDesignSlotSummary,
   type ResolvedFormModalChrome,
 } from "./ui/resolve-form-config.js";
 export { buildInitialValuesFromLayout } from "./ui/build-form-initial-values.js";

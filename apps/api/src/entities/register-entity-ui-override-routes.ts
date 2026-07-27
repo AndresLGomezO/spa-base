@@ -45,6 +45,19 @@ function formatZodValidationMessage(error: z.ZodError): string {
 }
 
 /** Preserve override slices omitted from a surface-specific PUT body. */
+function resolveFormDesignIdPutValue(
+  incoming: string | null | undefined,
+  existing: string | undefined,
+): string | undefined {
+  if (incoming === null) {
+    return undefined;
+  }
+  if (incoming !== undefined) {
+    return incoming;
+  }
+  return existing;
+}
+
 function mergeUiOverridePutInput(
   existing: EntityUiOverrideRecord | null,
   incoming: PutEntityUiOverrideInput,
@@ -85,6 +98,15 @@ function mergeUiOverridePutInput(
   const recordDetail =
     incoming.recordDetail ?? existing?.recordDetail ?? existing?.detail;
 
+  const entityPageCreateFormDesignId = resolveFormDesignIdPutValue(
+    incoming.entityPageCreateFormDesignId,
+    existing?.entityPageCreateFormDesignId,
+  );
+  const entityPageEditFormDesignId = resolveFormDesignIdPutValue(
+    incoming.entityPageEditFormDesignId,
+    existing?.entityPageEditFormDesignId,
+  );
+
   return {
     views: incoming.views,
     ...((incoming.listViewType ?? existing?.listViewType)
@@ -116,22 +138,8 @@ function mergeUiOverridePutInput(
             incoming.formDesigns ?? existing?.formDesigns ?? undefined,
         }
       : {}),
-    ...((incoming.entityPageCreateFormDesignId ??
-    existing?.entityPageCreateFormDesignId)
-      ? {
-          entityPageCreateFormDesignId:
-            incoming.entityPageCreateFormDesignId ??
-            existing?.entityPageCreateFormDesignId,
-        }
-      : {}),
-    ...((incoming.entityPageEditFormDesignId ??
-    existing?.entityPageEditFormDesignId)
-      ? {
-          entityPageEditFormDesignId:
-            incoming.entityPageEditFormDesignId ??
-            existing?.entityPageEditFormDesignId,
-        }
-      : {}),
+    ...(entityPageCreateFormDesignId ? { entityPageCreateFormDesignId } : {}),
+    ...(entityPageEditFormDesignId ? { entityPageEditFormDesignId } : {}),
   } as PutEntityUiOverrideInput;
 }
 
@@ -345,22 +353,24 @@ export async function registerEntityUiOverrideRoutes(
                 existingOverride?.formDesigns) as readonly FormDesignDefinition[],
             }
           : {}),
-        ...((parsedBody.data.entityPageCreateFormDesignId ??
-        existingOverride?.entityPageCreateFormDesignId)
-          ? {
-              entityPageCreateFormDesignId:
-                parsedBody.data.entityPageCreateFormDesignId ??
-                existingOverride?.entityPageCreateFormDesignId,
-            }
-          : {}),
-        ...((parsedBody.data.entityPageEditFormDesignId ??
-        existingOverride?.entityPageEditFormDesignId)
-          ? {
-              entityPageEditFormDesignId:
-                parsedBody.data.entityPageEditFormDesignId ??
-                existingOverride?.entityPageEditFormDesignId,
-            }
-          : {}),
+        ...(() => {
+          const entityPageCreateFormDesignId = resolveFormDesignIdPutValue(
+            parsedBody.data.entityPageCreateFormDesignId,
+            existingOverride?.entityPageCreateFormDesignId,
+          );
+          return entityPageCreateFormDesignId
+            ? { entityPageCreateFormDesignId }
+            : {};
+        })(),
+        ...(() => {
+          const entityPageEditFormDesignId = resolveFormDesignIdPutValue(
+            parsedBody.data.entityPageEditFormDesignId,
+            existingOverride?.entityPageEditFormDesignId,
+          );
+          return entityPageEditFormDesignId
+            ? { entityPageEditFormDesignId }
+            : {};
+        })(),
       });
 
       try {
@@ -407,13 +417,13 @@ export async function registerEntityUiOverrideRoutes(
             ...(parsedBody.data.formDesigns
               ? { formDesigns: parsedBody.data.formDesigns }
               : {}),
-            ...(parsedBody.data.entityPageCreateFormDesignId
+            ...(parsedBody.data.entityPageCreateFormDesignId !== undefined
               ? {
                   entityPageCreateFormDesignId:
                     parsedBody.data.entityPageCreateFormDesignId,
                 }
               : {}),
-            ...(parsedBody.data.entityPageEditFormDesignId
+            ...(parsedBody.data.entityPageEditFormDesignId !== undefined
               ? {
                   entityPageEditFormDesignId:
                     parsedBody.data.entityPageEditFormDesignId,
