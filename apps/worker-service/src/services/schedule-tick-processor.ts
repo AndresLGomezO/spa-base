@@ -74,9 +74,12 @@ export async function processScheduleTick(
       });
     }
   } catch (error) {
-    options.logger.error("Tenant archive purge tick failed; continuing schedule hooks.", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    options.logger.error(
+      "Tenant archive purge tick failed; continuing schedule hooks.",
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
   }
 
   const tenantIds = await listAllTenantIds(options.firebaseAdminConfig);
