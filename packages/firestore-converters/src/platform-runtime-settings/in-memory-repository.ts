@@ -22,6 +22,9 @@ export function createInMemoryPlatformRuntimeSettingsRepository(): PlatformRunti
         updatePlatformRuntimeSettingsInputSchema.parse(settingsInput);
       const nowIso = new Date().toISOString();
       const next = platformRuntimeSettingsSchema.parse({
+        aiEnabled: parsed.aiEnabled ?? store.current?.aiEnabled ?? null,
+        aiTraceEnabled:
+          parsed.aiTraceEnabled ?? store.current?.aiTraceEnabled ?? null,
         aiStepTraceEnabled:
           parsed.aiStepTraceEnabled ??
           store.current?.aiStepTraceEnabled ??

@@ -17,9 +17,9 @@ export const platformRuntimeSettingsSchema = z
      * Prefer aiTraceEnabled; aiStepTraceEnabled kept for back-compat.
      */
     aiTraceEnabled: z.boolean().nullable().default(null),
-    aiStepTraceEnabled: z.boolean().nullable(),
-    requestPerfTraceEnabled: z.boolean().nullable(),
-    seedHookObservabilityEnabled: z.boolean().nullable(),
+    aiStepTraceEnabled: z.boolean().nullable().default(null),
+    requestPerfTraceEnabled: z.boolean().nullable().default(null),
+    seedHookObservabilityEnabled: z.boolean().nullable().default(null),
     /** null = use env GMAIL_INGEST_DELIVERY_MODE */
     gmailIngestDeliveryMode: gmailIngestDeliveryModeSchema
       .nullable()

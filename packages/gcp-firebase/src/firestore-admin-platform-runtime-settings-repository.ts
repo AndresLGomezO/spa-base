@@ -43,6 +43,8 @@ export function createFirestoreAdminPlatformRuntimeSettingsRepository(
       const existing = await get();
 
       const next = toSettings({
+        aiEnabled: parsed.aiEnabled ?? existing?.aiEnabled ?? null,
+        aiTraceEnabled: parsed.aiTraceEnabled ?? existing?.aiTraceEnabled ?? null,
         aiStepTraceEnabled:
           parsed.aiStepTraceEnabled ?? existing?.aiStepTraceEnabled ?? null,
         requestPerfTraceEnabled:
