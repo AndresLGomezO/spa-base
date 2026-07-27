@@ -254,7 +254,7 @@ describe("createCallDataHookAi via controller", () => {
       textResult(
         JSON.stringify({
           action: "useExisting",
-          categoryId: "cat_transport",
+          categoryId: "c1",
           confidence: 0.99,
         }),
       ),
@@ -339,6 +339,89 @@ describe("createCallDataHookAi via controller", () => {
     expect(jobs[0]?.input).toMatchObject({
       kind: "dataHookCallAi",
       prompt: "Classify this bank transaction...\nDescription: UBER RIDES",
+    });
+  });
+
+  it("translates short category ids from compact catalog in classify responses", async () => {
+    const repository = createInMemoryAiJobRepository();
+    const generateModelAnswer = vi.fn(async (_config, input) => {
+      expect(input.userText).toContain("- c1: Transport");
+      expect(input.userText).toContain(
+        'Return JSON only: {"categoryId":"<short id from list above>"}',
+      );
+      expect(input.userText).not.toContain('"id":"cat_transport"');
+      return textResult(
+        JSON.stringify({
+          action: "useExisting",
+          categoryId: "c1",
+          confidence: 0.99,
+        }),
+      );
+    });
+    const aiController = createAiController({
+      repository,
+      vertexAiConfig: {
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        reasoningModelId: "gemini-3.1-pro-preview",
+        mockEnabled: false,
+      },
+      clients: {
+        generateModelAnswer,
+        generateChatAnswer: vi.fn(async () => textResult("unused")),
+        generateTextEmbedding: vi.fn(async () => ({
+          vector: [0.1],
+          usage: { modelId: "text-embedding-005", outputDimensions: 1 },
+        })),
+      },
+      flags: {
+        isAiEnabled: () => true,
+        isAiTraceEnabled: () => false,
+      },
+    });
+
+    const callAi = createCallDataHookAi({
+      vertexAiConfig: {
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        reasoningModelId: "gemini-3.1-pro-preview",
+        mockEnabled: false,
+      },
+      aiController,
+      getRepository: () =>
+        ({
+          findAll: async () => ({
+            items: [
+              {
+                id: "cat_transport",
+                tenantId: "tenant_a",
+                name: "Transport",
+                kind: "EXPENSE",
+              },
+              {
+                id: "cat_food",
+                tenantId: "tenant_a",
+                name: "Food",
+                kind: "EXPENSE",
+              },
+            ],
+          }),
+        }) as never,
+    });
+
+    const result = await callAi({
+      tenantId: "tenant_a",
+      hookId: "hook_classify",
+      prompt: "Classify: UBER",
+      includeEntities: ["category"],
+      retrievalHint: "UBER TRANSPORT",
+    });
+
+    expect(result).toMatchObject({
+      action: "useExisting",
+      categoryId: "cat_transport",
     });
   });
 

@@ -13,6 +13,7 @@ import {
   type VertexAiConfig,
 } from "@repo/ai-engine/vertex-ai.client";
 import { HookExecutionError, type DataHookAiRequest } from "@repo/hooks";
+import { normalizeMatchText } from "@repo/hooks";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 import type { DataHookAiCacheRepository } from "@repo/firestore-converters/data-hook-ai-cache";
 
@@ -62,6 +63,10 @@ type CompactCategory = {
   readonly kind?: string;
 };
 
+const CLASSIFY_SHORT_ID_INSTRUCTION = `Return JSON only: {"categoryId":"<short id from list above>"} or {"categoryId":null} if none fit.`;
+
+const RETRIEVAL_HINT_MAX_LEAVES = 10;
+
 /** Fixed key order so catalog JSON is byte-stable across runs (prompt cache). */
 const COMPACT_ENTITY_KEYS = [
   "id",
@@ -90,7 +95,7 @@ export function compactEntityRecord(
   return compact;
 }
 
-/** Deterministic JSON for includeEntities catalogs (stable Vertex prefix). */
+/** Deterministic JSON for non-category includeEntities catalogs. */
 export function stableJsonStringify(
   records: readonly Record<string, unknown>[],
 ): string {
@@ -118,11 +123,176 @@ export function sortRecordsById<T extends { readonly id?: unknown }>(
   });
 }
 
+function sharedTokenCount(
+  query: ReadonlySet<string>,
+  tokens: ReadonlySet<string>,
+): number {
+  let count = 0;
+  for (const token of tokens) {
+    if (query.has(token)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function dedupeById(
+  records: readonly CompactCategory[],
+): CompactCategory[] {
+  const seen = new Set<string>();
+  const out: CompactCategory[] = [];
+  for (const record of records) {
+    if (seen.has(record.id)) {
+      continue;
+    }
+    seen.add(record.id);
+    out.push(record);
+  }
+  return out;
+}
+
+/**
+ * Keep all parents + top-scoring leaves by token overlap with the hint.
+ * Flat catalogs (no parentId links) score every row.
+ * No positive signal → return the full catalog (safe default).
+ */
+export function filterCategoriesForHint(
+  records: readonly CompactCategory[],
+  hint: string | undefined,
+  options?: { readonly maxLeaves?: number },
+): readonly CompactCategory[] {
+  if (!hint) {
+    return records;
+  }
+  const maxLeaves = options?.maxLeaves ?? RETRIEVAL_HINT_MAX_LEAVES;
+  const query = new Set(
+    normalizeMatchText(hint)
+      .split(" ")
+      .filter((token) => token.length > 0),
+  );
+  if (query.size === 0) {
+    return records;
+  }
+
+  const hasHierarchy = records.some((row) => Boolean(row.parentId));
+  const candidates = hasHierarchy
+    ? records.filter((row) => Boolean(row.parentId))
+    : records;
+  const scored = candidates.map((row) => ({
+    row,
+    score: sharedTokenCount(
+      query,
+      new Set(
+        normalizeMatchText(row.name)
+          .split(" ")
+          .filter((token) => token.length > 0),
+      ),
+    ),
+  }));
+  const positive = scored.filter((entry) => entry.score > 0);
+  if (positive.length === 0) {
+    return records;
+  }
+  const top = positive
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.row.name.localeCompare(right.row.name) ||
+        left.row.id.localeCompare(right.row.id),
+    )
+    .slice(0, maxLeaves)
+    .map((entry) => entry.row);
+
+  if (!hasHierarchy) {
+    return sortRecordsById(dedupeById(top));
+  }
+
+  const parents = records.filter((row) => !row.parentId);
+  return sortRecordsById(dedupeById([...parents, ...top]));
+}
+
+/**
+ * Compact text catalog with worker-internal short ids (`c1..cN`).
+ * Short ids are assigned in stable sorted-by-uuid order.
+ */
+export function buildCompactCategoryCatalog(
+  records: readonly CompactCategory[],
+): {
+  readonly text: string;
+  readonly shortToLong: ReadonlyMap<string, string>;
+} {
+  const sorted = sortRecordsById(records);
+  const shortToLong = new Map<string, string>();
+  const longToShort = new Map<string, string>();
+  sorted.forEach((row, index) => {
+    const shortId = `c${index + 1}`;
+    shortToLong.set(shortId, row.id);
+    longToShort.set(row.id, shortId);
+  });
+
+  const byKind = new Map<string, CompactCategory[]>();
+  for (const row of sorted) {
+    const kind = row.kind?.trim() || "OTHER";
+    const group = byKind.get(kind) ?? [];
+    group.push(row);
+    byKind.set(kind, group);
+  }
+
+  const kindOrder = [...byKind.keys()].sort((left, right) =>
+    left.localeCompare(right),
+  );
+  const lines: string[] = [
+    "Categories (short → real id maps server-side; return short id):",
+  ];
+  for (const kind of kindOrder) {
+    lines.push(kind);
+    const group = [...(byKind.get(kind) ?? [])].sort(
+      (left, right) =>
+        left.name.localeCompare(right.name) || left.id.localeCompare(right.id),
+    );
+    for (const row of group) {
+      const shortId = longToShort.get(row.id)!;
+      const parentShort = row.parentId
+        ? longToShort.get(row.parentId)
+        : undefined;
+      const parentName = row.parentId
+        ? sorted.find((candidate) => candidate.id === row.parentId)?.name
+        : undefined;
+      const parentSuffix =
+        parentShort && parentName
+          ? ` (parent: ${parentShort} ${parentName})`
+          : "";
+      lines.push(`- ${shortId}: ${row.name}${parentSuffix}`);
+    }
+  }
+  return { text: lines.join("\n"), shortToLong };
+}
+
+export function translateShortCategoryId(
+  result: Record<string, unknown>,
+  shortToLong: ReadonlyMap<string, string>,
+): Record<string, unknown> {
+  if (shortToLong.size === 0) {
+    return result;
+  }
+  const raw = result.categoryId;
+  if (typeof raw !== "string") {
+    return result;
+  }
+  const long = shortToLong.get(raw.trim());
+  return long ? { ...result, categoryId: long } : result;
+}
+
 async function loadIncludeEntityContext(
   deps: CallDataHookAiDeps,
   tenantId: string,
   entityName: string,
-): Promise<{ readonly text: string; readonly categories: CompactCategory[] }> {
+  retrievalHint?: string,
+): Promise<{
+  readonly text: string;
+  readonly categories: CompactCategory[];
+  readonly shortToLong: ReadonlyMap<string, string>;
+}> {
   const repository = deps.getRepository(tenantId, entityName);
   if (!repository) {
     throw new HookExecutionError(
@@ -134,34 +304,48 @@ async function loadIncludeEntityContext(
     limit: INCLUDE_ENTITY_LIMIT,
   });
   const sorted = sortRecordsById(result.items);
+
+  if (entityName === "category") {
+    const categories: CompactCategory[] = sorted.flatMap((item) => {
+      const row = item as Record<string, unknown>;
+      if (typeof row.id !== "string" || typeof row.name !== "string") {
+        return [];
+      }
+      return [
+        {
+          id: row.id,
+          name: row.name,
+          ...(typeof row.parentId === "string"
+            ? { parentId: row.parentId }
+            : {}),
+          ...(typeof row.kind === "string" ? { kind: row.kind } : {}),
+        },
+      ];
+    });
+    const filtered = filterCategoriesForHint(categories, retrievalHint);
+    const catalog = buildCompactCategoryCatalog(filtered);
+    return {
+      text: catalog.text,
+      categories: [...filtered],
+      shortToLong: catalog.shortToLong,
+    };
+  }
+
   const compact = sorted.map((item) =>
     compactEntityRecord(item as Record<string, unknown>),
   );
-  const categories: CompactCategory[] =
-    entityName === "category"
-      ? sorted.flatMap((item) => {
-          const row = item as Record<string, unknown>;
-          if (typeof row.id !== "string" || typeof row.name !== "string") {
-            return [];
-          }
-          return [
-            {
-              id: row.id,
-              name: row.name,
-              ...(typeof row.parentId === "string"
-                ? { parentId: row.parentId }
-                : {}),
-              ...(typeof row.kind === "string" ? { kind: row.kind } : {}),
-            },
-          ];
-        })
-      : [];
-  return { text: stableJsonStringify(compact), categories };
+  return {
+    text: stableJsonStringify(compact),
+    categories: [],
+    shortToLong: new Map(),
+  };
 }
 
+
 function buildMockClassificationAnswer(prompt: string): string {
+  const shortIdMatch = prompt.match(/^- (c\d+):/m);
   const existingIdMatch = prompt.match(/"id"\s*:\s*"([a-zA-Z0-9_-]{4,})"/);
-  const categoryId = existingIdMatch?.[1] ?? null;
+  const categoryId = shortIdMatch?.[1] ?? existingIdMatch?.[1] ?? null;
   return JSON.stringify({
     action: "useExisting",
     categoryId,
@@ -260,22 +444,49 @@ function assertJsonObject(json: unknown): Record<string, unknown> {
 async function buildEntitySections(
   deps: CallDataHookAiDeps,
   request: DataHookAiRequest,
+  options?: { readonly applyRetrievalHint?: boolean },
 ): Promise<{
   readonly sections: string[];
   readonly categories: CompactCategory[];
+  readonly shortToLong: ReadonlyMap<string, string>;
 }> {
   const sections: string[] = [];
   const categories: CompactCategory[] = [];
+  const shortToLong = new Map<string, string>();
+  const applyHint = options?.applyRetrievalHint !== false;
   for (const entityName of request.includeEntities ?? []) {
     const loaded = await loadIncludeEntityContext(
       deps,
       request.tenantId,
       entityName,
+      applyHint ? request.retrievalHint : undefined,
     );
-    sections.push(`## entity:${entityName}\n${loaded.text}`);
+    const sectionBody =
+      entityName === "category"
+        ? `${loaded.text}\n\n${CLASSIFY_SHORT_ID_INSTRUCTION}`
+        : loaded.text;
+    sections.push(`## entity:${entityName}\n${sectionBody}`);
     categories.push(...loaded.categories);
+    for (const [shortId, longId] of loaded.shortToLong) {
+      shortToLong.set(shortId, longId);
+    }
   }
-  return { sections, categories };
+  return { sections, categories, shortToLong };
+}
+
+function uniformRetrievalHint(
+  requests: readonly DataHookAiRequest[],
+): string | undefined {
+  const first = requests[0]?.retrievalHint?.trim();
+  if (!first) {
+    return undefined;
+  }
+  for (const request of requests) {
+    if ((request.retrievalHint?.trim() ?? "") !== first) {
+      return undefined;
+    }
+  }
+  return first;
 }
 
 const CLASSIFY_GENERATE_OPTIONS = {
@@ -407,7 +618,10 @@ export function createCallDataHookAi(
   deps: CallDataHookAiDeps,
 ): (request: DataHookAiRequest) => Promise<Record<string, unknown>> {
   return async (request) => {
-    const { sections, categories } = await buildEntitySections(deps, request);
+    const { sections, categories, shortToLong } = await buildEntitySections(
+      deps,
+      request,
+    );
     const prefixText =
       sections.length > 0 ? `${sections.join("\n\n")}\n\n---\n\n` : "";
     const classify = isClassifyRequest(request);
@@ -453,10 +667,13 @@ export function createCallDataHookAi(
         ? `${prefixText}${request.prompt}`
         : request.prompt;
       return finalizeClassification(
-        assertJsonObject(
-          extractJsonFromModelAnswer(
-            buildMockClassificationAnswer(mockPrompt),
+        translateShortCategoryId(
+          assertJsonObject(
+            extractJsonFromModelAnswer(
+              buildMockClassificationAnswer(mockPrompt),
+            ),
           ),
+          shortToLong,
         ),
         categories,
       );
@@ -481,7 +698,10 @@ export function createCallDataHookAi(
         );
         const parsed = assertJsonObject(extractJsonFromModelAnswer(answer));
         return classify
-          ? finalizeClassification(parsed, categories)
+          ? finalizeClassification(
+              translateShortCategoryId(parsed, shortToLong),
+              categories,
+            )
           : expandNarrativeCharts(parsed);
       } catch (error) {
         lastError = error;
@@ -524,7 +744,16 @@ export function createBatchCallDataHookAi(
     }
 
     const first = requests[0]!;
-    const { sections, categories } = await buildEntitySections(deps, first);
+    const sharedHint = uniformRetrievalHint(requests);
+    const { sections, categories, shortToLong } = await buildEntitySections(
+      deps,
+      {
+        ...first,
+        ...(sharedHint ? { retrievalHint: sharedHint } : { retrievalHint: undefined }),
+      },
+      // Apply only when the batch shares one hint; otherwise full compact catalog.
+      { applyRetrievalHint: Boolean(sharedHint) },
+    );
     const prefixText =
       sections.length > 0 ? `${sections.join("\n\n")}\n\n---\n\n` : "";
     const systemInstruction =
@@ -542,9 +771,9 @@ export function createBatchCallDataHookAi(
     });
 
     const batchTail = `Classify each item below. Reply with JSON only — compact objects, no markdown, no commentary:
-{"results":[{"action":"useExisting"|"createChild"|"abstain","categoryId":"...|null","parentCategoryId":null,"newCategoryName":null,"kind":"EXPENSE","confidence":0.98}]}
+{"results":[{"action":"useExisting"|"createChild"|"abstain","categoryId":"<short id from catalog>|null","parentCategoryId":null,"newCategoryName":null,"kind":"EXPENSE","confidence":0.98}]}
 
-One result object per item, same order as items. Always include confidence (0..1). Use abstain / null categoryId when not near-certain (confidence < 0.95). Colombia: specialty butcher/pollo/carne (e.g. Rica) → Food; supermarket chains (D1, Éxito, Carulla) → Groceries. Keep each object under 120 tokens.
+One result object per item, same order as items. Always include confidence (0..1). Use abstain / null categoryId when not near-certain (confidence < 0.95). Colombia: specialty butcher/pollo/carne (e.g. Rica) → Food; supermarket chains (D1, Éxito, Carulla) → Groceries. Keep each object under 120 tokens. Return short category ids from the catalog above.
 
 ${itemBlocks.join("\n\n")}`;
 
@@ -595,7 +824,10 @@ ${itemBlocks.join("\n\n")}`;
           return runSequential();
         }
         return results.map((entry) =>
-          finalizeClassification(assertJsonObject(entry), categories),
+          finalizeClassification(
+            translateShortCategoryId(assertJsonObject(entry), shortToLong),
+            categories,
+          ),
         );
       } catch {
         return runSequential();

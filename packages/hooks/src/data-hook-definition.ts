@@ -476,8 +476,9 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
      */
     when: expressionNodeSchema.optional(),
     /**
-     * Load up to 500 records per entity into the model context (compact
-     * `{id,name,parentId,kind}`-style fields when present).
+     * Load up to 500 records per entity into the model context. For
+     * `category`, the worker emits a compact short-id catalog (optionally
+     * pre-filtered via `retrievalHint`); other entities use compact JSON.
      */
     includeEntities: z
       .array(z.string().trim().min(1))
@@ -493,6 +494,12 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
      * requests within a schedule tick (e.g. normalizeMatchText(description)).
      */
     cacheKey: expressionNodeSchema.optional(),
+    /**
+     * Optional expression → string used by the worker to pre-filter
+     * `includeEntities` (category) catalogs (e.g. current.description).
+     * No positive match → full catalog is sent.
+     */
+    retrievalHint: expressionNodeSchema.optional(),
     /** Alias for the parsed JSON object result (or `null` when skipped). */
     as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
   }),

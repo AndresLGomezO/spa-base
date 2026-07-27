@@ -894,13 +894,14 @@ Invoke Vertex AI (worker-service) with a prompt, parse the JSON object response,
 - `prompt` (required): expression → non-empty string
 - `systemInstruction` (optional): expression → string; defaults in the worker caller
 - `when` (optional): expression; when falsey, skips the model call and loads `null` at `as`
-- `includeEntities` (optional): up to 3 entity names; worker loads up to 500 compact records each into the prompt (classify path; Flash)
+- `includeEntities` (optional): up to 3 entity names; worker loads up to 500 records each. For `category`, emits a compact short-id catalog grouped by kind (e.g. `- c1: Food (parent: c8 Expenses)`); other entities use compact JSON. Flash classify path.
 - `model` (optional): `"flash"` (default) or `"reasoning"`. Use `reasoning` only for long-form narrative JSON that needs the Pro model. Enrichment / tagging should stay on Flash.
 - `cacheKey` (optional): expression → string; identical keys within a schedule tick share one model call (result memoization only — not Vertex prompt caching)
+- `retrievalHint` (optional): expression → string; worker pre-filters the `category` catalog to top ~10 name-token matches (plus all parents). No positive match → full catalog. Typical value: `current.description`.
 - `as` (required): loaded alias for the parsed JSON object (or `null` when skipped)
 - Requires the `callAi` service (wired on worker-service). Sync API runs without Vertex will throw if this action executes.
 - **Every `callAi` / batch / embedding request is recorded** to `ai_jobs` via the unified AI controller and appears under `/debugger/ai-jobs` (feature `dataHookCallAi`, `dataHookBatchCallAi`, or `dataHookEmbedding`). Platform Observability exposes the AI kill-switch (`aiEnabled`), trace toggle (`aiTraceEnabled`), and data-hook catalog cache toggle (`dataHookAiCacheEnabled`).
-- **Classify catalog caching:** when `includeEntities` is set, the worker builds a stable sorted catalog prefix and (when `dataHookAiCacheEnabled` is on) stores it as Vertex `CachedContent` keyed per tenant/hook. Subsequent classify calls send only the per-record prompt tail and reference the cache. Catalog changes (add/rename category) invalidate via `prefixHash`. Google Search grounding is off on the classify path so caching can apply. Env override: `DATA_HOOK_AI_CACHE_ENABLED` (default off in `NODE_ENV=test`, on otherwise).
+- **Classify catalog caching:** when `includeEntities` is set and `dataHookAiCacheEnabled` is on, the worker may store the catalog prefix as Vertex `CachedContent` keyed per tenant/hook. **Important:** Vertex requires a per-model minimum (currently **4096 tokens** for `gemini-3.6-flash`). The compressed short-id catalog is typically well below that floor, so create fails and classify falls back to inlining the (already small) prefix. Keep the toggle as a lever for future large catalogs; prefer compression + `retrievalHint` over padding prompts to qualify for cache. Env override: `DATA_HOOK_AI_CACHE_ENABLED` (default off in `NODE_ENV=test`, on otherwise).
 
 ### `computeEmbedding`
 

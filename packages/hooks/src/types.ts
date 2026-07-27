@@ -161,6 +161,11 @@ export interface DataHookAiRequest {
    * within a schedule tick share one model call.
    */
   readonly cacheKey?: string;
+  /**
+   * Optional text used by the worker to pre-filter `includeEntities`
+   * (category) catalogs before sending to the model (e.g. description).
+   */
+  readonly retrievalHint?: string;
   /** Observability metadata for unified AI job tracing. */
   readonly hookId?: string;
   readonly hookName?: string;

@@ -2571,6 +2571,45 @@ describe("callAi action", () => {
     });
   });
 
+  it("forwards retrievalHint from the expression to callAi", async () => {
+    const callAi = vi.fn(async () => ({ categoryId: "cat_1" }));
+    const context = createContext({
+      event: "loan.beforeCreate",
+      current: { id: "txn_1", description: "UBER TRIP" },
+      services: {
+        callAi,
+        logger: { info: vi.fn(), error: vi.fn() },
+      },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "before",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "callAi",
+            prompt: { kind: "literal", value: "Classify" },
+            retrievalHint: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            as: "classification",
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(callAi).toHaveBeenCalledWith(
+      expect.objectContaining({
+        retrievalHint: "UBER TRIP",
+      }),
+    );
+  });
+
   it("skips the model call when when is falsey and loads null", async () => {
     const callAi = vi.fn(async () => ({ categoryId: "cat_1" }));
     const loaded: Record<string, Record<string, unknown> | null> = {};

@@ -863,6 +863,21 @@ async function runAction(
               return key.length > 0 ? { cacheKey: key } : {};
             })()
           : {}),
+        ...(action.retrievalHint
+          ? (() => {
+              const hintValue = evaluateExpression(
+                action.retrievalHint,
+                scope,
+              );
+              const hint =
+                hintValue == null
+                  ? ""
+                  : typeof hintValue === "string"
+                    ? hintValue.trim()
+                    : String(hintValue).trim();
+              return hint.length > 0 ? { retrievalHint: hint } : {};
+            })()
+          : {}),
       });
       context.loaded[action.as] = result;
       const matched = result != null && Object.keys(result).length > 0;
