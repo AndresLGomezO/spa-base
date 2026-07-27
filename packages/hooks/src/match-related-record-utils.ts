@@ -4,6 +4,9 @@
  *
  * Prefer case-insensitive exact alias equality; otherwise pick the longest
  * alias that is a substring of the haystack (stable candidate order on ties).
+ * As a third tier, score merchant-normalized token overlap when both sides
+ * share the same leading token (merchant anchor) — covers Uber-like shapes
+ * where token order differs and directional `includes` misses.
  *
  * Alias values are compared both as uppercase trim and as
  * {@link normalizeMerchantText} so raw descriptions match normalized haystacks.
@@ -13,6 +16,27 @@ import { normalizeMerchantText } from "./expression.js";
 
 function normalizeText(value: unknown): string {
   return typeof value === "string" ? value.trim().toUpperCase() : "";
+}
+
+function merchantTokens(value: string): readonly string[] {
+  const normalized = normalizeMerchantText(value);
+  if (normalized.length === 0) {
+    return [];
+  }
+  return normalized.split(" ");
+}
+
+function sharedTokenCount(
+  left: ReadonlySet<string>,
+  right: readonly string[],
+): number {
+  let count = 0;
+  for (const token of right) {
+    if (left.has(token)) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 export function aliasesFromFieldValue(value: unknown): readonly string[] {
@@ -63,6 +87,39 @@ export function pickBestAliasMatch<T extends Record<string, unknown>>(options: {
       }
     }
   }
+  if (best) {
+    return best;
+  }
 
-  return best;
+  const haystackTokenList = merchantTokens(haystack);
+  if (haystackTokenList.length === 0) {
+    return null;
+  }
+  const haystackLeading = haystackTokenList[0]!;
+  const haystackTokenSet = new Set(haystackTokenList);
+
+  let overlapBest: T | null = null;
+  let bestShared = 0;
+  let bestAliasLength = 0;
+  for (const candidate of options.candidates) {
+    for (const alias of aliasesFromFieldValue(candidate[options.aliasField])) {
+      const aliasTokens = merchantTokens(alias);
+      if (aliasTokens.length === 0 || aliasTokens[0] !== haystackLeading) {
+        continue;
+      }
+      const shared = sharedTokenCount(haystackTokenSet, [
+        ...new Set(aliasTokens),
+      ]);
+      if (
+        shared > bestShared ||
+        (shared === bestShared && alias.length > bestAliasLength)
+      ) {
+        overlapBest = candidate;
+        bestShared = shared;
+        bestAliasLength = alias.length;
+      }
+    }
+  }
+
+  return overlapBest;
 }

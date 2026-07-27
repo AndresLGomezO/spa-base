@@ -76,6 +76,62 @@ describe("pickBestAliasMatch", () => {
       }),
     ).toBeNull();
   });
+
+  it("matches Uber shapes with token-order variance via merchant overlap", () => {
+    // PENDING haystack already merchant-normalized: "UBER *TRIP 987 ES" → "UBER TRIP ES"
+    // DONE description: "UBER *ES-TRIP 12" → aliases include "UBER ES TRIP"
+    // Exact/substring miss; leading-token overlap must hit.
+    expect(
+      pickBestAliasMatch({
+        haystack: "UBER TRIP ES",
+        aliasField: "description",
+        candidates: [
+          {
+            id: "uber_done",
+            description: "UBER *ES-TRIP 12",
+            categoryId: "cat_transport",
+          },
+          {
+            id: "spotify",
+            description: "SPOTIFY PREMIUM",
+            categoryId: "cat_music",
+          },
+        ],
+      })?.id,
+    ).toBe("uber_done");
+  });
+
+  it("matches when the haystack is a shorter Uber token set than the alias", () => {
+    expect(
+      pickBestAliasMatch({
+        haystack: "UBER TRIP",
+        aliasField: "description",
+        candidates: [
+          {
+            id: "uber_long",
+            description: "UBER *TRIP HELP ABCDEF123456 12.50 COP",
+            categoryId: "cat_transport",
+          },
+        ],
+      })?.id,
+    ).toBe("uber_long");
+  });
+
+  it("does not match unrelated merchants that share only filler tokens", () => {
+    expect(
+      pickBestAliasMatch({
+        haystack: "UBER TRIP HELP COP",
+        aliasField: "description",
+        candidates: [
+          {
+            id: "rappi",
+            description: "RAPPI HELP COP",
+            categoryId: "cat_food",
+          },
+        ],
+      }),
+    ).toBeNull();
+  });
 });
 
 describe("aliasesFromFieldValue", () => {
