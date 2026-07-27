@@ -39,6 +39,7 @@ export default [
       route("general", "./routes/account/general.tsx"),
       route("profile", "./routes/account/profile.tsx"),
       route("tenants", "./routes/account/tenants.tsx"),
+      route("notifications", "./routes/account/notifications.tsx"),
       route("integrations/email", "./routes/account/integrations-email.tsx"),
     ]),
     route("settings/metrics", "./routes/settings/metrics.tsx"),

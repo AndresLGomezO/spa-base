@@ -5,7 +5,10 @@ import { clearDynamicEntityRegistry } from "@repo/dynamic-entities";
 import { clearEntityRegistry } from "@repo/entities";
 import { clearHookRegistry } from "@repo/hooks";
 import { clearModuleRegistries } from "@repo/modules";
-import { createInMemoryUserNotificationRepository } from "@repo/firestore-converters";
+import {
+  createInMemoryPushTokenRepository,
+  createInMemoryUserNotificationRepository,
+} from "@repo/firestore-converters";
 
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
@@ -31,9 +34,14 @@ const authHeaders = {
   "x-firebase-appcheck": "fake-appcheck",
 };
 
+const { deliverPushMock } = vi.hoisted(() => ({
+  deliverPushMock: vi.fn(),
+}));
+
 vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminPushTokenRepository: vi.fn(),
   createSendUserNotificationWithPush: vi.fn(() => vi.fn(async () => undefined)),
+  createDeliverWebPushNotification: vi.fn(() => deliverPushMock),
   configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: authState.uid,
@@ -95,6 +103,7 @@ vi.mock("@repo/gcp-firebase", () => ({
 async function buildTestServer() {
   const runtime = createInMemoryCrudRuntime();
   const userNotificationRepository = createInMemoryUserNotificationRepository();
+  const pushTokenRepository = createInMemoryPushTokenRepository();
 
   await userNotificationRepository.create("tenant_a", {
     userId: authState.uid,
@@ -120,6 +129,7 @@ async function buildTestServer() {
     joinRepository: createInMemoryJoinCollectionRepository(),
     queryExecutors: runtime.queryExecutors,
     userNotificationRepository,
+    pushTokenRepository,
     getRoleCatalog: async () => buildRoleCatalog([]),
     getUserAccessProfile: async () => ({
       platformRole: null,
@@ -129,7 +139,7 @@ async function buildTestServer() {
     skipPlatformTenantSeed: true,
   });
 
-  return { server, userNotificationRepository };
+  return { server, userNotificationRepository, pushTokenRepository };
 }
 
 describe("notification routes", () => {
@@ -140,6 +150,7 @@ describe("notification routes", () => {
     clearModuleRegistries();
     authState.uid = "user_123";
     authState.tenantId = "tenant_a";
+    deliverPushMock.mockClear();
   });
 
   it("lists notifications scoped to the authenticated user", async () => {
@@ -212,5 +223,108 @@ describe("notification routes", () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  it("creates an in-app test notification for the authenticated user only", async () => {
+    const { server, userNotificationRepository } = await buildTestServer();
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/notifications/test",
+      headers: {
+        ...authHeaders,
+        "content-type": "application/json",
+      },
+      payload: { channel: "inApp" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data).toEqual({
+      channel: "inApp",
+      delivered: true,
+    });
+    expect(deliverPushMock).not.toHaveBeenCalled();
+
+    const page = await userNotificationRepository.listForUser(
+      "tenant_a",
+      authState.uid,
+      { limit: 10 },
+    );
+    expect(
+      page.items.some((item) => item.message === "Test in-app notification"),
+    ).toBe(true);
+
+    const otherPage = await userNotificationRepository.listForUser(
+      "tenant_a",
+      otherUserAuthState.uid,
+      { limit: 10 },
+    );
+    expect(
+      otherPage.items.some(
+        (item) => item.message === "Test in-app notification",
+      ),
+    ).toBe(false);
+  });
+
+  it("returns 400 when testing push without a registered token", async () => {
+    const { server } = await buildTestServer();
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/notifications/test",
+      headers: {
+        ...authHeaders,
+        "content-type": "application/json",
+      },
+      payload: { channel: "push" },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.message).toBe("no_push_token");
+    expect(deliverPushMock).not.toHaveBeenCalled();
+  });
+
+  it("delivers a push test when the user has a registered token", async () => {
+    const { server, pushTokenRepository, userNotificationRepository } =
+      await buildTestServer();
+    await pushTokenRepository.upsert("tenant_a", {
+      userId: authState.uid,
+      token: "fcm-token-test",
+    });
+
+    const beforeCount = await userNotificationRepository.countUnread(
+      "tenant_a",
+      authState.uid,
+    );
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/notifications/test",
+      headers: {
+        ...authHeaders,
+        "content-type": "application/json",
+      },
+      payload: { channel: "push" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data).toEqual({
+      channel: "push",
+      delivered: true,
+    });
+    expect(deliverPushMock).toHaveBeenCalledOnce();
+    expect(deliverPushMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: authState.uid,
+        message: "Test push notification",
+        level: "info",
+      }),
+    );
+
+    const afterCount = await userNotificationRepository.countUnread(
+      "tenant_a",
+      authState.uid,
+    );
+    expect(afterCount).toBe(beforeCount);
   });
 });

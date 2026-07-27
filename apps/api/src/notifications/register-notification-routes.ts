@@ -4,8 +4,13 @@ import { z } from "zod";
 import {
   decodeUserNotificationListCursor,
   encodeUserNotificationListCursor,
+  type PushTokenRepository,
   type UserNotificationRepository,
 } from "@repo/firestore-converters";
+import {
+  createDeliverWebPushNotification,
+  type FirebaseAdminConfig,
+} from "@repo/gcp-firebase";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
@@ -14,6 +19,8 @@ import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 interface RegisterNotificationRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly userNotificationRepository: UserNotificationRepository;
+  readonly pushTokenRepository?: PushTokenRepository;
+  readonly firebaseAdminConfig?: FirebaseAdminConfig;
 }
 
 const listQuerySchema = z.object({
@@ -27,6 +34,10 @@ const listQuerySchema = z.object({
 
 const notificationIdParamsSchema = z.object({
   id: z.string().trim().min(1),
+});
+
+const testNotificationBodySchema = z.object({
+  channel: z.enum(["inApp", "push"]),
 });
 
 export async function registerNotificationRoutes(
@@ -111,6 +122,91 @@ export async function registerNotificationRoutes(
       );
 
       return reply.send(successEnvelope({ updatedCount }));
+    },
+  );
+
+  app.post(
+    "/api/notifications/test",
+    { preHandler: [options.authenticate] },
+    async (request, reply) => {
+      const parsedBody = testNotificationBodySchema.safeParse(request.body);
+      if (!parsedBody.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid request body.",
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      const uid = request.ctx?.uid;
+      if (!tenantId || !uid) {
+        return;
+      }
+
+      const { channel } = parsedBody.data;
+      const createdAt = new Date().toISOString();
+
+      if (channel === "inApp") {
+        await options.userNotificationRepository.create(tenantId, {
+          userId: uid,
+          message: "Test in-app notification",
+          level: "info",
+          createdAt,
+        });
+        return reply.send(successEnvelope({ channel, delivered: true }));
+      }
+
+      // channel === "push"
+      if (!options.pushTokenRepository || !options.firebaseAdminConfig) {
+        return replyWithError(
+          reply,
+          503,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Browser push is not configured on this server.",
+        );
+      }
+
+      const tokens = await options.pushTokenRepository.listForUser(
+        tenantId,
+        uid,
+      );
+      if (tokens.length === 0) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "no_push_token",
+        );
+      }
+
+      try {
+        const deliver = createDeliverWebPushNotification({
+          config: options.firebaseAdminConfig,
+          pushTokenRepository: options.pushTokenRepository,
+          tenantId,
+        });
+        await deliver({
+          userId: uid,
+          message: "Test push notification",
+          level: "info",
+          createdAt,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to deliver push notification.";
+        return replyWithError(
+          reply,
+          502,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
+        );
+      }
+
+      return reply.send(successEnvelope({ channel, delivered: true }));
     },
   );
 

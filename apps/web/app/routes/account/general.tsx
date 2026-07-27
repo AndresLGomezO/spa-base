@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@repo/ui";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { ThemeToggle } from "../../components/ThemeToggle";
-import { BrowserPushNotificationsSetting } from "../../features/notifications/BrowserPushNotificationsSetting";
 
 export default function AccountSettingsGeneralRoute() {
   const { t } = useTranslation("common");
@@ -37,7 +36,6 @@ export default function AccountSettingsGeneralRoute() {
             <LanguageSwitcher fullWidth />
           </div>
         </div>
-        <BrowserPushNotificationsSetting />
       </div>
     </div>
   );

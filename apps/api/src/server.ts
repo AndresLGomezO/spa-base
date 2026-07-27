@@ -1143,6 +1143,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
   await registerNotificationRoutes(server, {
     authenticate,
     userNotificationRepository,
+    pushTokenRepository,
+    firebaseAdminConfig,
   });
 
   await registerPushTokenRoutes(server, {

@@ -2060,6 +2060,7 @@
       "general": "General",
       "profile": "Your Profile",
       "tenants": "Tenants",
+      "notifications": "Notifications",
       "integrations": "Integrations",
       "email": "Email"
     },
@@ -2080,6 +2081,18 @@
       "pushUnsupported": "Browser notifications are not supported in this browser or context.",
       "pushUnsupportedNoSw": "Browser notifications need the app service worker. Reload the page and try again.",
       "pushUnsupportedMissingVapid": "Browser notifications are not configured for this environment."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage browser push for this device and send a quick test.",
+      "testSectionTitle": "Send a test",
+      "testSectionHint": "In-app adds a bell notification. Push uses this browser’s registered token only (no in-app copy).",
+      "testInApp": "Test in-app",
+      "testPush": "Test push",
+      "testInAppSuccess": "Test in-app notification sent. Check the bell.",
+      "testPushSuccess": "Test push sent. Check this browser’s toast or OS notification.",
+      "testPushNoToken": "Enable browser notifications above first, then try again.",
+      "testFailed": "Could not send the test notification."
     },
     "profile": {
       "name": "Name",

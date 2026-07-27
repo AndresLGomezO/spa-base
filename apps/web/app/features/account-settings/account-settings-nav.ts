@@ -2,6 +2,7 @@ type AccountSettingsNavLabelKey =
   | "accountSettings.nav.general"
   | "accountSettings.nav.profile"
   | "accountSettings.nav.tenants"
+  | "accountSettings.nav.notifications"
   | "accountSettings.nav.integrations"
   | "accountSettings.nav.email";
 
@@ -42,6 +43,11 @@ export const ACCOUNT_SETTINGS_NAV: readonly AccountSettingsNavItem[] = [
     id: "tenants",
     labelKey: "accountSettings.nav.tenants",
     to: `${ACCOUNT_SETTINGS_BASE}/tenants`,
+  },
+  {
+    id: "notifications",
+    labelKey: "accountSettings.nav.notifications",
+    to: `${ACCOUNT_SETTINGS_BASE}/notifications`,
   },
   {
     id: "integrations",

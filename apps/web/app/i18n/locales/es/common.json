@@ -2060,6 +2060,7 @@
       "general": "General",
       "profile": "Tu perfil",
       "tenants": "Tenants",
+      "notifications": "Notificaciones",
       "integrations": "Integraciones",
       "email": "Correo"
     },
@@ -2080,6 +2081,18 @@
       "pushUnsupported": "Las notificaciones del navegador no son compatibles en este navegador o contexto.",
       "pushUnsupportedNoSw": "Las notificaciones del navegador requieren el service worker de la app. Recarga la página e inténtalo de nuevo.",
       "pushUnsupportedMissingVapid": "Las notificaciones del navegador no están configuradas en este entorno."
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "description": "Gestiona las notificaciones push de este dispositivo y envía una prueba rápida.",
+      "testSectionTitle": "Enviar una prueba",
+      "testSectionHint": "In-app añade una notificación a la campana. Push usa solo el token registrado de este navegador (sin copia in-app).",
+      "testInApp": "Probar in-app",
+      "testPush": "Probar push",
+      "testInAppSuccess": "Notificación de prueba in-app enviada. Revisa la campana.",
+      "testPushSuccess": "Push de prueba enviado. Revisa el toast o la notificación del sistema.",
+      "testPushNoToken": "Activa primero las notificaciones del navegador arriba e inténtalo de nuevo.",
+      "testFailed": "No se pudo enviar la notificación de prueba."
     },
     "profile": {
       "name": "Nombre",

@@ -1,6 +1,15 @@
 # Browser push notifications
 
-In-app bell delivery always ships with `sendNotification` / `sendUserNotification`. Browser (web) push is optional: the user must grant notification permission and register an FCM token (Account → General, or the post-login soft-ask).
+In-app bell delivery always ships with `sendNotification` / `sendUserNotification`. Browser (web) push is optional: the user must grant notification permission and register an FCM token (Account → **Notifications**, or the post-login soft-ask).
+
+## Account settings
+
+Account → Settings → **Notifications** owns:
+
+- Browser push toggle for this device
+- **Test in-app** / **Test push** buttons (`POST /api/notifications/test` with `channel: "inApp" | "push"`)
+  - `inApp` — persists a notification for the current user only (no FCM)
+  - `push` — FCM data-only multicast to registered tokens only (no in-app row); returns `400` / `no_push_token` when none are registered
 
 ## Architecture (short)
 
@@ -29,8 +38,9 @@ Local Docker typically **cannot deliver** FCM: the web app can register tokens w
 4. Trigger a hook / path that calls `sendUserNotification` (any Data Hook `sendNotification` action is fine).
 5. **Tab focused:** an in-app Sonner toast appears; **no** duplicate OS toast; the notification bell unread count updates promptly. (Poll-driven toasts are suppressed for ~15s after a foreground FCM toast so the same notification is not shown twice.)
 6. **Tab blurred / backgrounded:** an OS notification appears; clicking it focuses the app and navigates toward `/notifications`.
-7. Account → General → turn browser notifications **off** → token is removed; further sends do not reach this device.
-8. (Fresh profile / cleared site data) Deny the OS prompt: UI stays stable; soft-ask does not reappear; Account toggle shows the denied state.
+7. Account → Notifications → turn browser notifications **off** → token is removed; further sends do not reach this device.
+8. (Fresh profile / cleared site data) Deny the OS prompt: UI stays stable; soft-ask does not reappear; Account → Notifications toggle shows the denied state.
+9. Account → Notifications → **Test in-app** (bell updates) and **Test push** (focused/blurred toast) when a token is registered.
 
 ### Soft-ask nag rules
 

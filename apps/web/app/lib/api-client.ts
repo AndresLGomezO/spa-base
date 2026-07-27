@@ -1921,6 +1921,16 @@ export async function markAllNotificationsRead(): Promise<{
   });
 }
 
+export async function sendTestNotification(channel: "inApp" | "push"): Promise<{
+  readonly channel: "inApp" | "push";
+  readonly delivered: boolean;
+}> {
+  return apiRequest("/api/notifications/test", {
+    method: "POST",
+    body: { channel },
+  });
+}
+
 export async function upsertPushToken(input: {
   readonly token: string;
   readonly userAgent?: string;
