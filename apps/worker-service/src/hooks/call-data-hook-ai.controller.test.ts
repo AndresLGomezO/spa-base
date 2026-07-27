@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createInMemoryAiJobRepository } from "@repo/firestore-converters";
+import { createInMemoryDataHookAiCacheRepository } from "@repo/firestore-converters";
+import { createMockVertexCachedContentClient } from "@repo/ai-engine/grounded-chat";
 import { createAiController } from "@repo/ai-engine/controller";
 
 import { createCallDataHookAi } from "./call-data-hook-ai.js";
@@ -234,8 +236,110 @@ describe("createCallDataHookAi via controller", () => {
     expect(generateModelAnswer).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
+      expect.objectContaining({
+        googleSearch: false,
+        responseMimeType: "application/json",
+      }),
+    );
+    expect(generateModelAnswer).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
       expect.not.objectContaining({ modelId: expect.anything() }),
     );
+  });
+
+  it("sends only the txn tail and cachedContent when classify catalog cache hits", async () => {
+    const repository = createInMemoryAiJobRepository();
+    const generateModelAnswer = vi.fn(async () =>
+      textResult(
+        JSON.stringify({
+          action: "useExisting",
+          categoryId: "cat_transport",
+          confidence: 0.99,
+        }),
+      ),
+    );
+    const aiController = createAiController({
+      repository,
+      vertexAiConfig: {
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        reasoningModelId: "gemini-3.1-pro-preview",
+        mockEnabled: false,
+      },
+      clients: {
+        generateModelAnswer,
+        generateChatAnswer: vi.fn(async () => textResult("unused")),
+        generateTextEmbedding: vi.fn(async () => ({
+          vector: [0.1],
+          usage: { modelId: "text-embedding-005", outputDimensions: 1 },
+        })),
+      },
+      flags: {
+        isAiEnabled: () => true,
+        isAiTraceEnabled: () => false,
+      },
+    });
+
+    const categoryRepo = {
+      findAll: vi.fn(async () => ({
+        items: [
+          {
+            id: "cat_transport",
+            tenantId: "tenant_a",
+            name: "Transport",
+            kind: "EXPENSE",
+          },
+        ],
+      })),
+    };
+    const cacheClient = createMockVertexCachedContentClient();
+    const cacheRepository = createInMemoryDataHookAiCacheRepository();
+
+    const callAi = createCallDataHookAi({
+      vertexAiConfig: {
+        projectId: "demo",
+        region: "us-central1",
+        modelId: "gemini-3.6-flash",
+        reasoningModelId: "gemini-3.1-pro-preview",
+        mockEnabled: false,
+      },
+      aiController,
+      getRepository: () => categoryRepo as never,
+      cacheClient,
+      cacheRepository,
+      isDataHookAiCacheEnabled: () => true,
+    });
+
+    const result = await callAi({
+      tenantId: "tenant_a",
+      hookId: "hook_classify",
+      prompt: "Classify this bank transaction...\nDescription: UBER RIDES",
+      systemInstruction: "Reply with JSON only.",
+      includeEntities: ["category"],
+    });
+
+    expect(result).toMatchObject({
+      action: "useExisting",
+      categoryId: "cat_transport",
+    });
+    expect(generateModelAnswer).toHaveBeenCalledOnce();
+    expect(generateModelAnswer).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        userText: "Classify this bank transaction...\nDescription: UBER RIDES",
+      }),
+      expect.objectContaining({
+        cachedContent: expect.stringContaining("cachedContents/mock-"),
+        googleSearch: false,
+      }),
+    );
+    const jobs = await repository.listRecent("tenant_a", { limit: 10 });
+    expect(jobs[0]?.input).toMatchObject({
+      kind: "dataHookCallAi",
+      prompt: "Classify this bank transaction...\nDescription: UBER RIDES",
+    });
   });
 
   it("retries once when the model returns truncated JSON", async () => {

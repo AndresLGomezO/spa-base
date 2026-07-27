@@ -66,6 +66,17 @@ export function resolveEnvSeedHookObservabilityEnabled(
   return env.NODE_ENV !== "production";
 }
 
+export function resolveEnvDataHookAiCacheEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const explicit = parseBooleanEnvFlag(env.DATA_HOOK_AI_CACHE_ENABLED);
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  // Off in test by default; on in prod/dev so classify catalogs cache.
+  return env.NODE_ENV !== "test";
+}
+
 export function resolveEnvGmailIngestDeliveryMode(
   env: NodeJS.ProcessEnv = process.env,
 ): GmailIngestDeliveryMode {
@@ -85,6 +96,7 @@ export function getObservabilityEnvDefaults(
     aiStepTraceEnabled: aiTraceEnabled,
     requestPerfTraceEnabled: resolveEnvRequestPerfTraceEnabled(env),
     seedHookObservabilityEnabled: resolveEnvSeedHookObservabilityEnabled(env),
+    dataHookAiCacheEnabled: resolveEnvDataHookAiCacheEnabled(env),
     gmailIngestDeliveryMode: resolveEnvGmailIngestDeliveryMode(env),
   };
 }
@@ -153,6 +165,19 @@ export function resolveSeedHookObservabilityEnabled(
   return resolveEnvSeedHookObservabilityEnabled(env);
 }
 
+export function resolveDataHookAiCacheEnabled(
+  settings: PlatformRuntimeSettings | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (
+    settings?.dataHookAiCacheEnabled !== null &&
+    settings?.dataHookAiCacheEnabled !== undefined
+  ) {
+    return settings.dataHookAiCacheEnabled;
+  }
+  return resolveEnvDataHookAiCacheEnabled(env);
+}
+
 export function resolveGmailIngestDeliveryMode(
   settings: PlatformRuntimeSettings | null | undefined,
   env: NodeJS.ProcessEnv = process.env,
@@ -180,6 +205,7 @@ export function resolveEffectiveObservabilityFlags(
       settings,
       env,
     ),
+    dataHookAiCacheEnabled: resolveDataHookAiCacheEnabled(settings, env),
     gmailIngestDeliveryMode: resolveGmailIngestDeliveryMode(settings, env),
   };
 }

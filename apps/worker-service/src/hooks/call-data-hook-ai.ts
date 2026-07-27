@@ -3,6 +3,7 @@ import {
   extractJsonFromModelAnswer,
   isRetriableTruncatedModelAnswerError,
 } from "@repo/ai-engine/extract-json-from-model-answer";
+import type { VertexCachedContentClient } from "@repo/ai-engine/grounded-chat";
 import {
   DATA_HOOK_AI_BATCH_MAX_OUTPUT_TOKENS,
   DATA_HOOK_AI_MAX_OUTPUT_TOKENS,
@@ -13,8 +14,13 @@ import {
 } from "@repo/ai-engine/vertex-ai.client";
 import { HookExecutionError, type DataHookAiRequest } from "@repo/hooks";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
+import type { DataHookAiCacheRepository } from "@repo/firestore-converters/data-hook-ai-cache";
 
 import { expandNarrativeCharts } from "./expand-narrative-charts.js";
+import {
+  ensureDataHookCachedContent,
+  hashDataHookAiPrefix,
+} from "./ensure-data-hook-cached-content.js";
 
 const INCLUDE_ENTITY_LIMIT = 500;
 /** One compact retry when Gemini returns STOP mid-JSON (seen on narrative summaries). */
@@ -43,6 +49,10 @@ export type CallDataHookAiDeps = {
     tenantId: string,
     entityName: string,
   ) => TenantScopedEntityRepository<GenericRecord, unknown> | undefined;
+  /** Optional explicit Vertex CachedContent for classify catalogs. */
+  readonly cacheClient?: VertexCachedContentClient;
+  readonly cacheRepository?: DataHookAiCacheRepository;
+  readonly isDataHookAiCacheEnabled?: () => boolean | Promise<boolean>;
 };
 
 type CompactCategory = {
@@ -52,24 +62,60 @@ type CompactCategory = {
   readonly kind?: string;
 };
 
-function compactEntityRecord(
+/** Fixed key order so catalog JSON is byte-stable across runs (prompt cache). */
+const COMPACT_ENTITY_KEYS = [
+  "id",
+  "name",
+  "parentId",
+  "kind",
+  "enabled",
+  "categoryId",
+  "type",
+  "description",
+] as const;
+
+export function compactEntityRecord(
   record: Record<string, unknown>,
 ): Record<string, unknown> {
-  const compact: Record<string, unknown> = { id: record.id };
-  for (const key of [
-    "name",
-    "parentId",
-    "kind",
-    "enabled",
-    "categoryId",
-    "type",
-    "description",
-  ] as const) {
+  const compact: Record<string, unknown> = {};
+  for (const key of COMPACT_ENTITY_KEYS) {
+    if (key === "id") {
+      compact.id = record.id;
+      continue;
+    }
     if (record[key] !== undefined) {
       compact[key] = record[key];
     }
   }
   return compact;
+}
+
+/** Deterministic JSON for includeEntities catalogs (stable Vertex prefix). */
+export function stableJsonStringify(
+  records: readonly Record<string, unknown>[],
+): string {
+  return `[${records
+    .map((record) => {
+      const parts: string[] = [];
+      for (const key of COMPACT_ENTITY_KEYS) {
+        if (!(key in record) || record[key] === undefined) {
+          continue;
+        }
+        parts.push(`${JSON.stringify(key)}:${JSON.stringify(record[key])}`);
+      }
+      return `{${parts.join(",")}}`;
+    })
+    .join(",")}]`;
+}
+
+export function sortRecordsById<T extends { readonly id?: unknown }>(
+  items: readonly T[],
+): T[] {
+  return [...items].sort((left, right) => {
+    const leftId = typeof left.id === "string" ? left.id : "";
+    const rightId = typeof right.id === "string" ? right.id : "";
+    return leftId.localeCompare(rightId);
+  });
 }
 
 async function loadIncludeEntityContext(
@@ -87,12 +133,13 @@ async function loadIncludeEntityContext(
     tenantId,
     limit: INCLUDE_ENTITY_LIMIT,
   });
-  const compact = result.items.map((item) =>
+  const sorted = sortRecordsById(result.items);
+  const compact = sorted.map((item) =>
     compactEntityRecord(item as Record<string, unknown>),
   );
   const categories: CompactCategory[] =
     entityName === "category"
-      ? result.items.flatMap((item) => {
+      ? sorted.flatMap((item) => {
           const row = item as Record<string, unknown>;
           if (typeof row.id !== "string" || typeof row.name !== "string") {
             return [];
@@ -109,7 +156,7 @@ async function loadIncludeEntityContext(
           ];
         })
       : [];
-  return { text: JSON.stringify(compact), categories };
+  return { text: stableJsonStringify(compact), categories };
 }
 
 function buildMockClassificationAnswer(prompt: string): string {
@@ -232,7 +279,9 @@ async function buildEntitySections(
 }
 
 const CLASSIFY_GENERATE_OPTIONS = {
-  googleSearch: true,
+  // Google Search grounding blocks Vertex prompt caching on Gemini; classify
+  // only needs the provided catalog, so keep search off for cache hits.
+  googleSearch: false,
   responseMimeType: "application/json" as const,
   thinkingBudget: DATA_HOOK_AI_THINKING_BUDGET,
 };
@@ -248,17 +297,59 @@ function isClassifyRequest(request: DataHookAiRequest): boolean {
   return (request.includeEntities?.length ?? 0) > 0;
 }
 
+type CallAiModelOptions = {
+  readonly modelId?: string;
+  readonly googleSearch?: boolean;
+  readonly responseMimeType?: "text/plain" | "application/json";
+  readonly thinkingBudget?: number;
+  readonly maxOutputTokens?: number;
+  readonly cachedContent?: string;
+};
+
+async function resolveClassifyCachedContent(
+  deps: CallDataHookAiDeps,
+  input: {
+    readonly tenantId: string;
+    readonly hookId: string;
+    readonly systemInstruction: string;
+    readonly prefixText: string;
+  },
+): Promise<string | null> {
+  if (
+    !input.prefixText ||
+    !deps.cacheClient ||
+    !deps.cacheRepository ||
+    deps.vertexAiConfig.mockEnabled
+  ) {
+    return null;
+  }
+  const enabled = deps.isDataHookAiCacheEnabled
+    ? await deps.isDataHookAiCacheEnabled()
+    : false;
+  if (!enabled) {
+    return null;
+  }
+  const result = await ensureDataHookCachedContent({
+    config: deps.vertexAiConfig,
+    cacheClient: deps.cacheClient,
+    cacheRepository: deps.cacheRepository,
+    tenantId: input.tenantId,
+    hookId: input.hookId,
+    systemInstruction: input.systemInstruction,
+    prefixText: input.prefixText,
+    prefixHash: hashDataHookAiPrefix({
+      systemInstruction: input.systemInstruction,
+      prefixText: input.prefixText,
+    }),
+  });
+  return result.cachedContentName;
+}
+
 async function runTrackedText(
   deps: CallDataHookAiDeps,
   request: DataHookAiRequest,
   promptWithContext: string,
-  modelOptions: {
-    readonly modelId?: string;
-    readonly googleSearch?: boolean;
-    readonly responseMimeType?: "text/plain" | "application/json";
-    readonly thinkingBudget?: number;
-    readonly maxOutputTokens?: number;
-  },
+  modelOptions: CallAiModelOptions,
 ): Promise<string> {
   const systemInstruction =
     request.systemInstruction ??
@@ -317,19 +408,35 @@ export function createCallDataHookAi(
 ): (request: DataHookAiRequest) => Promise<Record<string, unknown>> {
   return async (request) => {
     const { sections, categories } = await buildEntitySections(deps, request);
-    const promptWithContext =
-      sections.length > 0
-        ? `${sections.join("\n\n")}\n\n---\n\n${request.prompt}`
-        : request.prompt;
+    const prefixText =
+      sections.length > 0 ? `${sections.join("\n\n")}\n\n---\n\n` : "";
     const classify = isClassifyRequest(request);
+    const systemInstruction =
+      request.systemInstruction ??
+      "You are a structured data assistant. Reply with JSON only.";
+    const cachedContentName = classify
+      ? await resolveClassifyCachedContent(deps, {
+          tenantId: request.tenantId,
+          hookId: request.hookId ?? "unknown",
+          systemInstruction,
+          prefixText,
+        })
+      : null;
+    const promptWithContext =
+      cachedContentName && prefixText
+        ? request.prompt
+        : prefixText
+          ? `${prefixText}${request.prompt}`
+          : request.prompt;
     const useReasoning = request.model === "reasoning";
     const reasoningModelId =
       deps.vertexAiConfig.reasoningModelId ?? deps.vertexAiConfig.modelId;
     const flashModelId = deps.vertexAiConfig.modelId;
-    const modelOptions = classify
+    const modelOptions: CallAiModelOptions = classify
       ? {
           ...CLASSIFY_GENERATE_OPTIONS,
           maxOutputTokens: DATA_HOOK_AI_MAX_OUTPUT_TOKENS,
+          ...(cachedContentName ? { cachedContent: cachedContentName } : {}),
         }
       : useReasoning
         ? {
@@ -342,10 +449,13 @@ export function createCallDataHookAi(
           };
 
     if (deps.vertexAiConfig.mockEnabled && classify) {
+      const mockPrompt = prefixText
+        ? `${prefixText}${request.prompt}`
+        : request.prompt;
       return finalizeClassification(
         assertJsonObject(
           extractJsonFromModelAnswer(
-            buildMockClassificationAnswer(promptWithContext),
+            buildMockClassificationAnswer(mockPrompt),
           ),
         ),
         categories,
@@ -415,23 +525,33 @@ export function createBatchCallDataHookAi(
 
     const first = requests[0]!;
     const { sections, categories } = await buildEntitySections(deps, first);
-    const catalogBlock =
+    const prefixText =
       sections.length > 0 ? `${sections.join("\n\n")}\n\n---\n\n` : "";
+    const systemInstruction =
+      first.systemInstruction ??
+      "You are a structured data assistant. Reply with JSON only. Be extremely concise.";
+    const cachedContentName = await resolveClassifyCachedContent(deps, {
+      tenantId: first.tenantId,
+      hookId: first.hookId ?? "unknown",
+      systemInstruction,
+      prefixText,
+    });
 
     const itemBlocks = requests.map((request, index) => {
       return `### Item ${index}\ncacheKey: ${request.cacheKey ?? String(index)}\n${request.prompt}`;
     });
 
-    const batchPrompt = `${catalogBlock}Classify each item below. Reply with JSON only — compact objects, no markdown, no commentary:
+    const batchTail = `Classify each item below. Reply with JSON only — compact objects, no markdown, no commentary:
 {"results":[{"action":"useExisting"|"createChild"|"abstain","categoryId":"...|null","parentCategoryId":null,"newCategoryName":null,"kind":"EXPENSE","confidence":0.98}]}
 
 One result object per item, same order as items. Always include confidence (0..1). Use abstain / null categoryId when not near-certain (confidence < 0.95). Colombia: specialty butcher/pollo/carne (e.g. Rica) → Food; supermarket chains (D1, Éxito, Carulla) → Groceries. Keep each object under 120 tokens.
 
 ${itemBlocks.join("\n\n")}`;
 
-    const systemInstruction =
-      first.systemInstruction ??
-      "You are a structured data assistant. Reply with JSON only. Be extremely concise.";
+    const batchPrompt =
+      cachedContentName && prefixText
+        ? batchTail
+        : `${prefixText}${batchTail}`;
 
     try {
       const parent = await deps.aiController.runAiRequest({
@@ -454,6 +574,7 @@ ${itemBlocks.join("\n\n")}`;
           modelOptions: {
             ...CLASSIFY_GENERATE_OPTIONS,
             maxOutputTokens: DATA_HOOK_AI_BATCH_MAX_OUTPUT_TOKENS,
+            ...(cachedContentName ? { cachedContent: cachedContentName } : {}),
           },
         },
       });

@@ -2207,6 +2207,10 @@
         "title": "Observabilidad de hooks en seed",
         "description": "Persiste ejecuciones de hooks, logs de hooks y notificaciones al reproducir hooks durante el seed de la base de datos."
       },
+      "dataHookAiCache": {
+        "title": "Caché de catálogo AI en data-hooks",
+        "description": "Guarda el catálogo de categorías de classify como Vertex CachedContent por tenant/hook para que las llamadas repetidas reutilicen el prefijo compartido en lugar de reenviarlo."
+      },
       "gmailIngest": {
         "title": "Entrega de ingestión de Gmail",
         "description": "Elige cómo se descubren correos nuevos. Poll sincroniza el historial cada 5 minutos; Push usa watches de Pub/Sub. La ruta inactiva no hace nada para evitar doble ingestión y costos duplicados.",

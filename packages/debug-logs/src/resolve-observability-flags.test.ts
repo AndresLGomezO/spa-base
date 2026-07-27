@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getObservabilityEnvDefaults,
   resolveAiStepTraceEnabled,
+  resolveDataHookAiCacheEnabled,
   resolveEffectiveObservabilityFlags,
   resolveRequestPerfTraceEnabled,
   resolveSeedHookObservabilityEnabled,
@@ -15,6 +16,7 @@ const baseSettings: PlatformRuntimeSettings = {
   aiStepTraceEnabled: null,
   requestPerfTraceEnabled: null,
   seedHookObservabilityEnabled: null,
+  dataHookAiCacheEnabled: null,
   gmailIngestDeliveryMode: null,
   updatedAt: "2026-01-01T00:00:00.000Z",
   updatedBy: "admin",
@@ -46,8 +48,17 @@ describe("resolveObservabilityFlags", () => {
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
       seedHookObservabilityEnabled: true,
+      dataHookAiCacheEnabled: true,
       gmailIngestDeliveryMode: "poll",
     });
+  });
+
+  it("defaults dataHookAiCacheEnabled off in test", () => {
+    expect(
+      resolveDataHookAiCacheEnabled(null, {
+        NODE_ENV: "test",
+      }),
+    ).toBe(false);
   });
 
   it("prefers explicit env flags over NODE_ENV heuristic", () => {
@@ -69,6 +80,12 @@ describe("resolveObservabilityFlags", () => {
         ENABLE_PERF_LOGS: "false",
       }),
     ).toBe(false);
+    expect(
+      resolveDataHookAiCacheEnabled(null, {
+        NODE_ENV: "test",
+        DATA_HOOK_AI_CACHE_ENABLED: "true",
+      }),
+    ).toBe(true);
   });
 
   it("prefers runtime overrides over env defaults", () => {
@@ -93,6 +110,7 @@ describe("resolveObservabilityFlags", () => {
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
       seedHookObservabilityEnabled: false,
+      dataHookAiCacheEnabled: true,
       gmailIngestDeliveryMode: "poll",
     });
   });
@@ -113,6 +131,7 @@ describe("resolveObservabilityFlags", () => {
       aiStepTraceEnabled: false,
       requestPerfTraceEnabled: false,
       seedHookObservabilityEnabled: true,
+      dataHookAiCacheEnabled: true,
       gmailIngestDeliveryMode: "poll",
     });
   });
@@ -156,6 +175,18 @@ describe("resolveObservabilityFlags", () => {
           seedHookObservabilityEnabled: false,
         },
         { NODE_ENV: "development" },
+      ),
+    ).toBe(false);
+  });
+
+  it("resolves dataHookAiCacheEnabled from runtime override", () => {
+    expect(
+      resolveDataHookAiCacheEnabled(
+        {
+          ...baseSettings,
+          dataHookAiCacheEnabled: false,
+        },
+        { NODE_ENV: "production" },
       ),
     ).toBe(false);
   });

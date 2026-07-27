@@ -134,6 +134,7 @@ export {
   type TenantDeletionTaskPayload,
 } from "./tenant-deletion/index.js";
 export { createFirestoreAdminAiJobRepository } from "./firestore-admin-ai-job-repository.js";
+export { createFirestoreAdminDataHookAiCacheRepository } from "./firestore-admin-data-hook-ai-cache-repository.js";
 export { createFirestoreAdminAiSpendRepository } from "./firestore-admin-ai-spend-repository.js";
 export { createFirestoreAdminUiBuilderAiSuggestionRepository } from "./firestore-admin-ui-builder-ai-suggestion-repository.js";
 export { createFirestoreAdminTenantAiContextRepository } from "./firestore-admin-tenant-ai-context-repository.js";

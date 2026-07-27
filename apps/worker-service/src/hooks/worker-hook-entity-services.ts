@@ -73,6 +73,12 @@ export interface WorkerCrudHookDeps {
   readonly aiRecordSummaryRepository?: import("@repo/firestore-converters").AiRecordSummaryRepository;
   readonly aggregation?: AggregationEmitterDeps;
   readonly aiController?: import("@repo/ai-engine/controller").AiController;
+  /** Shared Vertex CachedContent deps for classify `callAi` / batch. */
+  readonly callAiCache?: {
+    readonly cacheClient?: import("@repo/ai-engine/grounded-chat").VertexCachedContentClient;
+    readonly cacheRepository?: import("@repo/firestore-converters/data-hook-ai-cache").DataHookAiCacheRepository;
+    readonly isDataHookAiCacheEnabled?: () => boolean | Promise<boolean>;
+  };
 }
 
 export interface ResolvedHookUserContext {

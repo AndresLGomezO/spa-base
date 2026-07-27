@@ -51,6 +51,12 @@ export {
   type ProcessAiChatTaskPayload,
 } from "./ai-job.schema.js";
 export {
+  DATA_HOOK_AI_CACHE_COLLECTION,
+  dataHookAiCacheDocId,
+  dataHookAiCacheRecordSchema,
+  type DataHookAiCacheRecord,
+} from "./data-hook-ai-cache.schema.js";
+export {
   aiChatInputSchema,
   submitAiChatRequestSchema,
   type AiChatInput,

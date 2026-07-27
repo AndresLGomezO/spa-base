@@ -20,6 +20,11 @@ export const platformRuntimeSettingsSchema = z
     aiStepTraceEnabled: z.boolean().nullable().default(null),
     requestPerfTraceEnabled: z.boolean().nullable().default(null),
     seedHookObservabilityEnabled: z.boolean().nullable().default(null),
+    /**
+     * Explicit Vertex CachedContent for data-hook classify catalogs.
+     * null = use env DATA_HOOK_AI_CACHE_ENABLED (default on in prod, off in test).
+     */
+    dataHookAiCacheEnabled: z.boolean().nullable().default(null),
     /** null = use env GMAIL_INGEST_DELIVERY_MODE */
     gmailIngestDeliveryMode: gmailIngestDeliveryModeSchema
       .nullable()
@@ -40,6 +45,7 @@ export const updatePlatformRuntimeSettingsInputSchema = z
     aiStepTraceEnabled: z.boolean().nullable().optional(),
     requestPerfTraceEnabled: z.boolean().nullable().optional(),
     seedHookObservabilityEnabled: z.boolean().nullable().optional(),
+    dataHookAiCacheEnabled: z.boolean().nullable().optional(),
     gmailIngestDeliveryMode: gmailIngestDeliveryModeSchema
       .nullable()
       .optional(),
@@ -52,6 +58,7 @@ export const updatePlatformRuntimeSettingsInputSchema = z
       value.aiStepTraceEnabled !== undefined ||
       value.requestPerfTraceEnabled !== undefined ||
       value.seedHookObservabilityEnabled !== undefined ||
+      value.dataHookAiCacheEnabled !== undefined ||
       value.gmailIngestDeliveryMode !== undefined,
     { message: "At least one setting must be provided." },
   );
@@ -67,6 +74,7 @@ export interface ObservabilityEnvDefaults {
   readonly aiStepTraceEnabled: boolean;
   readonly requestPerfTraceEnabled: boolean;
   readonly seedHookObservabilityEnabled: boolean;
+  readonly dataHookAiCacheEnabled: boolean;
   readonly gmailIngestDeliveryMode: GmailIngestDeliveryMode;
 }
 
@@ -77,5 +85,6 @@ export interface EffectiveObservabilityFlags {
   readonly aiStepTraceEnabled: boolean;
   readonly requestPerfTraceEnabled: boolean;
   readonly seedHookObservabilityEnabled: boolean;
+  readonly dataHookAiCacheEnabled: boolean;
   readonly gmailIngestDeliveryMode: GmailIngestDeliveryMode;
 }

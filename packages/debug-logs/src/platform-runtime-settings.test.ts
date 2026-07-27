@@ -15,6 +15,7 @@ describe("platformRuntimeSettingsSchema", () => {
       aiStepTraceEnabled: null,
       requestPerfTraceEnabled: null,
       seedHookObservabilityEnabled: null,
+      dataHookAiCacheEnabled: null,
       gmailIngestDeliveryMode: null,
     });
   });

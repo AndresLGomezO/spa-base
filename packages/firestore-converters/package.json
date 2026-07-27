@@ -16,6 +16,7 @@
     "./entity-query-contract": "./src/entity/entity-query-contract.ts",
     "./metric-contribution": "./src/metric-contribution/repository-contract.ts",
     "./ai-job": "./src/ai-job/repository-contract.ts",
+    "./data-hook-ai-cache": "./src/data-hook-ai-cache/index.ts",
     "./tenant-ai-context": "./src/tenant-ai-context/repository-contract.ts"
   },
   "devDependencies": {

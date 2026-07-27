@@ -2207,6 +2207,10 @@
         "title": "Seed hook observability",
         "description": "Persist hook executions, hook logs, and notifications while replaying hooks during database seed."
       },
+      "dataHookAiCache": {
+        "title": "Data-hook AI catalog cache",
+        "description": "Cache the classify category catalog as Vertex CachedContent per tenant/hook so repeated categorize calls reuse the shared prefix instead of resending it."
+      },
       "gmailIngest": {
         "title": "Gmail ingest delivery",
         "description": "Choose how new mail is discovered. Poll runs a 5-minute history sync; Push uses Gmail Pub/Sub watches. The inactive path no-ops so you do not double-ingest or pay for both.",

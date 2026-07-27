@@ -60,7 +60,8 @@ function resolveToggleValue(
     | "aiTraceEnabled"
     | "aiStepTraceEnabled"
     | "requestPerfTraceEnabled"
-    | "seedHookObservabilityEnabled",
+    | "seedHookObservabilityEnabled"
+    | "dataHookAiCacheEnabled",
   effective: PlatformRuntimeSettingsResponse["effective"],
 ): boolean {
   const override = settings?.[key];
@@ -111,7 +112,8 @@ export function PlatformObservabilityPanel() {
       | "aiTraceEnabled"
       | "aiStepTraceEnabled"
       | "requestPerfTraceEnabled"
-      | "seedHookObservabilityEnabled",
+      | "seedHookObservabilityEnabled"
+      | "dataHookAiCacheEnabled",
     checked: boolean,
   ) => {
     updateMutation.mutate({ [key]: checked });
@@ -203,6 +205,26 @@ export function PlatformObservabilityPanel() {
         onChange={(checked) =>
           patchToggle("seedHookObservabilityEnabled", checked)
         }
+      />
+
+      <ObservabilityToggleRow
+        title={t("platform.observability.dataHookAiCache.title")}
+        description={t("platform.observability.dataHookAiCache.description")}
+        checked={resolveToggleValue(
+          settings,
+          "dataHookAiCacheEnabled",
+          effective,
+        )}
+        effectiveLabel={`${t("platform.observability.effective")}: ${formatEnabledLabel(
+          effective.dataHookAiCacheEnabled,
+          enabledLabels,
+        )}`}
+        envDefaultLabel={`${t("platform.observability.envDefaultLabel")}: ${formatEnabledLabel(
+          envDefaults.dataHookAiCacheEnabled,
+          enabledLabels,
+        )}`}
+        disabled={pending}
+        onChange={(checked) => patchToggle("dataHookAiCacheEnabled", checked)}
       />
 
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-md border p-4">

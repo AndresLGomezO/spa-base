@@ -243,6 +243,18 @@ async function processTenantScheduleTick(
             aiController: deps.aiController,
             getRepository: (tenantId, entityName) =>
               deps.entityRuntime.getRepository(tenantId, entityName),
+            ...(deps.callAiCache?.cacheClient
+              ? { cacheClient: deps.callAiCache.cacheClient }
+              : {}),
+            ...(deps.callAiCache?.cacheRepository
+              ? { cacheRepository: deps.callAiCache.cacheRepository }
+              : {}),
+            ...(deps.callAiCache?.isDataHookAiCacheEnabled
+              ? {
+                  isDataHookAiCacheEnabled:
+                    deps.callAiCache.isDataHookAiCacheEnabled,
+                }
+              : {}),
           }),
         });
         hookServices = {

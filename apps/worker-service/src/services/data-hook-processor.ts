@@ -37,6 +37,8 @@ import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import type { AiController } from "@repo/ai-engine/controller";
 import type { VectorIndexService } from "@repo/ai-retrieval";
+import type { VertexCachedContentClient } from "@repo/ai-engine/grounded-chat";
+import type { DataHookAiCacheRepository } from "@repo/firestore-converters/data-hook-ai-cache";
 
 import { PermanentTaskError } from "./ai-chat-processor.js";
 import { callDataHookWebhook } from "../hooks/call-data-hook-webhook.js";
@@ -80,6 +82,9 @@ export function createDataHookProcessorDeps(
   options: {
     readonly aiController: AiController;
     readonly vectorIndexService: VectorIndexService;
+    readonly cacheClient?: VertexCachedContentClient;
+    readonly cacheRepository?: DataHookAiCacheRepository;
+    readonly isDataHookAiCacheEnabled?: () => boolean | Promise<boolean>;
     readonly onRecordSummaryUpdated?: (input: {
       readonly tenantId: string;
       readonly entityName: string;
@@ -192,6 +197,13 @@ export function createDataHookProcessorDeps(
       aiController: options.aiController,
       getRepository: (tenantId, entityName) =>
         entityRuntime.getRepository(tenantId, entityName),
+      ...(options.cacheClient ? { cacheClient: options.cacheClient } : {}),
+      ...(options.cacheRepository
+        ? { cacheRepository: options.cacheRepository }
+        : {}),
+      ...(options.isDataHookAiCacheEnabled
+        ? { isDataHookAiCacheEnabled: options.isDataHookAiCacheEnabled }
+        : {}),
     }),
     computeEmbedding: createComputeDataHookEmbedding({
       vertexAiConfig,
@@ -213,6 +225,25 @@ export function createDataHookProcessorDeps(
     aiRecordSummaryRepository,
     aiController: options.aiController,
     aggregation,
+    ...(options.cacheClient ||
+    options.cacheRepository ||
+    options.isDataHookAiCacheEnabled
+      ? {
+          callAiCache: {
+            ...(options.cacheClient
+              ? { cacheClient: options.cacheClient }
+              : {}),
+            ...(options.cacheRepository
+              ? { cacheRepository: options.cacheRepository }
+              : {}),
+            ...(options.isDataHookAiCacheEnabled
+              ? {
+                  isDataHookAiCacheEnabled: options.isDataHookAiCacheEnabled,
+                }
+              : {}),
+          },
+        }
+      : {}),
   };
 }
 

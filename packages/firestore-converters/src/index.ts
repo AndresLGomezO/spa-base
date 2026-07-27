@@ -155,6 +155,14 @@ export {
 } from "./ai-job/repository-contract.js";
 export { createInMemoryAiJobRepository } from "./ai-job/in-memory-repository.js";
 export {
+  DATA_HOOK_AI_CACHE_COLLECTION,
+  dataHookAiCacheDocId,
+  dataHookAiCacheRecordSchema,
+  type DataHookAiCacheRecord,
+  type DataHookAiCacheRepository,
+} from "./data-hook-ai-cache/repository-contract.js";
+export { createInMemoryDataHookAiCacheRepository } from "./data-hook-ai-cache/in-memory-repository.js";
+export {
   AI_SPEND_COLLECTION,
   AI_SPEND_USERS_COLLECTION,
   aiSpendRecordSchema,

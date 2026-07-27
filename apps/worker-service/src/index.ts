@@ -15,6 +15,7 @@ import {
   createFirestoreAdminAiChatSessionRepository,
   createFirestoreAdminAiContextSectionRepository,
   createFirestoreAdminAiSpendRepository,
+  createFirestoreAdminDataHookAiCacheRepository,
   createFirestoreAdminEntityDefinitionRepository as createFullEntityDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminInsightSurfaceRepository,
@@ -26,6 +27,7 @@ import {
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminUserAiMemoryRepository,
 } from "@repo/gcp-firebase";
+import { createRestVertexCachedContentClient } from "@repo/ai-engine/grounded-chat";
 import { buildTenantRoleCatalog } from "@repo/rbac";
 
 import { createWorkerAiController } from "./ai/create-worker-ai-controller.js";
@@ -156,6 +158,12 @@ const memoryRefreshScheduler = createDebouncedUserAiMemoryRefreshScheduler({
 const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig, {
   aiController,
   vectorIndexService,
+  cacheClient: createRestVertexCachedContentClient(),
+  cacheRepository: createFirestoreAdminDataHookAiCacheRepository(
+    firebaseAdminConfig,
+  ),
+  isDataHookAiCacheEnabled: () =>
+    runtimeSettingsCache.isDataHookAiCacheEnabled(),
   onRecordSummaryUpdated: (input) => {
     const userIds = new Set<string>(input.accessUserIds);
     if (input.ownerId) {

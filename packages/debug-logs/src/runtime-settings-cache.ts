@@ -3,6 +3,7 @@ import {
   resolveEffectiveObservabilityFlags,
   resolveAiEnabled,
   resolveAiTraceEnabled,
+  resolveDataHookAiCacheEnabled,
   resolveGmailIngestDeliveryMode,
   resolveRequestPerfTraceEnabled,
   resolveSeedHookObservabilityEnabled,
@@ -66,6 +67,11 @@ export function createRuntimeSettingsCache(
     return resolveSeedHookObservabilityEnabled(settings);
   }
 
+  async function isDataHookAiCacheEnabled(): Promise<boolean> {
+    const settings = await getSettings();
+    return resolveDataHookAiCacheEnabled(settings);
+  }
+
   async function getGmailIngestDeliveryMode(): Promise<GmailIngestDeliveryMode> {
     const settings = await getSettings();
     return resolveGmailIngestDeliveryMode(settings);
@@ -88,6 +94,7 @@ export function createRuntimeSettingsCache(
     isAiStepTraceEnabled,
     isRequestPerfTraceEnabled,
     isSeedHookObservabilityEnabled,
+    isDataHookAiCacheEnabled,
     getGmailIngestDeliveryMode,
     buildResponse,
   };
