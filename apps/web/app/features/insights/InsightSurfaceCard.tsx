@@ -31,7 +31,7 @@ export function InsightSurfaceCard({
     <article
       className={
         compact
-          ? "bg-card border-border flex min-w-[16rem] max-w-[20rem] shrink-0 flex-col gap-2 rounded-xl border p-3 shadow-sm"
+          ? "bg-card border-border flex min-w-0 w-full flex-col gap-2 rounded-xl border p-3 shadow-sm"
           : "bg-card border-border flex flex-col gap-2 rounded-xl border p-4 shadow-sm"
       }
       data-testid={`insight-card-${insight.recordId}`}

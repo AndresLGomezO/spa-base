@@ -79,12 +79,16 @@ export function InsightSurfaceCarousel({
       ) : null}
       <div className="flex gap-3 overflow-x-auto pb-1">
         {query.data.insights.map((insight) => (
-          <InsightSurfaceCard
+          <div
             key={insight.recordId}
-            insight={insight}
-            linkFields={query.data.linkFields}
-            compact
-          />
+            className="min-w-[16rem] max-w-[20rem] shrink-0"
+          >
+            <InsightSurfaceCard
+              insight={insight}
+              linkFields={query.data.linkFields}
+              compact
+            />
+          </div>
         ))}
       </div>
     </section>

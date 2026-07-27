@@ -137,6 +137,7 @@ export function createTenantDashboardLayoutRenderContext(
     ),
     metricWidgetRenderer: getDefinition
       ? createMetricWidgetRenderer({
+          dashboardDateFilter,
           buildLayoutContext: (definition, item, extras) =>
             createEntityLayoutRenderContext({
               item,
