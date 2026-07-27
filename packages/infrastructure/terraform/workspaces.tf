@@ -5,6 +5,12 @@ locals {
   # Must be a tenant admin (or equivalent) in each tenant where scheduled hooks run.
   demo_scheduled_hook_user_uid = "bq8nxIpwrFhrmM1KjaVfdBzqTyC3"
 
+  # GCP principals allowed to impersonate tasks_sa for manual force schedule-tick
+  # when schedule_tick_allow_force is true (dev/staging only).
+  schedule_tick_force_ops_members = [
+    "user:entitysystemproject@gmail.com",
+  ]
+
   # Canonical GCP project per Terraform workspace (project-per-environment).
   # Optional: set -var='project_id=...' to override for local testing only.
   env_base = {
