@@ -34,12 +34,12 @@ locals {
     development = {
       backend_min_instances            = 0
       max_instances                    = 2
-      backend_cpu                      = "250m"
-      backend_memory                   = "256Mi"
+      backend_cpu                      = "1000m"
+      backend_memory                   = "512Mi"
       cpu_idle                         = true
       startup_cpu_boost                = true
       timeout                          = "60s"
-      max_instance_request_concurrency = 1
+      max_instance_request_concurrency = 40
       worker_min_instances             = 1
       worker_max_instances             = 1
       # cpu_idle=false requires limits.cpu >= 1 and memory >= 512Mi on Cloud Run v2.

@@ -5,20 +5,22 @@ locals {
   # Optional: set -var='project_id=...' to override for local testing only.
   env_base = {
     default = {
-      env_suffix                  = "dev"
-      project_id                  = "entitysystem-development"
-      node_env                    = "production"
-      ensure_firestore_indexes    = "true"
-      enable_aggregation_pubsub   = true
+      env_suffix               = "dev"
+      project_id               = "entitysystem-development"
+      node_env                 = "production"
+      ensure_firestore_indexes = "true"
+      # Inline aggregation on the API — avoids an always-on Cloud Run worker for single-user dev.
+      enable_aggregation_pubsub   = false
       enable_ai_worker            = true
       enable_observability_traces = true
     }
     dev = {
-      env_suffix                  = "dev"
-      project_id                  = "entitysystem-development"
-      node_env                    = "production"
-      ensure_firestore_indexes    = "true"
-      enable_aggregation_pubsub   = true
+      env_suffix               = "dev"
+      project_id               = "entitysystem-development"
+      node_env                 = "production"
+      ensure_firestore_indexes = "true"
+      # Inline aggregation on the API — avoids an always-on Cloud Run worker for single-user dev.
+      enable_aggregation_pubsub   = false
       enable_ai_worker            = true
       enable_observability_traces = true
     }

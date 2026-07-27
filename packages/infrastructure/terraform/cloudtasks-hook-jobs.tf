@@ -5,8 +5,9 @@ resource "google_cloud_tasks_queue" "hook_jobs" {
   location = var.region
 
   rate_limits {
-    max_dispatches_per_second = 50
-    max_concurrent_dispatches = 20
+    # Prod keeps higher throughput; non-prod (single-user) caps fan-out onto the backend.
+    max_dispatches_per_second = local.workspace == "prod" ? 50 : 10
+    max_concurrent_dispatches = local.workspace == "prod" ? 20 : 5
   }
 
   retry_config {

@@ -5,8 +5,9 @@ resource "google_cloud_tasks_queue" "ai_embed" {
   location = var.region
 
   rate_limits {
-    max_dispatches_per_second = 10
-    max_concurrent_dispatches = 20
+    # Prod keeps higher throughput; non-prod (single-user) caps Vertex embedding fan-out.
+    max_dispatches_per_second = local.workspace == "prod" ? 10 : 5
+    max_concurrent_dispatches = local.workspace == "prod" ? 20 : 5
   }
 
   retry_config {
