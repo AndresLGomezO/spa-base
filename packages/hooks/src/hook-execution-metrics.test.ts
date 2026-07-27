@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   HookWriteMetricsCollector,
   buildExecutionMetricsSnapshot,
+  deriveResolutionSource,
 } from "./hook-execution-metrics.js";
 
 describe("HookWriteMetricsCollector", () => {
@@ -22,6 +23,112 @@ describe("HookWriteMetricsCollector", () => {
         financialItem: { created: 0, updated: 1, deleted: 0 },
       },
     });
+  });
+});
+
+describe("deriveResolutionSource", () => {
+  it("returns undefined when no resolution actions ran", () => {
+    expect(
+      deriveResolutionSource([
+        { type: "setField", durationMs: 1 },
+        { type: "createRecords", entity: "commitment", count: 2, durationMs: 3 },
+      ]),
+    ).toBeUndefined();
+  });
+
+  it("prefers direct match over later embedding or llm", () => {
+    expect(
+      deriveResolutionSource([
+        {
+          type: "matchRelatedRecord",
+          outcome: "ran",
+          matched: true,
+          durationMs: 5,
+        },
+        {
+          type: "matchSimilarRecord",
+          outcome: "skipped",
+          matched: false,
+          durationMs: 1,
+        },
+        {
+          type: "callAi",
+          outcome: "skipped",
+          matched: false,
+          durationMs: 1,
+        },
+      ]),
+    ).toBe("directMatch");
+  });
+
+  it("uses embedding when direct miss and similar hit", () => {
+    expect(
+      deriveResolutionSource([
+        {
+          type: "matchRelatedRecord",
+          outcome: "empty",
+          matched: false,
+          durationMs: 5,
+        },
+        {
+          type: "matchSimilarRecord",
+          outcome: "ran",
+          matched: true,
+          score: 0.91,
+          durationMs: 40,
+        },
+        {
+          type: "callAi",
+          outcome: "skipped",
+          matched: false,
+          durationMs: 1,
+        },
+      ]),
+    ).toBe("embeddingMatch");
+  });
+
+  it("uses llm when earlier matches miss", () => {
+    expect(
+      deriveResolutionSource([
+        {
+          type: "matchRelatedRecord",
+          outcome: "empty",
+          matched: false,
+          durationMs: 5,
+        },
+        {
+          type: "matchSimilarRecord",
+          outcome: "empty",
+          matched: false,
+          durationMs: 40,
+        },
+        {
+          type: "callAi",
+          outcome: "ran",
+          matched: true,
+          durationMs: 200,
+        },
+      ]),
+    ).toBe("llm");
+  });
+
+  it("returns unresolved when resolution actions miss", () => {
+    expect(
+      deriveResolutionSource([
+        {
+          type: "matchRelatedRecord",
+          outcome: "empty",
+          matched: false,
+          durationMs: 5,
+        },
+        {
+          type: "callAi",
+          outcome: "skipped",
+          matched: false,
+          durationMs: 1,
+        },
+      ]),
+    ).toBe("unresolved");
   });
 });
 
@@ -57,6 +164,30 @@ describe("buildExecutionMetricsSnapshot", () => {
           durationMs: 40,
         },
       ],
+    });
+  });
+
+  it("derives resolutionSource from actionTrace", () => {
+    expect(
+      buildExecutionMetricsSnapshot({
+        actionTrace: [
+          {
+            type: "matchRelatedRecord",
+            outcome: "empty",
+            matched: false,
+            durationMs: 2,
+          },
+          {
+            type: "callAi",
+            outcome: "ran",
+            matched: true,
+            as: "llmMatch",
+            durationMs: 100,
+          },
+        ],
+      }),
+    ).toMatchObject({
+      resolutionSource: "llm",
     });
   });
 });

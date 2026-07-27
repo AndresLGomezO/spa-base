@@ -170,6 +170,22 @@
       "writesDeleted": "Eliminados",
       "chainDepth": "Profundidad de cadena",
       "actionTrace": "Traza de acciones",
+      "resolutionSource": "Resolución",
+      "resolutionSources": {
+        "directMatch": "Coincidencia directa",
+        "embeddingMatch": "Embedding",
+        "llm": "LLM",
+        "unresolved": "Sin resolver"
+      },
+      "actionOutcome": {
+        "ran": "Ejecutado",
+        "skipped": "Omitido",
+        "empty": "Vacío"
+      },
+      "actionMatched": "Coincide",
+      "actionScore": "Puntuación",
+      "actionCandidates": "Candidatos",
+      "actionRawJson": "JSON crudo",
       "writesByEntity": "Escrituras por entidad",
       "actor": "Actor",
       "targetUser": "Usuario destino",

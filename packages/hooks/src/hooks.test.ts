@@ -2774,6 +2774,369 @@ describe("AI enrichment actions", () => {
   });
 });
 
+describe("resolution source tracing", () => {
+  function createMockRecorder() {
+    return {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+  }
+
+  it("records directMatch when matchRelatedRecord hits", async () => {
+    const recorder = createMockRecorder();
+    const list = vi.fn(async () => [
+      {
+        id: "txn_prior",
+        tenantId: "tenant_a",
+        categorizationStatus: "DONE",
+        description: "UBER TRIP",
+        categoryId: "cat_transport",
+      },
+    ]);
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "matchRelatedRecord",
+            entity: "transaction",
+            where: {
+              type: "condition",
+              field: "categorizationStatus",
+              operator: "==",
+              value: { kind: "literal", value: "DONE" },
+            },
+            haystack: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            aliasField: "description",
+            as: "priorTxn",
+          },
+          {
+            type: "callAi",
+            prompt: { kind: "literal", value: "Classify" },
+            when: {
+              kind: "call",
+              fn: "isEmpty",
+              args: [
+                {
+                  kind: "field",
+                  source: "loaded",
+                  alias: "priorTxn",
+                  path: "categoryId",
+                },
+              ],
+            },
+            as: "llmMatch",
+          },
+        ],
+      },
+      createContext({
+        event: "transaction.afterCreate",
+        entityName: "transaction",
+        current: {
+          id: "txn_1",
+          description: "UBER TRIP",
+          categorizationStatus: "PENDING",
+        },
+        services: {
+          dataHookExecutionRecorder: recorder,
+          callAi: vi.fn(async () => ({ categoryId: "should_not_run" })),
+          entities: {
+            list,
+            get: vi.fn(),
+            create: vi.fn(),
+            createMany: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolutionSource: "directMatch",
+        actionTrace: expect.arrayContaining([
+          expect.objectContaining({
+            type: "matchRelatedRecord",
+            outcome: "ran",
+            matched: true,
+            as: "priorTxn",
+          }),
+          expect.objectContaining({
+            type: "callAi",
+            outcome: "skipped",
+            matched: false,
+            as: "llmMatch",
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it("records embeddingMatch with score and skips callAi", async () => {
+    const recorder = createMockRecorder();
+    const query = [1, 0, 0];
+    const computeEmbedding = vi.fn(async () => query);
+    const callAi = vi.fn(async () => ({ categoryId: "should_not_run" }));
+    const list = vi.fn(async (entity: string) => {
+      if (entity === "transaction") {
+        return [];
+      }
+      return [
+        {
+          id: "ex_uber",
+          tenantId: "tenant_a",
+          enabled: true,
+          categoryId: "cat_transport",
+          embedding: [0.99, 0.01, 0],
+        },
+      ];
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "matchRelatedRecord",
+            entity: "transaction",
+            where: {
+              type: "condition",
+              field: "categorizationStatus",
+              operator: "==",
+              value: { kind: "literal", value: "DONE" },
+            },
+            haystack: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            aliasField: "description",
+            as: "priorTxn",
+          },
+          {
+            type: "matchSimilarRecord",
+            entity: "categoryExample",
+            where: {
+              type: "condition",
+              field: "enabled",
+              operator: "==",
+              value: { kind: "literal", value: true },
+            },
+            haystack: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            embeddingField: "embedding",
+            minScore: 0.5,
+            when: {
+              kind: "call",
+              fn: "isEmpty",
+              args: [
+                {
+                  kind: "field",
+                  source: "loaded",
+                  alias: "priorTxn",
+                  path: "categoryId",
+                },
+              ],
+            },
+            as: "example",
+          },
+          {
+            type: "callAi",
+            prompt: { kind: "literal", value: "Classify" },
+            when: {
+              kind: "call",
+              fn: "isEmpty",
+              args: [
+                {
+                  kind: "call",
+                  fn: "coalesce",
+                  args: [
+                    {
+                      kind: "field",
+                      source: "loaded",
+                      alias: "priorTxn",
+                      path: "categoryId",
+                    },
+                    {
+                      kind: "field",
+                      source: "loaded",
+                      alias: "example",
+                      path: "categoryId",
+                    },
+                  ],
+                },
+              ],
+            },
+            as: "llmMatch",
+          },
+        ],
+      },
+      createContext({
+        event: "transaction.afterCreate",
+        entityName: "transaction",
+        current: {
+          id: "txn_1",
+          description: "UBER TRIP HELP",
+          categorizationStatus: "PENDING",
+        },
+        services: {
+          dataHookExecutionRecorder: recorder,
+          callAi,
+          computeEmbedding,
+          entities: {
+            list,
+            get: vi.fn(),
+            create: vi.fn(),
+            createMany: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(callAi).not.toHaveBeenCalled();
+    expect(computeEmbedding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookExecutionId: "exec_running",
+      }),
+    );
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolutionSource: "embeddingMatch",
+        actionTrace: expect.arrayContaining([
+          expect.objectContaining({
+            type: "matchSimilarRecord",
+            outcome: "ran",
+            matched: true,
+            as: "example",
+            score: expect.any(Number),
+          }),
+          expect.objectContaining({
+            type: "callAi",
+            outcome: "skipped",
+            matched: false,
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it("records llm when matches miss and passes hookExecutionId", async () => {
+    const recorder = createMockRecorder();
+    const callAi = vi.fn(async () => ({ categoryId: "cat_food" }));
+    const list = vi.fn(async () => []);
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "matchRelatedRecord",
+            entity: "transaction",
+            where: {
+              type: "condition",
+              field: "categorizationStatus",
+              operator: "==",
+              value: { kind: "literal", value: "DONE" },
+            },
+            haystack: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            aliasField: "description",
+            as: "priorTxn",
+          },
+          {
+            type: "callAi",
+            prompt: { kind: "literal", value: "Classify" },
+            when: {
+              kind: "call",
+              fn: "isEmpty",
+              args: [
+                {
+                  kind: "field",
+                  source: "loaded",
+                  alias: "priorTxn",
+                  path: "categoryId",
+                },
+              ],
+            },
+            as: "llmMatch",
+          },
+        ],
+      },
+      createContext({
+        event: "transaction.afterCreate",
+        entityName: "transaction",
+        current: {
+          id: "txn_1",
+          description: "UNKNOWN MERCHANT",
+          categorizationStatus: "PENDING",
+        },
+        services: {
+          dataHookExecutionRecorder: recorder,
+          callAi,
+          entities: {
+            list,
+            get: vi.fn(),
+            create: vi.fn(),
+            createMany: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(callAi).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookExecutionId: "exec_running",
+      }),
+    );
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolutionSource: "llm",
+        actionTrace: expect.arrayContaining([
+          expect.objectContaining({
+            type: "matchRelatedRecord",
+            outcome: "empty",
+            matched: false,
+          }),
+          expect.objectContaining({
+            type: "callAi",
+            outcome: "ran",
+            matched: true,
+            as: "llmMatch",
+          }),
+        ]),
+      }),
+    );
+  });
+});
+
 describe("execution logging", () => {
   function createMockRecorder() {
     const recorder = {

@@ -153,6 +153,7 @@ function toHookExecutionDebugEvent(
       writesDeleted: record.writesDeleted,
       writesByEntity: record.writesByEntity,
       actionTrace: record.actionTrace,
+      resolutionSource: record.resolutionSource,
     },
     payload: record,
   };

@@ -11,12 +11,36 @@ export const entityWriteCountsSchema = z.object({
 });
 export type EntityWriteCounts = z.infer<typeof entityWriteCountsSchema>;
 
+export const dataHookActionTraceOutcomeSchema = z.enum([
+  "ran",
+  "skipped",
+  "empty",
+]);
+export type DataHookActionTraceOutcome = z.infer<
+  typeof dataHookActionTraceOutcomeSchema
+>;
+
+export const dataHookResolutionSourceSchema = z.enum([
+  "directMatch",
+  "embeddingMatch",
+  "llm",
+  "unresolved",
+]);
+export type DataHookResolutionSource = z.infer<
+  typeof dataHookResolutionSourceSchema
+>;
+
 export const dataHookActionTraceEntrySchema = z.object({
   type: z.string().trim().min(1),
   entity: z.string().trim().min(1).optional(),
   count: z.number().int().nonnegative().optional(),
   durationMs: z.number().int().nonnegative(),
   error: z.string().trim().optional(),
+  as: z.string().trim().min(1).optional(),
+  outcome: dataHookActionTraceOutcomeSchema.optional(),
+  matched: z.boolean().optional(),
+  score: z.number().optional(),
+  candidateCount: z.number().int().nonnegative().optional(),
 });
 export type DataHookActionTraceEntry = z.infer<
   typeof dataHookActionTraceEntrySchema
@@ -29,10 +53,52 @@ export const dataHookExecutionMetricsSchema = z.object({
   writesDeleted: z.number().int().nonnegative().optional(),
   writesByEntity: z.record(z.string(), entityWriteCountsSchema).optional(),
   actionTrace: z.array(dataHookActionTraceEntrySchema).optional(),
+  resolutionSource: dataHookResolutionSourceSchema.optional(),
 });
 export type DataHookExecutionMetrics = z.infer<
   typeof dataHookExecutionMetricsSchema
 >;
+
+const RESOLUTION_ACTION_TYPES = new Set([
+  "matchRelatedRecord",
+  "matchSimilarRecord",
+  "callAi",
+]);
+
+/**
+ * First-win resolution path: direct alias match → embedding similar → LLM.
+ * Returns undefined when the trace has no resolution-relevant actions.
+ */
+export function deriveResolutionSource(
+  actionTrace: readonly DataHookActionTraceEntry[],
+): DataHookResolutionSource | undefined {
+  const relevant = actionTrace.filter((entry) =>
+    RESOLUTION_ACTION_TYPES.has(entry.type),
+  );
+  if (relevant.length === 0) {
+    return undefined;
+  }
+  if (
+    relevant.some(
+      (entry) => entry.type === "matchRelatedRecord" && entry.matched === true,
+    )
+  ) {
+    return "directMatch";
+  }
+  if (
+    relevant.some(
+      (entry) => entry.type === "matchSimilarRecord" && entry.matched === true,
+    )
+  ) {
+    return "embeddingMatch";
+  }
+  if (
+    relevant.some((entry) => entry.type === "callAi" && entry.matched === true)
+  ) {
+    return "llm";
+  }
+  return "unresolved";
+}
 
 export class HookWriteMetricsCollector {
   private readonly byEntity = new Map<string, EntityWriteCounts>();
@@ -135,16 +201,23 @@ export function buildExecutionMetricsSnapshot(options: {
   readonly chainDepth?: number;
   readonly writeMetrics?: HookWriteMetricsCollector;
   readonly actionTrace?: readonly DataHookActionTraceEntry[];
+  readonly resolutionSource?: DataHookResolutionSource;
 }): DataHookExecutionMetrics {
   const writeSnapshot = options.writeMetrics?.snapshot() ?? {};
+  const actionTrace =
+    options.actionTrace && options.actionTrace.length > 0
+      ? [...options.actionTrace]
+      : undefined;
+  const resolutionSource =
+    options.resolutionSource ??
+    (actionTrace ? deriveResolutionSource(actionTrace) : undefined);
 
   return {
     ...(options.chainDepth != null && options.chainDepth > 0
       ? { chainDepth: options.chainDepth }
       : {}),
     ...writeSnapshot,
-    ...(options.actionTrace && options.actionTrace.length > 0
-      ? { actionTrace: [...options.actionTrace] }
-      : {}),
+    ...(actionTrace ? { actionTrace } : {}),
+    ...(resolutionSource ? { resolutionSource } : {}),
   };
 }

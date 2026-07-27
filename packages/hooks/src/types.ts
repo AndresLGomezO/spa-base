@@ -315,6 +315,11 @@ export interface HookContext {
     readonly writeMetrics: import("./hook-execution-metrics.js").HookWriteMetricsCollector;
     readonly actionTrace: import("./hook-execution-metrics.js").DataHookActionTraceEntry[];
   };
+  /**
+   * Persisted `__data_hook_executions` id for this run, when recording is enabled.
+   * Forwarded to `callAi` / `computeEmbedding` so AI debugger jobs can join.
+   */
+  hookExecutionId?: string;
 }
 
 export type HookHandler = (context: HookContext) => Promise<void> | void;

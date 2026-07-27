@@ -170,6 +170,22 @@
       "writesDeleted": "Deleted",
       "chainDepth": "Chain depth",
       "actionTrace": "Action trace",
+      "resolutionSource": "Resolution",
+      "resolutionSources": {
+        "directMatch": "Direct match",
+        "embeddingMatch": "Embedding",
+        "llm": "LLM",
+        "unresolved": "Unresolved"
+      },
+      "actionOutcome": {
+        "ran": "Ran",
+        "skipped": "Skipped",
+        "empty": "Empty"
+      },
+      "actionMatched": "Matched",
+      "actionScore": "Score",
+      "actionCandidates": "Candidates",
+      "actionRawJson": "Raw JSON",
       "writesByEntity": "Writes by entity",
       "actor": "Actor",
       "targetUser": "Target user",

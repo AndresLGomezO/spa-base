@@ -171,8 +171,11 @@ export {
 export {
   MAX_HOOK_ACTION_TRACE_ENTRIES,
   entityWriteCountsSchema,
+  dataHookActionTraceOutcomeSchema,
+  dataHookResolutionSourceSchema,
   dataHookActionTraceEntrySchema,
   dataHookExecutionMetricsSchema,
+  deriveResolutionSource,
   HookWriteMetricsCollector,
   wrapHookEntityServicesWithMetrics,
   appendActionTraceEntry,
@@ -180,6 +183,8 @@ export {
 } from "./hook-execution-metrics.js";
 export type {
   EntityWriteCounts,
+  DataHookActionTraceOutcome,
+  DataHookResolutionSource,
   DataHookActionTraceEntry,
   DataHookExecutionMetrics,
 } from "./hook-execution-metrics.js";

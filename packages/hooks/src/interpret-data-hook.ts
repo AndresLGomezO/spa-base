@@ -33,6 +33,7 @@ import {
   HookWriteMetricsCollector,
   wrapHookEntityServicesWithMetrics,
   type DataHookActionTraceEntry,
+  type DataHookActionTraceOutcome,
 } from "./hook-execution-metrics.js";
 import { buildDataHookJobPayload } from "./data-hook-job.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
@@ -338,6 +339,15 @@ interface DataHookActionMeta {
   readonly hookName: string;
 }
 
+/** Outcome metadata returned by actions that participate in resolution tracing. */
+interface ActionRunResult {
+  readonly outcome: DataHookActionTraceOutcome;
+  readonly as?: string;
+  readonly matched?: boolean;
+  readonly score?: number;
+  readonly candidateCount?: number;
+}
+
 interface HookExecutionInstrumentation {
   readonly writeMetrics: HookWriteMetricsCollector;
   readonly actionTrace: DataHookActionTraceEntry[];
@@ -373,6 +383,7 @@ function recordActionTrace(
   scope: ExpressionScope,
   durationMs: number,
   error?: string,
+  result?: ActionRunResult,
 ): void {
   const trace = context.executionInstrumentation?.actionTrace;
   if (!trace) {
@@ -394,6 +405,13 @@ function recordActionTrace(
     ...(count != null ? { count } : {}),
     durationMs,
     ...(error ? { error } : {}),
+    ...(result?.as ? { as: result.as } : {}),
+    ...(result?.outcome ? { outcome: result.outcome } : {}),
+    ...(result?.matched != null ? { matched: result.matched } : {}),
+    ...(result?.score != null ? { score: result.score } : {}),
+    ...(result?.candidateCount != null
+      ? { candidateCount: result.candidateCount }
+      : {}),
   });
 }
 
@@ -404,7 +422,7 @@ async function runAction(
   execution: DataHookExecutionMode | undefined,
   hookMeta: DataHookActionMeta,
   writeOptions?: HookEntityWriteOptions,
-): Promise<void> {
+): Promise<ActionRunResult | undefined> {
   const scope = buildScope(context);
 
   switch (action.type) {
@@ -628,7 +646,7 @@ async function runAction(
         (typeof haystack === "string" && haystack.trim().length === 0)
       ) {
         context.loaded[action.as] = null;
-        return;
+        return { outcome: "empty", as: action.as, matched: false };
       }
 
       const matches = await listMatchingRecordsForWhere(
@@ -638,12 +656,25 @@ async function runAction(
         scope,
         entities.list,
       );
-      context.loaded[action.as] = pickBestAliasMatch({
+      const matched = pickBestAliasMatch({
         haystack,
         aliasField: action.aliasField,
         candidates: matches,
       });
-      return;
+      context.loaded[action.as] = matched;
+      return matched
+        ? {
+            outcome: "ran",
+            as: action.as,
+            matched: true,
+            candidateCount: matches.length,
+          }
+        : {
+            outcome: "empty",
+            as: action.as,
+            matched: false,
+            candidateCount: matches.length,
+          };
     }
 
     case "aggregateMatching": {
@@ -771,7 +802,7 @@ async function runAction(
         const whenValue = evaluateExpression(action.when, scope);
         if (!isTruthyExpressionValue(whenValue)) {
           context.loaded[action.as] = null;
-          return;
+          return { outcome: "skipped", as: action.as, matched: false };
         }
       }
       const callAi = context.services.callAi;
@@ -802,6 +833,9 @@ async function runAction(
         ...(typeof context.current.id === "string"
           ? { recordId: context.current.id }
           : {}),
+        ...(context.hookExecutionId
+          ? { hookExecutionId: context.hookExecutionId }
+          : {}),
         ...(systemInstruction ? { systemInstruction } : {}),
         ...(action.includeEntities && action.includeEntities.length > 0
           ? { includeEntities: action.includeEntities }
@@ -821,7 +855,10 @@ async function runAction(
           : {}),
       });
       context.loaded[action.as] = result;
-      return;
+      const matched = result != null && Object.keys(result).length > 0;
+      return matched
+        ? { outcome: "ran", as: action.as, matched: true }
+        : { outcome: "empty", as: action.as, matched: false };
     }
 
     case "computeEmbedding": {
@@ -832,7 +869,7 @@ async function runAction(
         const whenValue = evaluateExpression(action.when, scope);
         if (!isTruthyExpressionValue(whenValue)) {
           context.loaded[action.as] = null;
-          return;
+          return { outcome: "skipped", as: action.as, matched: false };
         }
       }
       const computeEmbedding = context.services.computeEmbedding;
@@ -850,7 +887,7 @@ async function runAction(
             : String(textValue).trim();
       if (text.length === 0) {
         context.loaded[action.as] = null;
-        return;
+        return { outcome: "empty", as: action.as, matched: false };
       }
       const values = await computeEmbedding({
         text,
@@ -860,9 +897,14 @@ async function runAction(
         ...(typeof context.current.id === "string"
           ? { recordId: context.current.id }
           : {}),
+        ...(context.hookExecutionId
+          ? { hookExecutionId: context.hookExecutionId }
+          : {}),
       });
       context.loaded[action.as] = { values: [...values] };
-      return;
+      return values.length > 0
+        ? { outcome: "ran", as: action.as, matched: true }
+        : { outcome: "empty", as: action.as, matched: false };
     }
 
     case "computeRecordAiSummary": {
@@ -1130,7 +1172,7 @@ async function runAction(
         const whenValue = evaluateExpression(action.when, scope);
         if (!isTruthyExpressionValue(whenValue)) {
           context.loaded[action.as] = null;
-          return;
+          return { outcome: "skipped", as: action.as, matched: false };
         }
       }
       const computeEmbedding = context.services.computeEmbedding;
@@ -1149,7 +1191,7 @@ async function runAction(
             : String(haystackValue).trim();
       if (haystack.length === 0) {
         context.loaded[action.as] = null;
-        return;
+        return { outcome: "empty", as: action.as, matched: false };
       }
       const candidates = await listMatchingRecordsForWhere(
         action.entity,
@@ -1160,7 +1202,12 @@ async function runAction(
       );
       if (candidates.length === 0) {
         context.loaded[action.as] = null;
-        return;
+        return {
+          outcome: "empty",
+          as: action.as,
+          matched: false,
+          candidateCount: 0,
+        };
       }
       const query = await computeEmbedding({
         text: haystack,
@@ -1169,6 +1216,9 @@ async function runAction(
         entityName: context.entityName,
         ...(typeof context.current.id === "string"
           ? { recordId: context.current.id }
+          : {}),
+        ...(context.hookExecutionId
+          ? { hookExecutionId: context.hookExecutionId }
           : {}),
       });
       const minScore = action.minScore ?? DEFAULT_MATCH_SIMILAR_MIN_SCORE;
@@ -1179,7 +1229,20 @@ async function runAction(
         minScore,
       });
       context.loaded[action.as] = best ? best.record : null;
-      return;
+      return best
+        ? {
+            outcome: "ran",
+            as: action.as,
+            matched: true,
+            score: best.score,
+            candidateCount: candidates.length,
+          }
+        : {
+            outcome: "empty",
+            as: action.as,
+            matched: false,
+            candidateCount: candidates.length,
+          };
     }
 
     default: {
@@ -1312,7 +1375,7 @@ async function runDataHookCore(
     const scope = buildScope(context);
     const startedAt = Date.now();
     try {
-      await runAction(
+      const result = await runAction(
         action,
         context,
         parsed.phase,
@@ -1323,7 +1386,14 @@ async function runDataHookCore(
         },
         writeOptions,
       );
-      recordActionTrace(context, action, scope, Date.now() - startedAt);
+      recordActionTrace(
+        context,
+        action,
+        scope,
+        Date.now() - startedAt,
+        undefined,
+        result,
+      );
     } catch (error) {
       if (error instanceof DataHookSkipError) {
         throw error;
@@ -1435,6 +1505,10 @@ export async function runDataHook(
     if (begun) {
       executionId = begun.id;
     }
+  }
+
+  if (executionId) {
+    runContext.hookExecutionId = executionId;
   }
 
   try {
