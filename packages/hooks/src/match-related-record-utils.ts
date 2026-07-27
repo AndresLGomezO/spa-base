@@ -4,22 +4,22 @@
  *
  * Prefer case-insensitive exact alias equality; otherwise pick the longest
  * alias that is a substring of the haystack (stable candidate order on ties).
- * As a third tier, score merchant-normalized token overlap when both sides
- * share the same leading token (merchant anchor) — covers Uber-like shapes
- * where token order differs and directional `includes` misses.
+ * As a third tier, score match-normalized token overlap when both sides share
+ * the same leading token (anchor) — covers shapes where token order differs
+ * and directional `includes` misses.
  *
  * Alias values are compared both as uppercase trim and as
- * {@link normalizeMerchantText} so raw descriptions match normalized haystacks.
+ * {@link normalizeMatchText} so raw field values match normalized haystacks.
  */
 
-import { normalizeMerchantText } from "./expression.js";
+import { normalizeMatchText } from "./expression.js";
 
 function normalizeText(value: unknown): string {
   return typeof value === "string" ? value.trim().toUpperCase() : "";
 }
 
-function merchantTokens(value: string): readonly string[] {
-  const normalized = normalizeMerchantText(value);
+function matchTokens(value: string): readonly string[] {
+  const normalized = normalizeMatchText(value);
   if (normalized.length === 0) {
     return [];
   }
@@ -45,9 +45,9 @@ export function aliasesFromFieldValue(value: unknown): readonly string[] {
     if (normalized.length === 0) {
       return [];
     }
-    const merchant = normalizeMerchantText(value);
-    return merchant && merchant !== normalized
-      ? [normalized, merchant]
+    const matched = normalizeMatchText(value);
+    return matched && matched !== normalized
+      ? [normalized, matched]
       : [normalized];
   }
   if (!Array.isArray(value)) {
@@ -91,7 +91,7 @@ export function pickBestAliasMatch<T extends Record<string, unknown>>(options: {
     return best;
   }
 
-  const haystackTokenList = merchantTokens(haystack);
+  const haystackTokenList = matchTokens(haystack);
   if (haystackTokenList.length === 0) {
     return null;
   }
@@ -103,7 +103,7 @@ export function pickBestAliasMatch<T extends Record<string, unknown>>(options: {
   let bestAliasLength = 0;
   for (const candidate of options.candidates) {
     for (const alias of aliasesFromFieldValue(candidate[options.aliasField])) {
-      const aliasTokens = merchantTokens(alias);
+      const aliasTokens = matchTokens(alias);
       if (aliasTokens.length === 0 || aliasTokens[0] !== haystackLeading) {
         continue;
       }

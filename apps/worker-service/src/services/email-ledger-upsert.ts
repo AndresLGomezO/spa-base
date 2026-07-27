@@ -4,7 +4,7 @@ import type {
 } from "@repo/gmail-ingest";
 import type { HookEntityServices } from "@repo/hooks";
 
-/** Rates (and other tenants) seed an `email` entity; worker upserts by name. */
+/** Tenants may seed an `email` entity; worker upserts by name. */
 export const EMAIL_LEDGER_ENTITY_NAME = "email";
 
 const BODY_TEXT_MAX_CHARS = 8_000;

@@ -161,7 +161,7 @@ export async function seedLocalCatalogs(
     );
     if (!entityParsed.ok) {
       throw new Error(
-        `Invalid rates entity catalog: ${entityParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant entity catalog: ${entityParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const entityResult = await replaceEntityDefinitionsCatalog(
@@ -186,7 +186,7 @@ export async function seedLocalCatalogs(
     );
     if (!queryParsed.ok) {
       throw new Error(
-        `Invalid rates query catalog: ${queryParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant query catalog: ${queryParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const queryResult = await replaceEntityQueryDefinitionsCatalog(
@@ -208,7 +208,7 @@ export async function seedLocalCatalogs(
     );
     if (!metricParsed.ok) {
       throw new Error(
-        `Invalid rates metric catalog: ${metricParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant metric catalog: ${metricParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const metricRuntime = createMetricRuntimeContext({
@@ -252,7 +252,7 @@ export async function seedLocalCatalogs(
     );
     if (!chartParsed.ok) {
       throw new Error(
-        `Invalid rates chart catalog: ${chartParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant chart catalog: ${chartParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const chartResult = await replaceChartDefinitionsCatalog(
@@ -272,7 +272,7 @@ export async function seedLocalCatalogs(
     );
     if (!insightSurfaceParsed.ok) {
       throw new Error(
-        `Invalid rates insight surfaces catalog: ${insightSurfaceParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant insight surfaces catalog: ${insightSurfaceParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const insightSurfaceResult = await replaceInsightSurfacesCatalog(
@@ -292,7 +292,7 @@ export async function seedLocalCatalogs(
     );
     if (!formulasParsed.ok) {
       throw new Error(
-        `Invalid rates formula catalog: ${formulasParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant formula catalog: ${formulasParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const formulaResult = await replaceFormulasCatalog(
@@ -310,7 +310,7 @@ export async function seedLocalCatalogs(
     );
     if (!dataHooksParsed.ok) {
       throw new Error(
-        `Invalid rates data hooks catalog: ${dataHooksParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant data hooks catalog: ${dataHooksParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const hookResult = await replaceDataHooksCatalog(
@@ -333,7 +333,7 @@ export async function seedLocalCatalogs(
     );
     if (!customViewParsed.ok) {
       throw new Error(
-        `Invalid rates custom views catalog: ${customViewParsed.errors.map((error) => error.message).join("; ")}`,
+        `Invalid local tenant custom views catalog: ${customViewParsed.errors.map((error) => error.message).join("; ")}`,
       );
     }
     const customViewResult = await replaceCustomViewsCatalog(

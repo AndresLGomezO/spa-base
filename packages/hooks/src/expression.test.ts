@@ -681,28 +681,42 @@ describe("expressionNodeSchema array literal", () => {
   });
 });
 
-describe("normalizeMerchantText", () => {
+describe("normalizeMatchText", () => {
   it("strips digits, hex ids, and punctuation for stable aliases", () => {
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "normalizeMatchText",
+      args: [
+        {
+          kind: "literal",
+          value: "ACME *ORDER help ABCDEF123456 12.50 XYZ",
+        },
+      ],
+    };
+    expect(evaluateExpression(node, scope())).toBe("ACME ORDER HELP XYZ");
+  });
+
+  it("returns empty string for null", () => {
+    const node: ExpressionNode = {
+      kind: "call",
+      fn: "normalizeMatchText",
+      args: [{ kind: "literal", value: null }],
+    };
+    expect(evaluateExpression(node, scope())).toBe("");
+  });
+
+  it("still evaluates the deprecated normalizeMerchantText alias", () => {
     const node: ExpressionNode = {
       kind: "call",
       fn: "normalizeMerchantText",
       args: [
         {
           kind: "literal",
-          value: "UBER *TRIP help ABCDEF123456 12.50 COP",
+          value: "ACME *ORDER 99",
         },
       ],
     };
-    expect(evaluateExpression(node, scope())).toBe("UBER TRIP HELP COP");
-  });
-
-  it("returns empty string for null", () => {
-    const node: ExpressionNode = {
-      kind: "call",
-      fn: "normalizeMerchantText",
-      args: [{ kind: "literal", value: null }],
-    };
-    expect(evaluateExpression(node, scope())).toBe("");
+    expect(evaluateExpression(node, scope())).toBe("ACME ORDER");
   });
 });
 

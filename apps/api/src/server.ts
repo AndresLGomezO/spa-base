@@ -1350,23 +1350,25 @@ export async function buildServer(options: BuildServerOptions = {}) {
     });
   }
 
-  const bootstrapTenantId = "rates";
-  if (!options.repositories) {
-    try {
-      await entityRuntime.loadTenantDefinitions(bootstrapTenantId, {
-        force: true,
-      });
-    } catch (error) {
-      server.log.warn(
-        { err: error, tenantId: bootstrapTenantId },
-        "Could not preload tenant entity definitions at boot",
-      );
-    }
-  } else {
-    const dynamicDefinitions =
-      await entityDefinitionRepository.list(bootstrapTenantId);
-    for (const record of dynamicDefinitions) {
-      await entityRuntime.syncDefinition(record);
+  const bootstrapTenantId = localTenant?.id ?? null;
+  if (bootstrapTenantId) {
+    if (!options.repositories) {
+      try {
+        await entityRuntime.loadTenantDefinitions(bootstrapTenantId, {
+          force: true,
+        });
+      } catch (error) {
+        server.log.warn(
+          { err: error, tenantId: bootstrapTenantId },
+          "Could not preload tenant entity definitions at boot",
+        );
+      }
+    } else {
+      const dynamicDefinitions =
+        await entityDefinitionRepository.list(bootstrapTenantId);
+      for (const record of dynamicDefinitions) {
+        await entityRuntime.syncDefinition(record);
+      }
     }
   }
 

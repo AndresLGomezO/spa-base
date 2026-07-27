@@ -14,7 +14,10 @@ import {
 
 describe("parseProtectedTenantIds", () => {
   it("parses comma-separated tenant ids", () => {
-    expect(parseProtectedTenantIds("rates, demo")).toEqual(["rates", "demo"]);
+    expect(parseProtectedTenantIds("tenant_a, demo")).toEqual([
+      "tenant_a",
+      "demo",
+    ]);
   });
 });
 

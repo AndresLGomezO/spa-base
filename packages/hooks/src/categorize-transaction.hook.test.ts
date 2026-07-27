@@ -1,63 +1,119 @@
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it, vi } from "vitest";
 
 import type { DataHookDefinition } from "./data-hook-definition.js";
-import { parseDataHookDefinitionJson } from "./data-hook-definition-json.js";
 import { runDataHook } from "./interpret-data-hook.js";
 import { mockHookEntityServices } from "./test/mock-hook-entity-services.js";
 import type { HookContext, HookEntityRecord } from "./types.js";
 
-const HOOK_JSON_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../../.local/tenant-import/catalogs/data-hooks/categorize-transaction.json",
-);
+/**
+ * Domain-neutral fixture mirroring matchRelatedRecord → setField short-circuit
+ * (same shape as tenant categorize hooks; no .local catalog coupling).
+ */
+const matchAndLabelDefinition: DataHookDefinition = {
+  id: "hook_match_and_label",
+  tenantId: "tenant_a",
+  name: "Match prior item and label",
+  entity: "item",
+  phase: "after",
+  trigger: {
+    kind: "schedule",
+    cron: "0 */2 * * *",
+    timezone: "UTC",
+    scope: "eachRecord",
+    eachRecordWhere: {
+      type: "condition",
+      field: "labelStatus",
+      operator: "==",
+      value: { kind: "literal", value: "PENDING" },
+    },
+  },
+  condition: null,
+  actions: [
+    {
+      type: "matchRelatedRecord",
+      entity: "item",
+      where: {
+        type: "condition",
+        field: "labelStatus",
+        operator: "==",
+        value: { kind: "literal", value: "DONE" },
+      },
+      haystack: {
+        kind: "call",
+        fn: "normalizeMatchText",
+        args: [{ kind: "field", source: "current", path: "description" }],
+      },
+      aliasField: "description",
+      as: "priorItem",
+    },
+    {
+      type: "setField",
+      field: "labelId",
+      value: {
+        kind: "field",
+        source: "loaded",
+        alias: "priorItem",
+        path: "labelId",
+      },
+    },
+    {
+      type: "setField",
+      field: "normalizedDescription",
+      value: {
+        kind: "call",
+        fn: "normalizeMatchText",
+        args: [{ kind: "field", source: "current", path: "description" }],
+      },
+    },
+    {
+      type: "setField",
+      field: "labelStatus",
+      value: {
+        kind: "call",
+        fn: "if",
+        args: [
+          {
+            kind: "call",
+            fn: "isEmpty",
+            args: [
+              {
+                kind: "field",
+                source: "loaded",
+                alias: "priorItem",
+                path: "labelId",
+              },
+            ],
+          },
+          { kind: "literal", value: "NEEDS_MANUAL" },
+          { kind: "literal", value: "DONE" },
+        ],
+      },
+    },
+  ],
+  enabled: true,
+  order: 0,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
 
-function loadCategorizeTransactionHook(): DataHookDefinition {
-  const parsed = parseDataHookDefinitionJson(
-    readFileSync(HOOK_JSON_PATH, "utf8"),
-  );
-  if (!parsed.ok) {
-    throw new Error(
-      `Failed to parse categorize-transaction.json: ${parsed.errors
-        .map((error) => error.message)
-        .join("; ")}`,
-    );
-  }
-  return {
-    ...parsed.data,
-    id: "hook_categorize_transaction",
-    tenantId: "tenant_a",
-    phase: parsed.data.phase ?? "after",
-    enabled: parsed.data.enabled ?? true,
-    order: parsed.data.order ?? 0,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  };
-}
-
-describe("categorize-transaction hook (tenant)", () => {
-  it("inherits categoryId from a prior DONE Uber-like txn without calling AI", async () => {
-    const definition = loadCategorizeTransactionHook();
+describe("matchRelatedRecord categorize short-circuit", () => {
+  it("inherits labelId from a prior DONE item without calling AI", async () => {
     const callAi = vi.fn(async () => {
       throw new Error("callAi must not run for a match-path short-circuit");
     });
-    const computeEmbedding = vi.fn(async () => [0.1, 0.2, 0.3] as const);
 
-    const doneUber: HookEntityRecord = {
-      id: "txn_uber_done",
+    const donePrior: HookEntityRecord = {
+      id: "item_done",
       tenantId: "tenant_a",
-      description: "UBER *ES-TRIP 12",
-      categoryId: "cat_transport",
-      categorizationStatus: "DONE",
+      description: "ACME *ES-ORDER 12",
+      labelId: "label_ops",
+      labelStatus: "DONE",
     };
     const pending: Record<string, unknown> = {
-      id: "txn_uber_pending",
+      id: "item_pending",
       tenantId: "tenant_a",
-      description: "UBER *TRIP 987 ES",
-      categorizationStatus: "PENDING",
+      description: "ACME *ORDER 987 ES",
+      labelStatus: "PENDING",
     };
 
     const updates: Array<{
@@ -69,14 +125,11 @@ describe("categorize-transaction hook (tenant)", () => {
     const list = vi.fn(
       async (entity: string, query: { field: string; value: unknown }) => {
         if (
-          entity === "transaction" &&
-          query.field === "categorizationStatus" &&
+          entity === "item" &&
+          query.field === "labelStatus" &&
           query.value === "DONE"
         ) {
-          return [doneUber];
-        }
-        if (entity === "categoryExample") {
-          return [];
+          return [donePrior];
         }
         return [];
       },
@@ -89,52 +142,41 @@ describe("categorize-transaction hook (tenant)", () => {
         patch: Record<string, unknown>,
       ): Promise<HookEntityRecord> => {
         updates.push({ entity, id, patch });
-        if (entity === "transaction" && id === pending.id) {
+        if (entity === "item" && id === pending.id) {
           Object.assign(pending, patch);
         }
         return { id, tenantId: "tenant_a", ...patch };
       },
     );
 
-    const create = vi.fn(
-      async (entity: string, data: Record<string, unknown>) => {
-        return {
-          id: `created_${entity}`,
-          tenantId: "tenant_a",
-          ...data,
-        };
-      },
-    );
-
     const context: HookContext = {
       tenantId: "tenant_a",
-      entityName: "transaction",
-      event: "transaction.afterSchedule",
+      entityName: "item",
+      event: "item.afterSchedule",
       current: pending,
       user: { uid: "user_1" },
       loaded: {},
       services: {
         callAi,
-        computeEmbedding,
-        entities: mockHookEntityServices({ list, update, create }),
+        entities: mockHookEntityServices({ list, update }),
         logger: { info: vi.fn(), error: vi.fn() },
       },
     };
 
-    await runDataHook(definition, context);
+    await runDataHook(matchAndLabelDefinition, context);
 
     expect(callAi).not.toHaveBeenCalled();
-    expect(pending.categoryId).toBe("cat_transport");
-    expect(pending.categorizationStatus).toBe("DONE");
-    expect(pending.normalizedDescription).toBe("UBER TRIP ES");
+    expect(pending.labelId).toBe("label_ops");
+    expect(pending.labelStatus).toBe("DONE");
+    expect(pending.normalizedDescription).toBe("ACME ORDER ES");
 
-    const categoryPatches = updates.filter(
+    const labelPatches = updates.filter(
       (entry) =>
-        entry.entity === "transaction" &&
-        entry.id === "txn_uber_pending" &&
-        "categoryId" in entry.patch,
+        entry.entity === "item" &&
+        entry.id === "item_pending" &&
+        "labelId" in entry.patch,
     );
-    expect(categoryPatches).toHaveLength(1);
-    expect(categoryPatches[0]?.patch.categoryId).toBe("cat_transport");
+    expect(labelPatches).toHaveLength(1);
+    expect(labelPatches[0]?.patch.labelId).toBe("label_ops");
   });
 });

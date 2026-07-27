@@ -77,56 +77,56 @@ describe("pickBestAliasMatch", () => {
     ).toBeNull();
   });
 
-  it("matches Uber shapes with token-order variance via merchant overlap", () => {
-    // PENDING haystack already merchant-normalized: "UBER *TRIP 987 ES" → "UBER TRIP ES"
-    // DONE description: "UBER *ES-TRIP 12" → aliases include "UBER ES TRIP"
+  it("matches shapes with token-order variance via leading-token overlap", () => {
+    // Haystack already match-normalized: "ACME *ORDER 987 ES" → "ACME ORDER ES"
+    // Candidate: "ACME *ES-ORDER 12" → aliases include "ACME ES ORDER"
     // Exact/substring miss; leading-token overlap must hit.
     expect(
       pickBestAliasMatch({
-        haystack: "UBER TRIP ES",
+        haystack: "ACME ORDER ES",
         aliasField: "description",
         candidates: [
           {
-            id: "uber_done",
-            description: "UBER *ES-TRIP 12",
-            categoryId: "cat_transport",
+            id: "acme_done",
+            description: "ACME *ES-ORDER 12",
+            categoryId: "cat_ops",
           },
           {
-            id: "spotify",
-            description: "SPOTIFY PREMIUM",
-            categoryId: "cat_music",
-          },
-        ],
-      })?.id,
-    ).toBe("uber_done");
-  });
-
-  it("matches when the haystack is a shorter Uber token set than the alias", () => {
-    expect(
-      pickBestAliasMatch({
-        haystack: "UBER TRIP",
-        aliasField: "description",
-        candidates: [
-          {
-            id: "uber_long",
-            description: "UBER *TRIP HELP ABCDEF123456 12.50 COP",
-            categoryId: "cat_transport",
+            id: "other",
+            description: "OTHER PREMIUM",
+            categoryId: "cat_other",
           },
         ],
       })?.id,
-    ).toBe("uber_long");
+    ).toBe("acme_done");
   });
 
-  it("does not match unrelated merchants that share only filler tokens", () => {
+  it("matches when the haystack is a shorter token set than the alias", () => {
     expect(
       pickBestAliasMatch({
-        haystack: "UBER TRIP HELP COP",
+        haystack: "ACME ORDER",
         aliasField: "description",
         candidates: [
           {
-            id: "rappi",
-            description: "RAPPI HELP COP",
-            categoryId: "cat_food",
+            id: "acme_long",
+            description: "ACME *ORDER HELP ABCDEF123456 12.50 XYZ",
+            categoryId: "cat_ops",
+          },
+        ],
+      })?.id,
+    ).toBe("acme_long");
+  });
+
+  it("does not match unrelated leading tokens that share only filler", () => {
+    expect(
+      pickBestAliasMatch({
+        haystack: "ACME ORDER HELP XYZ",
+        aliasField: "description",
+        candidates: [
+          {
+            id: "other",
+            description: "BETA HELP XYZ",
+            categoryId: "cat_other",
           },
         ],
       }),
@@ -141,8 +141,8 @@ describe("aliasesFromFieldValue", () => {
     expect(aliasesFromFieldValue(null)).toEqual([]);
   });
 
-  it("adds merchant-normalized form for free-text descriptions", () => {
-    const aliases = aliasesFromFieldValue("UBER *TRIP 12345 HELP");
+  it("adds match-normalized form for free-text descriptions", () => {
+    const aliases = aliasesFromFieldValue("ACME *ORDER 12345 HELP");
     expect(aliases.length).toBeGreaterThan(1);
     expect(
       pickBestAliasMatch({
@@ -151,7 +151,7 @@ describe("aliasesFromFieldValue", () => {
         candidates: [
           {
             id: "t1",
-            description: "UBER *TRIP 99999 HELP",
+            description: "ACME *ORDER 99999 HELP",
           },
         ],
       })?.id,

@@ -126,7 +126,7 @@ export const adminRoutes: FastifyPluginAsync<{
   const protectedTenantIds =
     opts.tenantDeletionProtectedIds ??
     parseProtectedTenantIds(
-      process.env.TENANT_DELETION_PROTECTED_IDS ?? "rates",
+      process.env.TENANT_DELETION_PROTECTED_IDS ?? "",
     );
 
   fastify.get(

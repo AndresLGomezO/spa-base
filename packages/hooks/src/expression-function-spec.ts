@@ -92,6 +92,7 @@ export const EXPRESSION_FUNCTION_SPECS: Record<
   includes: fixedArgs(2),
   pow: fixedArgs(2),
   ln: fixedArgs(1),
+  normalizeMatchText: fixedArgs(1),
   normalizeMerchantText: fixedArgs(1),
   arrayOf: {
     minArgs: 1,

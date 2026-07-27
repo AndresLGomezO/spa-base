@@ -78,7 +78,8 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
-  TENANT_DELETION_PROTECTED_IDS: z.string().trim().default("rates"),
+  /** Comma-separated tenant ids that cannot be deleted. Local may set e.g. `rates`. */
+  TENANT_DELETION_PROTECTED_IDS: z.string().trim().default(""),
   GMAIL_OAUTH_CLIENT_ID: z.string().trim().optional(),
   GMAIL_OAUTH_CLIENT_SECRET: z.string().trim().optional(),
   GMAIL_OAUTH_REDIRECT_URI: z

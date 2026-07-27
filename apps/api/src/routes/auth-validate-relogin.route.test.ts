@@ -110,7 +110,7 @@ vi.mock("../config/env.js", () => ({
     API_CORS_ORIGINS: "http://localhost:5173",
     WEB_APP_ORIGIN: "http://127.0.0.1:5173",
     PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS: "admin@example.com",
-    TENANT_DELETION_PROTECTED_IDS: "rates",
+    TENANT_DELETION_PROTECTED_IDS: "tenant_a",
   },
 }));
 
@@ -174,8 +174,8 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminTenantRepository: vi.fn(() =>
     createInMemoryTenantRepository([
       {
-        id: "rates",
-        name: "Rates",
+        id: "tenant_a",
+        name: "Demo Tenant",
         status: "active",
         createdBy: null,
         createdAt: new Date().toISOString(),
@@ -234,8 +234,8 @@ describe("GET /auth/validate re-login", () => {
       ok: true,
       user: {
         isSuperAdmin: true,
-        availableTenants: ["rates"],
-        tenantOptions: [{ id: "rates", name: "Rates" }],
+        availableTenants: ["tenant_a"],
+        tenantOptions: [{ id: "tenant_a", name: "Demo Tenant" }],
       },
     });
     expect(reloginState.storedUser.tenants).toEqual({});
@@ -252,8 +252,8 @@ describe("GET /auth/validate re-login", () => {
       ok: true,
       user: {
         isSuperAdmin: true,
-        availableTenants: ["rates"],
-        tenantOptions: [{ id: "rates", name: "Rates" }],
+        availableTenants: ["tenant_a"],
+        tenantOptions: [{ id: "tenant_a", name: "Demo Tenant" }],
       },
     });
     expect(reloginState.storedUser.tenants).toEqual({});

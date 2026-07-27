@@ -217,6 +217,7 @@ export {
   expressionValuesEqual,
   isEmptyExpressionValue,
   isTruthyExpressionValue,
+  normalizeMatchText,
   normalizeMerchantText,
   isArrayLiteralNode,
   ExpressionEvaluationError,

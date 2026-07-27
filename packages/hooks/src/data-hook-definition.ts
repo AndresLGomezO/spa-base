@@ -485,7 +485,7 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
       .optional(),
     /**
      * Optional expression → string used to memoize/batch identical callAi
-     * requests within a schedule tick (e.g. normalizeMerchantText(description)).
+     * requests within a schedule tick (e.g. normalizeMatchText(description)).
      */
     cacheKey: expressionNodeSchema.optional(),
     /** Alias for the parsed JSON object result (or `null` when skipped). */

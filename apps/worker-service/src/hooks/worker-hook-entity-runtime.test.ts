@@ -36,7 +36,7 @@ import { WorkerHookEntityRuntime } from "./worker-hook-entity-runtime.js";
 describe("WorkerHookEntityRuntime", () => {
   const entityDefinitionRepository = {
     list: vi.fn(async () => [
-      { id: "def_1", tenantId: "rates", name: "financialItem" },
+      { id: "def_1", tenantId: "tenant_a", name: "financialItem" },
     ]),
   };
 
@@ -60,18 +60,18 @@ describe("WorkerHookEntityRuntime", () => {
       entityDefinitionRepository as never,
     );
 
-    const first = runtime.getRepository("rates", "financialItem");
+    const first = runtime.getRepository("tenant_a", "financialItem");
     expect(first).toBeDefined();
     expect(createFirestoreAdminEntityRepository).toHaveBeenCalledTimes(1);
 
-    const cached = runtime.getRepository("rates", "financialItem");
+    const cached = runtime.getRepository("tenant_a", "financialItem");
     expect(cached).toBe(first);
     expect(createFirestoreAdminEntityRepository).toHaveBeenCalledTimes(1);
 
-    await runtime.ensureTenantEntitiesLoaded("rates");
+    await runtime.ensureTenantEntitiesLoaded("tenant_a");
     expect(registerDynamicEntity).toHaveBeenCalled();
 
-    const rebuilt = runtime.getRepository("rates", "financialItem");
+    const rebuilt = runtime.getRepository("tenant_a", "financialItem");
     expect(rebuilt).toBeDefined();
     expect(rebuilt).not.toBe(first);
     expect(createFirestoreAdminEntityRepository).toHaveBeenCalledTimes(2);

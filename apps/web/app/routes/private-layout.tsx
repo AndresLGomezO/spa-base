@@ -50,7 +50,7 @@ function MainOutlet({ padTopSafeArea }: { readonly padTopSafeArea: boolean }) {
 function AppShellColumn() {
   const runtime = useTenantSidebarLayoutRuntime();
   const footerLayout = runtime.exists ? runtime.config.footerLayout : null;
-  // Hardcoded header always renders; designed header may be empty (rates dashboard).
+  // Hardcoded header always renders; designed header may be empty.
   const hasHeaderChrome =
     !runtime.exists || appShellLayoutHasContent(runtime.config.headerLayout);
 

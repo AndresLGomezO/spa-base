@@ -148,7 +148,7 @@ export interface DataHookAiRequest {
   readonly includeEntities?: readonly string[];
   readonly tenantId: string;
   /**
-   * Optional memo/batch key (e.g. normalized merchant text). Identical keys
+   * Optional memo/batch key (e.g. normalizeMatchText output). Identical keys
    * within a schedule tick share one model call.
    */
   readonly cacheKey?: string;

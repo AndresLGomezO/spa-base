@@ -196,10 +196,12 @@ describe("EntityRuntimeContext", () => {
       },
       entityDefinitionRepository: createInMemoryEntityDefinitionRepository(),
       ensureFirestoreIndexes: true,
-      indexProvisioningExcludedTenants: new Set(["rates"]),
+      indexProvisioningExcludedTenants: new Set(["tenant_excluded"]),
     });
 
-    expect(() => entityRuntime.ensureCatalogIndexes("rates")).not.toThrow();
+    expect(() =>
+      entityRuntime.ensureCatalogIndexes("tenant_excluded"),
+    ).not.toThrow();
   });
 
   it("invalidateInMemoryListSnapshot is a no-op for missing or non-in-memory entities", async () => {
