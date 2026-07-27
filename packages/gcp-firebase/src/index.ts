@@ -92,6 +92,7 @@ export { createFirestoreAdminPushTokenRepository } from "./firestore-admin-push-
 export {
   createDeliverWebPushNotification,
   type CreateDeliverWebPushNotificationOptions,
+  type DeliverWebPushResult,
 } from "./deliver-web-push-notification.js";
 export {
   createSendUserNotificationWithPush,

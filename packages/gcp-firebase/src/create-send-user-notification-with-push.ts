@@ -37,11 +37,13 @@ export function createSendUserNotificationWithPush(
     options.tenantId,
     canPush
       ? {
-          deliverPush: createDeliverWebPushNotification({
-            config: options.firebaseAdminConfig!,
-            pushTokenRepository: options.pushTokenRepository!,
-            tenantId: options.tenantId,
-          }),
+          deliverPush: async (input) => {
+            await createDeliverWebPushNotification({
+              config: options.firebaseAdminConfig!,
+              pushTokenRepository: options.pushTokenRepository!,
+              tenantId: options.tenantId,
+            })(input);
+          },
           ...(options.onPushError ? { onPushError: options.onPushError } : {}),
         }
       : undefined,

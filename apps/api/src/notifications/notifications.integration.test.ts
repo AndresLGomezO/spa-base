@@ -35,7 +35,11 @@ const authHeaders = {
 };
 
 const { deliverPushMock } = vi.hoisted(() => ({
-  deliverPushMock: vi.fn(),
+  deliverPushMock: vi.fn(async () => ({
+    successCount: 1,
+    failureCount: 0,
+    errors: [] as string[],
+  })),
 }));
 
 vi.mock("@repo/gcp-firebase", () => ({
@@ -326,5 +330,33 @@ describe("notification routes", () => {
       authState.uid,
     );
     expect(afterCount).toBe(beforeCount);
+  });
+
+  it("returns 502 when FCM rejects every token", async () => {
+    deliverPushMock.mockResolvedValueOnce({
+      successCount: 0,
+      failureCount: 1,
+      errors: ["messaging/mismatched-credential: SenderId mismatch"],
+    });
+    const { server, pushTokenRepository } = await buildTestServer();
+    await pushTokenRepository.upsert("tenant_a", {
+      userId: authState.uid,
+      token: "fcm-token-test",
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/notifications/test",
+      headers: {
+        ...authHeaders,
+        "content-type": "application/json",
+      },
+      payload: { channel: "push" },
+    });
+
+    expect(response.statusCode).toBe(502);
+    expect(response.json().error.message).toContain(
+      "messaging/mismatched-credential",
+    );
   });
 });

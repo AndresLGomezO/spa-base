@@ -9,7 +9,7 @@ Account → Settings → **Notifications** owns:
 - Browser push toggle for this device
 - **Test in-app** / **Test push** buttons (`POST /api/notifications/test` with `channel: "inApp" | "push"`)
   - `inApp` — persists a notification for the current user only (no FCM)
-  - `push` — FCM data-only multicast to registered tokens only (no in-app row); returns `400` / `no_push_token` when none are registered
+  - `push` — FCM multicast to registered tokens with a **`notification` payload** so Chrome shows an OS toast even while the settings tab is focused (no in-app row). Returns `400` / `no_push_token` when none are registered, or `502` with the FCM error when every token fails.
 
 ## Architecture (short)
 

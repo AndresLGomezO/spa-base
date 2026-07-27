@@ -186,13 +186,26 @@ export async function registerNotificationRoutes(
           config: options.firebaseAdminConfig,
           pushTokenRepository: options.pushTokenRepository,
           tenantId,
+          // OS toast even when the settings tab is focused — verifies push end-to-end.
+          includeNotificationPayload: true,
         });
-        await deliver({
+        const result = await deliver({
           userId: uid,
           message: "Test push notification",
           level: "info",
           createdAt,
         });
+        if (result.successCount === 0) {
+          const detail =
+            result.errors[0] ??
+            "FCM did not accept the message for any registered token.";
+          return replyWithError(
+            reply,
+            502,
+            ApiErrorCode.VALIDATION_ERROR,
+            detail,
+          );
+        }
       } catch (error) {
         const message =
           error instanceof Error

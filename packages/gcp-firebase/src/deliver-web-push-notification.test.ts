@@ -91,6 +91,81 @@ describe("createDeliverWebPushNotification", () => {
     });
   });
 
+  it("includes notification payload when requested", async () => {
+    const pushTokenRepository = createInMemoryPushTokenRepository();
+    await pushTokenRepository.upsert("tenant_a", {
+      userId: "user_1",
+      token: "token-a",
+    });
+
+    sendEachForMulticast.mockResolvedValue({
+      responses: [{ success: true }],
+      successCount: 1,
+      failureCount: 0,
+    });
+
+    const deliver = createDeliverWebPushNotification({
+      config: { projectId: "demo" },
+      pushTokenRepository,
+      tenantId: "tenant_a",
+      includeNotificationPayload: true,
+    });
+
+    const result = await deliver({
+      userId: "user_1",
+      message: "Test push",
+      level: "info",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+
+    expect(result).toEqual({
+      successCount: 1,
+      failureCount: 0,
+      errors: [],
+    });
+    expect(sendEachForMulticast.mock.calls[0]?.[0].notification).toEqual({
+      title: "Notification",
+      body: "Test push",
+    });
+  });
+
+  it("reports FCM failures without throwing", async () => {
+    const pushTokenRepository = createInMemoryPushTokenRepository();
+    await pushTokenRepository.upsert("tenant_a", {
+      userId: "user_1",
+      token: "token-bad",
+    });
+
+    sendEachForMulticast.mockResolvedValue({
+      responses: [
+        {
+          success: false,
+          error: {
+            code: "messaging/third-party-auth-error",
+            message: "Auth error from push service",
+          },
+        },
+      ],
+    });
+
+    const deliver = createDeliverWebPushNotification({
+      config: { projectId: "demo" },
+      pushTokenRepository,
+      tenantId: "tenant_a",
+    });
+
+    const result = await deliver({
+      userId: "user_1",
+      message: "Hello",
+      level: "info",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+
+    expect(result.successCount).toBe(0);
+    expect(result.failureCount).toBe(1);
+    expect(result.errors[0]).toContain("messaging/third-party-auth-error");
+  });
+
   it("prunes invalid tokens without failing the send", async () => {
     const pushTokenRepository = createInMemoryPushTokenRepository();
     await pushTokenRepository.upsert("tenant_a", {

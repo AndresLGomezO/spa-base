@@ -80,24 +80,22 @@ try {
   const messaging = getMessaging(firebaseApp);
 
   onBackgroundMessage(messaging, (payload) => {
+    // Notification payloads are displayed by the browser; only render data-only.
     if (payload.notification) {
-      console.warn(
-        "[sw] FCM payload includes `notification`; prefer data-only so foreground tabs control UX.",
-      );
+      return;
     }
     const title =
-      payload.notification?.title ??
       (typeof payload.data?.title === "string" ? payload.data.title : null) ??
       "Notification";
     const body =
-      payload.notification?.body ??
-      (typeof payload.data?.body === "string" ? payload.data.body : undefined);
+      typeof payload.data?.body === "string" ? payload.data.body : undefined;
     const url =
       typeof payload.data?.url === "string"
         ? payload.data.url
         : "/notifications";
 
-    void self.registration.showNotification(title, {
+    // Return the promise so the SW stays alive until the OS toast is shown.
+    return self.registration.showNotification(title, {
       body,
       icon: "/icons/icon-192.png",
       data: { url },
