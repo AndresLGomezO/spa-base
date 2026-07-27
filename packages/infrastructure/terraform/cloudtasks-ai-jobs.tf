@@ -81,6 +81,15 @@ resource "google_project_iam_member" "worker_service_firestore" {
   member  = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
 }
 
+# Worker hook fan-out uses Admin SDK FCM (cloudmessaging.messages.create).
+resource "google_project_iam_member" "worker_service_firebase_cloud_messaging" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  project = local.gcp_project_id
+  role    = "roles/firebasecloudmessaging.admin"
+  member  = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
+}
+
 resource "google_project_iam_member" "worker_service_vertex_ai" {
   count = local.enable_ai_worker ? 1 : 0
 

@@ -17,6 +17,7 @@ resource "google_cloud_run_v2_service" "backend" {
     google_project_iam_member.backend_firestore,
     google_project_iam_member.backend_secrets,
     google_project_iam_member.backend_firebase_auth,
+    google_project_iam_member.backend_firebase_cloud_messaging,
     google_project_iam_member.backend_storage,
     google_service_account_iam_member.ci_deployer_act_as_backend_sa,
   ]

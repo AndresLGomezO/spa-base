@@ -16,6 +16,7 @@ resource "google_cloud_run_v2_service" "worker_service" {
     google_secret_manager_secret.gmail_oauth_client_id,
     google_secret_manager_secret.gmail_oauth_client_secret,
     google_project_iam_member.worker_service_firestore,
+    google_project_iam_member.worker_service_firebase_cloud_messaging,
     google_project_iam_member.worker_service_vertex_ai,
     google_project_iam_member.worker_service_storage,
     google_project_iam_member.worker_service_secrets,

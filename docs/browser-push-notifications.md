@@ -11,6 +11,24 @@ Account → Settings → **Notifications** owns:
   - `inApp` — persists a notification for the current user only (no FCM)
   - `push` — FCM multicast to registered tokens with a **`notification` payload** so Chrome shows an OS toast even while the settings tab is focused (no in-app row). Returns `400` / `no_push_token` when none are registered, or `502` with the FCM error when every token fails.
 
+### Troubleshoot: `cloudmessaging.messages.create` denied
+
+The API Cloud Run runtime SA (`es-backend-sa-{dev|stg|prod}`) needs **Firebase Cloud Messaging API Admin** (`roles/firebasecloudmessaging.admin`) on the GCP project. Terraform grants this in [`iam.tf`](./infrastructure/terraform/iam.tf) (and the worker SA in `cloudtasks-ai-jobs.tf`).
+
+**Immediate grant (dev example):**
+
+```bash
+gcloud projects add-iam-policy-binding entitysystem-development \
+  --member="serviceAccount:es-backend-sa-dev@entitysystem-development.iam.gserviceaccount.com" \
+  --role="roles/firebasecloudmessaging.admin"
+
+gcloud projects add-iam-policy-binding entitysystem-development \
+  --member="serviceAccount:es-worker-svc-sa-dev@entitysystem-development.iam.gserviceaccount.com" \
+  --role="roles/firebasecloudmessaging.admin"
+```
+
+IAM is usually effective within a minute; no API redeploy required. Then retry **Test push**.
+
 ## Architecture (short)
 
 | Layer | Role |

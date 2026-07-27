@@ -21,6 +21,13 @@ resource "google_project_iam_member" "backend_firebase_auth" {
   member  = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
+# Required for Admin SDK FCM send (cloudmessaging.messages.create).
+resource "google_project_iam_member" "backend_firebase_cloud_messaging" {
+  project = local.gcp_project_id
+  role    = "roles/firebasecloudmessaging.admin"
+  member  = "serviceAccount:${google_service_account.backend_sa.email}"
+}
+
 resource "google_project_iam_member" "backend_secrets" {
   project = local.gcp_project_id
   role    = "roles/secretmanager.secretAccessor"
