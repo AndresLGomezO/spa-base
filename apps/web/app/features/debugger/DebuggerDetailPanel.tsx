@@ -13,9 +13,11 @@ import {
 import { DebuggerJsonViewDialog } from "./components/DebuggerJsonViewDialog";
 import { IndexProvisioningJobDetail } from "./components/IndexProvisioningJobDetail";
 import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
+import { DebuggerResolutionBadge } from "./components/DebuggerResolutionBadge";
 import { DebuggerSummaryPanel } from "./DebuggerSummaryPanel";
 import { useDebugger } from "./debugger-context";
 import { useIndexProvisioningJobs } from "./hooks/useIndexProvisioningJobs";
+import { resolutionSourceForEvent } from "./hook-resolution-source";
 import { AiJobDebugDetail } from "./sources/ai-job-detail";
 import { AuditDebugDetail } from "./sources/audit-detail";
 import { EmailIngestDebugDetail } from "./sources/email-ingest-detail";
@@ -93,6 +95,11 @@ export function DebuggerDetailPanel() {
               <Heading level={2}>{selectedEvent.title}</Heading>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <DebuggerStatusBadge status={selectedEvent.status} />
+                {selectedEvent.source === "hookExecution" ? (
+                  <DebuggerResolutionBadge
+                    resolutionSource={resolutionSourceForEvent(selectedEvent)}
+                  />
+                ) : null}
                 <Text className="text-muted-foreground text-sm">
                   {selectedEvent.timestamp}
                 </Text>

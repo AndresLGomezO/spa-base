@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import type { DebugEvent } from "../../../lib/api-client";
 import { DebuggerJsonBlock } from "../components/DebuggerJsonBlock";
+import { DebuggerResolutionBadge } from "../components/DebuggerResolutionBadge";
+import { resolutionSourceForEvent } from "../hook-resolution-source";
 
 function DetailField({
   label,
@@ -19,110 +21,6 @@ function DetailField({
       </Text>
       <Text className="text-sm">{value ?? "—"}</Text>
     </div>
-  );
-}
-
-type ActionTraceStep = {
-  readonly type?: unknown;
-  readonly entity?: unknown;
-  readonly as?: unknown;
-  readonly outcome?: unknown;
-  readonly matched?: unknown;
-  readonly score?: unknown;
-  readonly candidateCount?: unknown;
-  readonly durationMs?: unknown;
-  readonly count?: unknown;
-  readonly error?: unknown;
-};
-
-function formatResolutionSource(
-  value: unknown,
-  t: (key: string) => string,
-): string | undefined {
-  if (typeof value !== "string" || value.length === 0) {
-    return undefined;
-  }
-  const key = `debugger.detail.resolutionSources.${value}`;
-  const translated = t(key);
-  return translated === key ? value : translated;
-}
-
-function formatOutcome(
-  value: unknown,
-  t: (key: string) => string,
-): string | undefined {
-  if (typeof value !== "string" || value.length === 0) {
-    return undefined;
-  }
-  const key = `debugger.detail.actionOutcome.${value}`;
-  const translated = t(key);
-  return translated === key ? value : translated;
-}
-
-function ActionTraceSteps({
-  steps,
-}: {
-  readonly steps: readonly ActionTraceStep[];
-}) {
-  const { t } = useTranslation("common");
-
-  return (
-    <ul className="divide-border border-border divide-y rounded-md border">
-      {steps.map((step, index) => {
-        const type = typeof step.type === "string" ? step.type : "action";
-        const outcome = formatOutcome(step.outcome, t);
-        const meta: string[] = [];
-        if (typeof step.as === "string" && step.as.length > 0) {
-          meta.push(`as=${step.as}`);
-        }
-        if (typeof step.entity === "string" && step.entity.length > 0) {
-          meta.push(step.entity);
-        }
-        if (step.matched === true) {
-          meta.push(t("debugger.detail.actionMatched"));
-        }
-        if (typeof step.score === "number" && Number.isFinite(step.score)) {
-          meta.push(
-            `${t("debugger.detail.actionScore")} ${step.score.toFixed(3)}`,
-          );
-        }
-        if (
-          typeof step.candidateCount === "number" &&
-          Number.isFinite(step.candidateCount)
-        ) {
-          meta.push(
-            `${t("debugger.detail.actionCandidates")} ${String(step.candidateCount)}`,
-          );
-        }
-        if (typeof step.count === "number") {
-          meta.push(`×${String(step.count)}`);
-        }
-        if (typeof step.durationMs === "number") {
-          meta.push(`${String(step.durationMs)}ms`);
-        }
-
-        return (
-          <li key={`${type}-${String(index)}`} className="space-y-1 px-3 py-2">
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <Text className="text-sm font-medium">{type}</Text>
-              {outcome ? (
-                <Text className="text-muted-foreground text-xs uppercase">
-                  {outcome}
-                </Text>
-              ) : null}
-            </div>
-            {meta.length > 0 ? (
-              <Text className="text-muted-foreground text-xs">
-                {meta.join(" · ")}
-              </Text>
-            ) : null}
-            {typeof step.error === "string" && step.error.length > 0 ? (
-              <Text className="text-destructive text-xs">{step.error}</Text>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -143,14 +41,11 @@ export function HookExecutionDebugDetail({
       typeof summary?.writesDeleted === "number" ? summary.writesDeleted : 0,
   });
   const actionTrace = Array.isArray(summary?.actionTrace)
-    ? (summary.actionTrace as ActionTraceStep[])
+    ? summary.actionTrace
     : Array.isArray(payload?.actionTrace)
-      ? (payload.actionTrace as ActionTraceStep[])
+      ? payload.actionTrace
       : [];
-  const resolutionSource = formatResolutionSource(
-    payload?.resolutionSource ?? summary?.resolutionSource,
-    t,
-  );
+  const resolutionSource = resolutionSourceForEvent(event);
   const writesByEntity =
     summary?.writesByEntity && typeof summary.writesByEntity === "object"
       ? (summary.writesByEntity as Record<
@@ -161,6 +56,15 @@ export function HookExecutionDebugDetail({
 
   return (
     <div className="space-y-4">
+      {resolutionSource ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Text className="text-muted-foreground text-xs font-medium uppercase">
+            {t("debugger.detail.resolutionSource")}
+          </Text>
+          <DebuggerResolutionBadge resolutionSource={resolutionSource} />
+        </div>
+      ) : null}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <DetailField
           label={t("debugger.detail.entity")}
@@ -197,10 +101,6 @@ export function HookExecutionDebugDetail({
               ? String(payload?.chainDepth ?? summary?.chainDepth)
               : undefined
           }
-        />
-        <DetailField
-          label={t("debugger.detail.resolutionSource")}
-          value={resolutionSource}
         />
         <DetailField
           label={t("debugger.detail.startedAt")}
@@ -273,13 +173,7 @@ export function HookExecutionDebugDetail({
       {actionTrace.length > 0 ? (
         <section className="space-y-2">
           <Heading level={3}>{t("debugger.detail.actionTrace")}</Heading>
-          <ActionTraceSteps steps={actionTrace} />
-          <details className="space-y-2">
-            <summary className="text-muted-foreground cursor-pointer text-xs">
-              {t("debugger.detail.actionRawJson")}
-            </summary>
-            <DebuggerJsonBlock value={actionTrace} />
-          </details>
+          <DebuggerJsonBlock value={actionTrace} />
         </section>
       ) : null}
 

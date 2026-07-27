@@ -136,6 +136,7 @@
       "sortTitle": "Título A–Z",
       "filterByStatus": "Estado",
       "filterByTypology": "Tipo de ejecución",
+      "filterByResolution": "Ruta de resolución",
       "filterByFeature": "Función",
       "showSkipped": "Mostrar omitidos",
       "clearFilters": "Borrar filtros",

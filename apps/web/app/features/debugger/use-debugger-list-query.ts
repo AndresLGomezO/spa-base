@@ -35,6 +35,13 @@ import {
   type HookExecutionTypeKey,
 } from "./hook-execution-live-metrics";
 import {
+  eventMatchesHookResolutionSource,
+  HOOK_RESOLUTION_SOURCE_KEYS,
+  hookResolutionSourceLabelKey,
+  parseHookResolutionSources,
+  type HookResolutionSourceKey,
+} from "./hook-resolution-source";
+import {
   AI_JOB_FEATURE_KEYS,
   aiJobFeatureForEvent,
   aiJobFeatureLabelKey,
@@ -48,6 +55,7 @@ interface DebuggerListQuery {
   readonly search: string;
   readonly statuses: readonly DebuggerListStatusFilter[];
   readonly executionTypes: readonly HookExecutionTypeKey[];
+  readonly resolutionSources: readonly HookResolutionSourceKey[];
   readonly aiFeatures: readonly AiJobFeatureKey[];
   readonly minWrites: number;
   readonly minDurationMs: number;
@@ -163,6 +171,10 @@ export function useDebuggerListQuery(
       executionTypes:
         activeSource === "hookExecution"
           ? parseHookExecutionTypes(searchParams.get("executionType"))
+          : [],
+      resolutionSources:
+        activeSource === "hookExecution"
+          ? parseHookResolutionSources(searchParams.get("resolutionSource"))
           : [],
       aiFeatures:
         activeSource === "ai"
@@ -282,6 +294,30 @@ export function useDebuggerListQuery(
     [activeSource, updateSearchParams],
   );
 
+  const toggleResolutionSource = useCallback(
+    (resolutionSource: HookResolutionSourceKey) => {
+      if (activeSource !== "hookExecution") {
+        return;
+      }
+      updateSearchParams((next) => {
+        const current = parseHookResolutionSources(
+          next.get("resolutionSource"),
+        );
+        const exists = current.includes(resolutionSource);
+        const updated = exists
+          ? current.filter((entry) => entry !== resolutionSource)
+          : [...current, resolutionSource];
+
+        if (updated.length === 0) {
+          next.delete("resolutionSource");
+        } else {
+          next.set("resolutionSource", updated.join(","));
+        }
+      });
+    },
+    [activeSource, updateSearchParams],
+  );
+
   const toggleAiFeature = useCallback(
     (feature: AiJobFeatureKey) => {
       if (activeSource !== "ai") {
@@ -341,6 +377,7 @@ export function useDebuggerListQuery(
       next.delete("q");
       next.delete("status");
       next.delete("executionType");
+      next.delete("resolutionSource");
       next.delete("aiFeature");
       next.delete("typology");
       next.delete("minWrites");
@@ -397,6 +434,16 @@ export function useDebuggerListQuery(
       }
 
       if (
+        activeSource === "hookExecution" &&
+        query.resolutionSources.length > 0 &&
+        !query.resolutionSources.some((resolutionSource) =>
+          eventMatchesHookResolutionSource(event, resolutionSource),
+        )
+      ) {
+        return false;
+      }
+
+      if (
         activeSource === "ai" &&
         query.aiFeatures.length > 0 &&
         !query.aiFeatures.some(
@@ -432,6 +479,7 @@ export function useDebuggerListQuery(
     activeSource,
     query.aiFeatures,
     query.executionTypes,
+    query.resolutionSources,
     query.minDurationMs,
     query.minWrites,
     query.search,
@@ -489,6 +537,7 @@ export function useDebuggerListQuery(
     query.search.trim().length > 0 ||
     query.statuses.length > 0 ||
     query.executionTypes.length > 0 ||
+    query.resolutionSources.length > 0 ||
     query.aiFeatures.length > 0 ||
     query.minWrites > 0 ||
     query.minDurationMs > 0 ||
@@ -530,6 +579,14 @@ export function useDebuggerListQuery(
       });
     }
 
+    for (const resolutionSource of query.resolutionSources) {
+      badges.push({
+        id: `resolutionSource:${resolutionSource}`,
+        label: resolutionSource,
+        onRemove: () => toggleResolutionSource(resolutionSource),
+      });
+    }
+
     for (const feature of query.aiFeatures) {
       badges.push({
         id: `aiFeature:${feature}`,
@@ -566,6 +623,7 @@ export function useDebuggerListQuery(
   }, [
     query.aiFeatures,
     query.executionTypes,
+    query.resolutionSources,
     query.minDurationMs,
     query.minWrites,
     query.search,
@@ -579,6 +637,7 @@ export function useDebuggerListQuery(
     setSort,
     toggleAiFeature,
     toggleExecutionType,
+    toggleResolutionSource,
     toggleStatus,
   ]);
 
@@ -588,6 +647,8 @@ export function useDebuggerListQuery(
       : DEBUGGER_STATUSES_BY_SOURCE[activeSource];
   const availableExecutionTypes =
     activeSource === "hookExecution" ? HOOK_EXECUTION_TYPE_KEYS : [];
+  const availableResolutionSources =
+    activeSource === "hookExecution" ? HOOK_RESOLUTION_SOURCE_KEYS : [];
   const availableAiFeatures = activeSource === "ai" ? AI_JOB_FEATURE_KEYS : [];
 
   return {
@@ -598,6 +659,7 @@ export function useDebuggerListQuery(
     executionTypeCounts,
     availableStatuses,
     availableExecutionTypes,
+    availableResolutionSources,
     availableAiFeatures,
     hasActiveFilters,
     activeFilterBadges,
@@ -607,12 +669,14 @@ export function useDebuggerListQuery(
     toggleShowSkipped,
     setShowSkipped,
     toggleExecutionType,
+    toggleResolutionSource,
     toggleAiFeature,
     setMinWrites,
     setMinDurationMs,
     clearFilters,
     debuggerStatusLabelKey,
     hookExecutionTypeLabelKey,
+    hookResolutionSourceLabelKey,
     aiJobFeatureLabelKey,
   };
 }

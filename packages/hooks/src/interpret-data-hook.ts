@@ -73,6 +73,16 @@ function requireAfterPhase(phase: HookPhase, actionType: string): void {
  */
 const MAX_HOOK_DEPTH = 5;
 
+/** Vertex / AI platform quota errors that should not abort the whole hook. */
+function isAiQuotaExhaustedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("RESOURCE_EXHAUSTED") ||
+    /Quota exceeded/i.test(message) ||
+    /online_prediction_requests_per_base_model/i.test(message)
+  );
+}
+
 function buildScope(
   context: HookContext,
   loopIndex?: number,
@@ -889,18 +899,35 @@ async function runAction(
         context.loaded[action.as] = null;
         return { outcome: "empty", as: action.as, matched: false };
       }
-      const values = await computeEmbedding({
-        text,
-        tenantId: context.tenantId,
-        hookId: hookMeta.hookId,
-        entityName: context.entityName,
-        ...(typeof context.current.id === "string"
-          ? { recordId: context.current.id }
-          : {}),
-        ...(context.hookExecutionId
-          ? { hookExecutionId: context.hookExecutionId }
-          : {}),
-      });
+      let values: readonly number[];
+      try {
+        values = await computeEmbedding({
+          text,
+          tenantId: context.tenantId,
+          hookId: hookMeta.hookId,
+          entityName: context.entityName,
+          ...(typeof context.current.id === "string"
+            ? { recordId: context.current.id }
+            : {}),
+          ...(context.hookExecutionId
+            ? { hookExecutionId: context.hookExecutionId }
+            : {}),
+        });
+      } catch (error: unknown) {
+        if (!isAiQuotaExhaustedError(error)) {
+          throw error;
+        }
+        context.services.logger?.error(
+          "computeEmbedding quota exhausted; continuing without embedding.",
+          {
+            hookId: hookMeta.hookId,
+            entityName: context.entityName,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        );
+        context.loaded[action.as] = null;
+        return { outcome: "empty", as: action.as, matched: false };
+      }
       context.loaded[action.as] = { values: [...values] };
       return values.length > 0
         ? { outcome: "ran", as: action.as, matched: true }
@@ -1209,18 +1236,40 @@ async function runAction(
           candidateCount: 0,
         };
       }
-      const query = await computeEmbedding({
-        text: haystack,
-        tenantId: context.tenantId,
-        hookId: hookMeta.hookId,
-        entityName: context.entityName,
-        ...(typeof context.current.id === "string"
-          ? { recordId: context.current.id }
-          : {}),
-        ...(context.hookExecutionId
-          ? { hookExecutionId: context.hookExecutionId }
-          : {}),
-      });
+      let query: readonly number[];
+      try {
+        query = await computeEmbedding({
+          text: haystack,
+          tenantId: context.tenantId,
+          hookId: hookMeta.hookId,
+          entityName: context.entityName,
+          ...(typeof context.current.id === "string"
+            ? { recordId: context.current.id }
+            : {}),
+          ...(context.hookExecutionId
+            ? { hookExecutionId: context.hookExecutionId }
+            : {}),
+        });
+      } catch (error: unknown) {
+        if (!isAiQuotaExhaustedError(error)) {
+          throw error;
+        }
+        context.services.logger?.error(
+          "matchSimilarRecord embedding quota exhausted; continuing without similar match.",
+          {
+            hookId: hookMeta.hookId,
+            entityName: context.entityName,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        );
+        context.loaded[action.as] = null;
+        return {
+          outcome: "empty",
+          as: action.as,
+          matched: false,
+          candidateCount: candidates.length,
+        };
+      }
       const minScore = action.minScore ?? DEFAULT_MATCH_SIMILAR_MIN_SCORE;
       const best = pickBestEmbeddingMatch({
         query,

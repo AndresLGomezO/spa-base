@@ -31,6 +31,7 @@ import {
   IndexProvisioningTreeScope,
 } from "./components/IndexProvisioningTreePanel";
 import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
+import { DebuggerResolutionBadge } from "./components/DebuggerResolutionBadge";
 import { DebuggerStatusSummary } from "./components/DebuggerStatusSummary";
 import { DebuggerTimeRangeControl } from "./components/DebuggerTimeRangeControl";
 import { useDebugger } from "./debugger-context";
@@ -43,6 +44,11 @@ import {
   type DebuggerListSort,
 } from "./debugger-status-styles";
 import { buildDebugRecordKey } from "./dismissed-debug-records";
+import {
+  hookResolutionSourceLabelKey,
+  resolutionSourceForEvent,
+  type HookResolutionSourceKey,
+} from "./hook-resolution-source";
 import { type HookExecutionTypeKey } from "./hook-execution-live-metrics";
 import {
   parsePositiveInt,
@@ -103,6 +109,12 @@ function DebuggerRecordRow({ event }: { readonly event: DebugEvent }) {
           </Text>
           {event.status ? (
             <DebuggerStatusBadge status={event.status} size="compact" />
+          ) : null}
+          {event.source === "hookExecution" ? (
+            <DebuggerResolutionBadge
+              resolutionSource={resolutionSourceForEvent(event)}
+              size="compact"
+            />
           ) : null}
           {event.source === "ai" &&
           typeof event.summary?.estimatedCostUsd === "number" ? (
@@ -183,6 +195,7 @@ export function DebuggerListTreePanel() {
     statusCounts,
     availableStatuses,
     availableExecutionTypes,
+    availableResolutionSources,
     availableAiFeatures,
     hasActiveFilters,
     activeFilterBadges,
@@ -191,12 +204,14 @@ export function DebuggerListTreePanel() {
     toggleStatus,
     toggleShowSkipped,
     toggleExecutionType,
+    toggleResolutionSource,
     toggleAiFeature,
     setMinWrites,
     setMinDurationMs,
     clearFilters,
     debuggerStatusLabelKey,
     hookExecutionTypeLabelKey,
+    hookResolutionSourceLabelKey,
     aiJobFeatureLabelKey,
   } = useDebuggerListQuery(sourceEvents, activeSource, timeRangeBounds);
 
@@ -236,6 +251,15 @@ export function DebuggerListTreePanel() {
             label: t(hookExecutionTypeLabelKey(executionType)),
           };
         }
+        if (badge.id.startsWith("resolutionSource:")) {
+          const resolutionSource = badge.id.slice(
+            "resolutionSource:".length,
+          ) as HookResolutionSourceKey;
+          return {
+            ...badge,
+            label: t(hookResolutionSourceLabelKey(resolutionSource)),
+          };
+        }
         if (badge.id.startsWith("aiFeature:")) {
           const feature = badge.id.slice(
             "aiFeature:".length,
@@ -264,6 +288,7 @@ export function DebuggerListTreePanel() {
       aiJobFeatureLabelKey,
       debuggerStatusLabelKey,
       hookExecutionTypeLabelKey,
+      hookResolutionSourceLabelKey,
       query.sort,
       t,
     ],
@@ -359,6 +384,20 @@ export function DebuggerListTreePanel() {
                 checked={query.executionTypes.includes(executionType)}
                 onChange={() => toggleExecutionType(executionType)}
                 label={t(hookExecutionTypeLabelKey(executionType))}
+              />
+            ))}
+          </div>
+          <Text className="text-muted-foreground pt-2 text-xs font-medium">
+            {t("debugger.list.filterByResolution")}
+          </Text>
+          <div className="flex flex-col gap-2">
+            {availableResolutionSources.map((resolutionSource) => (
+              <Checkbox
+                key={resolutionSource}
+                id={`debugger-resolution-${resolutionSource}`}
+                checked={query.resolutionSources.includes(resolutionSource)}
+                onChange={() => toggleResolutionSource(resolutionSource)}
+                label={t(hookResolutionSourceLabelKey(resolutionSource))}
               />
             ))}
           </div>

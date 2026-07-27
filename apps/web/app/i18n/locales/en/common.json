@@ -136,6 +136,7 @@
       "sortTitle": "Title A–Z",
       "filterByStatus": "Status",
       "filterByTypology": "Execution type",
+      "filterByResolution": "Resolution path",
       "filterByFeature": "Feature",
       "showSkipped": "Show skipped",
       "clearFilters": "Clear filters",

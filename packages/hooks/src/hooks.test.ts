@@ -3135,6 +3135,157 @@ describe("resolution source tracing", () => {
       }),
     );
   });
+  it("soft-fails matchSimilarRecord on embedding quota so callAi can run", async () => {
+    const recorder = createMockRecorder();
+    const callAi = vi.fn(async () => ({ categoryId: "cat_food" }));
+    const computeEmbedding = vi.fn(async () => {
+      throw new Error(
+        "8 RESOURCE_EXHAUSTED: Quota exceeded for aiplatform.googleapis.com/online_prediction_requests_per_base_model with base model: textembedding-gecko.",
+      );
+    });
+    const list = vi.fn(async (entity: string) => {
+      if (entity === "transaction") {
+        return [];
+      }
+      return [
+        {
+          id: "ex_1",
+          tenantId: "tenant_a",
+          enabled: true,
+          categoryId: "cat_transport",
+          embedding: [1, 0, 0],
+        },
+      ];
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "matchRelatedRecord",
+            entity: "transaction",
+            where: {
+              type: "condition",
+              field: "categorizationStatus",
+              operator: "==",
+              value: { kind: "literal", value: "DONE" },
+            },
+            haystack: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            aliasField: "description",
+            as: "priorTxn",
+          },
+          {
+            type: "matchSimilarRecord",
+            entity: "categoryExample",
+            where: {
+              type: "condition",
+              field: "enabled",
+              operator: "==",
+              value: { kind: "literal", value: true },
+            },
+            haystack: {
+              kind: "field",
+              source: "current",
+              path: "description",
+            },
+            embeddingField: "embedding",
+            minScore: 0.5,
+            when: {
+              kind: "call",
+              fn: "isEmpty",
+              args: [
+                {
+                  kind: "field",
+                  source: "loaded",
+                  alias: "priorTxn",
+                  path: "categoryId",
+                },
+              ],
+            },
+            as: "example",
+          },
+          {
+            type: "callAi",
+            prompt: { kind: "literal", value: "Classify" },
+            when: {
+              kind: "call",
+              fn: "isEmpty",
+              args: [
+                {
+                  kind: "call",
+                  fn: "coalesce",
+                  args: [
+                    {
+                      kind: "field",
+                      source: "loaded",
+                      alias: "priorTxn",
+                      path: "categoryId",
+                    },
+                    {
+                      kind: "field",
+                      source: "loaded",
+                      alias: "example",
+                      path: "categoryId",
+                    },
+                  ],
+                },
+              ],
+            },
+            as: "llmMatch",
+          },
+        ],
+      },
+      createContext({
+        event: "transaction.afterCreate",
+        entityName: "transaction",
+        current: {
+          id: "txn_1",
+          description: "UNKNOWN MERCHANT",
+          categorizationStatus: "PENDING",
+        },
+        services: {
+          dataHookExecutionRecorder: recorder,
+          callAi,
+          computeEmbedding,
+          entities: {
+            list,
+            get: vi.fn(),
+            create: vi.fn(),
+            createMany: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(callAi).toHaveBeenCalled();
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolutionSource: "llm",
+        actionTrace: expect.arrayContaining([
+          expect.objectContaining({
+            type: "matchSimilarRecord",
+            outcome: "empty",
+            matched: false,
+          }),
+          expect.objectContaining({
+            type: "callAi",
+            outcome: "ran",
+            matched: true,
+          }),
+        ]),
+      }),
+    );
+  });
 });
 
 describe("execution logging", () => {
