@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { useEntityCatalog } from "../entities/entity-catalog-context";
 import { getTenantDashboardLayout } from "../lib/api-client";
+import { HomeInsightCarousels } from "../features/insights";
 import { createTenantDashboardLayoutRenderContext } from "../features/ui-builder/create-tenant-dashboard-layout-render-context";
 import { dashboardLayoutHasContent } from "../features/ui-builder/dashboard-layout-has-content";
 import { useDashboardViewFilterUrlState } from "../features/ui-builder/use-dashboard-view-filter-url-state";
@@ -124,6 +125,7 @@ export function HomePage() {
 
   return (
     <ViewFilterPageProvider value={pageState}>
+      <HomeInsightCarousels />
       <RecursiveLayoutRenderer
         layout={dashboardLayout}
         context={renderContext}

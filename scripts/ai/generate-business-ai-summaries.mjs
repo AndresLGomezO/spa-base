@@ -150,35 +150,6 @@ const HOOK_SPECS = [
     ],
   },
   {
-    file: "refresh-transaction-ai-summary-json.json",
-    name: "Refresh transaction AI summary JSON",
-    description:
-      "Upsert ai_record_summaries for transactions for grounded chat RAG.",
-    entity: "transaction",
-    order: 92,
-    fields: [
-      ["id", field("id")],
-      ["type", field("type")],
-      ["amount", field("amount")],
-      ["date", field("date")],
-      ["description", field("description")],
-      ["accountId", field("accountId")],
-      ["financialItemId", field("financialItemId")],
-      ["paymentScheduleId", field("paymentScheduleId")],
-      ["categoryId", field("categoryId")],
-    ],
-    updateFields: [
-      "type",
-      "amount",
-      "date",
-      "description",
-      "accountId",
-      "financialItemId",
-      "paymentScheduleId",
-      "categoryId",
-    ],
-  },
-  {
     file: "refresh-email-ai-summary-json.json",
     name: "Refresh email AI summary JSON",
     description:

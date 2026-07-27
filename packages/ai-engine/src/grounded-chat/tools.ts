@@ -40,6 +40,23 @@ export interface GroundedChatMetricRunResult {
   readonly note?: string;
 }
 
+export interface GroundedChatInsightsResult {
+  readonly surfaceId: string;
+  readonly scope: string;
+  readonly currency?: string;
+  readonly summary: Readonly<Record<string, number>>;
+  readonly insights: readonly {
+    readonly recordId: string;
+    readonly title: string;
+    readonly rank?: number;
+    readonly impactScore?: number;
+    readonly links: Readonly<Record<string, string>>;
+    readonly narrative?: string;
+  }[];
+  readonly portfolioNarrative?: string;
+  readonly citations: readonly GroundedChatCitation[];
+}
+
 export interface GroundedChatDataPorts {
   listEntities(
     tenantId: string,
@@ -110,6 +127,11 @@ export interface GroundedChatDataPorts {
     userId: string,
     args: { readonly metricId: string },
   ): Promise<GroundedChatMetricRunResult | null>;
+  getInsights?(
+    tenantId: string,
+    userId: string,
+    args: { readonly surfaceId: string; readonly scope?: string },
+  ): Promise<GroundedChatInsightsResult | null>;
 }
 
 export interface GroundedChatToolResult {
@@ -131,6 +153,19 @@ function asPositiveInt(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0
     ? Math.min(Math.trunc(value), 50)
     : fallback;
+}
+
+const MONTH_RE = /^\d{4}-\d{2}$/;
+
+function resolveYearMonth(value: unknown): string | undefined {
+  if (value == null || value === "") {
+    return new Date().toISOString().slice(0, 7);
+  }
+  const month = asString(value);
+  if (!month || !MONTH_RE.test(month)) {
+    return undefined;
+  }
+  return month;
 }
 
 async function runKeywordSearch(
@@ -387,6 +422,50 @@ export async function executeGroundedChatTool(
                 },
               ]
             : [],
+        };
+      }
+      case "getInsights": {
+        const surfaceId = asString(call.args.surfaceId);
+        if (!surfaceId) {
+          return {
+            name: call.name,
+            ok: false,
+            result: null,
+            citations: [],
+            error: "surfaceId is required",
+          };
+        }
+        const scope =
+          call.args.scope == null || call.args.scope === ""
+            ? resolveYearMonth(undefined)
+            : resolveYearMonth(call.args.scope);
+        if (!scope) {
+          return {
+            name: call.name,
+            ok: false,
+            result: null,
+            citations: [],
+            error: 'scope must be "YYYY-MM" when provided',
+          };
+        }
+        if (!ports.getInsights) {
+          return {
+            name: call.name,
+            ok: false,
+            result: null,
+            citations: [],
+            error: "getInsights is unavailable",
+          };
+        }
+        const result = await ports.getInsights(tenantId, userId, {
+          surfaceId,
+          scope,
+        });
+        return {
+          name: call.name,
+          ok: true,
+          result,
+          citations: result?.citations ?? [],
         };
       }
       default: {

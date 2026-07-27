@@ -80,7 +80,35 @@ Tools themselves are free; planner/synthesis tokens still meter under `chat`. He
 
 ---
 
-## Pattern C — New section block kind
+## Pattern C — Tenant insight surface
+
+The insights platform is **domain-agnostic**. Finance vocabulary (spending, payments, products), healthcare, legal, etc. live only in **tenant catalog JSON** — never hardcoded in `apps/` or `packages/`.
+
+Adding a new surface requires **only**:
+
+1. **Entity JSON** (existing pattern) — insight entity + any signal/summary entities.
+2. **Data-hooks** (existing pattern) — signals, insight generation, portfolio narrative, invalidate-on-change.
+3. **New `insight-surface-definition` JSON** under `catalogs/insight-surfaces/` (id, labels, insight entity, scope, summary fields, chat blurb, refresh targets).
+4. **Zero platform code changes.**
+
+### Runtime surfaces
+
+| Layer | Contract |
+|---|---|
+| Catalog API | `GET /api/ai/insight-surfaces` |
+| Insights API | `GET /api/ai/insights/:surfaceId`, `POST /api/ai/insights/:surfaceId/refresh` |
+| Chat tool | `getInsights({ surfaceId, scope? })` |
+| UI | `/ai/insights` tabs + home carousels driven by the surface catalog |
+
+### Do not
+
+- Hardcode domain vocabulary (`spending`, `payments`, `products`, specialty names) in apps/packages.
+- Add per-domain API routes, chat tools, or React feature folders for each new surface.
+- Fork a second insights system — extend the tenant catalog instead.
+
+---
+
+## Pattern D — New section block kind
 
 **Examples:** “My open loans summary”, “Bank vs me” static+dynamic hybrid.
 
@@ -96,7 +124,7 @@ Respect `USER_AI_MEMORY_SNAPSHOT_MAX_CHARS` — huge dumps belong in RAG/tools, 
 
 ---
 
-## Pattern D — New async AI job feature
+## Pattern E — New async AI job feature
 
 **Examples:** “Generate weekly financial advice digest”, “Recompute all benchmark narratives”.
 
@@ -120,7 +148,7 @@ Respect `USER_AI_MEMORY_SNAPSHOT_MAX_CHARS` — huge dumps belong in RAG/tools, 
 
 ---
 
-## Pattern E — External rates / banking APIs
+## Pattern F — External rates / banking APIs
 
 **Examples:** live mortgage index, competitor APY, FX.
 
@@ -137,7 +165,7 @@ Scheduler / webhook
 Rules:
 
 - Fetching market data is **not** an AI feature (no spend).
-- Comparing with LLM **is** — use Pattern A/D.
+- Comparing with LLM **is** — use Pattern A/E.
 - Cache with TTL; tools should prefer cache over live HTTP at chat time (latency + reliability).
 - Never put API keys in prompts or AI docs.
 
@@ -145,7 +173,7 @@ If the cache is a new collection: schema → converter contract → Admin repo �
 
 ---
 
-## Pattern F — Cross-product relational insights
+## Pattern G — Cross-product relational insights
 
 Reuse existing relational stack:
 
@@ -158,7 +186,7 @@ Avoid N+1 LLM calls per child when one rollup narrative suffices.
 
 ---
 
-## Pattern G — Financial advice (high risk)
+## Pattern H — Financial advice (high risk)
 
 Advice features need stronger grounding:
 
@@ -197,7 +225,7 @@ Before merge, verify:
 
 | Layer | Choice |
 |---|---|
-| Market rate | Pattern E — worker cron writes `market_rates/es_mortgage_index` (example) |
+| Market rate | Pattern F — worker cron writes `market_rates/es_mortgage_index` (example) |
 | Personal side | Existing loan `ai_record_summaries` context.rates |
 | Compare snapshot | Hook or small job merges both into `context.benchmark = { market, mine, deltaBps }` |
 | RAG | One-line `ragText`: “Hipoteca X 3.1% vs market 2.7% (+40 bps)” |
@@ -205,19 +233,6 @@ Before merge, verify:
 | Chat tool | Optional `getRateBenchmark({ entityName, recordId })` reading AI doc + cache |
 | Spend | Narrative refresh user/on-demand = UID; nightly = system |
 | UI | Summary tab + out-of-sync when loan rate changes |
-
----
-
-## Worked sketch: “Transaction insights”
-
-| Layer | Choice |
-|---|---|
-| Trigger | `transaction.afterCreate/Update` Data Hook |
-| Context | Counterparty, category, related products, rolling 30d stats |
-| RAG | Short merchant + amount + anomaly flag |
-| Narrative | Nightly batch `enqueueAiRecordNarrative` variant `insights` |
-| L2 | Section block `savedQueryTop` or `entityRecordsSummary` for recent anomalies |
-| Chat | `semanticSearchRecords` over transaction RAG |
 
 ---
 
@@ -233,7 +248,8 @@ Before merge, verify:
 | Spend | `packages/ai-engine/src/spend/*`, `apps/api/src/ai/ai-spend-guard.ts` |
 | Worker wiring | `apps/worker-service/src/ai/*`, `src/routes/task.scope.ts` |
 | API wiring | `apps/api/src/server.ts`, `register-*-routes.ts` |
-| Web | `apps/web/app/features/{ai-spend,user-ai-context,record-ai-summary-templates,entity-summary}` |
+| Insight surfaces | `packages/ai-context/src/insight-surface/*`, `apps/api/src/ai/register-ai-insights-routes.ts`, `apps/web/app/features/insights/*` |
+| Web | `apps/web/app/features/{ai-spend,user-ai-context,record-ai-summary-templates,entity-summary,insights}` |
 
 ---
 

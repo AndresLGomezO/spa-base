@@ -53,6 +53,14 @@ export function loadChartDefinitionsCatalogJson(startDir?: string): string {
   });
 }
 
+export function loadInsightSurfacesCatalogJson(startDir?: string): string {
+  return mergeSingularCatalogDir(dir("insight-surfaces", startDir), {
+    kind: "insight-surfaces-catalog",
+    version: 1,
+    itemsKey: "insightSurfaces",
+  });
+}
+
 export function loadFormulaDefinitionsCatalogJson(startDir?: string): string {
   return mergeSingularCatalogDir(dir("formula-definitions", startDir), {
     kind: "formula-definitions-catalog",

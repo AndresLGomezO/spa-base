@@ -85,6 +85,7 @@
     "designLayoutDashboard": "Dashboard layout",
     "designLayoutAppShell": "App shell",
     "aiChat": "AI Chat",
+    "insights": "AI Insights",
     "debugger": "Debugger",
     "debuggerAiJobs": "AI Jobs",
     "debuggerHookExecutions": "Hook Executions",
@@ -411,6 +412,25 @@
       "parsed": "Parsed + validation",
       "draft": "Draft evolution"
     }
+  },
+  "insights": {
+    "pageTitle": "AI Insights",
+    "pageDescription": "Catalog-driven insights grounded in your data.",
+    "forbidden": "You do not have permission to view AI insights.",
+    "refresh": "Refresh insights",
+    "refreshing": "Refreshing…",
+    "refreshQueued": "Insight refresh queued.",
+    "refreshNoop": "Insights are already up to date.",
+    "refreshFailed": "Could not refresh insights. Try again.",
+    "emptyScope": "No insights for this period yet.",
+    "seeAll": "See all",
+    "impactLabel": "Impact {{score}}",
+    "rankLabel": "Rank {{rank}}",
+    "scopeLabel": "Period",
+    "tabs": {
+      "ariaLabel": "AI insights tabs"
+    },
+    "portfolioNarrativeFallback": "Portfolio narrative"
   },
   "aiChat": {
     "title": "AI Chat",

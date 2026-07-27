@@ -158,23 +158,43 @@ describe("AiChatThread streaming bubble", () => {
   });
 
   it("inserts day separators when messages span multiple days", () => {
+    const now = new Date();
+    const todayLocalNoon = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      12,
+      5,
+      0,
+    );
+    const yesterdayLocalNoon = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 1,
+      15,
+      30,
+      0,
+    );
+
     render(
       <AiChatThread
         messages={[
           {
             role: "user",
             content: "Yesterday question",
-            createdAt: "2026-07-24T15:30:00.000Z",
+            createdAt: yesterdayLocalNoon.toISOString(),
           },
           {
             role: "assistant",
             content: "Yesterday answer",
-            createdAt: "2026-07-24T15:31:00.000Z",
+            createdAt: new Date(
+              yesterdayLocalNoon.getTime() + 60_000,
+            ).toISOString(),
           },
           {
             role: "user",
             content: "Today question",
-            createdAt: "2026-07-25T18:05:00.000Z",
+            createdAt: todayLocalNoon.toISOString(),
           },
         ]}
         isPending={false}

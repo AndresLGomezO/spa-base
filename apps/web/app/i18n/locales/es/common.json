@@ -85,6 +85,7 @@
     "designLayoutDashboard": "Dashboard layout",
     "designLayoutAppShell": "Shell de la app",
     "aiChat": "AI Chat",
+    "insights": "Insights de IA",
     "debugger": "Debugger",
     "debuggerAiJobs": "AI Jobs",
     "debuggerHookExecutions": "Hook Executions",
@@ -411,6 +412,25 @@
       "parsed": "Parseado + validación",
       "draft": "Evolución del borrador"
     }
+  },
+  "insights": {
+    "pageTitle": "Insights de IA",
+    "pageDescription": "Insights impulsados por catálogo y fundamentados en tus datos.",
+    "forbidden": "No tienes permiso para ver los insights de IA.",
+    "refresh": "Actualizar insights",
+    "refreshing": "Actualizando…",
+    "refreshQueued": "Actualización de insights en cola.",
+    "refreshNoop": "Los insights ya están al día.",
+    "refreshFailed": "No se pudieron actualizar los insights. Inténtalo de nuevo.",
+    "emptyScope": "Aún no hay insights para este periodo.",
+    "seeAll": "Ver todos",
+    "impactLabel": "Impacto {{score}}",
+    "rankLabel": "Puesto {{rank}}",
+    "scopeLabel": "Periodo",
+    "tabs": {
+      "ariaLabel": "Pestañas de insights IA"
+    },
+    "portfolioNarrativeFallback": "Narrativa del portafolio"
   },
   "aiChat": {
     "title": "Chat IA",

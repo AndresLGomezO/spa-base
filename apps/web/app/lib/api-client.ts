@@ -2383,6 +2383,111 @@ export async function refreshAiRecordNarrative(
   );
 }
 
+export interface InsightSurfaceDescriptor {
+  readonly id: string;
+  readonly icon?: string;
+  readonly permission: string;
+  readonly labels: {
+    readonly title: string;
+    readonly description?: string;
+    readonly emptyScope?: string;
+    readonly seeAll?: string;
+    readonly refreshAction?: string;
+    readonly portfolioNarrativeTitle?: string;
+    readonly summary: Readonly<Record<string, string>>;
+  };
+  readonly ui: {
+    readonly showInHome: boolean;
+    readonly homeOrder: number;
+    readonly tabOrder: number;
+  };
+  readonly scope: {
+    readonly field: string;
+    readonly queryParam: string;
+    readonly format: "YYYY-MM";
+  };
+  readonly linkFields: readonly {
+    readonly field: string;
+    readonly entity: string;
+  }[];
+  readonly summaryFields: readonly {
+    readonly path: string;
+    readonly labelKey: string;
+    readonly format: "currency" | "number" | "count";
+  }[];
+}
+
+export interface InsightSurfacePayload {
+  readonly surfaceId: string;
+  readonly scope: string;
+  readonly currency?: string;
+  readonly summary: Readonly<Record<string, number>>;
+  readonly insights: readonly {
+    readonly recordId: string;
+    readonly title: string;
+    readonly rank?: number;
+    readonly impactScore?: number;
+    readonly links: Readonly<Record<string, string>>;
+    readonly narrative?: string;
+  }[];
+  readonly portfolioNarrative?: string;
+  readonly portfolioNarrativeUpdatedAt?: string;
+  readonly labels: InsightSurfaceDescriptor["labels"];
+  readonly ui: InsightSurfaceDescriptor["ui"];
+  readonly scopeConfig: InsightSurfaceDescriptor["scope"];
+  readonly summaryFields: InsightSurfaceDescriptor["summaryFields"];
+  readonly linkFields: InsightSurfaceDescriptor["linkFields"];
+}
+
+export async function getInsightSurfaces(
+  locale?: string,
+): Promise<{ surfaces: InsightSurfaceDescriptor[] }> {
+  return apiRequest<{ surfaces: InsightSurfaceDescriptor[] }>(
+    "/api/ai/insight-surfaces",
+    {
+      query: locale ? { locale } : undefined,
+    },
+  );
+}
+
+export async function getInsights(
+  surfaceId: string,
+  scope?: string,
+  locale?: string,
+): Promise<InsightSurfacePayload> {
+  const query: Record<string, string> = {};
+  if (scope) {
+    query.scope = scope;
+  }
+  if (locale) {
+    query.locale = locale;
+  }
+  return apiRequest<InsightSurfacePayload>(
+    `/api/ai/insights/${encodeURIComponent(surfaceId)}`,
+    {
+      query: Object.keys(query).length > 0 ? query : undefined,
+    },
+  );
+}
+
+export async function refreshInsights(
+  surfaceId: string,
+  scope?: string,
+): Promise<{
+  readonly surfaceId: string;
+  readonly scope: string;
+  readonly enqueued: number;
+  readonly alreadyCurrent: number;
+}> {
+  return apiRequest(
+    `/api/ai/insights/${encodeURIComponent(surfaceId)}/refresh`,
+    {
+      method: "POST",
+      body: scope ? { scope } : {},
+    },
+  );
+}
+
 interface GmailConnectionStatus {
   readonly connected: boolean;
   readonly status: string;

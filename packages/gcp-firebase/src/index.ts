@@ -102,6 +102,7 @@ export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admi
 export { createFirestoreAdminFormulaDefinitionRepository } from "./firestore-admin-formula-definition-repository.js";
 export { createFirestoreAdminEntityQueryDefinitionRepository } from "./firestore-admin-entity-query-definition-repository.js";
 export { createFirestoreAdminChartDefinitionRepository } from "./firestore-admin-chart-definition-repository.js";
+export { createFirestoreAdminInsightSurfaceRepository } from "./firestore-admin-insight-surface-repository.js";
 export { createFirestoreAdminCustomViewRepository } from "./firestore-admin-custom-view-repository.js";
 export { createFirestoreAdminAggregationEventRepository } from "./firestore-admin-aggregation-event-repository.js";
 export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-metric-value-repository.js";

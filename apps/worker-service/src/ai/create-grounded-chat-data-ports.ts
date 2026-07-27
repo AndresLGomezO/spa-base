@@ -2,16 +2,22 @@ import type {
   AiRecordSummaryRepository,
   EntityDefinitionRepository,
   EntityQueryDefinitionRepository,
+  InsightSurfaceRepository,
   MetricDefinitionRepository,
   MetricValueRepository,
   TenantScopedEntityRepository,
   UserAiMemoryRepository,
 } from "@repo/firestore-converters";
-import { readAiRecordSummaryField } from "@repo/ai-context";
+import {
+  loadInsightSurfacePayload,
+  readAiRecordSummaryField,
+} from "@repo/ai-context";
 import type { AiController } from "@repo/ai-engine/controller";
 import {
   redactForPrompt,
+  type GroundedChatCitation,
   type GroundedChatDataPorts,
+  type GroundedChatInsightsResult,
   type GroundedChatRecordHit,
 } from "@repo/ai-engine/grounded-chat";
 import type { VectorIndexService } from "@repo/ai-retrieval";
@@ -37,8 +43,11 @@ export interface CreateGroundedChatDataPortsDeps {
   readonly userAiMemoryRepository: UserAiMemoryRepository;
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
   readonly aiRecordSummaryRepository?: AiRecordSummaryRepository;
+  readonly insightSurfaceRepository?: InsightSurfaceRepository;
   readonly vectorIndexService?: VectorIndexService;
   readonly aiController?: AiController;
+  /** Optional clock override for month default (tests). */
+  readonly now?: () => Date;
   /** Optional field access maps keyed by entity name. */
   readonly resolveFieldAccessMap?: (
     tenantId: string,
@@ -52,6 +61,12 @@ export interface CreateGroundedChatDataPortsDeps {
   ) => Promise<
     Readonly<Record<string, "public" | "masked" | "excluded">> | undefined
   >;
+}
+
+function asOptionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : undefined;
 }
 
 function recordLabel(record: GenericRecord): string {
@@ -366,6 +381,67 @@ export function createGroundedChatDataPorts(
         name: definition.name,
         note: "Metric definition found; no stored value row for this user/default key.",
       };
+    },
+
+    async getInsights(tenantId, userId, args) {
+      if (!deps.insightSurfaceRepository || !deps.aiRecordSummaryRepository) {
+        return null;
+      }
+
+      const surface = await deps.insightSurfaceRepository.getById(
+        tenantId,
+        args.surfaceId,
+      );
+      if (!surface) {
+        return null;
+      }
+
+      const scope =
+        asOptionalString(args.scope) ??
+        (deps.now ?? (() => new Date()))().toISOString().slice(0, 7);
+
+      const payload = await loadInsightSurfacePayload(
+        {
+          getRepository: deps.getRepository,
+          isTenantWideRead: deps.isTenantWideRead,
+          aiRecordSummaryRepository: deps.aiRecordSummaryRepository,
+        },
+        {
+          tenantId,
+          userId,
+          surface,
+          scope,
+        },
+      );
+
+      if (
+        Object.keys(payload.summary).length === 0 &&
+        payload.insights.length === 0
+      ) {
+        return null;
+      }
+
+      const citations: GroundedChatCitation[] = payload.insights.map(
+        (insight) => ({
+          kind: "entity" as const,
+          entityName: surface.insight.entity,
+          recordId: insight.recordId,
+          label: insight.title,
+        }),
+      );
+
+      const result: GroundedChatInsightsResult = {
+        surfaceId: payload.surfaceId,
+        scope: payload.scope,
+        summary: payload.summary,
+        insights: payload.insights,
+        citations,
+        ...(payload.currency ? { currency: payload.currency } : {}),
+        ...(payload.portfolioNarrative
+          ? { portfolioNarrative: payload.portfolioNarrative }
+          : {}),
+      };
+      return result;
     },
   };
 }

@@ -174,6 +174,7 @@ async function seedLocalTenant(
     metricCounts: { ...EMPTY_COUNTS },
     queryCounts: { ...EMPTY_COUNTS },
     chartCounts: { ...EMPTY_COUNTS },
+    insightSurfaceCounts: { ...EMPTY_COUNTS },
     formulaCounts: { ...EMPTY_COUNTS },
     hookCounts: { ...EMPTY_COUNTS },
     customViewCounts: { ...EMPTY_COUNTS },
@@ -193,6 +194,7 @@ async function seedLocalTenant(
             hooks: selectionIncludes(selection, "hooks"),
             formulas: selectionIncludes(selection, "formulas"),
             charts: selectionIncludes(selection, "charts"),
+            insightSurfaces: selectionIncludes(selection, "insight-surfaces"),
             customViews: selectionIncludes(selection, "custom-views"),
           },
     );

@@ -17,6 +17,7 @@ import {
   createFirestoreAdminAiSpendRepository,
   createFirestoreAdminEntityDefinitionRepository as createFullEntityDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminInsightSurfaceRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminPlatformRuntimeSettingsRepository,
@@ -69,6 +70,8 @@ const metricDefinitionRepository =
   createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig);
 const entityQueryDefinitionRepository =
   createFirestoreAdminEntityQueryDefinitionRepository(firebaseAdminConfig);
+const insightSurfaceRepository =
+  createFirestoreAdminInsightSurfaceRepository(firebaseAdminConfig);
 const platformRuntimeSettingsRepository =
   createFirestoreAdminPlatformRuntimeSettingsRepository(firebaseAdminConfig);
 const runtimeSettingsCache = createRuntimeSettingsCache(
@@ -199,6 +202,7 @@ const groundedChatDataPorts = createGroundedChatDataPorts({
           dataHookProcessorDeps.aiRecordSummaryRepository,
       }
     : {}),
+  insightSurfaceRepository,
   vectorIndexService,
   aiController,
 });

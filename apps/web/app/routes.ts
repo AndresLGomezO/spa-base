@@ -57,6 +57,7 @@ export default [
     route("notifications", "./routes/notifications.tsx"),
     route("debugger/:sourceSlug", "./routes/debugger.tsx"),
     route("ai/chat", "./routes/ai/chat.tsx"),
+    route("ai/insights", "./routes/ai/insights.tsx"),
     route(
       "settings/design-layout/main/custom-view/:viewId",
       "./routes/settings/design-layout/main-custom-view.tsx",

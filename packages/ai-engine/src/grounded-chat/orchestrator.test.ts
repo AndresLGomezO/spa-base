@@ -8,6 +8,7 @@ import type {
 
 import type { AiController } from "../controller/index.js";
 import {
+  executeGroundedChatTool,
   filterBusinessEntityCitations,
   GROUNDED_CHAT_MAX_STEPS,
   runGroundedChatOrchestrator,
@@ -262,5 +263,251 @@ describe("runGroundedChatOrchestrator step-cap recovery", () => {
       },
     ]);
     expect(partials.at(-1)).toBe(result.answer);
+  });
+});
+
+describe("executeGroundedChatTool getInsights", () => {
+  const basePorts: GroundedChatDataPorts = {
+    listEntities: async () => [],
+    listMetrics: async () => [],
+    listQueries: async () => [],
+    searchRecords: async () => [],
+    getRecord: async () => null,
+    getUserMemoryFacts: async () => [],
+  };
+
+  it("returns compressed insights and citations from the port", async () => {
+    const ports: GroundedChatDataPorts = {
+      ...basePorts,
+      getInsights: async (_tenantId, _userId, args) => ({
+        surfaceId: args.surfaceId,
+        scope: args.scope ?? "2026-07",
+        currency: "USD",
+        summary: {
+          adherenceRate: 0.82,
+          openGaps: 3,
+        },
+        insights: [
+          {
+            recordId: "adh-1",
+            rank: 1,
+            title: "Missed check-in streak",
+            impactScore: 0.9,
+            links: { memberId: "m-1" },
+            narrative: "Three consecutive missed check-ins.",
+          },
+        ],
+        citations: [
+          {
+            kind: "entity",
+            entityName: "adherenceInsight",
+            recordId: "adh-1",
+            label: "Missed check-in streak",
+          },
+        ],
+      }),
+    };
+
+    const result = await executeGroundedChatTool(ports, "t1", "u1", {
+      name: "getInsights",
+      args: { surfaceId: "adherence", scope: "2026-07" },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.retrievalTop1Score).toBeUndefined();
+    expect(result.result).toMatchObject({
+      surfaceId: "adherence",
+      scope: "2026-07",
+      currency: "USD",
+      summary: { adherenceRate: 0.82, openGaps: 3 },
+    });
+    expect(result.citations).toEqual([
+      {
+        kind: "entity",
+        entityName: "adherenceInsight",
+        recordId: "adh-1",
+        label: "Missed check-in streak",
+      },
+    ]);
+  });
+
+  it("returns unavailable when the port is missing", async () => {
+    const result = await executeGroundedChatTool(basePorts, "t1", "u1", {
+      name: "getInsights",
+      args: { surfaceId: "adherence" },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("getInsights is unavailable");
+  });
+
+  it("rejects missing surfaceId", async () => {
+    const ports: GroundedChatDataPorts = {
+      ...basePorts,
+      getInsights: async () => null,
+    };
+    const result = await executeGroundedChatTool(ports, "t1", "u1", {
+      name: "getInsights",
+      args: {},
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe("surfaceId is required");
+  });
+
+  it("rejects invalid scope format", async () => {
+    const ports: GroundedChatDataPorts = {
+      ...basePorts,
+      getInsights: async () => null,
+    };
+    const result = await executeGroundedChatTool(ports, "t1", "u1", {
+      name: "getInsights",
+      args: { surfaceId: "adherence", scope: "July-2026" },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('scope must be "YYYY-MM" when provided');
+  });
+});
+
+describe("runGroundedChatOrchestrator getInsights loop", () => {
+  it("uses getInsights findings and cites adherenceInsight only", async () => {
+    const memoryRepo = createMemoryRepo();
+    const contextRepo = createContextRepo();
+    await contextRepo.upsert({
+      id: "entityCatalog",
+      tenantId: "t1",
+      kind: "entityCatalog",
+      sourceHash: "abc",
+      fragments: { "entity.catalog": "Entities: adherenceInsight" },
+      updatedAt: new Date().toISOString(),
+    });
+
+    let plannerCalls = 0;
+    const runAiRequest = vi.fn(async (request) => {
+      const stepId =
+        request.params.operation === "generateText"
+          ? request.params.stepId
+          : undefined;
+      if (stepId === "groundedChat.synthesis") {
+        return {
+          jobId: "child-synth",
+          output: {
+            text: "Adherence is slipping: **3 open gaps**, led by [Missed check-in streak](record:adherenceInsight/adh-1).",
+          },
+          rawModelAnswer: "",
+          durationMs: 1,
+        };
+      }
+
+      plannerCalls += 1;
+      if (plannerCalls === 1) {
+        return {
+          jobId: "child-plan-1",
+          output: {
+            text: JSON.stringify({
+              action: "tool_calls",
+              reasoning: "Need adherence insights",
+              toolCalls: [
+                {
+                  name: "getInsights",
+                  args: { surfaceId: "adherence", scope: "2026-07" },
+                },
+              ],
+            }),
+          },
+          rawModelAnswer: "",
+          durationMs: 1,
+        };
+      }
+      return {
+        jobId: "child-plan-2",
+        output: {
+          text: JSON.stringify({
+            action: "final",
+            confidence: 0.8,
+            answer: "Draft answer",
+          }),
+        },
+        rawModelAnswer: "",
+        durationMs: 1,
+      };
+    });
+
+    const dataPorts: GroundedChatDataPorts = {
+      listEntities: async () => [],
+      listMetrics: async () => [],
+      listQueries: async () => [],
+      searchRecords: async () => [],
+      getRecord: async () => null,
+      getUserMemoryFacts: async () => [],
+      getInsights: async () => ({
+        surfaceId: "adherence",
+        scope: "2026-07",
+        currency: "USD",
+        summary: { openGaps: 3 },
+        insights: [
+          {
+            recordId: "adh-1",
+            rank: 1,
+            title: "Missed check-in streak",
+            impactScore: 0.9,
+            links: {},
+          },
+        ],
+        portfolioNarrative: "Portfolio adherence rollup (do not cite).",
+        citations: [
+          {
+            kind: "entity",
+            entityName: "adherenceInsight",
+            recordId: "adh-1",
+            label: "Missed check-in streak",
+          },
+          {
+            kind: "entity",
+            entityName: "portfolioSettings",
+            recordId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            label: "Settings",
+          },
+        ],
+      }),
+    };
+
+    const result = await runGroundedChatOrchestrator(
+      {
+        aiController: { runAiRequest } as unknown as AiController,
+        vertexAiConfig: {
+          projectId: "demo",
+          region: "us-central1",
+          modelId: "gemini-flash",
+          mockEnabled: true,
+        },
+        tenantAiContextRepository: contextRepo,
+        userAiMemoryRepository: memoryRepo,
+        dataPorts,
+        cacheClient: createMockVertexCachedContentClient(),
+        isAiTraceEnabled: () => true,
+      },
+      {
+        tenantId: "t1",
+        userId: "u1",
+        question: "What are my adherence insights this month?",
+        parentJobId: "parent-adh-1",
+      },
+    );
+
+    expect(result.scratchpad).toContain("Tool getInsights (ok)");
+    expect(result.scratchpad).toContain("openGaps");
+    expect(result.answer).toContain("Missed check-in streak");
+    expect(result.citations).toEqual([
+      {
+        kind: "entity",
+        entityName: "adherenceInsight",
+        recordId: "adh-1",
+        label: "Missed check-in streak",
+      },
+    ]);
+    expect(
+      (result.citations ?? []).some(
+        (c) => c.entityName === "portfolioSettings",
+      ),
+    ).toBe(false);
   });
 });

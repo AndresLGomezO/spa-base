@@ -39,6 +39,7 @@ import type {
   MetricValueRepository,
   EntityQueryDefinitionRepository,
   ChartDefinitionRepository,
+  InsightSurfaceRepository,
   CustomViewRepository,
   PlatformRuntimeSettingsRepository,
   TenantDeletionArchiveRepository,
@@ -74,6 +75,7 @@ import {
   createInMemoryFormulaDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
   createInMemoryChartDefinitionRepository,
+  createInMemoryInsightSurfaceRepository,
   createInMemoryCustomViewRepository,
   createInMemoryMetricContributionRepository,
   createInMemoryMetricValueRepository,
@@ -113,6 +115,7 @@ import {
   createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminChartDefinitionRepository,
+  createFirestoreAdminInsightSurfaceRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminMetricContributionRepository,
   createFirestoreAdminMetricValueRepository,
@@ -188,6 +191,7 @@ import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerAiContextSectionRoutes } from "./ai-context-sections/register-ai-context-section-routes.js";
 import { registerAiRecordSummaryTemplateRoutes } from "./ai-record-summary-templates/register-ai-record-summary-template-routes.js";
 import { registerAiRecordSummaryRoutes } from "./ai-record-summaries/register-ai-record-summary-routes.js";
+import { registerAiInsightsRoutes } from "./ai/register-ai-insights-routes.js";
 import { registerDebugRoutes } from "./debug/register-debug-routes.js";
 import { registerNotificationRoutes } from "./notifications/register-notification-routes.js";
 import { registerPushTokenRoutes } from "./notifications/register-push-token-routes.js";
@@ -246,6 +250,7 @@ interface BuildServerOptions {
   readonly formulaDefinitionRepository?: FormulaDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly chartDefinitionRepository?: ChartDefinitionRepository;
+  readonly insightSurfaceRepository?: InsightSurfaceRepository;
   readonly customViewRepository?: CustomViewRepository;
   readonly aggregationEventRepository?: AggregationEventRepository;
   readonly metricValueRepository?: MetricValueRepository;
@@ -564,6 +569,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryChartDefinitionRepository()
       : createFirestoreAdminChartDefinitionRepository(firebaseAdminConfig));
+
+  const insightSurfaceRepository =
+    options.insightSurfaceRepository ??
+    (options.repositories
+      ? createInMemoryInsightSurfaceRepository()
+      : createFirestoreAdminInsightSurfaceRepository(firebaseAdminConfig));
 
   const customViewRepository =
     options.customViewRepository ??
@@ -1046,6 +1057,32 @@ export async function buildServer(options: BuildServerOptions = {}) {
   await registerAiRecordSummaryRoutes(server, {
     authenticate,
     permissionDeps,
+    aiRecordSummaryRepository,
+    aiSpendGuardDeps: {
+      tenantRepository: tenantRepositoryForSpend,
+      aiSpendRepository,
+      getRoleCatalog: loadRoleCatalog,
+      registeredUserRepository,
+    },
+    cloudTasksConfig: {
+      projectId: apiEnv.GCP_PROJECT_ID,
+      region: apiEnv.GCP_REGION,
+      queueName: apiEnv.CLOUD_TASKS_QUEUE_NAME,
+      workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+      serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+      localDispatch: apiEnv.AI_TASKS_LOCAL_DISPATCH,
+    },
+  });
+
+  await registerAiInsightsRoutes(server, {
+    authenticate,
+    permissionDeps,
+    insightSurfaceRepository,
+    getRepository: (tenantId, entityName) =>
+      entityRuntime.getRepository(tenantId, entityName),
+    isTenantWideRead: (tenantId, entityName) =>
+      entityRuntime.resolveEntity(entityName, tenantId)?.metadata
+        .tenantWideRead === true,
     aiRecordSummaryRepository,
     aiSpendGuardDeps: {
       tenantRepository: tenantRepositoryForSpend,

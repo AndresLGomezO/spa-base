@@ -1,3 +1,4 @@
+import { parseInsightSurfacesCatalogJson } from "@repo/ai-context";
 import { parseEntityDefinitionsCatalogJson } from "@repo/dynamic-entities";
 import { parseCustomViewsCatalogJson } from "@repo/custom-views";
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
@@ -13,6 +14,7 @@ import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminChartDefinitionRepository,
+  createFirestoreAdminInsightSurfaceRepository,
   createFirestoreAdminMetricContributionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminMetricValueRepository,
@@ -29,6 +31,7 @@ import {
 } from "../../aggregation/metric-query-runtime.js";
 import { replaceEntityQueryDefinitionsCatalog } from "../../entity-queries/replace-entity-query-definitions-catalog.js";
 import { replaceChartDefinitionsCatalog } from "../../chart-definitions/replace-chart-definitions-catalog.js";
+import { replaceInsightSurfacesCatalog } from "../../ai/replace-insight-surfaces-catalog.js";
 import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-views-catalog.js";
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
 import { replaceDataHooksCatalog } from "../../hooks/replace-data-hooks-catalog.js";
@@ -41,6 +44,7 @@ import {
   loadDataHooksCatalogJson,
   loadEntityDefinitionsCatalogJson,
   loadFormulaDefinitionsCatalogJson,
+  loadInsightSurfacesCatalogJson,
   loadMetricDefinitionsCatalogJson,
   loadQueryDefinitionsCatalogJson,
 } from "./seed-catalog-dir.js";
@@ -62,6 +66,11 @@ interface SeedLocalCatalogsResult {
     readonly deleted: number;
   };
   readonly chartCounts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly insightSurfaceCounts: {
     readonly created: number;
     readonly updated: number;
     readonly deleted: number;
@@ -103,6 +112,7 @@ interface SeedLocalCatalogsOptions {
   readonly hooks?: boolean;
   readonly formulas?: boolean;
   readonly charts?: boolean;
+  readonly insightSurfaces?: boolean;
   readonly customViews?: boolean;
 }
 
@@ -118,6 +128,7 @@ export async function seedLocalCatalogs(
   const includeHooks = options.hooks ?? true;
   const includeFormulas = options.formulas ?? true;
   const includeCharts = options.charts ?? true;
+  const includeInsightSurfaces = options.insightSurfaces ?? true;
   const includeCustomViews = options.customViews ?? true;
 
   const entityCategoryRepository =
@@ -128,6 +139,8 @@ export async function seedLocalCatalogs(
     createFirestoreAdminEntityQueryDefinitionRepository(firebaseAdminConfig);
   const chartDefinitionRepository =
     createFirestoreAdminChartDefinitionRepository(firebaseAdminConfig);
+  const insightSurfaceRepository =
+    createFirestoreAdminInsightSurfaceRepository(firebaseAdminConfig);
   const customViewRepository =
     createFirestoreAdminCustomViewRepository(firebaseAdminConfig);
   const dataHookRepository =
@@ -252,6 +265,26 @@ export async function seedLocalCatalogs(
     chartCounts = chartResult.counts;
   }
 
+  let insightSurfaceCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeInsightSurfaces) {
+    const insightSurfaceParsed = parseInsightSurfacesCatalogJson(
+      loadInsightSurfacesCatalogJson(),
+    );
+    if (!insightSurfaceParsed.ok) {
+      throw new Error(
+        `Invalid rates insight surfaces catalog: ${insightSurfaceParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const insightSurfaceResult = await replaceInsightSurfacesCatalog(
+      {
+        insightSurfaceRepository,
+      },
+      tenantId,
+      insightSurfaceParsed.data,
+    );
+    insightSurfaceCounts = insightSurfaceResult.counts;
+  }
+
   let formulaCounts = { ...EMPTY_CATALOG_COUNTS };
   if (includeFormulas) {
     const formulasParsed = parseFormulaDefinitionsCatalogJson(
@@ -317,7 +350,7 @@ export async function seedLocalCatalogs(
   }
 
   console.log(
-    `[local-tenant seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}`,
+    `[local-tenant seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, insightSurfaces +${insightSurfaceCounts.created}/~${insightSurfaceCounts.updated}/-${insightSurfaceCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}`,
   );
 
   return {
@@ -325,6 +358,7 @@ export async function seedLocalCatalogs(
     metricCounts,
     queryCounts,
     chartCounts,
+    insightSurfaceCounts,
     formulaCounts,
     hookCounts,
     customViewCounts,

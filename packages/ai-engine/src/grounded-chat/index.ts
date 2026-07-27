@@ -47,6 +47,7 @@ export {
   type GroundedChatMetricRunResult,
   type GroundedChatQuerySummary,
   type GroundedChatRecordHit,
+  type GroundedChatInsightsResult,
   type GroundedChatToolResult,
 } from "./tools.js";
 

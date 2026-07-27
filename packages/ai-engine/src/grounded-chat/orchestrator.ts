@@ -118,6 +118,8 @@ function progressLabelForTool(call: GroundedChatToolCall): string {
       return "Running saved query…";
     case "runMetric":
       return "Running metric…";
+    case "getInsights":
+      return "Reading insights…";
     default:
       return "Working…";
   }

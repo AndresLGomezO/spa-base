@@ -11,6 +11,7 @@ export const SEED_CATALOG_COMPONENTS = [
   "hooks",
   "formulas",
   "charts",
+  "insight-surfaces",
   "custom-views",
 ] as const;
 

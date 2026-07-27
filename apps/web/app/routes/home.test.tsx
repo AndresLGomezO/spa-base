@@ -9,6 +9,10 @@ vi.mock("../auth/AuthContext", () => ({
   useAuth: () => ({ user: null }),
 }));
 
+vi.mock("../auth/usePermission", () => ({
+  usePermission: () => false,
+}));
+
 vi.mock("../entities/entity-catalog-context", () => ({
   useEntityCatalog: () => ({
     getDefinition: () => undefined,
@@ -17,6 +21,8 @@ vi.mock("../entities/entity-catalog-context", () => ({
 }));
 
 vi.mock("../lib/api-client", () => ({
+  getInsightSurfaces: vi.fn().mockResolvedValue({ surfaces: [] }),
+  getInsights: vi.fn().mockResolvedValue({ insights: [] }),
   getTenantDashboardLayout: vi.fn().mockResolvedValue({
     config: {
       tenantId: "tenant-1",

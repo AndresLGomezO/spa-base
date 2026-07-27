@@ -34,7 +34,8 @@ If you do not know the recordId, write the display name as plain text (no record
 Never write bare forms like financialItem:uuid or financialItem/uuid in the answer text. Never dump search noise, memory keys, AI summary documents, portfolioSettings, or other system/settings entities as sources.
 Prefer precise numbers from tools over narrative memory snapshots.
 Prefer semanticSearchRecords for natural-language record lookup; use keywordSearchRecords for exact substring matches.
-For “biggest / largest / amount / due / this week / last month” questions: call listMetrics or listQueries early, then runMetric or runSavedQuery; prefer financialItem semantic search for products. Do not waste steps listing the full entity catalog when you already know the entity.
+Prefer getInsights when the tenant has registered insight surfaces and the question matches a surface's purpose. Call list of available surfaces is provided in the tool finding / planner context when available.
+For “biggest / largest / amount / due / this week / last month” questions: call listMetrics or listQueries early, then runMetric or runSavedQuery. Do not waste steps listing the full entity catalog when you already know the entity.
 After you have enough tool evidence to answer, you MUST choose action "final" (do not keep searching until the step limit).
 Business entities to search include actor, account, financialItem, paymentSchedule, transaction, email, statement, and balanceSnapshot.
 Follow relation fields across entities (actorId, accountId, financialItemId, paymentScheduleId, emailId, categoryId, etc.) with getRecord and additional searches when the question spans related records (e.g. actor → products → payment schedules → transactions).
@@ -57,6 +58,7 @@ export const groundedChatToolNameSchema = z.enum([
   "getUserMemoryFacts",
   "runSavedQuery",
   "runMetric",
+  "getInsights",
   /** @deprecated Prefer keywordSearchRecords. Kept for older planner prompts. */
   "searchRecords",
 ]);
@@ -115,7 +117,8 @@ Available tools:
 - getUserMemoryFacts: { "keys"?: string[] }
 - runSavedQuery: { "queryId": string, "limit"?: number }
 - runMetric: { "metricId": string }
-Use tool_calls when you need live data. Prefer semanticSearchRecords for meaning-based lookup (financialItem for products). For biggest/largest/amount/due questions prefer listMetrics/runMetric or listQueries/runSavedQuery early. Use final as soon as tool findings answer the question. Use clarify only when a single clarifying question is required. In any user-facing answer text, reference records only as [Display Name](record:entityName/recordId) with entityName/recordId copied from tool findings — never bare entityName:uuid, never nest Markdown inside record:(…), and never put the display name in the href. If the id is unknown, use plain text. Cite only the few business entity records you actually use (never memory, settings, or full search dumps). Include confidence 0..1 on final answers.`;
+- getInsights: { "surfaceId": "<id>", "scope"?: "YYYY-MM" }
+Use tool_calls when you need live data. Prefer semanticSearchRecords for meaning-based lookup. Prefer getInsights when the tenant has registered insight surfaces and the question matches a surface's purpose (surfaceId required; scope defaults to the current YYYY-MM). Call list of available surfaces is provided in the tool finding / planner context when available. For biggest/largest/amount/due questions prefer listMetrics/runMetric or listQueries/runSavedQuery early. Use final as soon as tool findings answer the question. Use clarify only when a single clarifying question is required. In any user-facing answer text, reference records only as [Display Name](record:entityName/recordId) with entityName/recordId copied from tool findings — never bare entityName:uuid, never nest Markdown inside record:(…), and never put the display name in the href. If the id is unknown, use plain text. Cite only the few business entity records you actually use (never memory, settings, or full search dumps). Include confidence 0..1 on final answers.`;
 
 export const GROUNDED_CHAT_SYNTHESIS_INSTRUCTION = `Write a clear, concise user-facing answer using ONLY the scratchpad / tool findings and conversation below.
 Format the answer as GFM Markdown: start with a short lead sentence, **bold** key amounts, use bullets or a compact table when comparing items, and optional ### headings for sections. Do not use raw HTML.

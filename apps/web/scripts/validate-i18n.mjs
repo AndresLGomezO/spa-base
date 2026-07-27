@@ -186,6 +186,9 @@ function extractUsedKeys(files, namespaces) {
 function extractNavLabelKeys(files) {
   const keys = new Set();
   for (const file of files) {
+    if (/\.(test|spec)\.[jt]sx?$/.test(file.path)) {
+      continue;
+    }
     for (const match of file.content.matchAll(/labelKey:\s*"([^"]+)"/g)) {
       const labelKey = match[1];
       if (labelKey.includes(".")) {

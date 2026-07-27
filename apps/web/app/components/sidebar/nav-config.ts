@@ -16,6 +16,7 @@ import {
   Layers,
   LayoutDashboard,
   LayoutTemplate,
+  Lightbulb,
   LineChart,
   BookText,
   Mail,
@@ -63,6 +64,7 @@ export type NavLabelKey =
   | "designLayoutDashboard"
   | "designLayoutAppShell"
   | "aiChat"
+  | "insights"
   | "debugger"
   | "debuggerAiJobs"
   | "debuggerHookExecutions"
@@ -160,6 +162,14 @@ export const SETTINGS_AI_CHAT_NAV_ITEM: NavLinkConfig = {
   to: "/ai/chat",
   matchPath: "/ai/chat",
   icon: Bot,
+};
+
+export const SETTINGS_AI_INSIGHTS_NAV_ITEM: NavLinkConfig = {
+  id: "ai-insights",
+  labelKey: "insights",
+  to: "/ai/insights",
+  matchPath: "/ai/insights",
+  icon: Lightbulb,
 };
 
 export const DEBUGGER_GROUP_ICON = ScanSearch;
