@@ -49,22 +49,21 @@ async function copyDocumentTreeInternal(
   }
 
   const subcollections = await sourceRef.listCollections();
-  await Promise.all(
-    subcollections.map(async (subcollection) => {
-      context.onProgress?.({ collectionsCopied: 1 });
-      const targetSubcollection = targetRef.collection(subcollection.id);
-      const docsSnapshot = await subcollection.get();
-      await Promise.all(
-        docsSnapshot.docs.map((doc) =>
-          copyDocumentTreeInternal(
-            doc.ref,
-            targetSubcollection.doc(doc.id),
-            context,
-          ),
-        ),
+  // Sequential fan-out: parallel Promise.all over large collections OOMs /
+  // stalls BulkWriter on Cloud Run (512Mi), leaving deletion jobs stuck
+  // in `running` forever.
+  for (const subcollection of subcollections) {
+    context.onProgress?.({ collectionsCopied: 1 });
+    const targetSubcollection = targetRef.collection(subcollection.id);
+    const docsSnapshot = await subcollection.get();
+    for (const doc of docsSnapshot.docs) {
+      await copyDocumentTreeInternal(
+        doc.ref,
+        targetSubcollection.doc(doc.id),
+        context,
       );
-    }),
-  );
+    }
+  }
 }
 
 export async function copyDocumentTree(

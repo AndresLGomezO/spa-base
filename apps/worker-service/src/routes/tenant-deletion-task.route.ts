@@ -31,6 +31,9 @@ export async function tenantDeletionTaskRoute(
         tenantId: parsed.data.tenantId,
         hookId: "delete-tenant",
         logLabel: "Processing tenant deletion",
+        // Keep the request open so Cloud Run CPU stays allocated until purge
+        // finishes. Fire-and-forget left jobs stuck in `running` mid-archive.
+        awaitCompletion: true,
         process: () => processTenantDeletionTask(deps, parsed.data),
       });
     },

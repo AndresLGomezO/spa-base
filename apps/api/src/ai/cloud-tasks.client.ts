@@ -27,6 +27,11 @@ interface EnqueueOptions {
   readonly taskId?: string;
   /** When set, Cloud Tasks runs the task at/after this time (local: delayed fetch). */
   readonly scheduleTime?: Date;
+  /**
+   * Cloud Tasks HTTP dispatch deadline in seconds (max 1800).
+   * Use for long-running worker handlers that await completion.
+   */
+  readonly dispatchDeadlineSeconds?: number;
 }
 
 export function createCloudTasksClient(config: CloudTasksClientConfig) {
@@ -123,6 +128,7 @@ async function enqueueCloudTask(
     httpRequest: typeof httpRequest;
     name?: string;
     scheduleTime?: { seconds: number };
+    dispatchDeadline?: { seconds: number };
   } = { httpRequest };
 
   if (options.taskId) {
@@ -133,6 +139,14 @@ async function enqueueCloudTask(
     task.scheduleTime = {
       seconds: Math.floor(options.scheduleTime.getTime() / 1000),
     };
+  }
+
+  if (options.dispatchDeadlineSeconds != null) {
+    const seconds = Math.min(
+      1800,
+      Math.max(15, Math.floor(options.dispatchDeadlineSeconds)),
+    );
+    task.dispatchDeadline = { seconds };
   }
 
   try {

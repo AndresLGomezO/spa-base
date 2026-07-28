@@ -247,13 +247,34 @@ export async function processTenantDeletion(
       startedAt: new Date().toISOString(),
     });
 
-    const archiveProgress = await copyTenantToArchiveMirror({
-      config: deps.firebaseAdminConfig,
-      tenantId: payload.tenantId,
-      archiveId: payload.archiveId,
-      onProgress: reportProgress,
-    });
-    await throttledProgress.close();
+    // Archive is best-effort. Live purge must not depend on a full mirror —
+    // a hung archive previously left jobs stuck in `running` (409 on retry).
+    let archiveProgress: {
+      collectionsCopied: number;
+      docsCopied: number;
+      docsDeleted: number;
+    } = { collectionsCopied: 0, docsCopied: 0, docsDeleted: 0 };
+    let archiveOk = false;
+    let archiveErrorMessage: string | null = null;
+    try {
+      archiveProgress = await copyTenantToArchiveMirror({
+        config: deps.firebaseAdminConfig,
+        tenantId: payload.tenantId,
+        archiveId: payload.archiveId,
+        onProgress: reportProgress,
+      });
+      await throttledProgress.close();
+      archiveOk = true;
+    } catch (archiveError: unknown) {
+      await throttledProgress.close();
+      archiveErrorMessage =
+        archiveError instanceof Error
+          ? archiveError.message
+          : "Tenant archive failed.";
+      await deps.archiveRepository.update(payload.archiveId, {
+        status: "archiving_failed",
+      });
+    }
 
     await removeTenantFromAllUsers({
       firebaseAdminConfig: deps.firebaseAdminConfig,
@@ -280,7 +301,7 @@ export async function processTenantDeletion(
     await reconcileIndexesAfterTenantRemoval(deps, entityDefinitions);
 
     await deps.archiveRepository.update(payload.archiveId, {
-      status: "archived",
+      status: archiveOk ? "archived" : "archiving_failed",
       stats: {
         collectionsCopied: archiveProgress.collectionsCopied,
         docsCopied: archiveProgress.docsCopied,
@@ -297,6 +318,11 @@ export async function processTenantDeletion(
         docsCopied: archiveProgress.docsCopied,
         docsDeleted: purgeProgress.docsDeleted,
       },
+      ...(archiveOk
+        ? {}
+        : {
+            error: `Tenant purged; archive incomplete: ${archiveErrorMessage ?? "unknown"}`,
+          }),
     });
   } catch (error) {
     const message =

@@ -24,6 +24,8 @@ export function createTenantDeletionTasksClient(
           payload.tenantId,
           `${payload.jobId}:${payload.archiveId}`,
         ),
+        // Worker awaits full purge; default Cloud Tasks deadline is too short.
+        dispatchDeadlineSeconds: 1800,
       });
     },
   };
