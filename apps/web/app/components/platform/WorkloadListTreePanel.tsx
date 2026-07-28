@@ -1,7 +1,7 @@
 import {
-  Checkbox,
   FilterPanel,
   FilterPanelBody,
+  SearchableMultiSelectDropdown,
   SearchField,
   Text,
 } from "@repo/ui";
@@ -257,126 +257,154 @@ export function WorkloadListTreePanel({
     t,
   ]);
 
+  const multiselectLabels = {
+    placeholder: t("platform.workloads.multiselectPlaceholder"),
+    selectedCountLabel: (count: number) =>
+      t("platform.workloads.multiselectSelectedCount", { count }),
+    searchPlaceholder: t("platform.workloads.multiselectSearchPlaceholder"),
+    noResultsLabel: t("platform.workloads.multiselectNoResults"),
+    removeAriaLabel: (label: string) =>
+      t("platform.workloads.removeBadge", { label }),
+  };
+
+  const domainOptions = useMemo(
+    () =>
+      ALL_WORKLOAD_DOMAINS.map((domain) => ({
+        value: domain,
+        label: t(domainLabelKey(domain) as never),
+      })),
+    [t],
+  );
+  const frequencyOptions = useMemo(
+    () =>
+      ALL_WORKLOAD_FREQUENCIES.map((frequency) => ({
+        value: frequency,
+        label: t(frequencyLabelKey(frequency) as never),
+      })),
+    [t],
+  );
+  const hourOptions = useMemo(
+    () =>
+      SCHEDULE_HOUR_PRESETS.map((hour) => ({
+        value: String(hour),
+        label: t("platform.workloads.runAtHour", {
+          hour: String(hour).padStart(2, "0"),
+        }),
+      })),
+    [t],
+  );
+  const kindOptions = useMemo(
+    () =>
+      OPERATIONAL_WORKLOAD_KINDS.map((kind) => ({
+        value: kind,
+        label: t(kindLabelKey(kind) as never),
+      })),
+    [t],
+  );
+  const sourceOptions = useMemo(
+    () =>
+      ALL_WORKLOAD_SOURCES.map((source) => ({
+        value: source,
+        label: t(
+          `platform.workloads.source${source.charAt(0).toUpperCase()}${source.slice(1)}` as never,
+        ),
+      })),
+    [t],
+  );
+  const statusOptions = useMemo(
+    () =>
+      ALL_WORKLOAD_STATUSES.map((status) => ({
+        value: status,
+        label: t(
+          `platform.workloads.status${status.charAt(0).toUpperCase()}${status.slice(1)}` as never,
+        ),
+      })),
+    [t],
+  );
+
   const filterBody = (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <div className="space-y-3">
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.filterDomain")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {ALL_WORKLOAD_DOMAINS.map((domain) => (
-            <Checkbox
-              key={domain}
-              id={`workload-domain-${domain}`}
-              checked={domains.includes(domain)}
-              onChange={() =>
-                onDomainsChange(toggleCsvValue([...domains], domain))
-              }
-              label={t(domainLabelKey(domain) as never)}
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={domainOptions}
+          selected={domains}
+          onChange={(selected) => onDomainsChange([...selected])}
+          ariaLabel={t("platform.workloads.filterDomain")}
+          {...multiselectLabels}
+        />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.filterFrequency")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {ALL_WORKLOAD_FREQUENCIES.map((frequency) => (
-            <Checkbox
-              key={frequency}
-              id={`workload-frequency-${frequency}`}
-              checked={frequencies.includes(frequency)}
-              onChange={() =>
-                onFrequenciesChange(toggleCsvValue([...frequencies], frequency))
-              }
-              label={t(frequencyLabelKey(frequency) as never)}
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={frequencyOptions}
+          selected={frequencies}
+          onChange={(selected) => onFrequenciesChange([...selected])}
+          ariaLabel={t("platform.workloads.filterFrequency")}
+          {...multiselectLabels}
+        />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.filterRunAt")}
         </Text>
         <Text className="text-muted-foreground text-[11px]">
           {t("platform.workloads.filterRunAtHint")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {SCHEDULE_HOUR_PRESETS.map((hour) => (
-            <Checkbox
-              key={hour}
-              id={`workload-hour-${hour}`}
-              checked={hours.includes(hour)}
-              onChange={() =>
-                onHoursChange(
-                  hours.includes(hour)
-                    ? hours.filter((value) => value !== hour)
-                    : [...hours, hour].sort((a, b) => a - b),
-                )
-              }
-              label={t("platform.workloads.runAtHour", {
-                hour: String(hour).padStart(2, "0"),
-              })}
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={hourOptions}
+          selected={hours.map(String)}
+          onChange={(selected) =>
+            onHoursChange(
+              selected
+                .map((value) => Number(value))
+                .filter((value) => Number.isFinite(value))
+                .sort((a, b) => a - b),
+            )
+          }
+          ariaLabel={t("platform.workloads.filterRunAt")}
+          {...multiselectLabels}
+        />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.filterKind")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {OPERATIONAL_WORKLOAD_KINDS.map((kind) => (
-            <Checkbox
-              key={kind}
-              id={`workload-kind-${kind}`}
-              checked={kinds.includes(kind)}
-              onChange={() => onKindsChange(toggleCsvValue([...kinds], kind))}
-              label={t(kindLabelKey(kind) as never)}
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={kindOptions}
+          selected={kinds}
+          onChange={(selected) => onKindsChange([...selected])}
+          ariaLabel={t("platform.workloads.filterKind")}
+          {...multiselectLabels}
+        />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.filterSource")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {ALL_WORKLOAD_SOURCES.map((source) => (
-            <Checkbox
-              key={source}
-              id={`workload-source-${source}`}
-              checked={sources.includes(source)}
-              onChange={() =>
-                onSourcesChange(toggleCsvValue([...sources], source))
-              }
-              label={t(
-                `platform.workloads.source${source.charAt(0).toUpperCase()}${source.slice(1)}` as never,
-              )}
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={sourceOptions}
+          selected={sources}
+          onChange={(selected) => onSourcesChange([...selected])}
+          ariaLabel={t("platform.workloads.filterSource")}
+          {...multiselectLabels}
+        />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.filterStatus")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {ALL_WORKLOAD_STATUSES.map((status) => (
-            <Checkbox
-              key={status}
-              id={`workload-status-${status}`}
-              checked={statuses.includes(status)}
-              onChange={() =>
-                onStatusesChange(toggleCsvValue([...statuses], status))
-              }
-              label={t(
-                `platform.workloads.status${status.charAt(0).toUpperCase()}${status.slice(1)}` as never,
-              )}
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={statusOptions}
+          selected={statuses}
+          onChange={(selected) => onStatusesChange([...selected])}
+          ariaLabel={t("platform.workloads.filterStatus")}
+          {...multiselectLabels}
+        />
       </div>
     </div>
   );

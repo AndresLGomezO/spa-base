@@ -8,7 +8,11 @@ external reviewer can recommend what to **keep**, **remove**, **merge**, or
 **split** without reading the whole codebase. Every entry answers: *why does
 this exist, what would break if we deleted it, and what else is coupled to it?*
 
-See also: [environment-variables.md](./environment-variables.md),
+See also: [workload-system-catalog.md](./workload-system-catalog.md) (registry
+model / wiring),
+[workload-inventory-by-entity.md](./workload-inventory-by-entity.md) (same
+workloads **grouped by tenant entity catalog** + system),
+[environment-variables.md](./environment-variables.md),
 [`AGENTS.md`](../../AGENTS.md) (Workload Manager rules),
 `pnpm check:workload-coverage`.
 

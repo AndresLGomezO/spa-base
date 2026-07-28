@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
-  Checkbox,
   FilterPanel,
   FilterPanelBody,
   Heading,
+  SearchableMultiSelectDropdown,
   SearchField,
   TabbedPanel,
   Text,
@@ -56,6 +56,8 @@ import {
   resolveWorkloadScheduleTiming,
   runStatusLabelKey,
   runTriggerLabelKey,
+  type WorkloadRunStatus,
+  type WorkloadRunTrigger,
 } from "./workload-ui-shared";
 import {
   WORKLOAD_RUNS_PAGE_SIZE_OPTIONS,
@@ -406,8 +408,8 @@ function RunsTab({
     setRangeKey,
     setPageSize,
     setPage,
-    toggleStatus,
-    toggleTriggeredBy,
+    setStatuses,
+    setTriggeredBy,
     clearFilters,
     removeBadge,
     loadMore,
@@ -443,6 +445,26 @@ function RunsTab({
     [filterBadges, removeBadge, t],
   );
 
+  const statusOptions = useMemo(
+    () =>
+      WORKLOAD_RUN_STATUSES.map((status) => ({
+        value: status,
+        label: `${t(runStatusLabelKey(status) as never, { defaultValue: status })} (${statusCounts[status] ?? 0})`,
+      })),
+    [statusCounts, t],
+  );
+
+  const triggerOptions = useMemo(
+    () =>
+      availableTriggers.map((trigger) => ({
+        value: trigger,
+        label: t(runTriggerLabelKey(trigger) as never, {
+          defaultValue: trigger,
+        }),
+      })),
+    [availableTriggers, t],
+  );
+
   if (selectedRunId) {
     return (
       <RunDetailSubPanel
@@ -453,58 +475,51 @@ function RunsTab({
     );
   }
 
+  const multiselectLabels = {
+    placeholder: t("platform.workloads.multiselectPlaceholder"),
+    selectedCountLabel: (count: number) =>
+      t("platform.workloads.multiselectSelectedCount", { count }),
+    searchPlaceholder: t("platform.workloads.multiselectSearchPlaceholder"),
+    noResultsLabel: t("platform.workloads.multiselectNoResults"),
+    removeAriaLabel: (label: string) =>
+      t("platform.workloads.runsRemoveBadge", { label }),
+  };
+
   const filterBody = (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <div className="space-y-3">
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.runsFilterByStatus")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {WORKLOAD_RUN_STATUSES.map((status) => (
-            <Checkbox
-              key={status}
-              id={`workload-runs-status-${status}`}
-              checked={query.statuses.includes(status)}
-              onChange={() => toggleStatus(status)}
-              label={
-                <span className="flex items-center gap-2">
-                  <WorkloadRunStatusBadge status={status} size="compact" />
-                  <span className="text-muted-foreground text-xs">
-                    {statusCounts[status] ?? 0}
-                  </span>
-                </span>
-              }
-            />
-          ))}
-        </div>
+        <SearchableMultiSelectDropdown
+          options={statusOptions}
+          selected={query.statuses}
+          onChange={(selected) =>
+            setStatuses(selected as readonly WorkloadRunStatus[])
+          }
+          ariaLabel={t("platform.workloads.runsFilterByStatus")}
+          {...multiselectLabels}
+        />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <Text className="text-muted-foreground text-xs font-medium">
           {t("platform.workloads.runsFilterByTrigger")}
         </Text>
-        <div className="flex flex-col gap-2">
-          {(availableTriggers.length > 0 ? availableTriggers : []).map(
-            (trigger) => (
-              <Checkbox
-                key={trigger}
-                id={`workload-runs-trigger-${trigger}`}
-                checked={query.triggeredBy.includes(trigger)}
-                onChange={() => toggleTriggeredBy(trigger)}
-                label={
-                  <WorkloadRunTriggerBadge
-                    triggeredBy={trigger}
-                    size="compact"
-                  />
-                }
-              />
-            ),
-          )}
-          {availableTriggers.length === 0 ? (
-            <Text className="text-muted-foreground text-xs">
-              {t("platform.workloads.runsNoTriggersYet")}
-            </Text>
-          ) : null}
-        </div>
+        {availableTriggers.length === 0 ? (
+          <Text className="text-muted-foreground text-xs">
+            {t("platform.workloads.runsNoTriggersYet")}
+          </Text>
+        ) : (
+          <SearchableMultiSelectDropdown
+            options={triggerOptions}
+            selected={query.triggeredBy}
+            onChange={(selected) =>
+              setTriggeredBy(selected as readonly WorkloadRunTrigger[])
+            }
+            ariaLabel={t("platform.workloads.runsFilterByTrigger")}
+            {...multiselectLabels}
+          />
+        )}
       </div>
     </div>
   );

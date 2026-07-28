@@ -105,25 +105,16 @@ export function useWorkloadRunsListQuery(workloadId: string) {
     setQuery((prev) => ({ ...prev, page }));
   }, []);
 
-  const toggleStatus = useCallback((status: WorkloadRunStatus) => {
-    setQuery((prev) => {
-      const has = prev.statuses.includes(status);
-      const statuses = has
-        ? prev.statuses.filter((value) => value !== status)
-        : [...prev.statuses, status];
-      return { ...prev, statuses, page: 1 };
-    });
+  const setStatuses = useCallback((statuses: readonly WorkloadRunStatus[]) => {
+    setQuery((prev) => ({ ...prev, statuses: [...statuses], page: 1 }));
   }, []);
 
-  const toggleTriggeredBy = useCallback((trigger: WorkloadRunTrigger) => {
-    setQuery((prev) => {
-      const has = prev.triggeredBy.includes(trigger);
-      const triggeredBy = has
-        ? prev.triggeredBy.filter((value) => value !== trigger)
-        : [...prev.triggeredBy, trigger];
-      return { ...prev, triggeredBy, page: 1 };
-    });
-  }, []);
+  const setTriggeredBy = useCallback(
+    (triggeredBy: readonly WorkloadRunTrigger[]) => {
+      setQuery((prev) => ({ ...prev, triggeredBy: [...triggeredBy], page: 1 }));
+    },
+    [],
+  );
 
   const clearFilters = useCallback(() => {
     setQuery((prev) => ({
@@ -207,8 +198,8 @@ export function useWorkloadRunsListQuery(workloadId: string) {
     setRangeKey,
     setPageSize,
     setPage,
-    toggleStatus,
-    toggleTriggeredBy,
+    setStatuses,
+    setTriggeredBy,
     clearFilters,
     removeBadge,
     loadMore,
