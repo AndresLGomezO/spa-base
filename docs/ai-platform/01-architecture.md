@@ -229,15 +229,15 @@ When adding a collection, implement **all three** layers or tests and production
 | Path constants | `packages/ai-engine/src/task-routes.ts` → `AI_TASK_ROUTES` |
 | API enqueue | `apps/api/src/ai/cloud-tasks.client.ts` |
 | Local bypass | `AI_TASKS_LOCAL_DISPATCH=true` → HTTP POST to `WORKER_SERVICE_URL` |
-| Queues | Terraform `cloudtasks-ai-jobs.tf` (`ai-jobs`), `cloudtasks-ai-embed.tf` (`ai-embed`) |
+| Queues | Terraform `cloudtasks-ai-jobs.tf` (`ai-jobs`) |
 
 Task paths:
 
 - `/tasks/process-ai-chat`
 - `/tasks/process-ai-ui-builder`
-- `/tasks/refresh-user-ai-memory`
-- `/tasks/nightly-user-ai-memory`
 - `/tasks/refresh-record-narrative`
+
+User AI memory refresh runs in-process via `inprocess:debounced-user-ai-memory` (no HTTP task route).
 
 ---
 

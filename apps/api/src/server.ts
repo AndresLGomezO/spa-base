@@ -985,7 +985,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
       CLOUD_TASKS_QUEUE_NAME: apiEnv.CLOUD_TASKS_QUEUE_NAME,
       HOOK_TASKS_QUEUE_NAME: apiEnv.HOOK_TASKS_QUEUE_NAME,
       GMAIL_TASKS_QUEUE_NAME: apiEnv.GMAIL_TASKS_QUEUE_NAME,
-      AI_EMBED_TASKS_QUEUE_NAME: apiEnv.AI_EMBED_TASKS_QUEUE_NAME,
     },
     schedulerJobNameByResource: {
       "schedule-tick": scheduleTickJobName,
@@ -993,6 +992,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     },
     localMode: isLocalMode,
     projectId: apiEnv.GCP_PROJECT_ID,
+    region: apiEnv.GCP_REGION,
     getGmailIngestDeliveryMode: () =>
       runtimeSettingsCache.getGmailIngestDeliveryMode(),
   });

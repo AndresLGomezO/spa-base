@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
+  Checkbox,
+  FilterPanel,
+  FilterPanelBody,
   Heading,
+  SearchField,
   TabbedPanel,
   Text,
+  useFilterPanelDismiss,
   type TabbedPanelTabId,
 } from "@repo/ui";
+import { AdminSelect as Select } from "~/components/admin/AdminSelect";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -17,9 +23,7 @@ import {
   getWorkload,
   getWorkloadRunLogs,
   getWorkloadRunTrace,
-  listWorkloadRuns,
   type WorkloadRunArtifactRef,
-  type WorkloadRunRecord,
   type WorkloadWithState,
   type WorkloadStats24h,
 } from "../../lib/admin-client";
@@ -31,10 +35,17 @@ import {
 } from "../../features/ui-builder/designer-tree-workbench-classes";
 import {
   StatusBadge,
+  BusyBadge,
   CatalogHandlerBadge,
   WorkloadActionButtons,
+  WorkloadRunStatusBadge,
+  WorkloadRunTriggerBadge,
+  WORKLOAD_RUN_STATUSES,
+  WORKLOAD_RUN_STATUS_ACCENT_CLASS,
+  WORKLOAD_RUN_STATUS_BAR_CLASS,
   handlersControlledBy,
   isCatalogWorkload,
+  isWorkloadBusy,
   kindLabelKey,
   domainLabelKey,
   frequencyLabelKey,
@@ -43,7 +54,17 @@ import {
   formatAbsoluteRunAt,
   formatCountdown,
   resolveWorkloadScheduleTiming,
+  runStatusLabelKey,
+  runTriggerLabelKey,
 } from "./workload-ui-shared";
+import {
+  WORKLOAD_RUNS_PAGE_SIZE_OPTIONS,
+  WORKLOAD_RUNS_RANGE_OPTIONS,
+  type WorkloadRunsListSort,
+  type WorkloadRunsPageSize,
+  type WorkloadRunsRangeKey,
+} from "./workload-runs-list-query";
+import { useWorkloadRunsListQuery } from "./use-workload-runs-list-query";
 import { WorkloadSummaryPanel } from "./WorkloadSummaryPanel";
 import {
   RelatedHandlersList,
@@ -193,7 +214,33 @@ function OverviewTab({
           {!catalog ? (
             <>
               <Text className="text-muted-foreground">Status</Text>
-              <StatusBadge status={workload.state.status} />
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={workload.state.status} />
+                {isWorkloadBusy(workload) ? <BusyBadge /> : null}
+                {workload.state.status === "running" &&
+                workload.schedule &&
+                !isWorkloadBusy(workload) ? (
+                  <Text className="text-muted-foreground text-xs">
+                    {t("platform.workloads.timerLive")}
+                  </Text>
+                ) : null}
+                {isWorkloadBusy(workload) &&
+                typeof workload.state.live?.activeRuns === "number" &&
+                workload.state.live.activeRuns > 0 ? (
+                  <Text className="text-muted-foreground text-xs">
+                    {t("platform.workloads.busyActiveRuns", {
+                      count: workload.state.live.activeRuns,
+                    })}
+                  </Text>
+                ) : null}
+                {isWorkloadBusy(workload) &&
+                typeof workload.state.live?.depth === "number" &&
+                workload.state.live.depth > 0 ? (
+                  <Text className="text-muted-foreground text-xs">
+                    {t("platform.workloads.busyPendingTasks")}
+                  </Text>
+                ) : null}
+              </div>
             </>
           ) : null}
           {workload.route ? (
@@ -233,6 +280,22 @@ function OverviewTab({
                   </button>
                 ))}
               </div>
+            </>
+          ) : null}
+          {workload.gcpConsoleUrl ? (
+            <>
+              <Text className="text-muted-foreground">
+                {t("platform.workloads.gcpConsole")}
+              </Text>
+              <a
+                href={workload.gcpConsoleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary inline-flex items-center gap-1 text-sm underline-offset-2 hover:underline"
+              >
+                {t("platform.workloads.openGcpConsole")}
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </>
           ) : null}
         </div>
@@ -291,35 +354,16 @@ function OverviewTab({
   );
 }
 
-const RANGE_OPTIONS = [
-  { key: "15m", ms: 15 * 60_000 },
-  { key: "1h", ms: 60 * 60_000 },
-  { key: "24h", ms: 24 * 60 * 60_000 },
-  { key: "7d", ms: 7 * 24 * 60 * 60_000 },
-] as const;
-
-function RunStatusBar({ runs }: { readonly runs: WorkloadRunRecord[] }) {
-  if (runs.length === 0) return null;
-
-  const statusCounts: Record<string, number> = {};
-  for (const run of runs) {
-    statusCounts[run.status] = (statusCounts[run.status] ?? 0) + 1;
-  }
-
-  const colorMap: Record<string, string> = {
-    success: "bg-green-500",
-    error: "bg-red-500",
-    timeout: "bg-orange-500",
-    running: "bg-blue-500",
-    cancelled: "bg-gray-400",
-  };
+function RunStatusBar({ counts }: { readonly counts: Record<string, number> }) {
+  const entries = Object.entries(counts).filter(([, count]) => count > 0);
+  if (entries.length === 0) return null;
 
   return (
-    <div className="flex h-3 w-full overflow-hidden rounded-full">
-      {Object.entries(statusCounts).map(([status, count]) => (
+    <div className="flex h-2.5 w-full overflow-hidden rounded-full">
+      {entries.map(([status, count]) => (
         <div
           key={status}
-          className={`${colorMap[status] ?? "bg-gray-300"}`}
+          className={WORKLOAD_RUN_STATUS_BAR_CLASS[status] ?? "bg-muted"}
           style={{ flex: count }}
           title={`${status}: ${count}`}
         />
@@ -338,20 +382,66 @@ function RunsTab({
   readonly onSelectWorkload?: (id: string) => void;
 }) {
   const { t } = useTranslation("common");
-  const [rangeKey, setRangeKey] = useState<string>("24h");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
-  const range =
-    RANGE_OPTIONS.find((option) => option.key === rangeKey) ?? RANGE_OPTIONS[2];
-  const since = new Date(Date.now() - range.ms).toISOString();
+  const {
+    query,
+    buffer,
+    pageItems,
+    totalFiltered,
+    totalPages,
+    page,
+    nextCursor,
+    loadingMore,
+    statusCounts,
+    availableTriggers,
+    filterBadges,
+    hasActiveFilters,
+    isLoading,
+    isError,
+    setSearch,
+    setSort,
+    setRangeKey,
+    setPageSize,
+    setPage,
+    toggleStatus,
+    toggleTriggeredBy,
+    clearFilters,
+    removeBadge,
+    loadMore,
+  } = useWorkloadRunsListQuery(workloadId);
 
-  const runsQuery = useQuery({
-    queryKey: ["platform-workload-runs", workloadId, rangeKey],
-    queryFn: () => listWorkloadRuns(workloadId, { since, limit: 100 }),
-    refetchInterval: 10_000,
-  });
+  useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
 
-  const runs = runsQuery.data?.items ?? [];
+  const displayBadges = useMemo(
+    () =>
+      filterBadges.map((badge) => {
+        let label = badge.label;
+        if (badge.id === "sort") {
+          label = t(
+            `platform.workloads.runsSort${badge.label.charAt(0).toUpperCase()}${badge.label.slice(1)}` as never,
+          );
+        } else if (badge.id.startsWith("status:")) {
+          const status = badge.id.slice("status:".length);
+          label = t(runStatusLabelKey(status) as never, {
+            defaultValue: status,
+          });
+        } else if (badge.id.startsWith("triggeredBy:")) {
+          const trigger = badge.id.slice("triggeredBy:".length);
+          label = t(runTriggerLabelKey(trigger) as never, {
+            defaultValue: trigger,
+          });
+        }
+        return {
+          id: badge.id,
+          label,
+          onRemove: () => removeBadge(badge.id),
+        };
+      }),
+    [filterBadges, removeBadge, t],
+  );
 
   if (selectedRunId) {
     return (
@@ -363,8 +453,72 @@ function RunsTab({
     );
   }
 
+  const filterBody = (
+    <div className="grid gap-6 sm:grid-cols-2">
+      <div className="space-y-3">
+        <Text className="text-muted-foreground text-xs font-medium">
+          {t("platform.workloads.runsFilterByStatus")}
+        </Text>
+        <div className="flex flex-col gap-2">
+          {WORKLOAD_RUN_STATUSES.map((status) => (
+            <Checkbox
+              key={status}
+              id={`workload-runs-status-${status}`}
+              checked={query.statuses.includes(status)}
+              onChange={() => toggleStatus(status)}
+              label={
+                <span className="flex items-center gap-2">
+                  <WorkloadRunStatusBadge status={status} size="compact" />
+                  <span className="text-muted-foreground text-xs">
+                    {statusCounts[status] ?? 0}
+                  </span>
+                </span>
+              }
+            />
+          ))}
+        </div>
+      </div>
+      <div className="space-y-3">
+        <Text className="text-muted-foreground text-xs font-medium">
+          {t("platform.workloads.runsFilterByTrigger")}
+        </Text>
+        <div className="flex flex-col gap-2">
+          {(availableTriggers.length > 0 ? availableTriggers : []).map(
+            (trigger) => (
+              <Checkbox
+                key={trigger}
+                id={`workload-runs-trigger-${trigger}`}
+                checked={query.triggeredBy.includes(trigger)}
+                onChange={() => toggleTriggeredBy(trigger)}
+                label={
+                  <WorkloadRunTriggerBadge
+                    triggeredBy={trigger}
+                    size="compact"
+                  />
+                }
+              />
+            ),
+          )}
+          {availableTriggers.length === 0 ? (
+            <Text className="text-muted-foreground text-xs">
+              {t("platform.workloads.runsNoTriggersYet")}
+            </Text>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+
+  const emptyMessage = isLoading
+    ? t("loading")
+    : isError
+      ? t("platform.workloads.runsLoadFailed")
+      : buffer.length === 0
+        ? t("platform.workloads.runsEmpty")
+        : t("platform.workloads.runsEmptyFiltered");
+
   return (
-    <div className="space-y-3 p-4">
+    <div className="flex min-h-0 flex-col gap-3 p-4">
       {fanOutQueueId ? (
         <Alert>
           <span>
@@ -383,13 +537,23 @@ function RunsTab({
           ) : null}
         </Alert>
       ) : null}
-      <div className="flex gap-1">
-        {RANGE_OPTIONS.map((opt) => (
+
+      <SearchField
+        value={query.search}
+        onChange={setSearch}
+        placeholder={t("platform.workloads.runsSearchPlaceholder")}
+        ariaLabel={t("platform.workloads.runsSearchPlaceholder")}
+        clearAriaLabel={t("platform.workloads.runsSearchClear")}
+        className="max-w-none min-w-0 w-full"
+      />
+
+      <div className="flex flex-wrap gap-1">
+        {WORKLOAD_RUNS_RANGE_OPTIONS.map((opt) => (
           <Button
             key={opt.key}
             size="sm"
-            variant={rangeKey === opt.key ? "primary" : "outline"}
-            onClick={() => setRangeKey(opt.key)}
+            variant={query.rangeKey === opt.key ? "primary" : "outline"}
+            onClick={() => setRangeKey(opt.key as WorkloadRunsRangeKey)}
           >
             {t(
               `platform.workloads.runsRange${opt.key.charAt(0).toUpperCase()}${opt.key.slice(1)}` as never,
@@ -398,72 +562,209 @@ function RunsTab({
         ))}
       </div>
 
-      <RunStatusBar runs={runs} />
+      <div
+        ref={toolbarRef}
+        className={`w-full min-w-0 ${filtersOpen ? "relative isolate z-30" : ""}`}
+      >
+        <div className="flex w-full min-w-0 flex-nowrap items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <FilterPanel
+              open={filtersOpen}
+              onOpenChange={setFiltersOpen}
+              activeBadges={displayBadges}
+              triggerLabel={t("platform.workloads.runsFilter")}
+              clearAllLabel={t("platform.workloads.runsClearFilters")}
+              removeAriaLabel={(label) =>
+                t("platform.workloads.runsRemoveBadge", { label })
+              }
+              onClearAll={clearFilters}
+              badgesBelowToolbar
+              renderBody={false}
+              compact
+              toolbarFillWidth
+              manageDismiss={false}
+              sibling={
+                <div className="flex w-auto shrink-0 items-end gap-2 py-0.5">
+                  <label className="inline-flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs font-medium">
+                      {t("platform.workloads.runsSort")}
+                    </span>
+                    <Select
+                      selectSize="sm"
+                      className="w-auto min-w-[9rem]"
+                      value={query.sort}
+                      onChange={(event) =>
+                        setSort(event.target.value as WorkloadRunsListSort)
+                      }
+                      aria-label={t("platform.workloads.runsSort")}
+                    >
+                      <option value="newest">
+                        {t("platform.workloads.runsSortNewest")}
+                      </option>
+                      <option value="oldest">
+                        {t("platform.workloads.runsSortOldest")}
+                      </option>
+                      <option value="status">
+                        {t("platform.workloads.runsSortStatus")}
+                      </option>
+                      <option value="duration">
+                        {t("platform.workloads.runsSortDuration")}
+                      </option>
+                    </Select>
+                  </label>
+                  <label className="inline-flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs font-medium">
+                      {t("platform.workloads.runsPageSize")}
+                    </span>
+                    <Select
+                      selectSize="sm"
+                      className="w-auto min-w-[5rem]"
+                      value={String(query.pageSize)}
+                      onChange={(event) =>
+                        setPageSize(
+                          Number(event.target.value) as WorkloadRunsPageSize,
+                        )
+                      }
+                      aria-label={t("platform.workloads.runsPageSize")}
+                    >
+                      {WORKLOAD_RUNS_PAGE_SIZE_OPTIONS.map((size) => (
+                        <option key={size} value={size}>
+                          {size}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                </div>
+              }
+            >
+              {filterBody}
+            </FilterPanel>
+          </div>
+        </div>
+        <FilterPanelBody
+          open={filtersOpen}
+          onClearAll={clearFilters}
+          clearAllLabel={t("platform.workloads.runsClearFilters")}
+          disabled={false}
+        >
+          {filterBody}
+        </FilterPanelBody>
+      </div>
 
-      {runsQuery.isError ? (
-        <Alert>{t("platform.workloads.runsLoadFailed")}</Alert>
-      ) : runs.length === 0 ? (
-        <Text className="text-muted-foreground py-4 text-center">
-          {t("platform.workloads.runsEmpty")}
+      <RunStatusBar counts={statusCounts} />
+
+      {pageItems.length === 0 ? (
+        <Text className="text-muted-foreground py-4 text-center text-sm">
+          {emptyMessage}
         </Text>
       ) : (
-        <div className="max-h-[400px] overflow-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="p-2">
-                  {t("platform.workloads.runsColStarted")}
-                </th>
-                <th className="p-2">
-                  {t("platform.workloads.runsColWorkload")}
-                </th>
-                <th className="p-2">{t("platform.workloads.runsColStatus")}</th>
-                <th className="p-2">
-                  {t("platform.workloads.runsColDuration")}
-                </th>
-                <th className="p-2">
-                  {t("platform.workloads.runsColTriggeredBy")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((run) => (
-                <tr
-                  key={run.id}
-                  className="hover:bg-muted/50 cursor-pointer border-b"
-                  onClick={() => setSelectedRunId(run.id)}
-                >
-                  <td className="p-2 font-mono text-xs">
-                    {new Date(run.startedAt).toLocaleString()}
-                  </td>
-                  <td className="p-2 font-mono text-xs">{run.workloadId}</td>
-                  <td className="p-2">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        run.status === "success"
-                          ? "bg-green-100 text-green-800"
-                          : run.status === "error"
-                            ? "bg-red-100 text-red-800"
-                            : run.status === "running"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {run.status}
-                    </span>
-                  </td>
-                  <td className="text-muted-foreground p-2 text-xs">
-                    {run.durationMs != null ? `${run.durationMs}ms` : "—"}
-                  </td>
-                  <td className="text-muted-foreground p-2 text-xs">
-                    {run.triggeredBy}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="max-h-[420px] space-y-1 overflow-auto">
+          {pageItems.map((run) => {
+            const accent =
+              WORKLOAD_RUN_STATUS_ACCENT_CLASS[run.status] ??
+              "border-l-muted-foreground/40";
+            return (
+              <button
+                key={run.id}
+                type="button"
+                className={cn(
+                  "hover:bg-muted/60 flex w-full cursor-pointer items-start gap-3 rounded-md border-l-2 px-3 py-2 text-left transition-colors",
+                  accent,
+                )}
+                onClick={() => setSelectedRunId(run.id)}
+              >
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <WorkloadRunStatusBadge
+                      status={run.status}
+                      size="compact"
+                    />
+                    <WorkloadRunTriggerBadge
+                      triggeredBy={run.triggeredBy}
+                      size="compact"
+                    />
+                    <Text className="text-muted-foreground font-mono text-[11px]">
+                      {new Date(run.startedAt).toLocaleString()}
+                    </Text>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <Text className="font-mono text-xs">{run.workloadId}</Text>
+                    <Text className="text-muted-foreground text-xs">
+                      {run.durationMs != null ? `${run.durationMs}ms` : "—"}
+                    </Text>
+                    {run.error ? (
+                      <Text className="text-destructive line-clamp-1 text-xs">
+                        {typeof run.error === "string"
+                          ? run.error
+                          : t("platform.workloads.runDetailError")}
+                      </Text>
+                    ) : null}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <Text className="text-muted-foreground text-xs">
+          {t("platform.workloads.runsPageSummary", {
+            filtered: totalFiltered,
+            loaded: buffer.length,
+            page,
+            totalPages,
+          })}
+        </Text>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            {t("platform.workloads.runsPrevPage")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            {t("platform.workloads.runsNextPage")}
+          </Button>
+          {nextCursor ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={loadingMore}
+              onClick={() => {
+                void loadMore();
+              }}
+            >
+              {loadingMore
+                ? t("platform.workloads.runsLoadingMore")
+                : t("platform.workloads.runsLoadMore")}
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      {hasActiveFilters && pageItems.length === 0 && buffer.length > 0 ? (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={clearFilters}
+          >
+            {t("platform.workloads.runsClearFilters")}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -553,19 +854,8 @@ function RunDetailSubPanel({
 
       <div className="flex items-center gap-2">
         <Heading level={3}>Run</Heading>
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-            run.status === "success"
-              ? "bg-green-100 text-green-800"
-              : run.status === "error"
-                ? "bg-red-100 text-red-800"
-                : run.status === "running"
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {run.status}
-        </span>
+        <WorkloadRunStatusBadge status={run.status} />
+        <WorkloadRunTriggerBadge triggeredBy={run.triggeredBy} size="compact" />
         {run.durationMs != null ? (
           <Text className="text-muted-foreground text-xs">
             {run.durationMs}ms
@@ -871,7 +1161,10 @@ export function WorkloadDetailPanel({
             {catalog ? (
               <CatalogHandlerBadge />
             ) : (
-              <StatusBadge status={workload.state.status} />
+              <>
+                <StatusBadge status={workload.state.status} />
+                {isWorkloadBusy(workload) ? <BusyBadge /> : null}
+              </>
             )}
             {workload.description ? (
               <Text className="text-muted-foreground text-sm">

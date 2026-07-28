@@ -28,11 +28,13 @@ import {
   WORKLOAD_LIST_ROW_HOVER_CLASS,
   WORKLOAD_LIST_ROW_SELECTED_CLASS,
   WORKLOAD_STATUS_ACCENT_CLASS,
+  BusyBadge,
   StatusBadge,
   domainLabelKey,
   formatLiveSummary,
   formatWorkloadScheduleSnippet,
   frequencyLabelKey,
+  isWorkloadBusy,
   kindLabelKey,
   type WorkloadListSort,
 } from "./workload-ui-shared";
@@ -84,6 +86,7 @@ function WorkloadRow({
             {workload.displayName}
           </Text>
           <StatusBadge status={workload.state.status} size="compact" />
+          {isWorkloadBusy(workload) ? <BusyBadge size="compact" /> : null}
         </div>
         <Text className="text-muted-foreground mt-0.5 block text-xs">
           {t(domainLabelKey(workload.domain) as never)} ·{" "}
@@ -156,7 +159,6 @@ export function WorkloadListTreePanel({
   const statusCounts = useMemo(() => {
     const counts: Record<WorkloadStatus, number> = {
       running: 0,
-      scheduled: 0,
       ready: 0,
       paused: 0,
       disabled: 0,

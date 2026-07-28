@@ -1,11 +1,9 @@
-import { z } from "zod";
 import {
   resolveAndAssembleUserContextSections,
   refreshUserAiMemory,
 } from "@repo/ai-engine/grounded-chat";
 import type {
   AiContextSectionRepository,
-  AiJobRepository,
   AiRecordSummaryRepository,
   EntityQueryDefinitionRepository,
   MetricDefinitionRepository,
@@ -16,26 +14,6 @@ import { createUserContextSectionDataPorts } from "../ai/create-user-context-sec
 import type { WorkerHookEntityRuntime } from "../hooks/worker-hook-entity-runtime.js";
 import type { GroundedChatDataPorts } from "@repo/ai-engine/grounded-chat";
 
-export const refreshUserAiMemoryTaskPayloadSchema = z.object({
-  tenantId: z.string().trim().min(1),
-  userId: z.string().trim().min(1),
-  jobId: z.string().trim().min(1).optional(),
-});
-
-export type RefreshUserAiMemoryTaskPayload = z.infer<
-  typeof refreshUserAiMemoryTaskPayloadSchema
->;
-
-export const nightlyUserAiMemoryTaskPayloadSchema = z.object({
-  tenantId: z.string().trim().min(1),
-  /** ISO timestamp; memories updated since this are refreshed. Default: 30d ago. */
-  sinceIso: z.string().trim().min(1).optional(),
-});
-
-export type NightlyUserAiMemoryTaskPayload = z.infer<
-  typeof nightlyUserAiMemoryTaskPayloadSchema
->;
-
 export interface UserAiMemoryRefreshProcessorDeps {
   readonly userAiMemoryRepository: UserAiMemoryRepository;
   readonly aiContextSectionRepository?: AiContextSectionRepository;
@@ -44,11 +22,6 @@ export interface UserAiMemoryRefreshProcessorDeps {
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly groundedChatDataPorts?: GroundedChatDataPorts;
-  readonly aiJobRepository?: AiJobRepository;
-  readonly enqueueUserRefresh?: (input: {
-    readonly tenantId: string;
-    readonly userId: string;
-  }) => Promise<void>;
 }
 
 export async function processUserAiMemoryRefresh(
@@ -112,31 +85,4 @@ export async function processUserAiMemoryRefresh(
       ...(assembledSectionsText ? { assembledSectionsText } : {}),
     },
   );
-}
-
-export async function processNightlyUserAiMemoryRefresh(
-  deps: UserAiMemoryRefreshProcessorDeps,
-  tenantId: string,
-  sinceIso?: string,
-): Promise<{ readonly enqueued: number }> {
-  const since =
-    sinceIso ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const memories = await deps.userAiMemoryRepository.listUpdatedSince(
-    tenantId,
-    since,
-  );
-  let enqueued = 0;
-  for (const memory of memories) {
-    if (deps.enqueueUserRefresh) {
-      await deps.enqueueUserRefresh({
-        tenantId,
-        userId: memory.userId,
-      });
-      enqueued += 1;
-    } else {
-      await processUserAiMemoryRefresh(deps, tenantId, memory.userId);
-      enqueued += 1;
-    }
-  }
-  return { enqueued };
 }

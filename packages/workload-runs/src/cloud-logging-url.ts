@@ -1,6 +1,7 @@
 /**
  * Build a Cloud Logging deep-link filtered by workloadRunId.
- * Uses the Logs Explorer query syntax.
+ * Logs Explorer uses semicolon-separated path params (not &-joined query params).
+ * @see https://console.cloud.google.com/logs/query
  */
 export function buildCloudLoggingUrl(options: {
   readonly projectId: string;
@@ -13,13 +14,13 @@ export function buildCloudLoggingUrl(options: {
     `jsonPayload.workloadRunId="${options.workloadRunId}"`,
   ].join("\n");
 
-  const params = new URLSearchParams();
-  params.set("query", filter);
+  const parts = [`query=${encodeURIComponent(filter)}`];
   if (options.since) {
-    params.set("startTime", options.since);
+    parts.push(`startTime=${encodeURIComponent(options.since)}`);
   }
   if (options.until) {
-    params.set("endTime", options.until);
+    parts.push(`endTime=${encodeURIComponent(options.until)}`);
   }
-  return `https://console.cloud.google.com/logs/query;${params.toString()}?project=${encodeURIComponent(options.projectId)}`;
+
+  return `https://console.cloud.google.com/logs/query;${parts.join(";")}?project=${encodeURIComponent(options.projectId)}`;
 }

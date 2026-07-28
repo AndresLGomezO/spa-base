@@ -81,7 +81,6 @@ const QUEUE_MAP: Record<string, string> = {
   ai_jobs: "queue:ai-jobs",
   hook_jobs: "queue:hook-jobs",
   gmail_jobs: "queue:gmail-jobs",
-  ai_embed: "queue:ai-embed",
 };
 
 const SCHEDULER_MAP: Record<string, string> = {

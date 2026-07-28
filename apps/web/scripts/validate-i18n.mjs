@@ -968,7 +968,8 @@ function extractHookResolutionSourceLabelKeys(corpus) {
 function extractPlatformWorkloadDynamicKeys(corpus) {
   if (
     !corpus.includes("platform.workloads.") &&
-    !corpus.includes("domainLabelKey")
+    !corpus.includes("domainLabelKey") &&
+    !corpus.includes("runStatusLabelKey")
   ) {
     return [];
   }
@@ -978,7 +979,7 @@ function extractPlatformWorkloadDynamicKeys(corpus) {
   ).platform?.workloads;
   if (!workloads || typeof workloads !== "object") return [];
 
-  return Object.keys(workloads)
+  const keys = Object.keys(workloads)
     .filter(
       (key) =>
         key.startsWith("domain") ||
@@ -989,6 +990,21 @@ function extractPlatformWorkloadDynamicKeys(corpus) {
         ),
     )
     .map((key) => `${DEFAULT_NAMESPACE}:platform.workloads.${key}`);
+
+  const runStatus = workloads.runStatus;
+  if (runStatus && typeof runStatus === "object") {
+    for (const key of Object.keys(runStatus)) {
+      keys.push(`${DEFAULT_NAMESPACE}:platform.workloads.runStatus.${key}`);
+    }
+  }
+  const runTrigger = workloads.runTrigger;
+  if (runTrigger && typeof runTrigger === "object") {
+    for (const key of Object.keys(runTrigger)) {
+      keys.push(`${DEFAULT_NAMESPACE}:platform.workloads.runTrigger.${key}`);
+    }
+  }
+
+  return keys;
 }
 
 /** debuggerStatusLabelKey() → all keys under debugger.status */

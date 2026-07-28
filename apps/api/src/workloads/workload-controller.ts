@@ -7,9 +7,10 @@ import {
   type WorkloadStateSnapshot,
   type WorkloadWithState,
 } from "@repo/workload-registry";
-import type {
-  WorkloadRunRepository,
-  WorkloadRunRecord,
+import {
+  buildGcpConsoleUrl,
+  type WorkloadRunRepository,
+  type WorkloadRunRecord,
 } from "@repo/workload-runs";
 
 import type { CloudTasksAdminAdapter } from "./adapters/cloud-tasks-admin.adapter.js";
@@ -33,6 +34,7 @@ export interface WorkloadControllerDeps {
   readonly schedulerJobNameByResource: Record<string, string>;
   readonly localMode: boolean;
   readonly projectId: string;
+  readonly region: string;
   /** Effective Gmail ingest delivery mode (env + Platform Observability override). */
   readonly getGmailIngestDeliveryMode: () => Promise<"poll" | "push">;
   readonly audit?: {
@@ -58,6 +60,50 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
 
   function resolveSubscriptionName(workload: WorkloadRecord): string | null {
     return workload.gcp?.resourceName ?? null;
+  }
+
+  function resolveGcpConsoleUrl(workload: WorkloadRecord): string | undefined {
+    if (deps.localMode || !deps.projectId) return undefined;
+
+    switch (workload.kind) {
+      case "cloudTasksQueue": {
+        const resourceName = resolveQueueName(workload);
+        if (!resourceName) return undefined;
+        return (
+          buildGcpConsoleUrl({
+            resource: "queue",
+            projectId: deps.projectId,
+            region: deps.region,
+            resourceName,
+          }) ?? undefined
+        );
+      }
+      case "schedulerJob": {
+        const resourceName = resolveSchedulerJobName(workload);
+        if (!resourceName) return undefined;
+        return (
+          buildGcpConsoleUrl({
+            resource: "schedulerJob",
+            projectId: deps.projectId,
+            region: deps.region,
+            resourceName,
+          }) ?? undefined
+        );
+      }
+      case "pubsubSubscription": {
+        const resourceName = resolveSubscriptionName(workload);
+        if (!resourceName) return undefined;
+        return (
+          buildGcpConsoleUrl({
+            resource: "subscription",
+            projectId: deps.projectId,
+            resourceName,
+          }) ?? undefined
+        );
+      }
+      default:
+        return undefined;
+    }
   }
 
   async function applyGmailDeliveryModeGate(
@@ -159,12 +205,12 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
           break;
         }
         case "scheduledDataHook": {
-          // Enabled cron hooks are armed ("scheduled"), not executing.
+          // Enabled cron hooks are Active (armed timer). Busy is layered below.
           const armed =
             workload.enabled === true ||
             (workload.enabled == null && workload.actions.includes("disable"));
           snapshot = {
-            status: armed ? "scheduled" : "disabled",
+            status: armed ? "running" : "disabled",
             live: {
               enabled: armed,
               ...(workload.schedule?.cron
@@ -195,12 +241,12 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
 
       snapshot = await applyGmailDeliveryModeGate(workload, snapshot);
 
-      // Promote armed/ready workloads to "running" only when work is in flight.
-      // Skip product-disabled / paused paths.
-      if (snapshot.status === "scheduled" || snapshot.status === "ready") {
+      // Layer Busy on Active/Ready; promote idle queues to Active when work is
+      // in flight or pending. Skip paused / product-disabled / unknown.
+      if (snapshot.status === "running" || snapshot.status === "ready") {
         const activeRuns = await hasActiveRun(workload.id);
         let pendingDepth = 0;
-        if (workload.kind === "cloudTasksQueue" && activeRuns === 0) {
+        if (workload.kind === "cloudTasksQueue") {
           const queueName = resolveQueueName(workload);
           if (queueName) {
             try {
@@ -214,12 +260,15 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
             }
           }
         }
-        if (activeRuns > 0 || pendingDepth > 0) {
+        const busy = activeRuns > 0 || pendingDepth > 0;
+        if (busy) {
           return {
             ...snapshot,
+            // Queues: Ready → Active when draining/pending. Timers stay Active.
             status: "running",
             live: {
               ...snapshot.live,
+              busy: true,
               ...(activeRuns > 0 ? { activeRuns } : {}),
               ...(pendingDepth > 0 ? { depth: pendingDepth } : {}),
             },
@@ -304,10 +353,12 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
       return workloads;
     },
 
-    async getWorkload(
-      id: string,
-    ): Promise<
-      (WorkloadWithState & { runStats?: Record<string, number> }) | null
+    async getWorkload(id: string): Promise<
+      | (WorkloadWithState & {
+          runStats?: Record<string, number>;
+          gcpConsoleUrl?: string;
+        })
+      | null
     > {
       let workload: WorkloadRecord | undefined;
 
@@ -349,7 +400,13 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
         runStats = undefined;
       }
 
-      return { ...workload, state, runStats };
+      const gcpConsoleUrl = resolveGcpConsoleUrl(workload);
+      return {
+        ...workload,
+        state,
+        runStats,
+        ...(gcpConsoleUrl ? { gcpConsoleUrl } : {}),
+      };
     },
 
     async applyAction(
@@ -504,9 +561,12 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
         run,
         logEntries,
         logExcerpt: run.logExcerpt ?? [],
-        cloudLoggingUrl:
-          run.cloudLoggingUrl ??
-          deps.cloudLogging.buildLogUrl(runId, run.startedAt, run.completedAt),
+        // Always rebuild so stored deep-links stay correct if URL format changes.
+        cloudLoggingUrl: deps.cloudLogging.buildLogUrl(
+          runId,
+          run.startedAt,
+          run.completedAt,
+        ),
       };
     },
 

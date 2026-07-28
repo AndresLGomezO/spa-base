@@ -89,11 +89,10 @@ Doc id = `userId`.
 
 | Path | Mechanism |
 |---|---|
-| On-demand / debounced | `debounced-user-ai-memory-refresh.ts` (default ~5 min) → `REFRESH_USER_AI_MEMORY` |
-| Nightly | `NIGHTLY_USER_AI_MEMORY` |
+| On-demand / debounced | `debounced-user-ai-memory-refresh.ts` (default ~5 min) → `processUserAiMemoryRefresh` in-process |
 | Core function | `refreshUserAiMemory` in `grounded-chat/refresh-user-ai-memory.ts` |
 
-Feature on any LLM step during refresh: `userAiMemoryRefresh` / permission `ai.chat.run`. Confirm `requestedBy` in `user-ai-memory-refresh-processor.ts` when attributing spend (per-user refresh should use that user’s UID; tenant-wide nightly batches may use `"system"` depending on wiring).
+Feature on any LLM step during refresh: `userAiMemoryRefresh` / permission `ai.chat.run`. Confirm `requestedBy` in `user-ai-memory-refresh-processor.ts` when attributing spend (per-user refresh should use that user’s UID).
 
 `invalidateUserAiMemoryCachesForTenant` clears Vertex handles after section/template changes.
 
@@ -205,7 +204,7 @@ Embeddings produced via controller `generateEmbedding` (`dataHookEmbedding` or s
 
 Env (worker): `VERTEX_VECTOR_INDEX_ID`, `VERTEX_VECTOR_INDEX_ENDPOINT_ID`, `VERTEX_VECTOR_DIM`, `VERTEX_VECTOR_REGION`, `VERTEX_VECTOR_DEPLOYED_INDEX_ID`, `VERTEX_VECTOR_PUBLIC_ENDPOINT_DOMAIN`.
 
-Queue for embed fan-out: `AI_EMBED_TASKS_QUEUE_NAME` (Terraform `cloudtasks-ai-embed.tf`).
+Embeddings run synchronously on the worker (no dedicated Cloud Tasks embed queue).
 
 ---
 

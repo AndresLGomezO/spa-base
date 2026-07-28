@@ -70,7 +70,7 @@ const SAMPLE_SCHEDULER: WorkloadWithState = {
   actions: ["pause", "resume", "runNow"],
   schedule: { cron: "0 21 * * *", timezone: "UTC" },
   state: {
-    status: "scheduled",
+    status: "running",
     fetchedAt: "2025-01-01T00:00:00Z",
   },
 };

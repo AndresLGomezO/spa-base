@@ -14,18 +14,15 @@ import { dataHookTaskRoute } from "./data-hook-task.route.js";
 import { scheduleTickRoute } from "./schedule-tick.route.js";
 import { tenantDeletionTaskRoute } from "./tenant-deletion-task.route.js";
 import { gmailIngestTaskRoute } from "./gmail-ingest-task.route.js";
-import { userAiMemoryRefreshTaskRoute } from "./user-ai-memory-refresh-task.route.js";
 import { recordNarrativeRefreshTaskRoute } from "./record-narrative-refresh-task.route.js";
 import type { GmailIngestProcessorDeps } from "../services/gmail-ingest-processor.js";
-import type { UserAiMemoryRefreshProcessorDeps } from "../services/user-ai-memory-refresh-processor.js";
 import type { RecordNarrativeRefreshProcessor } from "../services/record-narrative-refresh-processor.js";
 
 export type WorkerTaskScopeDeps = AiChatProcessorDeps &
   AiUiBuilderProcessorDeps &
   DataHookProcessorDeps &
   ScheduleTickRouteDeps &
-  TenantDeletionTaskRouteDeps &
-  UserAiMemoryRefreshProcessorDeps & {
+  TenantDeletionTaskRouteDeps & {
     readonly gmailIngest?: GmailIngestProcessorDeps;
     readonly refreshNarrative?: RecordNarrativeRefreshProcessor;
     readonly workloadRunRecorder?: WorkloadRunRecorder;
@@ -41,7 +38,6 @@ export async function taskScope(
   await app.register(dataHookTaskRoute, deps);
   await app.register(scheduleTickRoute, deps);
   await app.register(tenantDeletionTaskRoute, deps);
-  await app.register(userAiMemoryRefreshTaskRoute, deps);
   if (deps.refreshNarrative) {
     await app.register(recordNarrativeRefreshTaskRoute, {
       refreshNarrative: deps.refreshNarrative,

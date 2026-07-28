@@ -36,7 +36,6 @@ describe("terraform-parity", () => {
       ai_jobs: "queue:ai-jobs",
       hook_jobs: "queue:hook-jobs",
       gmail_jobs: "queue:gmail-jobs",
-      ai_embed: "queue:ai-embed",
     };
 
     const queues = extractTfResources("google_cloud_tasks_queue");

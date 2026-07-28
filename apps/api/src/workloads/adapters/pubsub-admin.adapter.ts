@@ -7,7 +7,7 @@ interface PubSubAdminConfig {
 }
 
 interface PubSubSubscriptionState {
-  readonly status: "ready" | "paused" | "unknown";
+  readonly status: "running" | "paused" | "unknown";
   readonly live: {
     exists?: boolean;
     pushEndpoint?: string;
@@ -29,7 +29,8 @@ export function createPubSubAdminAdapter(config: PubSubAdminConfig) {
   return {
     async getState(subscriptionName: string): Promise<PubSubSubscriptionState> {
       if (config.localMode) {
-        return { status: "ready", live: { exists: true } };
+        // Attached listener = Active locally.
+        return { status: "running", live: { exists: true } };
       }
       try {
         const client = getClient(config.projectId);
@@ -40,10 +41,10 @@ export function createPubSubAdminAdapter(config: PubSubAdminConfig) {
         const pushEndpoint =
           (metadata.pushConfig as { pushEndpoint?: string } | null | undefined)
             ?.pushEndpoint ?? undefined;
-        // Attached = ready to receive; not proof of active deliveries.
-        const status: "ready" | "paused" | "unknown" = detached
+        // Attached = live listener (Active). Product gates may still disable.
+        const status: "running" | "paused" | "unknown" = detached
           ? "paused"
-          : "ready";
+          : "running";
         return {
           status,
           live: { exists: true, pushEndpoint, detached },

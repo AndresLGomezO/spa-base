@@ -24,7 +24,6 @@ export type WorkloadDomain = (typeof WORKLOAD_DOMAINS)[number];
 
 export const WORKLOAD_STATUSES = [
   "running",
-  "scheduled",
   "ready",
   "paused",
   "disabled",
@@ -79,7 +78,7 @@ export const workloadRecordSchema = z.object({
   controlledBy: z.array(z.string().trim().min(1)).optional(),
   /**
    * For scheduled data hooks: whether the hook definition is enabled.
-   * Used to derive scheduled vs disabled without inventing a live "running" state.
+   * Used to derive Active (running) vs disabled for armed timers.
    */
   enabled: z.boolean().optional(),
 });

@@ -48,7 +48,6 @@ export const SCHEDULE_HOUR_PRESETS = [6, 9, 12, 18, 21] as const;
 
 export const ALL_WORKLOAD_STATUSES: WorkloadStatus[] = [
   "running",
-  "scheduled",
   "ready",
   "paused",
   "disabled",
@@ -140,7 +139,6 @@ export function formatWorkloadScheduleSnippet(
 
 export const WORKLOAD_STATUS_ACCENT_CLASS: Record<WorkloadStatus, string> = {
   running: "border-l-success",
-  scheduled: "border-l-info",
   ready: "border-l-emerald-500/70",
   paused: "border-l-warning",
   disabled: "border-l-destructive",
@@ -208,6 +206,17 @@ export function filterWorkloadsByScheduleMeta(
   });
 }
 
+export function isWorkloadBusy(
+  workload: Pick<WorkloadWithState, "state">,
+): boolean {
+  const live = workload.state.live;
+  if (!live || typeof live !== "object") return false;
+  if (live.busy === true) return true;
+  if (typeof live.activeRuns === "number" && live.activeRuns > 0) return true;
+  if (typeof live.depth === "number" && live.depth > 0) return true;
+  return false;
+}
+
 export function StatusBadge({
   status,
   size = "default",
@@ -220,7 +229,6 @@ export function StatusBadge({
   const colorMap: Record<WorkloadStatus, string> = {
     running:
       "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     ready: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
     paused:
       "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
@@ -230,7 +238,6 @@ export function StatusBadge({
 
   const labelMap: Record<WorkloadStatus, string> = {
     running: t("platform.workloads.statusRunning"),
-    scheduled: t("platform.workloads.statusScheduled"),
     ready: t("platform.workloads.statusReady"),
     paused: t("platform.workloads.statusPaused"),
     disabled: t("platform.workloads.statusDisabled"),
@@ -244,6 +251,24 @@ export function StatusBadge({
       }`}
     >
       {labelMap[status]}
+    </span>
+  );
+}
+
+/** Secondary chip: work is in flight (does not replace Active/Ready). */
+export function BusyBadge({
+  size = "default",
+}: {
+  readonly size?: "default" | "compact";
+}) {
+  const { t } = useTranslation("common");
+  return (
+    <span
+      className={`inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100 ${
+        size === "compact" ? "px-1.5 py-0 text-[10px]" : "px-2 py-0.5 text-xs"
+      }`}
+    >
+      {t("platform.workloads.statusBusy")}
     </span>
   );
 }
@@ -262,6 +287,125 @@ export function CatalogHandlerBadge({
       }`}
     >
       {t("platform.workloads.catalogHandlerBadge")}
+    </span>
+  );
+}
+
+export const WORKLOAD_RUN_STATUSES = [
+  "running",
+  "success",
+  "error",
+  "timeout",
+  "cancelled",
+] as const;
+export type WorkloadRunStatus = (typeof WORKLOAD_RUN_STATUSES)[number];
+
+export const WORKLOAD_RUN_TRIGGERS = [
+  "scheduler",
+  "cloudTasks",
+  "pubsub",
+  "manual",
+  "inProcess",
+  "http",
+] as const;
+export type WorkloadRunTrigger = (typeof WORKLOAD_RUN_TRIGGERS)[number];
+
+const WORKLOAD_RUN_STATUS_BADGE_CLASS: Record<string, string> = {
+  success: "bg-badge-success text-badge-success-foreground",
+  error: "bg-badge-danger text-badge-danger-foreground",
+  timeout:
+    "bg-orange-100 text-orange-900 dark:bg-orange-900 dark:text-orange-100",
+  running: "bg-badge-warning text-badge-warning-foreground",
+  cancelled: "bg-badge-default text-badge-default-foreground",
+};
+
+export const WORKLOAD_RUN_STATUS_ACCENT_CLASS: Record<string, string> = {
+  success: "border-l-success",
+  error: "border-l-destructive",
+  timeout: "border-l-orange-500",
+  running: "border-l-warning",
+  cancelled: "border-l-muted-foreground/40",
+};
+
+export const WORKLOAD_RUN_STATUS_BAR_CLASS: Record<string, string> = {
+  success: "bg-success",
+  error: "bg-destructive",
+  timeout: "bg-orange-500",
+  running: "bg-warning",
+  cancelled: "bg-muted-foreground/60",
+};
+
+const RUN_STATUS_SORT_PRIORITY: Record<string, number> = {
+  error: 0,
+  timeout: 1,
+  running: 2,
+  cancelled: 3,
+  success: 4,
+};
+
+export function workloadRunStatusSortPriority(status: string): number {
+  return RUN_STATUS_SORT_PRIORITY[status] ?? 99;
+}
+
+export function runStatusLabelKey(
+  status: string,
+): `platform.workloads.runStatus.${string}` {
+  return `platform.workloads.runStatus.${status}`;
+}
+
+export function runTriggerLabelKey(
+  trigger: string,
+): `platform.workloads.runTrigger.${string}` {
+  return `platform.workloads.runTrigger.${trigger}`;
+}
+
+export function WorkloadRunStatusBadge({
+  status,
+  size = "default",
+}: {
+  readonly status: string;
+  readonly size?: "default" | "compact";
+}) {
+  const { t } = useTranslation("common");
+  const label = t(runStatusLabelKey(status) as never, { defaultValue: status });
+  const sizeClass =
+    size === "compact"
+      ? "px-1.5 py-0 text-[10px] leading-4"
+      : "px-2 py-0.5 text-xs";
+
+  return (
+    <span
+      className={`inline-flex shrink-0 rounded-full font-medium ${sizeClass} ${
+        WORKLOAD_RUN_STATUS_BADGE_CLASS[status] ??
+        "bg-muted text-muted-foreground"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
+export function WorkloadRunTriggerBadge({
+  triggeredBy,
+  size = "default",
+}: {
+  readonly triggeredBy: string;
+  readonly size?: "default" | "compact";
+}) {
+  const { t } = useTranslation("common");
+  const label = t(runTriggerLabelKey(triggeredBy) as never, {
+    defaultValue: triggeredBy,
+  });
+  const sizeClass =
+    size === "compact"
+      ? "px-1.5 py-0 text-[10px] leading-4"
+      : "px-2 py-0.5 text-xs";
+
+  return (
+    <span
+      className={`bg-muted text-muted-foreground inline-flex shrink-0 rounded-full font-medium ${sizeClass}`}
+    >
+      {label}
     </span>
   );
 }

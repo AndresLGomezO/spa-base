@@ -17,7 +17,7 @@ function scheduled(
     actions: ["disable"],
     schedule: { cron, timezone: "UTC" },
     state: {
-      status: "scheduled",
+      status: "running",
       fetchedAt: "2026-07-27T12:00:00.000Z",
     },
   };

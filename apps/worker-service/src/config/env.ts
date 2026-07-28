@@ -63,7 +63,6 @@ const workerEnvSchema = z.object({
   GMAIL_INGEST_DELIVERY_MODE: z.enum(["poll", "push"]).default("poll"),
   WORKER_SERVICE_URL: z.string().trim().default("http://127.0.0.1:3001"),
   GMAIL_TASKS_QUEUE_NAME: z.string().trim().default("gmail-jobs"),
-  AI_EMBED_TASKS_QUEUE_NAME: z.string().trim().default("ai-embed"),
   GMAIL_TASKS_LOCAL_DISPATCH: z
     .enum(["true", "false"])
     .default("true")

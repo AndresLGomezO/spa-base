@@ -56,9 +56,9 @@ Constants: `packages/ai-engine/src/task-routes.ts`.
 |---|---|
 | `/tasks/process-ai-chat` | Grounded chat |
 | `/tasks/process-ai-ui-builder` | UI builder orchestrator |
-| `/tasks/refresh-user-ai-memory` | L2 refresh for user(s) |
-| `/tasks/nightly-user-ai-memory` | Batch memory refresh |
 | `/tasks/refresh-record-narrative` | Narrative LLM for AI summary doc |
+
+User AI memory refresh is in-process only (`debounced-user-ai-memory-refresh.ts` → `processUserAiMemoryRefresh`).
 
 Registration: `apps/worker-service/src/routes/task.scope.ts`.
 
@@ -141,7 +141,6 @@ All are registered via `packages/rbac` `getAllKnownPermissions()` — new permis
 | `VERTEX_IMAGEN_MODEL_ID` | Image generation |
 | `USE_REAL_VERTEX` / `IS_LOCAL` | Mock vs real |
 | `VERTEX_VECTOR_*` | Matching Engine wiring |
-| `AI_EMBED_TASKS_QUEUE_NAME` | Default `ai-embed` |
 | `AI_STEP_TRACE_ENABLED` | Persist CoT / step traces |
 
 See also `docs/infrastructure/environment-variables.md`.
@@ -153,8 +152,7 @@ See also `docs/infrastructure/environment-variables.md`.
 | File | What |
 |---|---|
 | `packages/infrastructure/terraform/cloudtasks-ai-jobs.tf` | Main AI jobs queue, IAM, API enablement |
-| `packages/infrastructure/terraform/cloudtasks-ai-embed.tf` | Embed queue (higher concurrency) |
-| `cloudrun-worker-service.tf` | Worker env (Vertex, embed queue, step trace) |
+| `cloudrun-worker-service.tf` | Worker env (Vertex, step trace) |
 | `cloudrun.tf` | API `AI_TASKS_LOCAL_DISPATCH` etc. |
 
 After Terraform changes: `pnpm terraform:fmt` and review plan per environment.

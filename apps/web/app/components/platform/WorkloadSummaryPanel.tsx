@@ -39,7 +39,9 @@ import {
   ALL_WORKLOAD_SOURCES,
   OPERATIONAL_WORKLOAD_KINDS,
   WORKLOAD_STATUS_ACCENT_CLASS,
+  BusyBadge,
   StatusBadge,
+  isWorkloadBusy,
   kindLabelKey,
 } from "./workload-ui-shared";
 
@@ -103,6 +105,9 @@ function AttentionList({
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={workload.state.status} size="compact" />
+                  {isWorkloadBusy(workload) ? (
+                    <BusyBadge size="compact" />
+                  ) : null}
                   <Text className="break-words text-sm font-medium">
                     {workload.displayName}
                   </Text>
@@ -163,7 +168,6 @@ export function WorkloadSummaryPanel({
   const stats = useMemo(() => {
     const byStatus: Record<WorkloadStatus, number> = {
       running: 0,
-      scheduled: 0,
       ready: 0,
       paused: 0,
       disabled: 0,
@@ -183,13 +187,22 @@ export function WorkloadSummaryPanel({
       integration: 0,
     };
     let withActions = 0;
+    let busy = 0;
     for (const workload of workloads) {
       byStatus[workload.state.status] += 1;
       byKind[workload.kind] += 1;
       bySource[workload.source] += 1;
       if (workload.actions.length > 0) withActions += 1;
+      if (isWorkloadBusy(workload)) busy += 1;
     }
-    return { byStatus, byKind, bySource, withActions, total: workloads.length };
+    return {
+      byStatus,
+      byKind,
+      bySource,
+      withActions,
+      busy,
+      total: workloads.length,
+    };
   }, [workloads]);
 
   const kpiItems = useMemo((): DebuggerKpiItem[] => {
@@ -208,9 +221,9 @@ export function WorkloadSummaryPanel({
       },
       {
         key: "info",
-        label: t("platform.workloads.statusScheduled"),
-        value: stats.byStatus.scheduled,
-        subValue: formatSharePercent(stats.byStatus.scheduled, total),
+        label: t("platform.workloads.statusBusy"),
+        value: stats.busy,
+        subValue: formatSharePercent(stats.busy, total),
       },
       {
         key: "queuedPending",
@@ -277,7 +290,6 @@ export function WorkloadSummaryPanel({
       (
         [
           "running",
-          "scheduled",
           "ready",
           "paused",
           "disabled",
@@ -468,12 +480,24 @@ export function WorkloadSummaryPanel({
               <Text className="text-muted-foreground text-xs">
                 {t("platform.workloads.summaryFootnote")}
               </Text>
-              {stats.byStatus.running > 0 ? (
-                <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                  <Activity aria-hidden className="size-3.5 shrink-0" />
-                  {t("platform.workloads.summaryRunningHint", {
-                    count: stats.byStatus.running,
-                  })}
+              {stats.byStatus.running > 0 || stats.busy > 0 ? (
+                <div className="text-muted-foreground flex flex-col gap-1 text-xs">
+                  {stats.byStatus.running > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <Activity aria-hidden className="size-3.5 shrink-0" />
+                      {t("platform.workloads.summaryRunningHint", {
+                        count: stats.byStatus.running,
+                      })}
+                    </div>
+                  ) : null}
+                  {stats.busy > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <Activity aria-hidden className="size-3.5 shrink-0" />
+                      {t("platform.workloads.summaryBusyHint", {
+                        count: stats.busy,
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>

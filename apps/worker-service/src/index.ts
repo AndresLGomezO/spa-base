@@ -137,8 +137,7 @@ const vectorIndexService = new VectorIndexService(vectorIndexClient, {
 const memoryRefreshScheduler = createDebouncedUserAiMemoryRefreshScheduler({
   workloadRunRecorder,
   enqueue: async ({ tenantId, userId }) => {
-    // Local/dev: process in-process. Production Cloud Scheduler/Tasks can
-    // hit AI_TASK_ROUTES.REFRESH_USER_AI_MEMORY with the same payload.
+    // Process in-process via the debounced scheduler (no Cloud Tasks route).
     await processUserAiMemoryRefresh(
       {
         userAiMemoryRepository,

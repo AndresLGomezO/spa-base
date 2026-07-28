@@ -30,3 +30,4 @@ export {
   type WorkloadRunRepository,
 } from "./create-workload-run-recorder.js";
 export { buildCloudLoggingUrl } from "./cloud-logging-url.js";
+export { buildGcpConsoleUrl } from "./gcp-console-url.js";

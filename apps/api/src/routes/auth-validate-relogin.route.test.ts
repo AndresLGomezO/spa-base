@@ -117,7 +117,6 @@ vi.mock("../config/env.js", () => ({
     CLOUD_TASKS_QUEUE_NAME: "ai-jobs",
     HOOK_TASKS_QUEUE_NAME: "hook-jobs",
     GMAIL_TASKS_QUEUE_NAME: "gmail-jobs",
-    AI_EMBED_TASKS_QUEUE_NAME: "ai-embed-jobs",
     WORKLOAD_CLOUD_LOGGING_TAIL: false,
   },
 }));

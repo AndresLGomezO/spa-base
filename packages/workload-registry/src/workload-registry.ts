@@ -14,8 +14,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     source: "system",
     domain: "ai",
     displayName: "AI Jobs Queue",
-    description:
-      "AI chat, UI builder, record narrative refresh, and user AI memory refresh tasks",
+    description: "AI chat, UI builder, and record narrative refresh tasks",
     actions: ["pause", "resume"],
     gcp: {
       resource: "queue",
@@ -53,21 +52,6 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
       terraformFile: "gmail-ingest.tf",
     },
   },
-  {
-    id: "queue:ai-embed",
-    kind: "cloudTasksQueue",
-    source: "system",
-    domain: "ai",
-    displayName: "AI Embed Queue",
-    description: "Provisioned for embedding jobs (no enqueue path wired yet)",
-    actions: ["pause", "resume"],
-    gcp: {
-      resource: "queue",
-      envKey: "AI_EMBED_TASKS_QUEUE_NAME",
-      terraformFile: "cloudtasks-ai-embed.tf",
-    },
-  },
-
   // ── Cloud Scheduler jobs ────────────────────────────────────────────
   {
     id: "scheduler:schedule-tick",
@@ -120,21 +104,6 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
       resource: "subscription",
       resourceName: "aggregation-events-worker",
       terraformFile: "pubsub-aggregation-events.tf",
-    },
-  },
-  {
-    id: "pubsub:index-provisioning-worker",
-    kind: "pubsubSubscription",
-    source: "system",
-    domain: "platform",
-    displayName: "Index Provisioning Worker",
-    description:
-      "Pull subscription for Firestore index provisioning (gated by enable_index_provisioning_pubsub)",
-    actions: ["pause", "resume"],
-    gcp: {
-      resource: "subscription",
-      resourceName: "index-provisioning-worker",
-      terraformFile: "pubsub-index-provisioning.tf",
     },
   },
   {
@@ -220,34 +189,6 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     sourceFile: "apps/worker-service/src/routes/ai-ui-builder-task.route.ts",
     controlledBy: ["queue:ai-jobs"],
     disableHint: "Pause the ai-jobs queue or disable AI via platform settings",
-  },
-  {
-    id: "worker:refresh-user-ai-memory",
-    kind: "workerRoute",
-    source: "system",
-    domain: "ai",
-    displayName: "Refresh User AI Memory",
-    description: "Debounced / on-demand user AI memory refresh",
-    actions: [],
-    route: "/tasks/refresh-user-ai-memory",
-    sourceFile:
-      "apps/worker-service/src/routes/user-ai-memory-refresh-task.route.ts",
-    controlledBy: ["queue:ai-jobs"],
-    disableHint: "Pause the ai-jobs queue",
-  },
-  {
-    id: "worker:nightly-user-ai-memory",
-    kind: "workerRoute",
-    source: "system",
-    domain: "ai",
-    displayName: "Nightly User AI Memory",
-    description:
-      "Batch user AI memory refresh (manual HTTP only — no Scheduler in TF)",
-    actions: [],
-    route: "/tasks/nightly-user-ai-memory",
-    sourceFile:
-      "apps/worker-service/src/routes/user-ai-memory-refresh-task.route.ts",
-    disableHint: "Do not invoke the HTTP endpoint",
   },
   {
     id: "worker:refresh-record-narrative",

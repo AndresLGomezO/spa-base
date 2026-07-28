@@ -31,6 +31,7 @@ export default [
       "src/firestore-transaction-retry.ts",
       "src/build-firestore-filter-tree.ts",
       "src/firestore-admin-user-repository.ts",
+      "src/firestore-admin-workload-run-repository.ts",
       "src/firestore-admin-entity-repository.ts",
       "src/firestore-admin-join-collection-repository.ts",
       "src/firestore-entity-query-executor.ts",

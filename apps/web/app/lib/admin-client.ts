@@ -206,7 +206,6 @@ export type WorkloadSource = "system" | "hook" | "integration";
 type WorkloadDomain = "ai" | "email" | "platform" | "metrics" | "tenant";
 export type WorkloadStatus =
   | "running"
-  | "scheduled"
   | "ready"
   | "paused"
   | "disabled"
@@ -249,6 +248,8 @@ export interface WorkloadState {
 
 export interface WorkloadWithState extends WorkloadRecord {
   readonly state: WorkloadState;
+  /** Google Cloud Console deep-link; only present when API is not in local mode. */
+  readonly gcpConsoleUrl?: string;
 }
 
 export interface WorkloadStats24h {

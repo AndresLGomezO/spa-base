@@ -5,7 +5,7 @@ interface SchedulerAdminConfig {
 }
 
 interface SchedulerJobState {
-  readonly status: "scheduled" | "paused" | "unknown";
+  readonly status: "running" | "paused" | "unknown";
   readonly live: {
     state?: string;
     schedule?: string;
@@ -60,18 +60,19 @@ export function createSchedulerAdminAdapter(config: SchedulerAdminConfig) {
   return {
     async getState(jobName: string): Promise<SchedulerJobState> {
       if (config.localMode) {
-        return { status: "scheduled", live: { state: "ENABLED" } };
+        // Armed timer is Active locally (countdown from cron).
+        return { status: "running", live: { state: "ENABLED" } };
       }
       try {
         const client = await getClient();
         const [job] = await client.getJob({ name: jobPath(jobName) });
         const state = job.state as string | undefined;
-        // ENABLED means armed for cron — not currently executing a tick.
-        const status: "scheduled" | "paused" | "unknown" =
+        // ENABLED = live timer (Active). Busy/in-flight is layered in the controller.
+        const status: "running" | "paused" | "unknown" =
           state === "PAUSED"
             ? "paused"
             : state === "ENABLED"
-              ? "scheduled"
+              ? "running"
               : "unknown";
         return {
           status,

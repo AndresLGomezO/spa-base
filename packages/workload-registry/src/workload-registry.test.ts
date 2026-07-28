@@ -26,9 +26,9 @@ describe("WORKLOAD_REGISTRY", () => {
         "queue:ai-jobs",
         "queue:hook-jobs",
         "queue:gmail-jobs",
-        "queue:ai-embed",
       ]),
     );
+    expect(queues.map((q) => q.id)).not.toContain("queue:ai-embed");
   });
 
   it("filters by source and query", () => {
