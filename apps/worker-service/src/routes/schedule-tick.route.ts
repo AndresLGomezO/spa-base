@@ -1,5 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
+import {
+  buildCloudLoggingUrl,
+  buildDeterministicSchedulerRunId,
+  type WorkloadRunRecorder,
+} from "@repo/workload-runs";
+
 import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
 import { createWorkerHookLogger } from "../hooks/create-worker-hook-logger.js";
 import { dispatchHookTaskAsync } from "./dispatch-hook-task-async.js";
@@ -7,12 +13,14 @@ import { processScheduleTick } from "../services/schedule-tick-processor.js";
 import type { DataHookProcessorDeps } from "../services/data-hook-processor.js";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
-import { scheduleTickConfig } from "../config/env.js";
+import { scheduleTickConfig, workerEnv } from "../config/env.js";
+import { withWorkloadRun } from "../workloads/with-workload-run.js";
 
 export type ScheduleTickRouteDeps = DataHookProcessorDeps & {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly indexProjectId: string;
   readonly indexDatabaseId?: string;
+  readonly workloadRunRecorder?: WorkloadRunRecorder;
 };
 
 function parseForceFlag(request: FastifyRequest): boolean {
@@ -73,15 +81,47 @@ export async function scheduleTickRoute(
         // Never await: categorize (and other eachRecord hooks) can run for
         // minutes under force; curl should get 202 and watch worker logs /
         // hook debugger instead.
-        process: () =>
-          processScheduleTick(deps, {
-            firebaseAdminConfig: deps.firebaseAdminConfig,
-            scheduledHookUserUid: scheduleTickConfig.scheduledHookUserUid,
-            at: new Date(),
-            logger,
-            ...(force ? { force: true } : {}),
-            ...(hookFilter ? { hookFilter } : {}),
-          }),
+        process: async () => {
+          const at = new Date();
+          const runId = buildDeterministicSchedulerRunId("schedule-tick", at);
+
+          const execute = () =>
+            processScheduleTick(deps, {
+              firebaseAdminConfig: deps.firebaseAdminConfig,
+              scheduledHookUserUid: scheduleTickConfig.scheduledHookUserUid,
+              at,
+              logger,
+              ...(force ? { force: true } : {}),
+              ...(hookFilter ? { hookFilter } : {}),
+            });
+
+          if (!deps.workloadRunRecorder) {
+            return execute();
+          }
+
+          await withWorkloadRun(
+            deps.workloadRunRecorder,
+            {
+              workloadId: "scheduler:schedule-tick",
+              triggeredBy: force ? "http" : "scheduler",
+              id: runId,
+              triggerContext: {
+                schedulerJob: "schedule-tick",
+                cronFireTime: at.toISOString(),
+                forced: force,
+              },
+              cloudLoggingUrl: buildCloudLoggingUrl({
+                projectId: workerEnv.GCP_PROJECT_ID,
+                workloadRunId: runId,
+                since: at.toISOString(),
+              }),
+            },
+            request.log,
+            async (handle) => {
+              await execute();
+            },
+          );
+        },
       });
     },
   );

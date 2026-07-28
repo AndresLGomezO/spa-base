@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 
+import type { WorkloadRunRecorder } from "@repo/workload-runs";
+
 import type { AiChatProcessorDeps } from "../services/ai-chat-processor.js";
 import type { AiUiBuilderProcessorDeps } from "../services/ai-ui-builder-processor.js";
 import type { DataHookProcessorDeps } from "../services/data-hook-processor.js";
@@ -26,6 +28,7 @@ export type WorkerTaskScopeDeps = AiChatProcessorDeps &
   UserAiMemoryRefreshProcessorDeps & {
     readonly gmailIngest?: GmailIngestProcessorDeps;
     readonly refreshNarrative?: RecordNarrativeRefreshProcessor;
+    readonly workloadRunRecorder?: WorkloadRunRecorder;
   };
 
 export async function taskScope(
@@ -42,9 +45,13 @@ export async function taskScope(
   if (deps.refreshNarrative) {
     await app.register(recordNarrativeRefreshTaskRoute, {
       refreshNarrative: deps.refreshNarrative,
+      workloadRunRecorder: deps.workloadRunRecorder,
     });
   }
   if (deps.gmailIngest) {
-    await app.register(gmailIngestTaskRoute, deps.gmailIngest);
+    await app.register(gmailIngestTaskRoute, {
+      ...deps.gmailIngest,
+      workloadRunRecorder: deps.workloadRunRecorder,
+    });
   }
 }

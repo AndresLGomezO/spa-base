@@ -37,6 +37,7 @@
     "prune:firestore-indexes": "tsx scripts/prune-all-firestore-composite-indexes.ts",
     "check:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts && git diff --exit-code firestore.indexes.json",
     "check:ai-context": "tsx scripts/generate-ai-context.ts && git diff --exit-code packages/ai-context/src/generated/",
+    "check:workload-coverage": "tsx scripts/check-workload-coverage.ts",
     "check:docker-workspace": "tsx scripts/check-docker-workspace.ts",
     "check:prod-runtime": "node scripts/check-prod-runtime.mjs",
     "validate": "tsx scripts/validate.ts",

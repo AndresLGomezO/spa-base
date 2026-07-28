@@ -15,6 +15,11 @@ import {
   AGGREGATION_EVENTS_TOPIC,
   ensureAggregationEventsTopic,
 } from "@repo/gcp-firebase/firestore-aggregation-pubsub";
+import { createFirestoreAdminWorkloadRunRepository } from "@repo/gcp-firebase";
+import {
+  buildDeterministicPubsubRunId,
+  createWorkloadRunRecorder,
+} from "@repo/workload-runs";
 
 import { createWorkerMetricQueryMembershipResolver } from "./metric-query-deps.js";
 
@@ -61,6 +66,10 @@ const deps = {
   resolveQueryMembership:
     createWorkerMetricQueryMembershipResolver(firebaseAdminConfig),
 };
+
+const workloadRunRecorder = createWorkloadRunRecorder({
+  repository: createFirestoreAdminWorkloadRunRepository(firebaseAdminConfig),
+});
 
 function log(message: string, meta: Record<string, unknown>): void {
   console.log(JSON.stringify({ message, ...meta }));
@@ -125,7 +134,32 @@ async function main(): Promise<void> {
 
   subscription.on("message", (message) => {
     void (async () => {
+      const deliveryAttempt =
+        typeof message.deliveryAttempt === "number"
+          ? message.deliveryAttempt
+          : 1;
+      const runId = buildDeterministicPubsubRunId(
+        subscriptionName,
+        message.id,
+        deliveryAttempt,
+      );
+      let handle;
       try {
+        const parentRunId =
+          message.attributes?.["X-Workload-Run-Parent-Id"] ?? undefined;
+        const rootRunId =
+          message.attributes?.["X-Workload-Run-Root-Id"] ?? undefined;
+        handle = await workloadRunRecorder.beginRun({
+          workloadId: "pubsub:aggregation-events-worker",
+          triggeredBy: "pubsub",
+          id: runId,
+          triggerContext: {
+            messageId: message.id,
+            subscription: subscriptionName,
+          },
+          ...(parentRunId ? { parentRunId } : {}),
+          ...(rootRunId ? { rootRunId } : {}),
+        });
         const raw = JSON.parse(message.data.toString()) as unknown;
         const payload = aggregationEventMessageSchema.parse(raw);
         await processAggregationEventTransaction(
@@ -139,9 +173,14 @@ async function main(): Promise<void> {
         } else {
           message.ack();
         }
+        await handle.succeed();
       } catch (error) {
         console.error("Failed to process aggregation event", error);
         message.nack();
+        if (handle) {
+          const msg = error instanceof Error ? error.message : String(error);
+          await handle.fail(msg).catch(() => {});
+        }
       }
     })();
   });

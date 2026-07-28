@@ -12,6 +12,11 @@ import {
   initializeFirebaseAdmin,
   type IndexProvisioningMessage,
 } from "@repo/gcp-firebase";
+import { createFirestoreAdminWorkloadRunRepository } from "@repo/gcp-firebase";
+import {
+  buildDeterministicPubsubRunId,
+  createWorkloadRunRecorder,
+} from "@repo/workload-runs";
 
 const projectId = process.env.GCP_PROJECT_ID?.trim();
 const topicName =
@@ -52,6 +57,9 @@ configureIndexProvisioningQueue({
     : 400,
 });
 const statusStore = createFirestoreIndexStatusStore(firebaseAdminConfig);
+const workloadRunRecorder = createWorkloadRunRecorder({
+  repository: createFirestoreAdminWorkloadRunRepository(firebaseAdminConfig),
+});
 
 async function main(): Promise<void> {
   const { PubSub } = await import("@google-cloud/pubsub");
@@ -73,7 +81,32 @@ async function main(): Promise<void> {
 
   subscription.on("message", (message) => {
     void (async () => {
+      const deliveryAttempt =
+        typeof message.deliveryAttempt === "number"
+          ? message.deliveryAttempt
+          : 1;
+      const runId = buildDeterministicPubsubRunId(
+        subscriptionName,
+        message.id,
+        deliveryAttempt,
+      );
+      let handle;
       try {
+        const parentRunId =
+          message.attributes?.["X-Workload-Run-Parent-Id"] ?? undefined;
+        const rootRunId =
+          message.attributes?.["X-Workload-Run-Root-Id"] ?? undefined;
+        handle = await workloadRunRecorder.beginRun({
+          workloadId: "pubsub:index-provisioning-worker",
+          triggeredBy: "pubsub",
+          id: runId,
+          triggerContext: {
+            messageId: message.id,
+            subscription: subscriptionName,
+          },
+          ...(parentRunId ? { parentRunId } : {}),
+          ...(rootRunId ? { rootRunId } : {}),
+        });
         const payload = JSON.parse(
           message.data.toString(),
         ) as IndexProvisioningMessage;
@@ -82,9 +115,14 @@ async function main(): Promise<void> {
           statusStore,
         });
         message.ack();
+        await handle.succeed();
       } catch (error) {
         console.error("Failed to provision index", error);
         message.nack();
+        if (handle) {
+          const msg = error instanceof Error ? error.message : String(error);
+          await handle.fail(msg).catch(() => {});
+        }
       }
     })();
   });

@@ -14,6 +14,7 @@ export default [
     route("select-tenant", "./routes/select-tenant-redirect.tsx"),
     layout("./routes/superadmin-layout.tsx", [
       route("platform/create-tenant", "./routes/platform/create-tenant.tsx"),
+      route("platform/workloads", "./routes/platform/workloads.tsx"),
       route("settings/tenant", "./routes/settings/tenant.tsx"),
       route("settings/appearance", "./routes/settings/appearance.tsx"),
       route("settings/observability", "./routes/settings/observability.tsx"),

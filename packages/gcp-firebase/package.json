@@ -56,6 +56,7 @@
     "@repo/query-engine": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
+    "@repo/workload-runs": "workspace:*",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",
     "zod": "catalog:"

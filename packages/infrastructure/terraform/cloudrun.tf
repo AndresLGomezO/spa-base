@@ -262,6 +262,22 @@ resource "google_cloud_run_v2_service" "backend" {
           value = "false"
         }
       }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "SCHEDULER_SCHEDULE_TICK_JOB_NAME"
+          value = "${local.app_name}-schedule-tick-${local.prefix}"
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "SCHEDULER_GMAIL_POLL_JOB_NAME"
+          value = "${local.app_name}-gmail-poll-${local.prefix}"
+        }
+      }
     }
 
     scaling {

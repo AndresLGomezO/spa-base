@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { isActivePathMatch } from "@repo/ui-builder-core";
 import {
+  Activity,
   AppWindow,
   BarChart3,
   Blocks,
@@ -73,6 +74,7 @@ export type NavLabelKey =
   | "debuggerRequestPerf"
   | "debuggerIndexProvision"
   | "debuggerEmailIngest"
+  | "platformWorkloads"
   | "systemConfiguration";
 
 export interface NavLinkConfig {
@@ -283,6 +285,14 @@ export const PLATFORM_OBSERVABILITY_NAV_ITEM: NavLinkConfig = {
   to: "/settings/observability",
   matchPath: "/settings/observability",
   icon: Gauge,
+};
+
+export const PLATFORM_WORKLOADS_NAV_ITEM: NavLinkConfig = {
+  id: "platform-workloads",
+  labelKey: "platformWorkloads",
+  to: "/platform/workloads",
+  matchPath: "/platform/workloads",
+  icon: Activity,
 };
 
 export const SETTINGS_GROUP_ICON = Settings;

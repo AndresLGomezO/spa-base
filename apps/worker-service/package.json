@@ -35,6 +35,8 @@
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@repo/worker-firestore": "workspace:*",
+    "@repo/workload-registry": "workspace:*",
+    "@repo/workload-runs": "workspace:*",
     "cron-parser": "catalog:",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",

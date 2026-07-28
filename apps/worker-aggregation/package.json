@@ -20,6 +20,7 @@
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
+    "@repo/workload-runs": "workspace:*",
     "cron-parser": "catalog:",
     "zod": "catalog:"
   },

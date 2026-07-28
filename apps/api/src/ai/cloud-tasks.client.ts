@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 
 import type { CloudTasksClient as CloudTasksClientType } from "@google-cloud/tasks";
+import {
+  WORKLOAD_RUN_PARENT_HEADER,
+  WORKLOAD_RUN_ROOT_HEADER,
+} from "@repo/workload-runs";
 
 export interface CloudTasksClientConfig {
   readonly projectId: string;
@@ -32,6 +36,8 @@ interface EnqueueOptions {
    * Use for long-running worker handlers that await completion.
    */
   readonly dispatchDeadlineSeconds?: number;
+  readonly parentRunId?: string;
+  readonly rootRunId?: string;
 }
 
 export function createCloudTasksClient(config: CloudTasksClientConfig) {
@@ -49,6 +55,14 @@ async function enqueueLocal(
   config: CloudTasksClientConfig,
   options: EnqueueOptions,
 ): Promise<string> {
+  const lineageHeaders: Record<string, string> = {};
+  if (options.parentRunId) {
+    lineageHeaders[WORKLOAD_RUN_PARENT_HEADER] = options.parentRunId;
+  }
+  if (options.rootRunId) {
+    lineageHeaders[WORKLOAD_RUN_ROOT_HEADER] = options.rootRunId;
+  }
+
   const run = async () => {
     const url = `${config.workerBaseUrl}${options.path}`;
     const response = await fetch(url, {
@@ -56,6 +70,7 @@ async function enqueueLocal(
       headers: {
         "Content-Type": "application/json",
         "X-Local-Task-Dispatcher": "true",
+        ...lineageHeaders,
       },
       body: JSON.stringify(options.payload),
       // Worker accepts the task quickly (202) and processes async, like Cloud Tasks.
@@ -117,6 +132,13 @@ async function enqueueCloudTask(
     headers: { "Content-Type": "application/json" },
     body: Buffer.from(JSON.stringify(options.payload)).toString("base64"),
   };
+
+  if (options.parentRunId) {
+    httpRequest.headers[WORKLOAD_RUN_PARENT_HEADER] = options.parentRunId;
+  }
+  if (options.rootRunId) {
+    httpRequest.headers[WORKLOAD_RUN_ROOT_HEADER] = options.rootRunId;
+  }
 
   if (config.serviceAccountEmail) {
     httpRequest.oidcToken = {

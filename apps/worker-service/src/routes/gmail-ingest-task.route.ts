@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
+import type { WorkloadRunRecorder } from "@repo/workload-runs";
+
 import { dispatchHookTaskAsync } from "./dispatch-hook-task-async.js";
 import { createWorkerHookLogger } from "../hooks/create-worker-hook-logger.js";
 import { createAsyncSemaphore } from "../lib/async-semaphore.js";
@@ -13,6 +15,8 @@ import {
   processGmailWindowSync,
   type GmailIngestProcessorDeps,
 } from "../services/gmail-ingest-processor.js";
+import { readWorkloadRunLineageFromHeaders } from "../workloads/workload-run-context.js";
+import { withWorkloadRun } from "../workloads/with-workload-run.js";
 
 const ROUTES = {
   WINDOW_SYNC: "/tasks/gmail-window-sync",
@@ -38,7 +42,7 @@ function isLocalTaskDispatcher(request: FastifyRequest): boolean {
 
 export async function gmailIngestTaskRoute(
   app: FastifyInstance,
-  deps: GmailIngestProcessorDeps,
+  deps: GmailIngestProcessorDeps & { readonly workloadRunRecorder?: WorkloadRunRecorder },
 ): Promise<void> {
   app.post(
     ROUTES.PROCESS_MESSAGE,
@@ -66,8 +70,32 @@ export async function gmailIngestTaskRoute(
         awaitCompletion: isLocalTaskDispatcher(request),
         process: () =>
           processMessageGate.run(async () => {
-            // Per-message failures update runMetrics.failed; do not fail the whole run.
-            await processGmailProcessMessage(deps, payload, logger);
+            if (!deps.workloadRunRecorder) {
+              await processGmailProcessMessage(deps, payload, logger);
+              return;
+            }
+            const lineage = readWorkloadRunLineageFromHeaders(
+              request.headers as Record<string, string | string[] | undefined>,
+            );
+            await withWorkloadRun(
+              deps.workloadRunRecorder,
+              {
+                workloadId: "worker:gmail-process-message",
+                triggeredBy: "cloudTasks",
+                tenantId: payload.tenantId,
+                parentRunId: lineage.parentRunId,
+                rootRunId: lineage.rootRunId,
+              },
+              request.log,
+              async (handle) => {
+                await processGmailProcessMessage(deps, payload, logger);
+                await handle.addArtifact({
+                  kind: "emailIngestJob",
+                  id: payload.jobId,
+                  tenantId: payload.tenantId,
+                });
+              },
+            );
           }),
       });
     },
@@ -95,19 +123,46 @@ export async function gmailIngestTaskRoute(
         hookId: payload.jobId,
         logLabel: "Gmail window sync",
         process: async () => {
-          try {
-            await processGmailWindowSync(deps, payload, logger);
-          } catch (error) {
-            const message =
-              error instanceof Error ? error.message : "window sync failed";
-            await deps.emailIngestJobRepository.complete(
-              payload.tenantId,
-              payload.jobId,
-              "failed",
-              message,
-            );
-            throw error;
+          const doWork = async () => {
+            try {
+              await processGmailWindowSync(deps, payload, logger);
+            } catch (error) {
+              const message =
+                error instanceof Error ? error.message : "window sync failed";
+              await deps.emailIngestJobRepository.complete(
+                payload.tenantId,
+                payload.jobId,
+                "failed",
+                message,
+              );
+              throw error;
+            }
+          };
+          if (!deps.workloadRunRecorder) {
+            return doWork();
           }
+          const lineage = readWorkloadRunLineageFromHeaders(
+            request.headers as Record<string, string | string[] | undefined>,
+          );
+          await withWorkloadRun(
+            deps.workloadRunRecorder,
+            {
+              workloadId: "worker:gmail-window-sync",
+              triggeredBy: "cloudTasks",
+              tenantId: payload.tenantId,
+              parentRunId: lineage.parentRunId,
+              rootRunId: lineage.rootRunId,
+            },
+            request.log,
+            async (handle) => {
+              await doWork();
+              await handle.addArtifact({
+                kind: "emailIngestJob",
+                id: payload.jobId,
+                tenantId: payload.tenantId,
+              });
+            },
+          );
         },
       });
     },
@@ -134,7 +189,27 @@ export async function gmailIngestTaskRoute(
         tenantId: payload.tenantId ?? "platform",
         hookId: payload.jobId ?? payload.userId,
         logLabel: "Gmail watch renew",
-        process: () => processGmailWatchRenew(deps, payload, logger),
+        process: async () => {
+          if (!deps.workloadRunRecorder) {
+            return processGmailWatchRenew(deps, payload, logger);
+          }
+          const lineage = readWorkloadRunLineageFromHeaders(
+            request.headers as Record<string, string | string[] | undefined>,
+          );
+          await withWorkloadRun(
+            deps.workloadRunRecorder,
+            {
+              workloadId: "worker:gmail-watch-renew",
+              triggeredBy: "cloudTasks",
+              parentRunId: lineage.parentRunId,
+              rootRunId: lineage.rootRunId,
+            },
+            request.log,
+            async () => {
+              await processGmailWatchRenew(deps, payload, logger);
+            },
+          );
+        },
       });
     },
   );
@@ -153,7 +228,22 @@ export async function gmailIngestTaskRoute(
         tenantId: "platform",
         hookId: "gmail-poll",
         logLabel: "Gmail poll",
-        process: () => processGmailPoll(deps, logger),
+        process: async () => {
+          if (!deps.workloadRunRecorder) {
+            return processGmailPoll(deps, logger);
+          }
+          await withWorkloadRun(
+            deps.workloadRunRecorder,
+            {
+              workloadId: "scheduler:gmail-poll",
+              triggeredBy: "scheduler",
+            },
+            request.log,
+            async () => {
+              await processGmailPoll(deps, logger);
+            },
+          );
+        },
       });
     },
   );

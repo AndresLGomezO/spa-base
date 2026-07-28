@@ -139,6 +139,7 @@ export { createFirestoreAdminAiSpendRepository } from "./firestore-admin-ai-spen
 export { createFirestoreAdminUiBuilderAiSuggestionRepository } from "./firestore-admin-ui-builder-ai-suggestion-repository.js";
 export { createFirestoreAdminTenantAiContextRepository } from "./firestore-admin-tenant-ai-context-repository.js";
 export { createFirestoreAdminUserAiMemoryRepository } from "./firestore-admin-user-ai-memory-repository.js";
+export { createFirestoreAdminWorkloadRunRepository } from "./firestore-admin-workload-run-repository.js";
 export { createFirestoreAdminAiChatSessionRepository } from "./firestore-admin-ai-chat-session-repository.js";
 export { createFirestoreAdminAiContextSectionRepository } from "./firestore-admin-ai-context-section-repository.js";
 export { createFirestoreAdminAiRecordSummaryRepository } from "./firestore-admin-ai-record-summary-repository.js";

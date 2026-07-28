@@ -215,6 +215,18 @@ import { createEntityFileReadEnricher } from "./entity-files/create-entity-file-
 import { registerEntityFileRoutes } from "./entity-files/register-entity-file-routes.js";
 import { sanitizeFileFieldsForWrite } from "./entity-files/entity-file-field-utils.js";
 import { adminRoutes } from "./routes/admin.routes.js";
+import { workloadsRoutes } from "./workloads/workloads.routes.js";
+import { createWorkloadController } from "./workloads/workload-controller.js";
+import { createCloudTasksAdminAdapter } from "./workloads/adapters/cloud-tasks-admin.adapter.js";
+import { createSchedulerAdminAdapter } from "./workloads/adapters/scheduler-admin.adapter.js";
+import { createPubSubAdminAdapter } from "./workloads/adapters/pubsub-admin.adapter.js";
+import { createScheduledHooksAdapter } from "./workloads/adapters/scheduled-hooks.adapter.js";
+import { createWorkerRoutesAdapter } from "./workloads/adapters/worker-routes.adapter.js";
+import { createInProcessAdapter } from "./workloads/adapters/in-process.adapter.js";
+import { createCloudLoggingAdapter } from "./workloads/adapters/cloud-logging.adapter.js";
+import { createFirestoreAdminWorkloadRunRepository } from "@repo/gcp-firebase";
+import { listAllTenantIds } from "@repo/gcp-firebase";
+import { deriveSchedulerJobName } from "./workloads/resolve-gcp-names.js";
 import { platformRuntimeSettingsRoutes } from "./routes/platform-runtime-settings.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
@@ -928,6 +940,66 @@ export async function buildServer(options: BuildServerOptions = {}) {
     tenantDeletionProtectedIds: parseProtectedTenantIds(
       apiEnv.TENANT_DELETION_PROTECTED_IDS,
     ),
+  });
+
+  const workloadRunRepository = createFirestoreAdminWorkloadRunRepository(
+    firebaseAdminConfig,
+  );
+
+  const isLocalMode = apiEnv.AI_TASKS_LOCAL_DISPATCH;
+
+  const scheduleTickJobName =
+    apiEnv.SCHEDULER_SCHEDULE_TICK_JOB_NAME ??
+    deriveSchedulerJobName(apiEnv.CLOUD_TASKS_QUEUE_NAME, "schedule-tick");
+  const gmailPollJobName =
+    apiEnv.SCHEDULER_GMAIL_POLL_JOB_NAME ??
+    deriveSchedulerJobName(apiEnv.CLOUD_TASKS_QUEUE_NAME, "gmail-poll");
+
+  const workloadController = createWorkloadController({
+    cloudTasks: createCloudTasksAdminAdapter({
+      projectId: apiEnv.GCP_PROJECT_ID,
+      region: apiEnv.GCP_REGION,
+      localMode: isLocalMode,
+    }),
+    scheduler: createSchedulerAdminAdapter({
+      projectId: apiEnv.GCP_PROJECT_ID,
+      region: apiEnv.GCP_REGION,
+      localMode: isLocalMode,
+    }),
+    pubsub: createPubSubAdminAdapter({
+      projectId: apiEnv.GCP_PROJECT_ID,
+      localMode: isLocalMode,
+    }),
+    scheduledHooks: createScheduledHooksAdapter({
+      listAllTenantIds: () => listAllTenantIds(firebaseAdminConfig),
+      dataHookRepository: hookRepository,
+    }),
+    workerRoutes: createWorkerRoutesAdapter(),
+    inProcess: createInProcessAdapter(),
+    cloudLogging: createCloudLoggingAdapter({
+      projectId: apiEnv.GCP_PROJECT_ID,
+      localMode: isLocalMode,
+      enabled: apiEnv.WORKLOAD_CLOUD_LOGGING_TAIL,
+    }),
+    runs: workloadRunRepository,
+    queueNameByEnvKey: {
+      CLOUD_TASKS_QUEUE_NAME: apiEnv.CLOUD_TASKS_QUEUE_NAME,
+      HOOK_TASKS_QUEUE_NAME: apiEnv.HOOK_TASKS_QUEUE_NAME,
+      GMAIL_TASKS_QUEUE_NAME: apiEnv.GMAIL_TASKS_QUEUE_NAME,
+      AI_EMBED_TASKS_QUEUE_NAME: apiEnv.AI_EMBED_TASKS_QUEUE_NAME,
+    },
+    schedulerJobNameByResource: {
+      "schedule-tick": scheduleTickJobName,
+      "gmail-poll": gmailPollJobName,
+    },
+    localMode: isLocalMode,
+    projectId: apiEnv.GCP_PROJECT_ID,
+  });
+
+  await server.register(workloadsRoutes, {
+    firebaseAdminConfig,
+    permissionDeps,
+    controller: workloadController,
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);

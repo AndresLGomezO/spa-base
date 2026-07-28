@@ -100,6 +100,13 @@ const ApiEnvSchema = z.object({
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
   WEB_APP_ORIGIN: z.string().trim().url().default("http://127.0.0.1:5173"),
+  AI_EMBED_TASKS_QUEUE_NAME: z.string().trim().default("ai-embed"),
+  SCHEDULER_SCHEDULE_TICK_JOB_NAME: z.string().trim().optional(),
+  SCHEDULER_GMAIL_POLL_JOB_NAME: z.string().trim().optional(),
+  WORKLOAD_CLOUD_LOGGING_TAIL: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

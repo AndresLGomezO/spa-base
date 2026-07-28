@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 
 import type { CloudTasksClient as CloudTasksClientType } from "@google-cloud/tasks";
+import {
+  WORKLOAD_RUN_PARENT_HEADER,
+  WORKLOAD_RUN_ROOT_HEADER,
+} from "@repo/workload-runs";
 
 import { createAsyncSemaphore } from "../lib/async-semaphore.js";
 
@@ -73,12 +77,21 @@ async function enqueueLocal(
   path: string,
   payload: object,
   timeoutMs: number = LOCAL_DEFAULT_TIMEOUT_MS,
+  lineage?: { parentRunId?: string; rootRunId?: string },
 ): Promise<void> {
+  const lineageHeaders: Record<string, string> = {};
+  if (lineage?.parentRunId) {
+    lineageHeaders[WORKLOAD_RUN_PARENT_HEADER] = lineage.parentRunId;
+  }
+  if (lineage?.rootRunId) {
+    lineageHeaders[WORKLOAD_RUN_ROOT_HEADER] = lineage.rootRunId;
+  }
   const response = await fetch(`${config.workerBaseUrl}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Local-Task-Dispatcher": "true",
+      ...lineageHeaders,
     },
     body: JSON.stringify(payload),
     signal: AbortSignal.timeout(timeoutMs),
@@ -98,6 +111,7 @@ async function enqueueCloudTask(
     readonly payload: object;
     readonly taskId: string;
     readonly scheduleTime?: Date;
+    readonly lineage?: { parentRunId?: string; rootRunId?: string };
   },
 ): Promise<void> {
   const client = await getTasksClient();
@@ -118,6 +132,13 @@ async function enqueueCloudTask(
     headers: { "Content-Type": "application/json" },
     body: Buffer.from(JSON.stringify(options.payload)).toString("base64"),
   };
+  if (options.lineage?.parentRunId) {
+    httpRequest.headers[WORKLOAD_RUN_PARENT_HEADER] =
+      options.lineage.parentRunId;
+  }
+  if (options.lineage?.rootRunId) {
+    httpRequest.headers[WORKLOAD_RUN_ROOT_HEADER] = options.lineage.rootRunId;
+  }
   if (config.serviceAccountEmail) {
     httpRequest.oidcToken = {
       serviceAccountEmail: config.serviceAccountEmail,

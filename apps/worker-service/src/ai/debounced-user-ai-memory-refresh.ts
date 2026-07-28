@@ -1,3 +1,7 @@
+import type { WorkloadRunRecorder } from "@repo/workload-runs";
+
+import { withWorkloadRun } from "../workloads/with-workload-run.js";
+
 /**
  * Debounced per-user AI memory refresh scheduler (5-minute window by default).
  * Collapses bursty record writes into a single refresh.
@@ -9,6 +13,7 @@ export function createDebouncedUserAiMemoryRefreshScheduler(options: {
     readonly userId: string;
   }) => Promise<void>;
   readonly now?: () => number;
+  readonly workloadRunRecorder?: WorkloadRunRecorder;
 }): {
   schedule(input: { readonly tenantId: string; readonly userId: string }): void;
   flush(): Promise<void>;
@@ -29,6 +34,32 @@ export function createDebouncedUserAiMemoryRefreshScheduler(options: {
     return `${tenantId}::${userId}`;
   }
 
+  async function enqueueTracked(input: {
+    readonly tenantId: string;
+    readonly userId: string;
+  }): Promise<void> {
+    if (!options.workloadRunRecorder) {
+      await options.enqueue(input);
+      return;
+    }
+    await withWorkloadRun(
+      options.workloadRunRecorder,
+      {
+        workloadId: "inprocess:debounced-user-ai-memory",
+        triggeredBy: "inProcess",
+        tenantId: input.tenantId,
+        metrics: { pendingCount: pending.size },
+      },
+      {
+        info: () => undefined,
+        error: () => undefined,
+      },
+      async () => {
+        await options.enqueue(input);
+      },
+    );
+  }
+
   return {
     schedule(input) {
       const k = key(input.tenantId, input.userId);
@@ -38,7 +69,7 @@ export function createDebouncedUserAiMemoryRefreshScheduler(options: {
       }
       const timer = setTimeout(() => {
         pending.delete(k);
-        void options.enqueue(input).catch((error) => {
+        void enqueueTracked(input).catch((error) => {
           console.error(
             JSON.stringify({
               severity: "ERROR",
@@ -60,7 +91,7 @@ export function createDebouncedUserAiMemoryRefreshScheduler(options: {
       pending.clear();
       for (const entry of entries) {
         clearTimeout(entry.timer);
-        await options.enqueue({
+        await enqueueTracked({
           tenantId: entry.tenantId,
           userId: entry.userId,
         });

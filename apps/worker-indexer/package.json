@@ -11,7 +11,8 @@
   "dependencies": {
     "@google-cloud/pubsub": "catalog:",
     "@repo/firestore-indexes": "workspace:*",
-    "@repo/gcp-firebase": "workspace:*"
+    "@repo/gcp-firebase": "workspace:*",
+    "@repo/workload-runs": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

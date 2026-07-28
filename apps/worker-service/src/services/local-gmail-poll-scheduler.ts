@@ -1,3 +1,7 @@
+import type { WorkloadRunRecorder } from "@repo/workload-runs";
+
+import { withWorkloadRun } from "../workloads/with-workload-run.js";
+
 // Matches Cloud Scheduler cadence in gmail-ingest.tf (every 5 minutes).
 export const GMAIL_POLL_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -7,6 +11,7 @@ export interface LocalGmailPollSchedulerOptions {
   readonly intervalMs?: number;
   readonly fetchImpl?: typeof fetch;
   readonly log?: (entry: Record<string, unknown>) => void;
+  readonly workloadRunRecorder?: WorkloadRunRecorder;
 }
 
 /**
@@ -27,40 +32,113 @@ export function startLocalGmailPollScheduler(
   const pollUrl = `${options.workerBaseUrl.replace(/\/$/, "")}/tasks/gmail-poll`;
 
   async function tick(): Promise<void> {
-    const deliveryMode = await options.getDeliveryMode();
-    if (deliveryMode !== "poll") {
-      log({
-        message: "Local Gmail poll tick skipped: delivery mode is not poll",
-        deliveryMode,
-      });
+    const runTick = async (): Promise<void> => {
+      const deliveryMode = await options.getDeliveryMode();
+      if (deliveryMode !== "poll") {
+        log({
+          message: "Local Gmail poll tick skipped: delivery mode is not poll",
+          deliveryMode,
+        });
+        return;
+      }
+
+      try {
+        const response = await fetchImpl(pollUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Local-Task-Dispatcher": "true",
+          },
+          body: "{}",
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!response.ok) {
+          const body = await response.text();
+          log({
+            message: "Local Gmail poll tick failed",
+            status: response.status,
+            body: body.slice(0, 300),
+          });
+          return;
+        }
+        log({ message: "Local Gmail poll tick enqueued" });
+      } catch (error) {
+        log({
+          message: "Local Gmail poll tick error",
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
+    };
+
+    if (!options.workloadRunRecorder) {
+      try {
+        await runTick();
+      } catch {
+        // Logged above; keep interval alive.
+      }
       return;
     }
 
     try {
-      const response = await fetchImpl(pollUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Local-Task-Dispatcher": "true",
+      await withWorkloadRun(
+        options.workloadRunRecorder,
+        {
+          workloadId: "inprocess:local-gmail-poll",
+          triggeredBy: "inProcess",
         },
-        body: "{}",
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!response.ok) {
-        const body = await response.text();
-        log({
-          message: "Local Gmail poll tick failed",
-          status: response.status,
-          body: body.slice(0, 300),
-        });
-        return;
-      }
-      log({ message: "Local Gmail poll tick enqueued" });
-    } catch (error) {
-      log({
-        message: "Local Gmail poll tick error",
-        error: error instanceof Error ? error.message : String(error),
-      });
+        {
+          info: (msg: string | Record<string, unknown>, ...args: unknown[]) =>
+            log({
+              message: typeof msg === "string" ? msg : "info",
+              ...(typeof msg === "object" ? msg : {}),
+              ...(typeof args[0] === "object" && args[0]
+                ? (args[0] as Record<string, unknown>)
+                : {}),
+            }),
+          error: (msg: string | Record<string, unknown>, ...args: unknown[]) =>
+            log({
+              message: typeof msg === "string" ? msg : "error",
+              severity: "ERROR",
+              ...(typeof msg === "object" ? msg : {}),
+              ...(typeof args[0] === "object" && args[0]
+                ? (args[0] as Record<string, unknown>)
+                : {}),
+            }),
+          child: (bindings: Record<string, unknown>) => ({
+            info: (
+              msg: string | Record<string, unknown>,
+              ...args: unknown[]
+            ) =>
+              log({
+                message: typeof msg === "string" ? msg : "info",
+                ...bindings,
+                ...(typeof msg === "object" ? msg : {}),
+                ...(typeof args[0] === "object" && args[0]
+                  ? (args[0] as Record<string, unknown>)
+                  : {}),
+              }),
+            error: (
+              msg: string | Record<string, unknown>,
+              ...args: unknown[]
+            ) =>
+              log({
+                message: typeof msg === "string" ? msg : "error",
+                severity: "ERROR",
+                ...bindings,
+                ...(typeof msg === "object" ? msg : {}),
+                ...(typeof args[0] === "object" && args[0]
+                  ? (args[0] as Record<string, unknown>)
+                  : {}),
+              }),
+          }),
+        },
+        async () => {
+          await runTick();
+        },
+      );
+    } catch {
+      // Logged via withWorkloadRun / tick; keep interval alive.
     }
   }
 

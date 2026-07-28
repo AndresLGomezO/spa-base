@@ -40,6 +40,7 @@ import { startLocalGmailPollScheduler } from "./services/local-gmail-poll-schedu
 import { createWorkerGmailTaskEnqueuer } from "./services/worker-gmail-task-enqueuer.js";
 import { processUserAiMemoryRefresh } from "./services/user-ai-memory-refresh-processor.js";
 import { buildWorkerServer } from "./server.js";
+import { createWorkerWorkloadRunRecorder } from "./workloads/create-worker-workload-run-recorder.js";
 
 const firebaseAdminConfig = {
   projectId: workerEnv.GCP_PROJECT_ID,
@@ -51,6 +52,9 @@ const firebaseAdminConfig = {
 };
 
 initializeFirebaseAdmin(firebaseAdminConfig);
+
+const workloadRunRecorder =
+  createWorkerWorkloadRunRecorder(firebaseAdminConfig);
 
 const aiJobRepository =
   createFirestoreAdminAiJobRepository(firebaseAdminConfig);
@@ -131,6 +135,7 @@ const vectorIndexService = new VectorIndexService(vectorIndexClient, {
 });
 
 const memoryRefreshScheduler = createDebouncedUserAiMemoryRefreshScheduler({
+  workloadRunRecorder,
   enqueue: async ({ tenantId, userId }) => {
     // Local/dev: process in-process. Production Cloud Scheduler/Tasks can
     // hit AI_TASK_ROUTES.REFRESH_USER_AI_MEMORY with the same payload.
@@ -269,6 +274,7 @@ const server = await buildWorkerServer({
   indexProjectId: workerEnv.GCP_PROJECT_ID,
   isAiStepTraceEnabled: () => runtimeSettingsCache.isAiTraceEnabled(),
   isAiTraceEnabled: () => runtimeSettingsCache.isAiTraceEnabled(),
+  workloadRunRecorder,
   ...(gmailIngest ? { gmailIngest } : {}),
 });
 
@@ -281,6 +287,7 @@ if (workerEnv.IS_LOCAL && gmailIngest) {
   startLocalGmailPollScheduler({
     workerBaseUrl: workerEnv.WORKER_SERVICE_URL,
     getDeliveryMode: () => runtimeSettingsCache.getGmailIngestDeliveryMode(),
+    workloadRunRecorder,
   });
 }
 

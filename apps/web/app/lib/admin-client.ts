@@ -192,6 +192,192 @@ export async function getTenantDeletionJob(
 
 export type { AdminTenant };
 
+// --- Workload Manager types ---
+
+export type WorkloadKind =
+  | "cloudTasksQueue"
+  | "schedulerJob"
+  | "pubsubSubscription"
+  | "scheduledDataHook"
+  | "workerRoute"
+  | "inProcessScheduler";
+
+export type WorkloadSource = "system" | "hook" | "integration";
+export type WorkloadStatus = "running" | "paused" | "disabled" | "unknown";
+export type WorkloadAction =
+  | "pause"
+  | "resume"
+  | "runNow"
+  | "enable"
+  | "disable";
+
+export interface WorkloadRecord {
+  readonly id: string;
+  readonly kind: WorkloadKind;
+  readonly source: WorkloadSource;
+  readonly displayName: string;
+  readonly description?: string;
+  readonly actions: readonly WorkloadAction[];
+  readonly gcp?: Record<string, unknown>;
+  readonly route?: string;
+  readonly sourceFile?: string;
+  readonly disableHint?: string;
+  readonly controlledBy?: string;
+}
+
+export interface WorkloadState {
+  readonly status: WorkloadStatus;
+  readonly live?: Record<string, unknown>;
+  readonly fetchedAt: string;
+  readonly error?: string;
+}
+
+export interface WorkloadWithState extends WorkloadRecord {
+  readonly state: WorkloadState;
+}
+
+export interface WorkloadStats24h {
+  readonly success: number;
+  readonly error: number;
+  readonly timeout: number;
+  readonly running: number;
+  readonly cancelled: number;
+}
+
+export interface WorkloadRunRecord {
+  readonly id: string;
+  readonly workloadId: string;
+  readonly tenantId?: string;
+  readonly triggeredBy: string;
+  readonly triggerContext?: Record<string, unknown>;
+  readonly startedAt: string;
+  readonly completedAt?: string;
+  readonly durationMs?: number;
+  readonly status: string;
+  readonly error?: string;
+  readonly metrics?: Record<string, unknown>;
+  readonly artifactRefs?: Record<string, string>;
+  readonly parentRunId?: string;
+  readonly rootRunId?: string;
+  readonly logExcerpt?: string;
+  readonly cloudLoggingUrl?: string;
+}
+
+export interface WorkloadRunLogEntry {
+  readonly timestamp: string;
+  readonly severity?: string;
+  readonly message: string;
+}
+
+export interface WorkloadFilters {
+  readonly kind?: WorkloadKind;
+  readonly source?: WorkloadSource;
+  readonly status?: WorkloadStatus;
+  readonly q?: string;
+}
+
+export interface WorkloadRunFilters {
+  readonly since?: string;
+  readonly until?: string;
+  readonly status?: string;
+  readonly triggeredBy?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+export async function listWorkloads(
+  filters?: WorkloadFilters,
+): Promise<WorkloadWithState[]> {
+  const params = new URLSearchParams();
+  if (filters?.kind) params.set("kind", filters.kind);
+  if (filters?.source) params.set("source", filters.source);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.q) params.set("q", filters.q);
+  const qs = params.toString();
+  const path = `/admin/workloads${qs ? `?${qs}` : ""}`;
+  const payload = await adminFetch<{ workloads: WorkloadWithState[] }>(path);
+  return payload.workloads;
+}
+
+export async function getWorkload(
+  id: string,
+): Promise<{ workload: WorkloadWithState; stats24h?: WorkloadStats24h }> {
+  return adminFetch<{
+    workload: WorkloadWithState;
+    stats24h?: WorkloadStats24h;
+  }>(`/admin/workloads/${encodeURIComponent(id)}`);
+}
+
+export async function applyWorkloadAction(
+  id: string,
+  action: WorkloadAction,
+): Promise<WorkloadWithState> {
+  const payload = await adminFetch<{ workload: WorkloadWithState }>(
+    `/admin/workloads/${encodeURIComponent(id)}/actions/${encodeURIComponent(action)}`,
+    { method: "POST" },
+  );
+  return payload.workload;
+}
+
+export async function listWorkloadRuns(
+  id: string,
+  filters?: WorkloadRunFilters,
+): Promise<{ items: WorkloadRunRecord[]; nextCursor: string | null }> {
+  const params = new URLSearchParams();
+  if (filters?.since) params.set("since", filters.since);
+  if (filters?.until) params.set("until", filters.until);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.triggeredBy) params.set("triggeredBy", filters.triggeredBy);
+  if (filters?.cursor) params.set("cursor", filters.cursor);
+  if (filters?.limit) params.set("limit", String(filters.limit));
+  const qs = params.toString();
+  const path = `/admin/workloads/${encodeURIComponent(id)}/runs${qs ? `?${qs}` : ""}`;
+  return adminFetch<{ items: WorkloadRunRecord[]; nextCursor: string | null }>(
+    path,
+  );
+}
+
+export async function getWorkloadRun(
+  id: string,
+  runId: string,
+): Promise<WorkloadRunRecord> {
+  const payload = await adminFetch<{ run: WorkloadRunRecord }>(
+    `/admin/workloads/${encodeURIComponent(id)}/runs/${encodeURIComponent(runId)}`,
+  );
+  return payload.run;
+}
+
+export async function getWorkloadRunLogs(
+  id: string,
+  runId: string,
+  opts?: { tail?: number },
+): Promise<{
+  entries: WorkloadRunLogEntry[];
+  source: "cloudLogging" | "excerpt" | "empty";
+  cloudLoggingUrl?: string;
+}> {
+  const params = new URLSearchParams();
+  if (opts?.tail) params.set("tail", String(opts.tail));
+  const qs = params.toString();
+  const path = `/admin/workloads/${encodeURIComponent(id)}/runs/${encodeURIComponent(runId)}/logs${qs ? `?${qs}` : ""}`;
+  return adminFetch<{
+    entries: WorkloadRunLogEntry[];
+    source: "cloudLogging" | "excerpt" | "empty";
+    cloudLoggingUrl?: string;
+  }>(path);
+}
+
+export async function getWorkloadRunTrace(
+  rootRunId: string,
+): Promise<WorkloadRunRecord[]> {
+  const payload = await adminFetch<{ runs: WorkloadRunRecord[] }>(
+    `/admin/workloads/runs/trace/${encodeURIComponent(rootRunId)}`,
+  );
+  return payload.runs;
+}
+
+// --- Platform Runtime Settings ---
+
 export interface PlatformRuntimeSettingsResponse {
   readonly settings: {
     readonly aiEnabled: boolean | null;
