@@ -1,3 +1,4 @@
+import { FieldPath } from "firebase-admin/firestore";
 import {
   WORKLOAD_RUNS_COLLECTION,
   type CreateWorkloadRunInput,
@@ -51,7 +52,8 @@ export function createFirestoreAdminWorkloadRunRepository(
     async listByWorkloadId(workloadId, options) {
       let query: FirebaseFirestore.Query = collection()
         .where("workloadId", "==", workloadId)
-        .orderBy("startedAt", "desc");
+        .orderBy("startedAt", "desc")
+        .orderBy(FieldPath.documentId(), "desc");
 
       if (options?.since) {
         query = query.where("startedAt", ">=", options.since);
