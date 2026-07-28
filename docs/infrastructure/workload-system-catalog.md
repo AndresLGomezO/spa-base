@@ -344,7 +344,8 @@ Entity catalog sync / import / admin index routes
 | FIFO | [`firestore-index-provisioner.ts`](../../packages/gcp-firebase/src/firestore-index-provisioner.ts) |
 | Reconciler | [`firestore-index-reconciler.ts`](../../packages/gcp-firebase/src/firestore-index-reconciler.ts) |
 | Env | `ENSURE_FIRESTORE_INDEXES=true` (typical) |
-| Unused TF | [`pubsub-index-provisioning.tf`](../../packages/infrastructure/terraform/pubsub-index-provisioning.tf) — topic/IAM gated off; **not** in registry |
+| Unused TF | — | Former `pubsub-index-provisioning.tf` deleted; live path is in-process |
+
 
 **Reasonability.** In-process rate limiting is the live path. Async Pub/Sub
 index worker was never fully productized (removed from registry as
@@ -353,6 +354,11 @@ misleading).
 ---
 
 ## 5. Reasonability of the catalog shape
+
+System workloads are **tenant-agnostic shared pipes**. Tenant-specific cron
+and CRUD side-effects live in each tenant’s data-hook catalog and appear as
+dynamic `hook:{tenantId}:{hookId}` — not as hardcoded entity lists in platform
+packages.
 
 ### Why separate queues
 
@@ -396,7 +402,8 @@ Documented in inventory; brief:
 | `queue:ai-embed` | No enqueue; embeddings synchronous |
 | `worker:nightly-user-ai-memory` | No invoker |
 | `worker:refresh-user-ai-memory` | HTTP unused; debouncer is live |
-| `pubsub:index-provisioning-worker` | No TF subscription; in-process path is live |
+| `pubsub:index-provisioning-worker` | Never productized; in-process path is live |
+| `pubsub-index-provisioning.tf` | Unused gated TF deleted (System Phase 1) |
 
 ---
 

@@ -99,21 +99,24 @@ When a list query’s filter+sort shape does not match a planned index (or the e
 | `ENSURE_FIRESTORE_INDEXES` | `true` in dev, `false` in production | Call Firestore Admin `createIndex` on model sync |
 | `CLIENT_QUERY_FALLBACK_MAX_DOCS` | `1000` | Max docs loaded for in-memory list pipeline (`inMemoryListQueries` and non-flag fallback) |
 | `CACHE_TTL_MS` | `60000` | TTL for in-memory list snapshot cache (API process) |
-| `INDEX_PROVISIONING_PUBSUB` | `false` | Publish index jobs to Pub/Sub for worker |
-| Terraform `enable_index_provisioning_pubsub` | `false` | Create Pub/Sub topic + backend pub/sub IAM ([`pubsub-index-provisioning.tf`](../packages/infrastructure/terraform/pubsub-index-provisioning.tf)) |
 
 Backend SA needs `roles/datastore.indexAdmin` (in addition to `datastore.user`) when runtime provisioning is enabled.
 
 ### MVP deploy (CI/CD)
 
-By default, **no Pub/Sub resources** are created in Terraform (`enable_index_provisioning_pubsub = false`). Indexes also ship via committed [`firestore.indexes.json`](../firestore.indexes.json) and [`firestore.tf`](../packages/infrastructure/terraform/firestore.tf). Cloud Run sets **`ENSURE_FIRESTORE_INDEXES=true`** per workspace in [`workspaces.tf`](../packages/infrastructure/terraform/workspaces.tf) / [`cloudrun.tf`](../packages/infrastructure/terraform/cloudrun.tf), so the API calls Firestore Admin `createIndex` on entity model sync. Backend SA needs `roles/datastore.indexAdmin` (see [`iam.tf`](../packages/infrastructure/terraform/iam.tf)).
+Live path is **in-process** provisioning on the API
+(`inprocess:index-provisioner-queue` / `ENSURE_FIRESTORE_INDEXES`). Indexes also
+ship via committed [`firestore.indexes.json`](../firestore.indexes.json) and
+[`firestore.tf`](../packages/infrastructure/terraform/firestore.tf). Cloud Run
+sets **`ENSURE_FIRESTORE_INDEXES=true`** per workspace in
+[`workspaces.tf`](../packages/infrastructure/terraform/workspaces.tf) /
+[`cloudrun.tf`](../packages/infrastructure/terraform/cloudrun.tf). Backend SA
+needs `roles/datastore.indexAdmin` (see
+[`iam.tf`](../packages/infrastructure/terraform/iam.tf)).
 
-### Enabling async index provisioning (Phase C)
-
-1. Set `enable_index_provisioning_pubsub = true` in Terraform (workspace `terraform.tfvars` or CI variable).
-2. Add `roles/pubsub.admin` to `DEPLOYER_ROLES` in [`scripts/setup-github-wif.sh`](../scripts/setup-github-wif.sh) and re-run `bash scripts/setup-github-wif.sh entitysystem` so GitHub Actions can create topics (see [github-wif-setup.md](infrastructure/github-wif-setup.md)).
-3. Optionally add `pubsub.googleapis.com` to `BOOTSTRAP_APIS` in the same script so the API is enabled before the first gated apply.
-4. Add a Pub/Sub subscription (Terraform or console), deploy [`apps/worker-indexer`](../apps/worker-indexer), and set `INDEX_PROVISIONING_PUBSUB=true` on the API service.
+Former gated `pubsub-index-provisioning.tf` / async Phase C scaffolding was
+removed; do not re-add without a full producer, consumer, and workload-registry
+entry.
 
 ## Operational runbook (Development)
 

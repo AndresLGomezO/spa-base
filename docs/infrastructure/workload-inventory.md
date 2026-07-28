@@ -389,17 +389,13 @@ UI even if the subscription still exists.
 
 ---
 
-### Index provisioning Pub/Sub (not in registry)
+### Index provisioning Pub/Sub (removed)
 
-Topic/IAM scaffolding still exists in
-[`pubsub-index-provisioning.tf`](../../packages/infrastructure/terraform/pubsub-index-provisioning.tf)
-(`enable_index_provisioning_pubsub` default **false**). There is **no**
-registry subscription entry and **no** Cloud Run for `worker-indexer` in TF.
-The live path is [`inprocess:index-provisioner-queue`](#inprocessindex-provisioner-queue).
-Former registry id `pubsub:index-provisioning-worker` was removed as misleading.
-
-**Review lean.** Leave TF gated off, or delete the TF topic entirely if you
-are sure async index provisioning will not return.
+Former gated TF `pubsub-index-provisioning.tf` and registry id
+`pubsub:index-provisioning-worker` are **gone**. There was never a Cloud Run
+subscription in Terraform. The live path is
+[`inprocess:index-provisioner-queue`](#inprocessindex-provisioner-queue).
+Do not re-add without a real producer + consumer + registry entry.
 
 ---
 
@@ -684,11 +680,10 @@ index routes enqueue specs; the FIFO drains `ensureFirestoreIndexes`.
 **If removed.** Index creation must become fully synchronous on those paths
 (timeout risk) or indexes must be managed only manually.
 
-**Coupled to.** Entity definition sync; admin index UI; gated-off
-`pubsub-index-provisioning.tf` scaffolding.
+**Coupled to.** Entity definition sync; admin index UI. Former gated
+`pubsub-index-provisioning.tf` scaffolding was removed (System Phase 1).
 
-**Review lean.** **Keep** as the index provisioning workload. Delete or keep
-unused Pub/Sub TF separately (see §3).
+**Review lean.** **Keep** as the index provisioning workload.
 
 ---
 
@@ -721,29 +716,34 @@ crons; do not explode into N Scheduler jobs without a scale reason.
 
 Use this section when deciding clean-up vs architecture change.
 
+**Tenant scope.** Static registry workloads are **platform pipes** (any tenant).
+Tenant-specific schedules are dynamic `hook:{tenantId}:{hookId}` from each
+tenant’s data-hook catalog. Do not encode tenant entity product rules into
+`@repo/*` packages. System Phase 1 matrix:
+[workload-inventory-by-entity.md §A](./workload-inventory-by-entity.md#a-system-not-tied-to-one-entity).
+
 ### Recommended KEEP (baseline clean set)
 
-| ID | Role |
-| -- | ---- |
-| `queue:ai-jobs` + 3 AI worker routes | User AI async |
-| `queue:hook-jobs` + process-data-hook + delete-tenant | Platform async |
-| `queue:gmail-jobs` + window-sync + process-message + watch-renew | Email fan-out |
-| `scheduler:schedule-tick` + worker:schedule-tick + `hook:*` | Cron fabric |
-| `scheduler:gmail-poll` + worker:gmail-poll + local-gmail-poll | Default email ingest |
-| `pubsub:aggregation-events-worker` | Prod metrics offload |
-| `inprocess:debounced-user-ai-memory` | L2 memory refresh |
-| `inprocess:index-provisioner-queue` | Firestore indexes |
+| ID | Verdict | Role |
+| -- | ------- | ---- |
+| `queue:ai-jobs` + 3 AI worker routes | KEEP | User AI async |
+| `queue:hook-jobs` + process-data-hook + delete-tenant | KEEP | Platform async |
+| `queue:gmail-jobs` + window-sync + process-message | KEEP | Email fan-out |
+| `scheduler:schedule-tick` + worker:schedule-tick + `hook:*` | KEEP | Cron fabric |
+| `scheduler:gmail-poll` + worker:gmail-poll + local-gmail-poll | KEEP | Default email ingest |
+| `pubsub:aggregation-events-worker` | KEEP (conditional) | Prod metrics offload |
+| `inprocess:debounced-user-ai-memory` | KEEP | L2 memory refresh |
+| `inprocess:index-provisioner-queue` | KEEP | Firestore indexes |
 
 ### Optional product decisions (not defects)
 
 | Topic | Options |
 | ----- | ------- |
-| **Gmail push vs poll** | A) Keep both (current: poll default, push optional). B) Poll-only → delete `pubsub:gmail-push-api` + watch-renew + topic TF. C) Push-only → pause/delete `scheduler:gmail-poll` + local stand-in. |
+| **Gmail push vs poll** | **DEFER.** A) Keep both (current: poll default, push optional). B) Poll-only → delete `pubsub:gmail-push-api` + watch-renew + topic TF. C) Push-only → pause/delete `scheduler:gmail-poll` + local stand-in. |
 | **Aggregation in non-prod** | Keep dev-inline / prod-PubSub (current). Or always-PubSub (run worker-aggregation locally). |
 | **Split `queue:ai-jobs`** | Only if chat SLOs suffer under narrative/UI-builder load. |
 | **Split `queue:hook-jobs`** | Only if pausing hooks must not pause tenant deletion. |
 | **User AI memory on Cloud Tasks** | Needed only for multi-replica debounce correctness; today single in-process debounce is intentional. |
-| **Index Pub/Sub TF** | Delete unused topic/IAM or leave gated for future. |
 
 ### Do not “merge” these (false duplicates)
 
@@ -761,7 +761,8 @@ Use this section when deciding clean-up vs architecture change.
 | `queue:ai-embed` | Zero enqueue; embeddings synchronous on worker |
 | `worker:nightly-user-ai-memory` | No invoker, no Scheduler |
 | `worker:refresh-user-ai-memory` | HTTP never enqueued; in-process debouncer is the path |
-| `pubsub:index-provisioning-worker` | Subscription not in TF; feature gated off; in-process queue is live |
+| `pubsub:index-provisioning-worker` | Subscription never in TF; in-process queue is live |
+| `pubsub-index-provisioning.tf` (gated topic/IAM) | Unused scaffolding deleted in System Phase 1; live path remains `inprocess:index-provisioner-queue` |
 
 ---
 

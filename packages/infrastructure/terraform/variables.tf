@@ -40,12 +40,6 @@ variable "firestore_collection_prefix" {
   default     = null
 }
 
-variable "enable_index_provisioning_pubsub" {
-  description = "Create Pub/Sub topic and backend publisher/subscriber IAM for async index provisioning (Phase C)."
-  type        = bool
-  default     = false
-}
-
 variable "worker_aggregation_image" {
   description = "Docker image URI for the aggregation worker Cloud Run service. Set by CI on every deploy."
   type        = string

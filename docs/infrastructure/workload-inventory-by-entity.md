@@ -32,7 +32,13 @@ per-entity Scheduler job).
 
 ## A. System (not tied to one entity)
 
-Platform fabric. Pausing these stops work **across** entities.
+Platform fabric — **tenant-agnostic shared pipes**. Pausing these stops work
+**across** tenants and entities. System does **not** encode which tenant
+entities may use AI, hooks, or email; tenants express that in their own
+catalog (dynamic `hook:{tenantId}:{hookId}`).
+
+Chips on System rows in Section G are **seed attribution** for the rates
+tenant (who currently enqueues onto the pipe), not platform ownership rules.
 
 ### Control plane
 
@@ -64,9 +70,34 @@ Platform fabric. Pausing these stops work **across** entities.
 | `inprocess:debounced-user-ai-memory` | Cross-entity L2 memory after summaries | LIVE |
 | `inprocess:index-provisioner-queue` | Firestore indexes (API process) | LIVE |
 
-**Reasonability:** System must stay. Entity-specific *scheduled* work is almost
-entirely `hook:*` under `scheduler:schedule-tick`. Gmail/AI queues are shared
-pipes, not per-entity queues.
+### Review lean (System Phase 1)
+
+| Workload | Verdict | Why |
+| -------- | ------- | --- |
+| `queue:ai-jobs` + `worker:process-ai-chat` + `worker:process-ai-ui-builder` + `worker:refresh-record-narrative` | **KEEP** | Shared Vertex budget pipe; job types are platform features |
+| `queue:hook-jobs` + `worker:process-data-hook` + `worker:delete-tenant` | **KEEP** | Platform async side-effects; not entity-specific |
+| `queue:gmail-jobs` + `worker:gmail-window-sync` + `worker:gmail-process-message` | **KEEP** | Integration fan-out isolation |
+| `scheduler:schedule-tick` + `worker:schedule-tick` | **KEEP** | Single ticker for all tenants’ scheduled hooks |
+| `scheduler:gmail-poll` + `worker:gmail-poll` + `inprocess:local-gmail-poll` | **KEEP** | Default delivery mode (poll + local stand-in) |
+| `pubsub:aggregation-events-worker` | **KEEP (conditional)** | Env/workspace gated; prod metrics offload |
+| `pubsub:gmail-push-api` + `worker:gmail-watch-renew` | **DEFER (product)** | Inactive under default poll; keep provisioned until poll-only decision |
+| `inprocess:debounced-user-ai-memory` | **KEEP** | Platform L2 memory coalesce |
+| `inprocess:index-provisioner-queue` | **KEEP** | Live Firestore index path |
+| Former index Pub/Sub TF (`pubsub-index-provisioning.tf`) | **REMOVED** | Never in registry; gated off; in-process path is live — scaffolding deleted |
+
+Do **not** merge poll + local-gmail-poll, or a `worker:*` with its parent queue/scheduler (false duplicates). See [workload-inventory.md](./workload-inventory.md) §7.
+
+**Reasonability:** System pipes stay. Tenant-specific *scheduled* work is
+dynamic `hook:*` under `scheduler:schedule-tick`, owned by each tenant’s data-hook
+catalog — not by platform packages.
+
+### Phase 2 handoff (tenant catalog)
+
+System is locked. Next pass walks **rates seed** scheduled + event hooks
+entity-by-entity with the same reasonability lens (required process?
+duplicate? stale? cost?). Judgment examples (e.g. “LLM narrative on every
+transaction is not a functional process”) apply to **catalog** keep/remove/
+merge decisions — never as hardcoding into `@repo/*`.
 
 ---
 
@@ -277,7 +308,7 @@ extra pauseable workload rows.
 | ------ | ---------------------------- | --------------------- | ------------ | ------- |
 | *(System)* | — | — | All queues/schedulers/gmail/AI | LIVE — required |
 | `financialItem` | 8 | ~29 | gmail-jobs, hook-jobs | LIVE |
-| `transaction` | 5 | ~6 | hook-jobs, ai narrative | LIVE |
+| `transaction` | 5 | ~6 | hook-jobs | LIVE |
 | `paymentSchedule` | 3 | 0 primary | metrics engine | LIVE |
 | `portfolioSettings` | 6 | 3 | ai-jobs (narratives) | LIVE |
 | `spendingPattern` | 1 | 0 primary | — | LIVE |
@@ -295,23 +326,35 @@ extra pauseable workload rows.
 ## D. What looks “not in use” (workload lens)
 
 1. **No orphan System control-plane workloads** in the cleaned registry (see
-   inventory removed list: `ai-embed`, nightly memory HTTP, etc. already gone).
+   inventory removed list: `ai-embed`, nightly memory HTTP, index Pub/Sub TF,
+   etc. already gone). System Phase 1 reasonability matrix is in **Section A**.
 
 2. **No scheduled `hook:*` with zero entity purpose** in the rates seed — every
    schedule maps to financialItem / transaction / paymentSchedule /
-   portfolioSettings / spendingPattern.
+   portfolioSettings / spendingPattern. **Phase 2** re-judges each with
+   reasonability (keep / merge / remove) in the tenant catalog.
 
 3. **Entities with no primary workload rows**
    (`incomeDetails`, `investmentDetails`, `serviceDetails`): not unused
    *workloads* — they simply **don’t own** any. Cleanup question is entity
    schema, not Scheduler inventory.
 
-4. **Gmail push** (`pubsub:gmail-push-api`, `worker:gmail-watch-renew`):
-   provisioned, **inactive** under default poll — optional product path, not
-   dead code.
+4. **`hook:rates:Reset NEEDS_MANUAL to PENDING` — manual-only.** Natural cron
+   is leap-day only (29 Feb); day-to-day use is ops force-run after catalog
+   changes. Keep provisioned (near-zero schedule cost); do not treat as daily
+   traffic.
 
-5. **Aggregation pubsub**: off in dev workspace; on in staging/prod —
+5. **Gmail push** (`pubsub:gmail-push-api`, `worker:gmail-watch-renew`):
+   provisioned, **inactive** under default poll — optional product path, not
+   dead code. Product decision (keep vs retire) deferred to catalog cleanup.
+
+6. **Aggregation pubsub**: off in dev workspace; on in staging/prod —
    environment gate, not unused.
+
+7. **Portfolio narrative fan-out** — 7 nightly hooks writing to the same
+   `portfolioSettings` singleton under different `narrativeVariant`s. Prime
+   merge candidate for rates seed catalog cleanup (reasonability), not a
+   platform code change.
 
 ---
 
@@ -360,9 +403,9 @@ Complete set of **static registry** workloads plus **scheduled** dynamic
 
 | # | Workload | Summary | Used by (chips) |
 | - | -------- | ------- | --------------- |
-| 1 | `queue:ai-jobs` | Cloud Tasks queue for async AI work: chat, UI builder, and record narrative refresh. | `system` `financialItem` `account` `actor` `portfolioSettings` `transaction` |
+| 1 | `queue:ai-jobs` | Cloud Tasks queue for async AI work: chat, UI builder, and record narrative refresh. | `system` `financialItem` `portfolioSettings` `productInsight` `upcomingPaymentInsight` `spendingCategoryInsight` |
 | 1.1 |  | `system` — Shared Cloud Tasks pipe that rate-limits all async AI jobs. | `system` |
-| 1.2 |  | Carries narrative-refresh tasks for entity AI summaries when enqueued. | `financialItem` `account` `actor` `portfolioSettings` `transaction` |
+| 1.2 |  | Carries narrative-refresh tasks for entity AI summaries when enqueued (rates seed attribution). | `financialItem` `portfolioSettings` `productInsight` `upcomingPaymentInsight` `spendingCategoryInsight` |
 | 2 | `queue:hook-jobs` | Cloud Tasks queue for queued after-hooks and long-running tenant deletion. | `system` |
 | 3 | `queue:gmail-jobs` | Cloud Tasks queue for Gmail window sync, per-message processing, and watch renew. | `system` `financialItem` `attachment` `email` `statement` `transaction` |
 | 3.1 |  | `system` — Shared Cloud Tasks pipe for all Gmail ingest fan-out. | `system` |
@@ -388,9 +431,9 @@ Complete set of **static registry** workloads plus **scheduled** dynamic
 | 10 | `worker:delete-tenant` | HTTP handler for async tenant archive and purge. | `system` |
 | 11 | `worker:process-ai-chat` | HTTP handler that runs an async grounded AI chat job. | `system` |
 | 12 | `worker:process-ai-ui-builder` | HTTP handler that runs an async AI UI builder job. | `system` |
-| 13 | `worker:refresh-record-narrative` | HTTP handler that refreshes LLM narratives on AI record summaries. | `system` `financialItem` `account` `actor` `portfolioSettings` `transaction` |
+| 13 | `worker:refresh-record-narrative` | HTTP handler that refreshes LLM narratives on AI record summaries. | `system` `financialItem` `portfolioSettings` `productInsight` `upcomingPaymentInsight` `spendingCategoryInsight` |
 | 13.1 |  | `system` — Shared HTTP path for narrative refresh tasks from ai-jobs. | `system` |
-| 13.2 |  | Refreshes LLM narrative text on entity AI summary docs. | `financialItem` `account` `actor` `portfolioSettings` `transaction` |
+| 13.2 |  | Refreshes LLM narrative text on entity AI summary docs (rates seed attribution). | `financialItem` `portfolioSettings` `productInsight` `upcomingPaymentInsight` `spendingCategoryInsight` |
 | 14 | `worker:gmail-poll` | HTTP target for gmail-poll; enqueues a window sync per connected mailbox. | `system` `email` |
 | 14.1 |  | `system` — HTTP face of the gmail-poll scheduler job. | `system` |
 | 14.2 |  | `email` — Enqueues per-mailbox sync that updates the email ingest pipeline. | `email` |
@@ -471,6 +514,7 @@ Complete set of **static registry** workloads plus **scheduled** dynamic
 _Total: 43 parent workloads (20 static + 23 scheduled hooks) and 78 entity/system child rows (siblings with the same role merged)._
 
 **Chip legend:** `` `system` `` = platform control-plane / shared pipe;
-`` `entityName` `` = tenant entity catalog model.
+`` `entityName` `` = tenant entity catalog model (**attribution** for who
+currently uses the pipe in the rates seed — not a platform allowlist).
 On parent rows, chips list everyone involved (primary first after `system`).
 On child rows, Workload is blank. Single-chip children keep `` `entity` `` — summary; merged siblings share one summary with multiple chips. No children when the parent already has only one chip.
