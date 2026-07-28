@@ -45,7 +45,6 @@ import {
 } from "./debugger-status-styles";
 import { buildDebugRecordKey } from "./dismissed-debug-records";
 import {
-  hookResolutionSourceLabelKey,
   resolutionSourceForEvent,
   type HookResolutionSourceKey,
 } from "./hook-resolution-source";

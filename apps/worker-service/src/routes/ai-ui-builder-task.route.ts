@@ -14,7 +14,9 @@ import { withWorkloadRun } from "../workloads/with-workload-run.js";
 
 export async function aiUiBuilderTaskRoute(
   app: FastifyInstance,
-  opts: AiUiBuilderProcessorDeps & { readonly workloadRunRecorder?: WorkloadRunRecorder },
+  opts: AiUiBuilderProcessorDeps & {
+    readonly workloadRunRecorder?: WorkloadRunRecorder;
+  },
 ): Promise<void> {
   app.post(
     AI_TASK_ROUTES.PROCESS_AI_UI_BUILDER,

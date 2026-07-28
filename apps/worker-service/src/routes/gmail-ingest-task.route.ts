@@ -42,7 +42,9 @@ function isLocalTaskDispatcher(request: FastifyRequest): boolean {
 
 export async function gmailIngestTaskRoute(
   app: FastifyInstance,
-  deps: GmailIngestProcessorDeps & { readonly workloadRunRecorder?: WorkloadRunRecorder },
+  deps: GmailIngestProcessorDeps & {
+    readonly workloadRunRecorder?: WorkloadRunRecorder;
+  },
 ): Promise<void> {
   app.post(
     ROUTES.PROCESS_MESSAGE,

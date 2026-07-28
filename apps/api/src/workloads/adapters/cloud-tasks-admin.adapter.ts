@@ -6,8 +6,8 @@ export interface CloudTasksAdminConfig {
   readonly localMode: boolean;
 }
 
-export interface CloudTasksQueueState {
-  readonly status: "running" | "paused" | "unknown";
+interface CloudTasksQueueState {
+  readonly status: "ready" | "paused" | "unknown";
   readonly live: {
     depth?: number;
     oldestScheduleTime?: string;
@@ -16,7 +16,7 @@ export interface CloudTasksQueueState {
   readonly error?: string;
 }
 
-export interface PendingTask {
+interface PendingTask {
   readonly name: string;
   readonly scheduleTime?: string;
   readonly createTime?: string;
@@ -40,7 +40,8 @@ export function createCloudTasksAdminAdapter(config: CloudTasksAdminConfig) {
   return {
     async getState(queueName: string): Promise<CloudTasksQueueState> {
       if (config.localMode) {
-        return { status: "running", live: { state: "RUNNING" } };
+        // Enabled locally, but not proof of in-flight work.
+        return { status: "ready", live: { state: "RUNNING" } };
       }
       try {
         const tasksClient = await getClient();
@@ -48,11 +49,12 @@ export function createCloudTasksAdminAdapter(config: CloudTasksAdminConfig) {
           name: queuePath(queueName),
         });
         const state = queue.state as string | undefined;
-        const status: "running" | "paused" | "unknown" =
+        // GCP RUNNING = queue accepts tasks; not "work in flight".
+        const status: "ready" | "paused" | "unknown" =
           state === "PAUSED"
             ? "paused"
             : state === "RUNNING"
-              ? "running"
+              ? "ready"
               : "unknown";
         return { status, live: { state: state ?? undefined } };
       } catch (err) {
@@ -109,8 +111,8 @@ export function createCloudTasksAdminAdapter(config: CloudTasksAdminConfig) {
             ? new Date(
                 Number(
                   typeof t.scheduleTime === "object" && t.scheduleTime !== null
-                    ? (t.scheduleTime as { seconds?: number | string }).seconds ??
-                        0
+                    ? ((t.scheduleTime as { seconds?: number | string })
+                        .seconds ?? 0)
                     : 0,
                 ) * 1000,
               ).toISOString()
@@ -119,8 +121,8 @@ export function createCloudTasksAdminAdapter(config: CloudTasksAdminConfig) {
             ? new Date(
                 Number(
                   typeof t.createTime === "object" && t.createTime !== null
-                    ? (t.createTime as { seconds?: number | string }).seconds ??
-                        0
+                    ? ((t.createTime as { seconds?: number | string })
+                        .seconds ?? 0)
                     : 0,
                 ) * 1000,
               ).toISOString()

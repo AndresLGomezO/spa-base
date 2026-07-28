@@ -47,6 +47,7 @@
     "@repo/ui-builder-react": "workspace:*",
     "@repo/ui-builder-renderer": "workspace:*",
     "@repo/ui-charts": "workspace:*",
+    "@repo/workload-registry": "workspace:*",
     "@react-router/node": "catalog:",
     "firebase": "catalog:",
     "isbot": "catalog:",

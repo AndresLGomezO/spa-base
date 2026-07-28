@@ -1,187 +1,196 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Alert,
-  Button,
-  Heading,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Text,
-  toast,
-} from "@repo/ui";
+import { useCallback, useMemo } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { Alert, Text } from "@repo/ui";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
 
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
+import { listWorkloads } from "../../lib/admin-client";
 import {
-  applyWorkloadAction,
-  listWorkloads,
-  type WorkloadAction,
-  type WorkloadKind,
-  type WorkloadSource,
-  type WorkloadStatus,
-  type WorkloadWithState,
-} from "../../lib/admin-client";
-import { WorkloadDetailDrawer } from "./WorkloadDetailDrawer";
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../../features/ui-builder/designer-tree-workbench-classes";
+import { parseCsvParam, WorkloadListTreePanel } from "./WorkloadListTreePanel";
+import { WorkloadDetailPanel } from "./WorkloadDetailPanel";
+import {
+  filterWorkloadsByScheduleMeta,
+  isCatalogWorkload,
+  partitionWorkloads,
+  sortWorkloads,
+  type WorkloadListSort,
+} from "./workload-ui-shared";
 
-const ALL_KINDS: WorkloadKind[] = [
-  "cloudTasksQueue",
-  "schedulerJob",
-  "pubsubSubscription",
-  "scheduledDataHook",
-  "workerRoute",
-  "inProcessScheduler",
-];
-
-const ALL_SOURCES: WorkloadSource[] = ["system", "hook", "integration"];
-const ALL_STATUSES: WorkloadStatus[] = [
-  "running",
-  "paused",
-  "disabled",
-  "unknown",
-];
-
-function StatusBadge({ status }: { readonly status: WorkloadStatus }) {
-  const { t } = useTranslation("common");
-
-  const colorMap: Record<WorkloadStatus, string> = {
-    running: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    paused: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    disabled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    unknown: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-  };
-
-  const labelMap: Record<WorkloadStatus, string> = {
-    running: t("platform.workloads.statusRunning"),
-    paused: t("platform.workloads.statusPaused"),
-    disabled: t("platform.workloads.statusDisabled"),
-    unknown: t("platform.workloads.statusUnknown"),
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorMap[status]}`}
-    >
-      {labelMap[status]}
-    </span>
-  );
+function setOrDeleteParam(params: URLSearchParams, key: string, value: string) {
+  if (value) {
+    params.set(key, value);
+  } else {
+    params.delete(key);
+  }
 }
 
-function WorkloadActionButtons({
-  workload,
-  compact,
-}: {
-  readonly workload: WorkloadWithState;
-  readonly compact?: boolean;
-}) {
-  const { t } = useTranslation("common");
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: ({ action }: { action: WorkloadAction }) =>
-      applyWorkloadAction(workload.id, action),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["platform-workloads"] });
-      queryClient.invalidateQueries({
-        queryKey: ["platform-workload", workload.id],
-      });
-      toast.success(t("platform.workloads.actionSuccess"));
-    },
-    onError: () => {
-      toast.error(t("platform.workloads.actionFailed"));
-    },
-  });
-
-  const destructiveActions = new Set<WorkloadAction>([
-    "pause",
-    "disable",
-  ]);
-
-  const handleAction = (action: WorkloadAction) => {
-    if (destructiveActions.has(action)) {
-      const confirmed = window.confirm(
-        t("platform.workloads.actionConfirmMessage", { action }),
-      );
-      if (!confirmed) return;
-    }
-    mutation.mutate({ action });
-  };
-
-  return (
-    <div className="flex flex-wrap gap-1">
-      {workload.actions.map((action) => (
-        <Button
-          key={action}
-          size={compact ? "sm" : "md"}
-          variant={destructiveActions.has(action) ? "outline" : "primary"}
-          disabled={mutation.isPending}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAction(action);
-          }}
-        >
-          {action}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-function formatLiveSummary(live?: Record<string, unknown>): string {
-  if (!live) return "—";
-  const parts: string[] = [];
-  if ("depth" in live && live.depth !== undefined) {
-    parts.push(`depth: ${live.depth}`);
-  }
-  if ("nextRunAt" in live && live.nextRunAt) {
-    parts.push(`next: ${String(live.nextRunAt).slice(11, 19)}`);
-  }
-  if (parts.length === 0) {
-    return Object.keys(live).length > 0 ? JSON.stringify(live).slice(0, 40) : "—";
-  }
-  return parts.join(", ");
+function parseHourParam(value: string | null): number[] {
+  return parseCsvParam(value)
+    .map((part) => Number(part))
+    .filter((hour) => Number.isInteger(hour) && hour >= 0 && hour <= 23);
 }
 
 export function PlatformWorkloadsPanel() {
   const { t } = useTranslation("common");
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const q = searchParams.get("q") ?? "";
-  const kind = (searchParams.get("kind") as WorkloadKind) || undefined;
-  const source = (searchParams.get("source") as WorkloadSource) || undefined;
-  const status = (searchParams.get("status") as WorkloadStatus) || undefined;
+  const kindParam = searchParams.get("kind") ?? "";
+  const sourceParam = searchParams.get("source") ?? "";
+  const statusParam = searchParams.get("status") ?? "";
+  const domainParam = searchParams.get("domain") ?? "";
+  const frequencyParam = searchParams.get("frequency") ?? "";
+  const hourParam = searchParams.get("hour") ?? "";
+  const kinds = useMemo(() => parseCsvParam(kindParam), [kindParam]);
+  const sources = useMemo(() => parseCsvParam(sourceParam), [sourceParam]);
+  const statuses = useMemo(() => parseCsvParam(statusParam), [statusParam]);
+  const domains = useMemo(() => parseCsvParam(domainParam), [domainParam]);
+  const frequencies = useMemo(
+    () => parseCsvParam(frequencyParam),
+    [frequencyParam],
+  );
+  const hours = useMemo(() => parseHourParam(hourParam), [hourParam]);
+  const sort = (searchParams.get("sort") as WorkloadListSort) || "name";
+  const selectedId = searchParams.get("workload");
+  const view = searchParams.get("view");
+  const catalogView = view === "catalog" && !selectedId;
 
+  // Kind/status/domain/schedule filtered client-side on ops only so catalog
+  // handlers remain available for Catalog + related-handler lookup.
   const filters = useMemo(
-    () => ({ q: q || undefined, kind, source, status }),
-    [q, kind, source, status],
+    () => ({
+      q: q || undefined,
+      source: sourceParam || undefined,
+    }),
+    [q, sourceParam],
   );
 
   const workloadsQuery = useQuery({
     queryKey: ["platform-workloads", filters],
     queryFn: () => listWorkloads(filters),
     refetchInterval: 10_000,
+    placeholderData: keepPreviousData,
   });
 
-  const updateParam = (key: string, value: string) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (value) {
-        next.set(key, value);
-      } else {
-        next.delete(key);
-      }
-      return next;
-    });
-  };
+  const updateParams = useCallback(
+    (updates: Record<string, string>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [key, value] of Object.entries(updates)) {
+            setOrDeleteParam(next, key, value);
+          }
+          return next;
+        },
+        { replace: true, preventScrollReset: true },
+      );
+    },
+    [setSearchParams],
+  );
 
-  if (workloadsQuery.isLoading) {
+  const selectWorkload = useCallback(
+    (id: string) => {
+      updateParams({ workload: id, view: "" });
+    },
+    [updateParams],
+  );
+
+  const clearSelection = useCallback(() => {
+    updateParams({ workload: "", view: "" });
+  }, [updateParams]);
+
+  const openCatalog = useCallback(() => {
+    updateParams({ workload: "", view: "catalog" });
+  }, [updateParams]);
+
+  const backFromDetail = useCallback(() => {
+    const selected = (workloadsQuery.data ?? []).find(
+      (workload) => workload.id === selectedId,
+    );
+    if (selected && isCatalogWorkload(selected)) {
+      openCatalog();
+      return;
+    }
+    clearSelection();
+  }, [workloadsQuery.data, selectedId, openCatalog, clearSelection]);
+
+  const clearFilters = useCallback(() => {
+    updateParams({
+      q: "",
+      kind: "",
+      source: "",
+      status: "",
+      domain: "",
+      frequency: "",
+      hour: "",
+    });
+  }, [updateParams]);
+
+  const refreshWorkloads = useCallback(() => {
+    void workloadsQuery.refetch();
+  }, [workloadsQuery]);
+
+  const { operational, catalog } = useMemo(() => {
+    const all = workloadsQuery.data ?? [];
+    return partitionWorkloads(all);
+  }, [workloadsQuery.data]);
+
+  const sortNow = useMemo(() => {
+    // Bucket to the current minute so "Next to run" order stays stable across
+    // 10s list refetches within the same minute.
+    const date = new Date();
+    date.setSeconds(0, 0);
+    return date;
+    // Recompute when list data updates (status/nextRunTime may change).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional bucket keyed by dataUpdatedAt
+  }, [workloadsQuery.dataUpdatedAt]);
+
+  const operationalFiltered = useMemo(() => {
+    let items = operational;
+    if (kinds.length > 0) {
+      const kindSet = new Set(kinds);
+      items = items.filter((w) => kindSet.has(w.kind));
+    }
+    if (statuses.length > 0) {
+      const statusSet = new Set(statuses);
+      items = items.filter((w) => statusSet.has(w.state.status));
+    }
+    items = filterWorkloadsByScheduleMeta(items, {
+      domains,
+      frequencies,
+      hours,
+    });
+    return sortWorkloads(items, sort, sortNow);
+  }, [
+    operational,
+    kinds,
+    statuses,
+    domains,
+    frequencies,
+    hours,
+    sort,
+    sortNow,
+  ]);
+
+  const catalogSorted = useMemo(
+    () => sortWorkloads(catalog, sort, sortNow),
+    [catalog, sort, sortNow],
+  );
+
+  const parentLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const workload of workloadsQuery.data ?? []) {
+      map.set(workload.id, workload.displayName);
+    }
+    return map;
+  }, [workloadsQuery.data]);
+
+  if (workloadsQuery.isLoading && workloadsQuery.data == null) {
     return <SettingsPanelSkeleton />;
   }
 
@@ -189,144 +198,66 @@ export function PlatformWorkloadsPanel() {
     return <Alert>{t("platform.workloads.loadFailed")}</Alert>;
   }
 
-  const workloads = workloadsQuery.data ?? [];
-
   return (
-    <>
-      <div className="space-y-4">
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="text-muted-foreground absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2" />
-            <input
-              type="text"
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-9 w-full rounded-md border py-1 pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-              placeholder={t("platform.workloads.searchPlaceholder")}
-              value={q}
-              onChange={(e) => updateParam("q", e.target.value)}
-            />
-          </div>
-          <Select
-            className="w-44"
-            value={kind ?? ""}
-            aria-label={t("platform.workloads.filterKind")}
-            onChange={(e) => updateParam("kind", e.target.value)}
-          >
-            <option value="">{t("platform.workloads.filterKind")}</option>
-            {ALL_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {t(`platform.workloads.kind${k.charAt(0).toUpperCase() + k.slice(1)}` as never)}
-              </option>
-            ))}
-          </Select>
-          <Select
-            className="w-36"
-            value={source ?? ""}
-            aria-label={t("platform.workloads.filterSource")}
-            onChange={(e) => updateParam("source", e.target.value)}
-          >
-            <option value="">{t("platform.workloads.filterSource")}</option>
-            {ALL_SOURCES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </Select>
-          <Select
-            className="w-36"
-            value={status ?? ""}
-            aria-label={t("platform.workloads.filterStatus")}
-            onChange={(e) => updateParam("status", e.target.value)}
-          >
-            <option value="">{t("platform.workloads.filterStatus")}</option>
-            {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {t(`platform.workloads.status${s.charAt(0).toUpperCase() + s.slice(1)}` as never)}
-              </option>
-            ))}
-          </Select>
-        </div>
-
-        {/* Table */}
-        {workloads.length === 0 ? (
-          <Text className="text-muted-foreground py-8 text-center">
-            {q || kind || source || status
-              ? t("platform.workloads.emptyFiltered")
-              : t("platform.workloads.empty")}
-          </Text>
-        ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("platform.workloads.columnName")}</TableHead>
-                  <TableHead>{t("platform.workloads.columnKind")}</TableHead>
-                  <TableHead>{t("platform.workloads.columnSource")}</TableHead>
-                  <TableHead>{t("platform.workloads.columnStatus")}</TableHead>
-                  <TableHead>{t("platform.workloads.columnLive")}</TableHead>
-                  <TableHead>
-                    {t("platform.workloads.columnLastActivity")}
-                  </TableHead>
-                  <TableHead>{t("platform.workloads.columnActions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {workloads.map((w) => (
-                  <TableRow
-                    key={w.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedId(w.id)}
-                  >
-                    <TableCell>
-                      <div>
-                        <Text className="font-medium">{w.displayName}</Text>
-                        {w.description && (
-                          <Text className="text-muted-foreground text-xs">
-                            {w.description}
-                          </Text>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Text className="text-xs">{w.kind}</Text>
-                    </TableCell>
-                    <TableCell>
-                      <Text className="text-xs">{w.source}</Text>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={w.state.status} />
-                    </TableCell>
-                    <TableCell>
-                      <Text className="text-muted-foreground text-xs">
-                        {formatLiveSummary(w.state.live)}
-                      </Text>
-                    </TableCell>
-                    <TableCell>
-                      <Text className="text-muted-foreground text-xs">
-                        {w.state.fetchedAt
-                          ? new Date(w.state.fetchedAt).toLocaleString()
-                          : "—"}
-                      </Text>
-                    </TableCell>
-                    <TableCell>
-                      <WorkloadActionButtons workload={w} compact />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
-      {selectedId && (
-        <WorkloadDetailDrawer
-          workloadId={selectedId}
-          onClose={() => setSelectedId(null)}
+    <div className={designerTreeTabRootClassName}>
+      <div className={designerTreeWorkbenchClassName}>
+        <WorkloadListTreePanel
+          workloads={operationalFiltered}
+          selectedId={selectedId}
+          catalogSelected={catalogView}
+          search={q}
+          kinds={kinds}
+          sources={sources}
+          statuses={statuses}
+          domains={domains}
+          frequencies={frequencies}
+          hours={hours}
+          sort={sort}
+          isRefreshing={workloadsQuery.isFetching}
+          onSearchChange={(value) => updateParams({ q: value })}
+          onKindsChange={(values) => updateParams({ kind: values.join(",") })}
+          onSourcesChange={(values) =>
+            updateParams({ source: values.join(",") })
+          }
+          onStatusesChange={(values) =>
+            updateParams({ status: values.join(",") })
+          }
+          onDomainsChange={(values) =>
+            updateParams({ domain: values.join(",") })
+          }
+          onFrequenciesChange={(values) =>
+            updateParams({ frequency: values.join(",") })
+          }
+          onHoursChange={(values) => updateParams({ hour: values.join(",") })}
+          onSortChange={(value) =>
+            updateParams({ sort: value === "name" ? "" : value })
+          }
+          onSelect={selectWorkload}
+          onClearSelection={clearSelection}
+          onOpenCatalog={openCatalog}
+          onRefresh={refreshWorkloads}
+          onClearFilters={clearFilters}
         />
-      )}
-    </>
+        <div className={designerPreviewColumnClassName}>
+          {workloadsQuery.isFetching && !workloadsQuery.isLoading ? (
+            <Text className="text-muted-foreground sr-only">
+              {t("platform.workloads.refreshing")}
+            </Text>
+          ) : null}
+          <WorkloadDetailPanel
+            workloadId={selectedId}
+            catalogView={catalogView}
+            operationalWorkloads={operationalFiltered}
+            catalogHandlers={catalogSorted}
+            parentLabels={parentLabels}
+            onClearSelection={backFromDetail}
+            onSelect={selectWorkload}
+            onRefresh={refreshWorkloads}
+            isRefreshing={workloadsQuery.isFetching}
+            lastUpdatedAt={workloadsQuery.dataUpdatedAt || null}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
-
-export { StatusBadge, WorkloadActionButtons };

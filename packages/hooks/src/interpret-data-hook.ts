@@ -865,10 +865,7 @@ async function runAction(
           : {}),
         ...(action.retrievalHint
           ? (() => {
-              const hintValue = evaluateExpression(
-                action.retrievalHint,
-                scope,
-              );
+              const hintValue = evaluateExpression(action.retrievalHint, scope);
               const hint =
                 hintValue == null
                   ? ""

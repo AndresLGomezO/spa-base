@@ -571,6 +571,9 @@ importers:
       '@repo/ui-charts':
         specifier: workspace:*
         version: link:../../packages/ui-charts
+      '@repo/workload-registry':
+        specifier: workspace:*
+        version: link:../../packages/workload-registry
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.100.14(react@19.2.6)
@@ -2445,6 +2448,9 @@ importers:
 
   packages/workload-registry:
     dependencies:
+      cron-parser:
+        specifier: 'catalog:'
+        version: 4.9.0
       zod:
         specifier: 'catalog:'
         version: 4.4.3

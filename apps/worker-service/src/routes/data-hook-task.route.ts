@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
+import { scheduledHookWorkloadId } from "@repo/workload-registry";
 import type { WorkloadRunRecorder } from "@repo/workload-runs";
 
 import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
@@ -13,9 +14,24 @@ import {
 import { readWorkloadRunLineageFromHeaders } from "../workloads/workload-run-context.js";
 import { withWorkloadRun } from "../workloads/with-workload-run.js";
 
+function resolveDataHookWorkloadId(payload: {
+  readonly tenantId: string;
+  readonly hookId: string;
+  readonly triggerKind?: "crud" | "schedule" | "email";
+}): string {
+  // Scheduled / email hook executions belong on the dynamic hook workload so
+  // Platform → Workloads can show runs under that scheduled item.
+  if (payload.triggerKind === "schedule" || payload.triggerKind === "email") {
+    return scheduledHookWorkloadId(payload.tenantId, payload.hookId);
+  }
+  return "worker:process-data-hook";
+}
+
 export async function dataHookTaskRoute(
   app: FastifyInstance,
-  deps: DataHookProcessorDeps & { readonly workloadRunRecorder?: WorkloadRunRecorder },
+  deps: DataHookProcessorDeps & {
+    readonly workloadRunRecorder?: WorkloadRunRecorder;
+  },
 ): Promise<void> {
   app.post(
     HOOK_TASK_ROUTES.PROCESS_DATA_HOOK,
@@ -54,11 +70,15 @@ export async function dataHookTaskRoute(
           await withWorkloadRun(
             deps.workloadRunRecorder,
             {
-              workloadId: "worker:process-data-hook",
+              workloadId: resolveDataHookWorkloadId(payload),
               triggeredBy: "cloudTasks",
               tenantId: payload.tenantId,
               parentRunId: lineage.parentRunId,
               rootRunId: lineage.rootRunId,
+              triggerContext: {
+                taskCategory: payload.triggerKind ?? "crud",
+                route: HOOK_TASK_ROUTES.PROCESS_DATA_HOOK,
+              },
             },
             request.log,
             async (handle) => {

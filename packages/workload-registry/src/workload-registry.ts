@@ -12,6 +12,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "queue:ai-jobs",
     kind: "cloudTasksQueue",
     source: "system",
+    domain: "ai",
     displayName: "AI Jobs Queue",
     description:
       "AI chat, UI builder, record narrative refresh, and user AI memory refresh tasks",
@@ -26,6 +27,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "queue:hook-jobs",
     kind: "cloudTasksQueue",
     source: "system",
+    domain: "platform",
     displayName: "Hook Jobs Queue",
     description:
       "Queued data-hook executions and tenant deletion tasks (per-task runs carry taskCategory)",
@@ -40,6 +42,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "queue:gmail-jobs",
     kind: "cloudTasksQueue",
     source: "system",
+    domain: "email",
     displayName: "Gmail Jobs Queue",
     description:
       "Gmail window sync, process-message, and watch-renew fan-out tasks",
@@ -54,9 +57,9 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "queue:ai-embed",
     kind: "cloudTasksQueue",
     source: "system",
+    domain: "ai",
     displayName: "AI Embed Queue",
-    description:
-      "Provisioned for embedding jobs (no enqueue path wired yet)",
+    description: "Provisioned for embedding jobs (no enqueue path wired yet)",
     actions: ["pause", "resume"],
     gcp: {
       resource: "queue",
@@ -70,10 +73,12 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "scheduler:schedule-tick",
     kind: "schedulerJob",
     source: "system",
+    domain: "platform",
     displayName: "Schedule Tick",
     description:
       "Every-minute cron that runs due scheduled data hooks across all tenants and purges expired tenant archives",
     actions: ["pause", "resume", "runNow"],
+    schedule: { cron: "* * * * *", timezone: "UTC" },
     gcp: {
       resource: "schedulerJob",
       resourceName: "schedule-tick",
@@ -85,16 +90,20 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "scheduler:gmail-poll",
     kind: "schedulerJob",
     source: "integration",
+    domain: "email",
     displayName: "Gmail Poll",
     description:
-      "Every-5-minutes poll of connected Gmail mailboxes (no-ops when delivery mode is push)",
+      "Every-5-minutes poll of connected Gmail mailboxes (active only when Gmail delivery mode is poll; no-ops when push)",
     actions: ["pause", "resume", "runNow"],
+    schedule: { cron: "*/5 * * * *", timezone: "UTC" },
     gcp: {
       resource: "schedulerJob",
       resourceName: "gmail-poll",
       terraformFile: "gmail-ingest.tf",
     },
     route: "/tasks/gmail-poll",
+    disableHint:
+      "Inactive when delivery mode is push — switch Platform → Observability → Gmail ingest to poll, or pause this scheduler",
   },
 
   // ── Pub/Sub subscriptions ───────────────────────────────────────────
@@ -102,6 +111,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "pubsub:aggregation-events-worker",
     kind: "pubsubSubscription",
     source: "system",
+    domain: "metrics",
     displayName: "Aggregation Events Worker",
     description:
       "Pull subscription that drives metric aggregation on worker-aggregation",
@@ -116,6 +126,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "pubsub:index-provisioning-worker",
     kind: "pubsubSubscription",
     source: "system",
+    domain: "platform",
     displayName: "Index Provisioning Worker",
     description:
       "Pull subscription for Firestore index provisioning (gated by enable_index_provisioning_pubsub)",
@@ -130,15 +141,18 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "pubsub:gmail-push-api",
     kind: "pubsubSubscription",
     source: "integration",
+    domain: "email",
     displayName: "Gmail Push API",
     description:
-      "Push subscription from Gmail API → API /api/gmail/pubsub → Cloud Task enqueue",
+      "Push subscription from Gmail API → API /api/gmail/pubsub → Cloud Task enqueue (active only when Gmail delivery mode is push; default is poll)",
     actions: ["pause", "resume"],
     gcp: {
       resource: "subscription",
       resourceName: "gmail-push-api",
       terraformFile: "gmail-ingest.tf",
     },
+    disableHint:
+      "Inactive when delivery mode is poll (default) — switch Platform → Observability → Gmail ingest to push to activate",
   },
 
   // ── Worker HTTP routes (read-only) ──────────────────────────────────
@@ -146,6 +160,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:process-data-hook",
     kind: "workerRoute",
     source: "system",
+    domain: "platform",
     displayName: "Process Data Hook",
     description: "Handles queued data-hook executions",
     actions: [],
@@ -158,6 +173,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:schedule-tick",
     kind: "workerRoute",
     source: "system",
+    domain: "platform",
     displayName: "Schedule Tick Handler",
     description: "HTTP target for the schedule-tick Cloud Scheduler job",
     actions: [],
@@ -170,6 +186,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:delete-tenant",
     kind: "workerRoute",
     source: "system",
+    domain: "tenant",
     displayName: "Delete Tenant",
     description: "Long-running tenant archive/purge (awaitCompletion)",
     actions: [],
@@ -182,6 +199,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:process-ai-chat",
     kind: "workerRoute",
     source: "system",
+    domain: "ai",
     displayName: "Process AI Chat",
     description: "Async AI chat job processor",
     actions: [],
@@ -194,6 +212,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:process-ai-ui-builder",
     kind: "workerRoute",
     source: "system",
+    domain: "ai",
     displayName: "Process AI UI Builder",
     description: "Async AI UI builder job processor",
     actions: [],
@@ -206,6 +225,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:refresh-user-ai-memory",
     kind: "workerRoute",
     source: "system",
+    domain: "ai",
     displayName: "Refresh User AI Memory",
     description: "Debounced / on-demand user AI memory refresh",
     actions: [],
@@ -219,6 +239,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:nightly-user-ai-memory",
     kind: "workerRoute",
     source: "system",
+    domain: "ai",
     displayName: "Nightly User AI Memory",
     description:
       "Batch user AI memory refresh (manual HTTP only — no Scheduler in TF)",
@@ -232,6 +253,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:refresh-record-narrative",
     kind: "workerRoute",
     source: "system",
+    domain: "ai",
     displayName: "Refresh Record Narrative",
     description: "AI record narrative refresh from insights / hooks",
     actions: [],
@@ -245,18 +267,21 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:gmail-poll",
     kind: "workerRoute",
     source: "integration",
+    domain: "email",
     displayName: "Gmail Poll Handler",
     description: "HTTP target for the gmail-poll Cloud Scheduler job",
     actions: [],
     route: "/tasks/gmail-poll",
     sourceFile: "apps/worker-service/src/routes/gmail-ingest-task.route.ts",
     controlledBy: ["scheduler:gmail-poll"],
-    disableHint: "Pause the gmail-poll scheduler or switch delivery mode to push",
+    disableHint:
+      "Pause the gmail-poll scheduler or switch delivery mode to push",
   },
   {
     id: "worker:gmail-window-sync",
     kind: "workerRoute",
     source: "integration",
+    domain: "email",
     displayName: "Gmail Window Sync",
     description: "Sync a time window of Gmail messages into the email ledger",
     actions: [],
@@ -269,6 +294,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:gmail-process-message",
     kind: "workerRoute",
     source: "integration",
+    domain: "email",
     displayName: "Gmail Process Message",
     description: "Process a single Gmail message (fan-out from window sync)",
     actions: [],
@@ -281,6 +307,7 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "worker:gmail-watch-renew",
     kind: "workerRoute",
     source: "integration",
+    domain: "email",
     displayName: "Gmail Watch Renew",
     description: "Renew Gmail push watch subscriptions",
     actions: [],
@@ -295,18 +322,22 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "inprocess:local-gmail-poll",
     kind: "inProcessScheduler",
     source: "integration",
+    domain: "email",
     displayName: "Local Gmail Poll Scheduler",
     description:
       "5-minute setInterval substitute for Cloud Scheduler when IS_LOCAL=true",
     actions: [],
+    schedule: { cron: "*/5 * * * *", timezone: "UTC" },
     sourceFile:
       "apps/worker-service/src/services/local-gmail-poll-scheduler.ts",
+    controlledBy: ["scheduler:gmail-poll"],
     disableHint: "Stop the local worker process or unset Gmail ingest config",
   },
   {
     id: "inprocess:debounced-user-ai-memory",
     kind: "inProcessScheduler",
     source: "system",
+    domain: "ai",
     displayName: "Debounced User AI Memory Refresh",
     description:
       "In-memory ~5-minute debouncer that fires user AI memory refresh from the worker",
@@ -319,16 +350,16 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     id: "inprocess:index-provisioner-queue",
     kind: "inProcessScheduler",
     source: "system",
+    domain: "platform",
     displayName: "Index Provisioner In-Process Queue",
     description:
       "In-memory FIFO with concurrency + batch delay for Firestore index provisioning",
     actions: [],
-    sourceFile:
-      "packages/gcp-firebase/src/firestore-index-provisioner.ts",
+    sourceFile: "packages/gcp-firebase/src/firestore-index-provisioner.ts",
     disableHint:
       "configureIndexProvisioningQueue() / disable INDEX_PROVISIONING_PUBSUB",
   },
-] as const;
+] as const satisfies readonly WorkloadRecord[];
 
 const BY_ID = new Map(WORKLOAD_REGISTRY.map((w) => [w.id, w]));
 
@@ -339,9 +370,10 @@ export function getWorkloadById(id: string): WorkloadRecord | undefined {
 export function listWorkloads(filters?: {
   readonly kind?: readonly string[];
   readonly source?: readonly string[];
+  readonly domain?: readonly string[];
   readonly q?: string;
 }): readonly WorkloadRecord[] {
-  let items = WORKLOAD_REGISTRY;
+  let items: readonly WorkloadRecord[] = WORKLOAD_REGISTRY;
   if (filters?.kind && filters.kind.length > 0) {
     const set = new Set(filters.kind);
     items = items.filter((w) => set.has(w.kind));
@@ -349,6 +381,10 @@ export function listWorkloads(filters?: {
   if (filters?.source && filters.source.length > 0) {
     const set = new Set(filters.source);
     items = items.filter((w) => set.has(w.source));
+  }
+  if (filters?.domain && filters.domain.length > 0) {
+    const set = new Set(filters.domain);
+    items = items.filter((w) => set.has(w.domain));
   }
   if (filters?.q?.trim()) {
     const q = filters.q.trim().toLowerCase();

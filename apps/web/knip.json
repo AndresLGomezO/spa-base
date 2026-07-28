@@ -28,6 +28,7 @@
     "@repo/ui-builder-react",
     "@repo/ui-builder-renderer",
     "@repo/ui-charts",
+    "@repo/workload-registry",
     "tailwindcss"
   ],
   "project": ["app/**/*.{ts,tsx}"]

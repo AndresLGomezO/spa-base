@@ -16,13 +16,8 @@ function readTfFiles(): string[] {
     .map((f) => fs.readFileSync(path.join(TF_DIR, f), "utf-8"));
 }
 
-function extractTfResources(
-  type: string,
-): { name: string; content: string }[] {
-  const re = new RegExp(
-    `resource\\s+"${type}"\\s+"(\\w+)"\\s*\\{`,
-    "g",
-  );
+function extractTfResources(type: string): { name: string; content: string }[] {
+  const re = new RegExp(`resource\\s+"${type}"\\s+"(\\w+)"\\s*\\{`, "g");
   const results: { name: string; content: string }[] = [];
   for (const src of readTfFiles()) {
     let m: RegExpExecArray | null;

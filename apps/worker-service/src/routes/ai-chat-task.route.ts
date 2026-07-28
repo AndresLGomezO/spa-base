@@ -14,7 +14,9 @@ import { withWorkloadRun } from "../workloads/with-workload-run.js";
 
 export async function aiChatTaskRoute(
   app: FastifyInstance,
-  opts: AiChatProcessorDeps & { readonly workloadRunRecorder?: WorkloadRunRecorder },
+  opts: AiChatProcessorDeps & {
+    readonly workloadRunRecorder?: WorkloadRunRecorder;
+  },
 ): Promise<void> {
   app.post(
     AI_TASK_ROUTES.PROCESS_AI_CHAT,

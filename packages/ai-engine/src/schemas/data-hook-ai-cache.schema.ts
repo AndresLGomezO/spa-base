@@ -15,9 +15,6 @@ export const dataHookAiCacheRecordSchema = z.object({
 export type DataHookAiCacheRecord = z.infer<typeof dataHookAiCacheRecordSchema>;
 
 /** Document id = `${tenantId}:${hookId}` (sanitized for Firestore). */
-export function dataHookAiCacheDocId(
-  tenantId: string,
-  hookId: string,
-): string {
+export function dataHookAiCacheDocId(tenantId: string, hookId: string): string {
   return `${tenantId}__${hookId}`;
 }

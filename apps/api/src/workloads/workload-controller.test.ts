@@ -27,22 +27,24 @@ function mockRunRepository(): WorkloadRunRepository {
   };
 }
 
-function buildDeps(overrides?: Partial<WorkloadControllerDeps>): WorkloadControllerDeps {
+function buildDeps(
+  overrides?: Partial<WorkloadControllerDeps>,
+): WorkloadControllerDeps {
   return {
     cloudTasks: {
-      getState: vi.fn().mockResolvedValue({ status: "running", live: {} }),
+      getState: vi.fn().mockResolvedValue({ status: "ready", live: {} }),
       pause: vi.fn().mockResolvedValue(undefined),
       resume: vi.fn().mockResolvedValue(undefined),
       listPendingTasks: vi.fn().mockResolvedValue([]),
     },
     scheduler: {
-      getState: vi.fn().mockResolvedValue({ status: "running", live: {} }),
+      getState: vi.fn().mockResolvedValue({ status: "scheduled", live: {} }),
       pause: vi.fn().mockResolvedValue(undefined),
       resume: vi.fn().mockResolvedValue(undefined),
       runNow: vi.fn().mockResolvedValue(undefined),
     },
     pubsub: {
-      getState: vi.fn().mockResolvedValue({ status: "running", live: {} }),
+      getState: vi.fn().mockResolvedValue({ status: "ready", live: {} }),
       pause: vi.fn().mockResolvedValue(undefined),
       resume: vi.fn().mockResolvedValue(undefined),
     },
@@ -73,6 +75,7 @@ function buildDeps(overrides?: Partial<WorkloadControllerDeps>): WorkloadControl
     },
     localMode: true,
     projectId: "test-project",
+    getGmailIngestDeliveryMode: vi.fn().mockResolvedValue("poll"),
     ...overrides,
   };
 }
@@ -97,7 +100,9 @@ describe("workloadController", () => {
 
     it("filters by kind", async () => {
       const controller = createWorkloadController(deps);
-      const result = await controller.listWorkloads({ kind: ["cloudTasksQueue"] });
+      const result = await controller.listWorkloads({
+        kind: ["cloudTasksQueue"],
+      });
       for (const w of result) {
         expect(w.kind).toBe("cloudTasksQueue");
       }
@@ -105,10 +110,195 @@ describe("workloadController", () => {
 
     it("filters by status", async () => {
       const controller = createWorkloadController(deps);
-      const result = await controller.listWorkloads({ status: "paused" });
+      const result = await controller.listWorkloads({ status: ["paused"] });
       for (const w of result) {
         expect(w.state.status).toBe("paused");
       }
+    });
+
+    it("excludes scheduled hooks when source filter omits hook", async () => {
+      deps.scheduledHooks.list = vi.fn().mockResolvedValue([
+        {
+          id: "scheduled-hook:tenant-a:hook-1",
+          kind: "scheduledDataHook",
+          source: "hook",
+          domain: "platform",
+          displayName: "Nightly cleanup",
+          description: "Tenant scheduled hook",
+          actions: ["disable"],
+          schedule: { cron: "0 6 * * *", timezone: "UTC" },
+        },
+      ]);
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({ source: ["system"] });
+      expect(deps.scheduledHooks.list).not.toHaveBeenCalled();
+      expect(result.every((w) => w.source === "system")).toBe(true);
+      expect(result.some((w) => w.kind === "scheduledDataHook")).toBe(false);
+    });
+
+    it("includes scheduled hooks when source filter includes hook", async () => {
+      deps.scheduledHooks.list = vi.fn().mockResolvedValue([
+        {
+          id: "scheduled-hook:tenant-a:hook-1",
+          kind: "scheduledDataHook",
+          source: "hook",
+          domain: "platform",
+          displayName: "Nightly cleanup",
+          description: "Tenant scheduled hook",
+          actions: ["disable"],
+          enabled: true,
+          schedule: { cron: "0 6 * * *", timezone: "UTC" },
+        },
+      ]);
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({ source: ["hook"] });
+      expect(deps.scheduledHooks.list).toHaveBeenCalled();
+      expect(result.every((w) => w.source === "hook")).toBe(true);
+      expect(
+        result.some((w) => w.id === "scheduled-hook:tenant-a:hook-1"),
+      ).toBe(true);
+      expect(
+        result.find((w) => w.id === "scheduled-hook:tenant-a:hook-1")?.state
+          .status,
+      ).toBe("scheduled");
+    });
+
+    it("marks disabled scheduled hooks as disabled, not running", async () => {
+      deps.scheduledHooks.list = vi.fn().mockResolvedValue([
+        {
+          id: "hook:rates:one-shot",
+          kind: "scheduledDataHook",
+          source: "hook",
+          domain: "platform",
+          displayName: "One shot",
+          description: "Disabled after fire",
+          actions: ["enable"],
+          enabled: false,
+          schedule: { cron: "0 9 * * *", timezone: "UTC" },
+        },
+      ]);
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({
+        kind: ["scheduledDataHook"],
+      });
+      expect(result[0]?.state.status).toBe("disabled");
+    });
+
+    it("promotes scheduled workload to running when an active run exists", async () => {
+      deps.scheduledHooks.list = vi.fn().mockResolvedValue([
+        {
+          id: "hook:rates:active",
+          kind: "scheduledDataHook",
+          source: "hook",
+          domain: "ai",
+          displayName: "Active hook",
+          description: "Currently executing",
+          actions: ["disable"],
+          enabled: true,
+          schedule: { cron: "0 9 * * *", timezone: "UTC" },
+        },
+      ]);
+      deps.runs.countByWorkloadIdSince = vi.fn().mockResolvedValue({
+        success: 0,
+        error: 0,
+        timeout: 0,
+        running: 1,
+        cancelled: 0,
+      });
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({
+        kind: ["scheduledDataHook"],
+      });
+      expect(result[0]?.state.status).toBe("running");
+      expect(result[0]?.state.live?.activeRuns).toBe(1);
+    });
+
+    it("disables gmail push when delivery mode is poll", async () => {
+      deps = buildDeps({
+        getGmailIngestDeliveryMode: vi.fn().mockResolvedValue("poll"),
+      });
+      deps.pubsub.getState = vi
+        .fn()
+        .mockResolvedValue({ status: "ready", live: { exists: true } });
+      deps.scheduler.getState = vi
+        .fn()
+        .mockResolvedValue({ status: "scheduled", live: { state: "ENABLED" } });
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads();
+      const push = result.find((w) => w.id === "pubsub:gmail-push-api");
+      const poll = result.find((w) => w.id === "scheduler:gmail-poll");
+      expect(push?.state.status).toBe("disabled");
+      expect(push?.state.live?.deliveryMode).toBe("poll");
+      expect(push?.state.live?.productActive).toBe(false);
+      expect(poll?.state.status).toBe("scheduled");
+      expect(poll?.state.live?.productActive).toBe(true);
+    });
+
+    it("disables gmail poll when delivery mode is push", async () => {
+      deps = buildDeps({
+        getGmailIngestDeliveryMode: vi.fn().mockResolvedValue("push"),
+      });
+      deps.pubsub.getState = vi
+        .fn()
+        .mockResolvedValue({ status: "ready", live: { exists: true } });
+      deps.scheduler.getState = vi
+        .fn()
+        .mockResolvedValue({ status: "scheduled", live: { state: "ENABLED" } });
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads();
+      const push = result.find((w) => w.id === "pubsub:gmail-push-api");
+      const poll = result.find((w) => w.id === "scheduler:gmail-poll");
+      expect(push?.state.status).toBe("ready");
+      expect(push?.state.live?.productActive).toBe(true);
+      expect(poll?.state.status).toBe("disabled");
+      expect(poll?.state.live?.deliveryMode).toBe("push");
+      expect(poll?.state.live?.productActive).toBe(false);
+    });
+
+    it("keeps idle queues as ready, not running", async () => {
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({
+        kind: ["cloudTasksQueue"],
+      });
+      expect(result.length).toBeGreaterThan(0);
+      for (const w of result) {
+        expect(w.state.status).toBe("ready");
+      }
+    });
+
+    it("promotes ready queue to running when pending tasks exist", async () => {
+      deps.cloudTasks.listPendingTasks = vi
+        .fn()
+        .mockResolvedValue([
+          { name: "projects/x/locations/y/queues/z/tasks/1" },
+        ]);
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({
+        kind: ["cloudTasksQueue"],
+      });
+      expect(result.every((w) => w.state.status === "running")).toBe(true);
+      expect(result[0]?.state.live?.depth).toBe(1);
+    });
+
+    it("promotes gmail queue to running when a catalog handler has an active run", async () => {
+      deps.runs.countByWorkloadIdSince = vi
+        .fn()
+        .mockImplementation(async (workloadId: string) => ({
+          success: 0,
+          error: 0,
+          timeout: 0,
+          running: workloadId === "worker:gmail-process-message" ? 1 : 0,
+          cancelled: 0,
+        }));
+      const controller = createWorkloadController(deps);
+      const result = await controller.listWorkloads({
+        kind: ["cloudTasksQueue"],
+      });
+      const gmailQueue = result.find((w) => w.id === "queue:gmail-jobs");
+      expect(gmailQueue?.state.status).toBe("running");
+      expect(gmailQueue?.state.live?.activeRuns).toBe(1);
+      const aiQueue = result.find((w) => w.id === "queue:ai-jobs");
+      expect(aiQueue?.state.status).toBe("ready");
     });
   });
 
@@ -172,11 +362,34 @@ describe("workloadController", () => {
     it("delegates to runs repository", async () => {
       const controller = createWorkloadController(deps);
       const result = await controller.listRuns("queue:ai-jobs");
-      expect(result).toEqual({ items: [], nextCursor: null });
-      expect(deps.runs.listByWorkloadId).toHaveBeenCalledWith(
-        "queue:ai-jobs",
-        expect.any(Object),
-      );
+      expect(result.items).toEqual([]);
+      expect(result.nextCursor).toBeNull();
+      // Parent merges handler catalog ids (ai-jobs has several controlledBy children).
+      expect(deps.runs.listByWorkloadId).toHaveBeenCalled();
+    });
+
+    it("includes catalog handler runs when listing a parent queue", async () => {
+      deps.runs.listByWorkloadId = vi
+        .fn()
+        .mockImplementation(async (workloadId: string) => ({
+          items:
+            workloadId === "worker:gmail-process-message"
+              ? [
+                  {
+                    id: "run-1",
+                    workloadId,
+                    triggeredBy: "cloudTasks",
+                    startedAt: "2026-07-27T20:00:00.000Z",
+                    status: "success",
+                  },
+                ]
+              : [],
+          nextCursor: null,
+        }));
+      const controller = createWorkloadController(deps);
+      const result = await controller.listRuns("queue:gmail-jobs");
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]?.workloadId).toBe("worker:gmail-process-message");
     });
   });
 

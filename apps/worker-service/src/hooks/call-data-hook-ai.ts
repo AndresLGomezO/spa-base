@@ -136,9 +136,7 @@ function sharedTokenCount(
   return count;
 }
 
-function dedupeById(
-  records: readonly CompactCategory[],
-): CompactCategory[] {
+function dedupeById(records: readonly CompactCategory[]): CompactCategory[] {
   const seen = new Set<string>();
   const out: CompactCategory[] = [];
   for (const record of records) {
@@ -340,7 +338,6 @@ async function loadIncludeEntityContext(
     shortToLong: new Map(),
   };
 }
-
 
 function buildMockClassificationAnswer(prompt: string): string {
   const shortIdMatch = prompt.match(/^- (c\d+):/m);
@@ -749,7 +746,9 @@ export function createBatchCallDataHookAi(
       deps,
       {
         ...first,
-        ...(sharedHint ? { retrievalHint: sharedHint } : { retrievalHint: undefined }),
+        ...(sharedHint
+          ? { retrievalHint: sharedHint }
+          : { retrievalHint: undefined }),
       },
       // Apply only when the batch shares one hint; otherwise full compact catalog.
       { applyRetrievalHint: Boolean(sharedHint) },
@@ -778,9 +777,7 @@ One result object per item, same order as items. Always include confidence (0..1
 ${itemBlocks.join("\n\n")}`;
 
     const batchPrompt =
-      cachedContentName && prefixText
-        ? batchTail
-        : `${prefixText}${batchTail}`;
+      cachedContentName && prefixText ? batchTail : `${prefixText}${batchTail}`;
 
     try {
       const parent = await deps.aiController.runAiRequest({

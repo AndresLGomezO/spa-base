@@ -1,6 +1,5 @@
 import {
   WORKLOAD_REGISTRY,
-  type WorkloadRecord,
   type WorkloadWithState,
 } from "@repo/workload-registry";
 
@@ -11,7 +10,8 @@ export function createWorkerRoutesAdapter() {
         (w) => ({
           ...w,
           state: {
-            status: "running" as const,
+            // Catalog entry only — not live job state.
+            status: "unknown" as const,
             live: { route: w.route },
             fetchedAt: new Date().toISOString(),
           },

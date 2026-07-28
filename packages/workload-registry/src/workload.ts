@@ -13,8 +13,19 @@ export type WorkloadKind = (typeof WORKLOAD_KINDS)[number];
 export const WORKLOAD_SOURCES = ["system", "hook", "integration"] as const;
 export type WorkloadSource = (typeof WORKLOAD_SOURCES)[number];
 
+export const WORKLOAD_DOMAINS = [
+  "ai",
+  "email",
+  "platform",
+  "metrics",
+  "tenant",
+] as const;
+export type WorkloadDomain = (typeof WORKLOAD_DOMAINS)[number];
+
 export const WORKLOAD_STATUSES = [
   "running",
+  "scheduled",
+  "ready",
   "paused",
   "disabled",
   "unknown",
@@ -41,14 +52,23 @@ export const workloadGcpRefSchema = z.object({
 });
 export type WorkloadGcpRef = z.infer<typeof workloadGcpRefSchema>;
 
+export const workloadScheduleSchema = z.object({
+  cron: z.string().trim().min(1),
+  timezone: z.string().trim().min(1).optional(),
+});
+export type WorkloadSchedule = z.infer<typeof workloadScheduleSchema>;
+
 export const workloadRecordSchema = z.object({
   id: z.string().trim().min(1),
   kind: z.enum(WORKLOAD_KINDS),
   source: z.enum(WORKLOAD_SOURCES),
+  domain: z.enum(WORKLOAD_DOMAINS),
   displayName: z.string().trim().min(1),
   description: z.string().trim().min(1),
   actions: z.array(z.enum(WORKLOAD_ACTIONS)),
   gcp: workloadGcpRefSchema.optional(),
+  /** Cron schedule when the workload is time-driven. */
+  schedule: workloadScheduleSchema.optional(),
   /** Worker HTTP route when kind is workerRoute. */
   route: z.string().trim().min(1).optional(),
   /** Source file path for in-process schedulers / worker routes. */
@@ -57,6 +77,11 @@ export const workloadRecordSchema = z.object({
   disableHint: z.string().trim().min(1).optional(),
   /** Related upstream workload ids (e.g. worker route → its queue). */
   controlledBy: z.array(z.string().trim().min(1)).optional(),
+  /**
+   * For scheduled data hooks: whether the hook definition is enabled.
+   * Used to derive scheduled vs disabled without inventing a live "running" state.
+   */
+  enabled: z.boolean().optional(),
 });
 export type WorkloadRecord = z.infer<typeof workloadRecordSchema>;
 

@@ -945,6 +945,52 @@ function extractHookExecutionTypeLabelKeys(corpus) {
   );
 }
 
+/** hookResolutionSourceLabelKey() → debugger.detail.resolutionSources.* */
+function extractHookResolutionSourceLabelKeys(corpus) {
+  if (!corpus.includes("hookResolutionSourceLabelKey")) {
+    return [];
+  }
+
+  const resolutionSources = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).debugger?.detail?.resolutionSources;
+  if (!resolutionSources || typeof resolutionSources !== "object") return [];
+
+  return Object.keys(resolutionSources).map(
+    (key) => `${DEFAULT_NAMESPACE}:debugger.detail.resolutionSources.${key}`,
+  );
+}
+
+/**
+ * Dynamic platform.workloads.* labels built via template strings
+ * (domain*, source*, action*, runsRange*).
+ */
+function extractPlatformWorkloadDynamicKeys(corpus) {
+  if (
+    !corpus.includes("platform.workloads.") &&
+    !corpus.includes("domainLabelKey")
+  ) {
+    return [];
+  }
+
+  const workloads = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).platform?.workloads;
+  if (!workloads || typeof workloads !== "object") return [];
+
+  return Object.keys(workloads)
+    .filter(
+      (key) =>
+        key.startsWith("domain") ||
+        key.startsWith("source") ||
+        key.startsWith("runsRange") ||
+        /^(actionPause|actionResume|actionRunNow|actionEnable|actionDisable)$/.test(
+          key,
+        ),
+    )
+    .map((key) => `${DEFAULT_NAMESPACE}:platform.workloads.${key}`);
+}
+
 /** debuggerStatusLabelKey() → all keys under debugger.status */
 function extractDebuggerStatusLabelKeys(corpus) {
   if (
@@ -1377,6 +1423,16 @@ mergeUsedKeys(
   usedKeys,
   extractHookExecutionTypeLabelKeys(corpus),
   path.join(SRC_DIR, "features/debugger/hook-execution-live-metrics.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractHookResolutionSourceLabelKeys(corpus),
+  path.join(SRC_DIR, "features/debugger/hook-resolution-source.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractPlatformWorkloadDynamicKeys(corpus),
+  path.join(SRC_DIR, "components/platform/workload-ui-shared.tsx"),
 );
 mergeUsedKeys(
   usedKeys,

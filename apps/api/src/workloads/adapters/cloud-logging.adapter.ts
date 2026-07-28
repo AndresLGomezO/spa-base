@@ -1,12 +1,12 @@
 import { buildCloudLoggingUrl } from "@repo/workload-runs";
 
-export interface CloudLoggingAdapterConfig {
+interface CloudLoggingAdapterConfig {
   readonly projectId: string;
   readonly localMode: boolean;
   readonly enabled: boolean;
 }
 
-export interface LogEntry {
+interface LogEntry {
   readonly timestamp: string;
   readonly severity: string;
   readonly message: string;
@@ -24,7 +24,9 @@ async function getClient(projectId: string) {
       filter: string;
       orderBy: string;
       pageSize: number;
-    }) => Promise<[Array<{ metadata: Record<string, unknown>; data: unknown }>]>;
+    }) => Promise<
+      [Array<{ metadata: Record<string, unknown>; data: unknown }>]
+    >;
   };
 }
 

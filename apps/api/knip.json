@@ -4,7 +4,6 @@
   "ignoreUnresolved": ["./formula-admin.js"],
   "ignoreDependencies": [
     "@google-cloud/firestore",
-    "@google-cloud/pubsub",
     "@app/platform",
     "@repo/dynamic-entities",
     "@repo/encryption",
@@ -34,6 +33,8 @@
     "@repo/tenant-bundle",
     "@repo/theme",
     "@repo/ui-builder-core",
+    "@repo/workload-registry",
+    "@repo/workload-runs",
     "cron-parser"
   ],
   "project": ["src/**/*.ts"]

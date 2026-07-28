@@ -136,7 +136,7 @@
     },
     {
       "collectionGroup": "__workload_runs",
-      "fieldPath": "completedAt",
+      "fieldPath": "expireAt",
       "ttl": true,
       "indexes": []
     }

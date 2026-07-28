@@ -46,4 +46,19 @@ describe("WORKLOAD_REGISTRY", () => {
     );
     expect(getWorkloadById("missing")).toBeUndefined();
   });
+
+  it("requires domain on every entry", () => {
+    for (const entry of WORKLOAD_REGISTRY) {
+      expect(entry.domain).toBeTruthy();
+    }
+  });
+
+  it("sets cron on cloud scheduler jobs", () => {
+    expect(getWorkloadById("scheduler:schedule-tick")?.schedule?.cron).toBe(
+      "* * * * *",
+    );
+    expect(getWorkloadById("scheduler:gmail-poll")?.schedule?.cron).toBe(
+      "*/5 * * * *",
+    );
+  });
 });

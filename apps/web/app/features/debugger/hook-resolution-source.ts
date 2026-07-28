@@ -14,7 +14,7 @@ const HOOK_RESOLUTION_SOURCE_KEY_SET = new Set<string>(
   HOOK_RESOLUTION_SOURCE_KEYS,
 );
 
-export function isHookResolutionSourceKey(
+function isHookResolutionSourceKey(
   value: string,
 ): value is HookResolutionSourceKey {
   return HOOK_RESOLUTION_SOURCE_KEY_SET.has(value);
@@ -33,7 +33,10 @@ export function resolutionSourceForEvent(
     return null;
   }
   const fromSummary = event.summary?.resolutionSource;
-  if (typeof fromSummary === "string" && isHookResolutionSourceKey(fromSummary)) {
+  if (
+    typeof fromSummary === "string" &&
+    isHookResolutionSourceKey(fromSummary)
+  ) {
     return fromSummary;
   }
   if (event.payload && typeof event.payload === "object") {

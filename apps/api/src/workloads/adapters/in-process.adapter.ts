@@ -11,7 +11,8 @@ export function createInProcessAdapter() {
       ).map((w) => ({
         ...w,
         state: {
-          status: "running" as const,
+          // Catalog entry only — not live job state.
+          status: "unknown" as const,
           live: { sourceFile: w.sourceFile },
           fetchedAt: new Date().toISOString(),
         },

@@ -117,7 +117,7 @@ export async function scheduleTickRoute(
               }),
             },
             request.log,
-            async (handle) => {
+            async () => {
               await execute();
             },
           );

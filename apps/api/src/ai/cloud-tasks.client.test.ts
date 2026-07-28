@@ -7,9 +7,11 @@ describe("cloud-tasks.client lineage headers", () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
-    fetchSpy = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ ok: true }), { status: 200 }),
-    );
+    fetchSpy = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), { status: 200 }),
+      );
     globalThis.fetch = fetchSpy;
   });
 

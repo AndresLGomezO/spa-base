@@ -15,7 +15,9 @@ import { withWorkloadRun } from "../workloads/with-workload-run.js";
 
 export async function userAiMemoryRefreshTaskRoute(
   app: FastifyInstance,
-  deps: UserAiMemoryRefreshProcessorDeps & { readonly workloadRunRecorder?: WorkloadRunRecorder },
+  deps: UserAiMemoryRefreshProcessorDeps & {
+    readonly workloadRunRecorder?: WorkloadRunRecorder;
+  },
 ): Promise<void> {
   app.post(
     AI_TASK_ROUTES.REFRESH_USER_AI_MEMORY,

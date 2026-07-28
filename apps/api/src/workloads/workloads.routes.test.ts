@@ -21,6 +21,7 @@ const baseWorkload = {
   id: "queue:hook-jobs",
   kind: "cloudTasksQueue" as const,
   source: "system" as const,
+  domain: "platform" as const,
   displayName: "Hook Jobs",
   description: "hooks",
   actions: ["pause", "resume"] as Array<"pause" | "resume">,
@@ -99,7 +100,10 @@ describe("workloadsRoutes", () => {
 
   it("lists workloads", async () => {
     const app = await buildApp();
-    const response = await app.inject({ method: "GET", url: "/admin/workloads" });
+    const response = await app.inject({
+      method: "GET",
+      url: "/admin/workloads",
+    });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ ok: true, workloads: [] });
     await app.close();
@@ -184,7 +188,10 @@ describe("workloadsRoutes", () => {
       throw new Error("GCP unavailable");
     });
     const app = await buildApp();
-    const response = await app.inject({ method: "GET", url: "/admin/workloads" });
+    const response = await app.inject({
+      method: "GET",
+      url: "/admin/workloads",
+    });
     expect(response.statusCode).toBe(502);
     await app.close();
   });

@@ -6,7 +6,10 @@ import {
   type WorkloadRunRepository,
 } from "@repo/workload-runs";
 
-import { getFirestoreAdmin, type FirebaseAdminConfig } from "./firebase-admin.js";
+import {
+  getFirestoreAdmin,
+  type FirebaseAdminConfig,
+} from "./firebase-admin.js";
 
 export function createFirestoreAdminWorkloadRunRepository(
   config: FirebaseAdminConfig,

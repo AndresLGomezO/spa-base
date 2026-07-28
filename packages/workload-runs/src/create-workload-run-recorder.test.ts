@@ -93,6 +93,7 @@ describe("createWorkloadRunRecorder", () => {
     const final = repo.store.get("run-fixed")!;
     expect(final.status).toBe("success");
     expect(final.durationMs).toBe(5000);
+    expect(final.expireAt).toBe("2026-01-31T00:00:05.000Z");
     expect(final.metrics).toEqual({
       tenantsProcessed: 2,
       hooksFired: 3,

@@ -942,9 +942,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     ),
   });
 
-  const workloadRunRepository = createFirestoreAdminWorkloadRunRepository(
-    firebaseAdminConfig,
-  );
+  const workloadRunRepository =
+    createFirestoreAdminWorkloadRunRepository(firebaseAdminConfig);
 
   const isLocalMode = apiEnv.AI_TASKS_LOCAL_DISPATCH;
 
@@ -994,6 +993,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     },
     localMode: isLocalMode,
     projectId: apiEnv.GCP_PROJECT_ID,
+    getGmailIngestDeliveryMode: () =>
+      runtimeSettingsCache.getGmailIngestDeliveryMode(),
   });
 
   await server.register(workloadsRoutes, {

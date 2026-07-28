@@ -4,6 +4,9 @@ import { workloadRunRefSchema } from "@repo/workload-registry";
 
 export const WORKLOAD_RUNS_COLLECTION = "__workload_runs" as const;
 
+/** How long completed (and stale running) run docs are retained before Firestore TTL. */
+export const WORKLOAD_RUN_RETENTION_MS = 30 * 24 * 60 * 60_000;
+
 export const WORKLOAD_RUN_STATUSES = [
   "running",
   "success",
@@ -63,6 +66,8 @@ export const createWorkloadRunInputSchema = z.object({
   metrics: z.record(z.string(), z.unknown()).default({}),
   artifactRefs: z.array(workloadRunRefSchema).default([]),
   cloudLoggingUrl: z.string().trim().min(1).optional(),
+  /** Firestore TTL timestamp (retention horizon). Not the same as completedAt. */
+  expireAt: z.string().trim().min(1).optional(),
 });
 export type CreateWorkloadRunInput = z.infer<
   typeof createWorkloadRunInputSchema
@@ -71,6 +76,8 @@ export type CreateWorkloadRunInput = z.infer<
 export const updateWorkloadRunPatchSchema = z.object({
   status: z.enum(WORKLOAD_RUN_STATUSES).optional(),
   completedAt: z.string().trim().min(1).optional(),
+  /** Firestore TTL field — must be retention horizon, never "now". */
+  expireAt: z.string().trim().min(1).optional(),
   durationMs: z.number().int().nonnegative().optional(),
   error: workloadRunErrorSchema.optional(),
   metrics: z.record(z.string(), z.unknown()).optional(),
@@ -84,6 +91,7 @@ export type UpdateWorkloadRunPatch = z.infer<
 
 export const workloadRunRecordSchema = createWorkloadRunInputSchema.extend({
   completedAt: z.string().trim().min(1).optional(),
+  expireAt: z.string().trim().min(1).optional(),
   durationMs: z.number().int().nonnegative().optional(),
   error: workloadRunErrorSchema.optional(),
   logExcerpt: z.array(z.string()).optional(),

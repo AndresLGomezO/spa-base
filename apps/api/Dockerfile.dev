@@ -42,6 +42,8 @@ COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/tenant-bundle/package.json ./packages/tenant-bundle/
 COPY packages/user-notifications/package.json ./packages/user-notifications/
+COPY packages/workload-registry/package.json ./packages/workload-registry/
+COPY packages/workload-runs/package.json ./packages/workload-runs/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/esbuild-runtime-deps/package.json ./packages/esbuild-runtime-deps/
 COPY packages/typescript-config/ ./packages/typescript-config/

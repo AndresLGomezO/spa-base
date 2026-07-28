@@ -67,7 +67,9 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const params = traceParamsSchema.safeParse(request.params);
       if (!params.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid rootRunId." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid rootRunId." });
       }
       try {
         const runs = await controller.getRunTrace(params.data.rootRunId);
@@ -84,12 +86,14 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const query = listQuerySchema.safeParse(request.query);
       if (!query.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid query parameters." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid query parameters." });
       }
       const filters = {
         kind: query.data.kind?.split(","),
         source: query.data.source?.split(","),
-        status: query.data.status,
+        status: query.data.status?.split(","),
         q: query.data.q,
       };
       try {
@@ -107,12 +111,16 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const params = idParamsSchema.safeParse(request.params);
       if (!params.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid workload id." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid workload id." });
       }
       try {
         const detail = await controller.getWorkload(params.data.id);
         if (!detail) {
-          return reply.status(404).send({ ok: false, message: "Workload not found." });
+          return reply
+            .status(404)
+            .send({ ok: false, message: "Workload not found." });
         }
         const { runStats, ...workload } = detail;
         return reply.send({
@@ -142,7 +150,9 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const params = actionParamsSchema.safeParse(request.params);
       if (!params.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid parameters." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid parameters." });
       }
       try {
         await controller.applyAction(
@@ -152,9 +162,12 @@ export const workloadsRoutes: FastifyPluginAsync<{
         );
         const detail = await controller.getWorkload(params.data.id);
         if (!detail) {
-          return reply.status(404).send({ ok: false, message: "Workload not found." });
+          return reply
+            .status(404)
+            .send({ ok: false, message: "Workload not found." });
         }
-        const { runStats: _runStats, ...workload } = detail;
+        const { runStats: _, ...workload } = detail;
+        void _;
         return reply.send({ ok: true, workload });
       } catch (err) {
         if (err instanceof WorkloadNotFoundError) {
@@ -174,11 +187,15 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const params = idParamsSchema.safeParse(request.params);
       if (!params.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid workload id." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid workload id." });
       }
       const query = listRunsQuerySchema.safeParse(request.query);
       if (!query.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid query parameters." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid query parameters." });
       }
       try {
         const result = await controller.listRuns(params.data.id, query.data);
@@ -195,12 +212,16 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const params = runIdParamsSchema.safeParse(request.params);
       if (!params.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid parameters." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid parameters." });
       }
       try {
         const run = await controller.getRun(params.data.id, params.data.runId);
         if (!run) {
-          return reply.status(404).send({ ok: false, message: "Run not found." });
+          return reply
+            .status(404)
+            .send({ ok: false, message: "Run not found." });
         }
         return reply.send({ ok: true, run });
       } catch (err) {
@@ -215,11 +236,15 @@ export const workloadsRoutes: FastifyPluginAsync<{
     async (request, reply) => {
       const params = runIdParamsSchema.safeParse(request.params);
       if (!params.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid parameters." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid parameters." });
       }
       const query = logsQuerySchema.safeParse(request.query);
       if (!query.success) {
-        return reply.status(400).send({ ok: false, message: "Invalid query parameters." });
+        return reply
+          .status(400)
+          .send({ ok: false, message: "Invalid query parameters." });
       }
       try {
         const result = await controller.getRunLogs(
@@ -228,7 +253,9 @@ export const workloadsRoutes: FastifyPluginAsync<{
           { tail: query.data.tail },
         );
         if (!result) {
-          return reply.status(404).send({ ok: false, message: "Run not found." });
+          return reply
+            .status(404)
+            .send({ ok: false, message: "Run not found." });
         }
         const cloudEntries = result.logEntries ?? [];
         const excerpt = result.logExcerpt ?? [];
@@ -262,5 +289,7 @@ function replyGcpError(
   err: unknown,
 ) {
   const message = err instanceof Error ? err.message : String(err);
-  return reply.status(502).send({ ok: false, message: `GCP adapter error: ${message}` });
+  return reply
+    .status(502)
+    .send({ ok: false, message: `GCP adapter error: ${message}` });
 }

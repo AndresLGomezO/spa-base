@@ -164,9 +164,8 @@ const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig, {
   aiController,
   vectorIndexService,
   cacheClient: createRestVertexCachedContentClient(),
-  cacheRepository: createFirestoreAdminDataHookAiCacheRepository(
-    firebaseAdminConfig,
-  ),
+  cacheRepository:
+    createFirestoreAdminDataHookAiCacheRepository(firebaseAdminConfig),
   isDataHookAiCacheEnabled: () =>
     runtimeSettingsCache.isDataHookAiCacheEnabled(),
   onRecordSummaryUpdated: (input) => {

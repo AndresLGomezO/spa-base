@@ -31,7 +31,12 @@ describe("deriveResolutionSource", () => {
     expect(
       deriveResolutionSource([
         { type: "setField", durationMs: 1 },
-        { type: "createRecords", entity: "commitment", count: 2, durationMs: 3 },
+        {
+          type: "createRecords",
+          entity: "commitment",
+          count: 2,
+          durationMs: 3,
+        },
       ]),
     ).toBeUndefined();
   });

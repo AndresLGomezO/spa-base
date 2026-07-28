@@ -7,7 +7,10 @@ import {
   type WorkloadStateSnapshot,
   type WorkloadWithState,
 } from "@repo/workload-registry";
-import type { WorkloadRunRepository, WorkloadRunRecord } from "@repo/workload-runs";
+import type {
+  WorkloadRunRepository,
+  WorkloadRunRecord,
+} from "@repo/workload-runs";
 
 import type { CloudTasksAdminAdapter } from "./adapters/cloud-tasks-admin.adapter.js";
 import type { SchedulerAdminAdapter } from "./adapters/scheduler-admin.adapter.js";
@@ -30,10 +33,15 @@ export interface WorkloadControllerDeps {
   readonly schedulerJobNameByResource: Record<string, string>;
   readonly localMode: boolean;
   readonly projectId: string;
+  /** Effective Gmail ingest delivery mode (env + Platform Observability override). */
+  readonly getGmailIngestDeliveryMode: () => Promise<"poll" | "push">;
   readonly audit?: {
     write: (event: Record<string, unknown>) => Promise<void>;
   };
 }
+
+const GMAIL_POLL_WORKLOAD_ID = "scheduler:gmail-poll";
+const GMAIL_PUSH_WORKLOAD_ID = "pubsub:gmail-push-api";
 
 export function createWorkloadController(deps: WorkloadControllerDeps) {
   function resolveQueueName(workload: WorkloadRecord): string | null {
@@ -52,51 +60,175 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
     return workload.gcp?.resourceName ?? null;
   }
 
+  async function applyGmailDeliveryModeGate(
+    workload: WorkloadRecord,
+    snapshot: WorkloadStateSnapshot,
+  ): Promise<WorkloadStateSnapshot> {
+    if (
+      workload.id !== GMAIL_POLL_WORKLOAD_ID &&
+      workload.id !== GMAIL_PUSH_WORKLOAD_ID
+    ) {
+      return snapshot;
+    }
+
+    const deliveryMode = await deps.getGmailIngestDeliveryMode();
+    const productActive =
+      (workload.id === GMAIL_POLL_WORKLOAD_ID && deliveryMode === "poll") ||
+      (workload.id === GMAIL_PUSH_WORKLOAD_ID && deliveryMode === "push");
+
+    if (productActive) {
+      return {
+        ...snapshot,
+        live: {
+          ...snapshot.live,
+          deliveryMode,
+          productActive: true,
+        },
+      };
+    }
+
+    // Inactive path no-ops at runtime even if the GCP resource still exists.
+    return {
+      status: "disabled",
+      live: {
+        ...snapshot.live,
+        deliveryMode,
+        productActive: false,
+        gcpStatus: snapshot.status,
+      },
+      fetchedAt: snapshot.fetchedAt,
+      ...(snapshot.error ? { error: snapshot.error } : {}),
+    };
+  }
+
+  function relatedWorkloadIds(workloadId: string): string[] {
+    const ids = new Set<string>([workloadId]);
+    for (const child of listRegistryWorkloads()) {
+      if (child.controlledBy?.includes(workloadId)) {
+        ids.add(child.id);
+      }
+    }
+    return [...ids];
+  }
+
+  async function hasActiveRun(workloadId: string): Promise<number> {
+    const since = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
+    // Handler routes record runs under catalog IDs (worker:*, inprocess:*).
+    // Roll those into the ops parent listed in controlledBy so queues/schedulers
+    // show Running while ingestion (etc.) is in flight.
+    let total = 0;
+    for (const id of relatedWorkloadIds(workloadId)) {
+      try {
+        const counts = await deps.runs.countByWorkloadIdSince(id, since);
+        total += counts.running;
+      } catch {
+        // ignore per-id failures
+      }
+    }
+    return total;
+  }
+
   async function fetchState(
     workload: WorkloadRecord,
   ): Promise<WorkloadStateSnapshot> {
     const now = new Date().toISOString();
 
     try {
+      let snapshot: WorkloadStateSnapshot;
       switch (workload.kind) {
         case "cloudTasksQueue": {
           const queueName = resolveQueueName(workload);
           if (!queueName)
             return { status: "unknown", live: {}, fetchedAt: now };
           const state = await deps.cloudTasks.getState(queueName);
-          return { ...state, fetchedAt: now };
+          snapshot = { ...state, fetchedAt: now };
+          break;
         }
         case "schedulerJob": {
           const jobName = resolveSchedulerJobName(workload);
-          if (!jobName)
-            return { status: "unknown", live: {}, fetchedAt: now };
+          if (!jobName) return { status: "unknown", live: {}, fetchedAt: now };
           const state = await deps.scheduler.getState(jobName);
-          return { ...state, fetchedAt: now };
+          snapshot = { ...state, fetchedAt: now };
+          break;
         }
         case "pubsubSubscription": {
           const subName = resolveSubscriptionName(workload);
-          if (!subName)
-            return { status: "unknown", live: {}, fetchedAt: now };
+          if (!subName) return { status: "unknown", live: {}, fetchedAt: now };
           const state = await deps.pubsub.getState(subName);
-          return { ...state, fetchedAt: now };
+          snapshot = { ...state, fetchedAt: now };
+          break;
         }
-        case "scheduledDataHook":
-          return { status: "running", live: {}, fetchedAt: now };
+        case "scheduledDataHook": {
+          // Enabled cron hooks are armed ("scheduled"), not executing.
+          const armed =
+            workload.enabled === true ||
+            (workload.enabled == null && workload.actions.includes("disable"));
+          snapshot = {
+            status: armed ? "scheduled" : "disabled",
+            live: {
+              enabled: armed,
+              ...(workload.schedule?.cron
+                ? { cron: workload.schedule.cron }
+                : {}),
+            },
+            fetchedAt: now,
+          };
+          break;
+        }
         case "workerRoute":
+          // Docs/catalog only — not an independently running job.
           return {
-            status: "running",
+            status: "unknown",
             live: { route: workload.route },
             fetchedAt: now,
           };
         case "inProcessScheduler":
+          // Docs/catalog only — not an independently running job.
           return {
-            status: "running",
+            status: "unknown",
             live: { sourceFile: workload.sourceFile },
             fetchedAt: now,
           };
         default:
           return { status: "unknown", live: {}, fetchedAt: now };
       }
+
+      snapshot = await applyGmailDeliveryModeGate(workload, snapshot);
+
+      // Promote armed/ready workloads to "running" only when work is in flight.
+      // Skip product-disabled / paused paths.
+      if (snapshot.status === "scheduled" || snapshot.status === "ready") {
+        const activeRuns = await hasActiveRun(workload.id);
+        let pendingDepth = 0;
+        if (workload.kind === "cloudTasksQueue" && activeRuns === 0) {
+          const queueName = resolveQueueName(workload);
+          if (queueName) {
+            try {
+              const pending = await deps.cloudTasks.listPendingTasks(
+                queueName,
+                1,
+              );
+              pendingDepth = pending.length;
+            } catch {
+              pendingDepth = 0;
+            }
+          }
+        }
+        if (activeRuns > 0 || pendingDepth > 0) {
+          return {
+            ...snapshot,
+            status: "running",
+            live: {
+              ...snapshot.live,
+              ...(activeRuns > 0 ? { activeRuns } : {}),
+              ...(pendingDepth > 0 ? { depth: pendingDepth } : {}),
+            },
+            fetchedAt: now,
+          };
+        }
+      }
+
+      return snapshot;
     } catch (err) {
       return {
         status: "unknown",
@@ -111,21 +243,26 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
     async listWorkloads(filters?: {
       kind?: string[];
       source?: string[];
-      status?: string;
+      status?: string[];
       q?: string;
     }): Promise<WorkloadWithState[]> {
-      let registryWorkloads = listRegistryWorkloads({
+      const registryWorkloads = listRegistryWorkloads({
         kind: filters?.kind,
         source: filters?.source,
         q: filters?.q,
       }) as WorkloadRecord[];
 
+      // Scheduled hooks are always source:"hook". Skip them when a source
+      // filter is set and does not include "hook" (ownership is exclusive).
       let hookWorkloads: WorkloadRecord[] = [];
-      const includeHooks =
+      const sourceFilter = filters?.source ?? [];
+      const includeHooksBySource =
+        sourceFilter.length === 0 || sourceFilter.includes("hook");
+      const includeHooksByKind =
         !filters?.kind ||
         filters.kind.length === 0 ||
         filters.kind.includes("scheduledDataHook");
-      if (includeHooks) {
+      if (includeHooksBySource && includeHooksByKind) {
         try {
           hookWorkloads = await deps.scheduledHooks.list();
         } catch {
@@ -159,10 +296,9 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
         )
         .map((r) => r.value);
 
-      if (filters?.status) {
-        workloads = workloads.filter(
-          (w) => w.state.status === filters.status,
-        );
+      if (filters?.status && filters.status.length > 0) {
+        const statusSet = new Set(filters.status);
+        workloads = workloads.filter((w) => statusSet.has(w.state.status));
       }
 
       return workloads;
@@ -171,8 +307,7 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
     async getWorkload(
       id: string,
     ): Promise<
-      | (WorkloadWithState & { runStats?: Record<string, number> })
-      | null
+      (WorkloadWithState & { runStats?: Record<string, number> }) | null
     > {
       let workload: WorkloadRecord | undefined;
 
@@ -190,7 +325,26 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       let runStats: Record<string, number> | undefined;
       try {
-        runStats = await deps.runs.countByWorkloadIdSince(id, since);
+        const empty = {
+          success: 0,
+          error: 0,
+          timeout: 0,
+          running: 0,
+          cancelled: 0,
+        };
+        const totals = { ...empty };
+        for (const relatedId of relatedWorkloadIds(id)) {
+          const counts = await deps.runs.countByWorkloadIdSince(
+            relatedId,
+            since,
+          );
+          totals.success += counts.success;
+          totals.error += counts.error;
+          totals.timeout += counts.timeout;
+          totals.running += counts.running;
+          totals.cancelled += counts.cancelled;
+        }
+        runStats = totals;
       } catch {
         runStats = undefined;
       }
@@ -225,8 +379,7 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
           const queueName = resolveQueueName(workload);
           if (!queueName) throw new Error(`No queue name resolved for ${id}`);
           if (action === "pause") await deps.cloudTasks.pause(queueName);
-          else if (action === "resume")
-            await deps.cloudTasks.resume(queueName);
+          else if (action === "resume") await deps.cloudTasks.resume(queueName);
           break;
         }
         case "schedulerJob": {
@@ -285,7 +438,8 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
         cursor?: string;
       },
     ) {
-      return deps.runs.listByWorkloadId(workloadId, {
+      const relatedIds = relatedWorkloadIds(workloadId);
+      const listOptions = {
         since: filters?.since,
         until: filters?.until,
         status: filters?.status as WorkloadRunRecord["status"] | undefined,
@@ -294,12 +448,39 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
           | undefined,
         limit: filters?.limit,
         cursor: filters?.cursor,
-      });
+      };
+
+      // Single id: preserve native pagination.
+      if (relatedIds.length === 1) {
+        return deps.runs.listByWorkloadId(relatedIds[0]!, listOptions);
+      }
+
+      // Parent + catalog handlers: merge first pages (cursor ignored across ids).
+      const limit = filters?.limit ?? 50;
+      const pages = await Promise.all(
+        relatedIds.map((id) =>
+          deps.runs.listByWorkloadId(id, {
+            ...listOptions,
+            limit,
+            cursor: undefined,
+          }),
+        ),
+      );
+      const merged = pages
+        .flatMap((page) => page.items)
+        .slice()
+        .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+      return {
+        items: merged.slice(0, limit),
+        nextCursor: null,
+      };
     },
 
     async getRun(workloadId: string, runId: string) {
       const run = await deps.runs.getById(runId);
-      if (!run || run.workloadId !== workloadId) return null;
+      if (!run) return null;
+      const allowed = new Set(relatedWorkloadIds(workloadId));
+      if (!allowed.has(run.workloadId)) return null;
       return run;
     },
 
@@ -309,7 +490,9 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
       options?: { tail?: number },
     ) {
       const run = await deps.runs.getById(runId);
-      if (!run || run.workloadId !== workloadId) return null;
+      if (!run) return null;
+      const allowed = new Set(relatedWorkloadIds(workloadId));
+      if (!allowed.has(run.workloadId)) return null;
 
       const logEntries = await deps.cloudLogging.listEntries({
         workloadRunId: runId,
@@ -323,11 +506,7 @@ export function createWorkloadController(deps: WorkloadControllerDeps) {
         logExcerpt: run.logExcerpt ?? [],
         cloudLoggingUrl:
           run.cloudLoggingUrl ??
-          deps.cloudLogging.buildLogUrl(
-            runId,
-            run.startedAt,
-            run.completedAt,
-          ),
+          deps.cloudLogging.buildLogUrl(runId, run.startedAt, run.completedAt),
       };
     },
 

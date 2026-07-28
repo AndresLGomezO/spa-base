@@ -1,11 +1,11 @@
-export interface SchedulerAdminConfig {
+interface SchedulerAdminConfig {
   readonly projectId: string;
   readonly region: string;
   readonly localMode: boolean;
 }
 
-export interface SchedulerJobState {
-  readonly status: "running" | "paused" | "unknown";
+interface SchedulerJobState {
+  readonly status: "scheduled" | "paused" | "unknown";
   readonly live: {
     state?: string;
     schedule?: string;
@@ -28,21 +28,24 @@ async function getClient(): Promise<{
     const Ctor =
       (mod as unknown as { CloudSchedulerClient: new () => unknown })
         .CloudSchedulerClient ??
-      (mod as unknown as { default: { CloudSchedulerClient: new () => unknown } })
-        .default?.CloudSchedulerClient ??
+      (
+        mod as unknown as {
+          default: { CloudSchedulerClient: new () => unknown };
+        }
+      ).default?.CloudSchedulerClient ??
       (mod as unknown as { v1: { CloudSchedulerClient: new () => unknown } }).v1
         ?.CloudSchedulerClient;
     if (!Ctor) throw new Error("Could not resolve CloudSchedulerClient");
     schedulerClient = new Ctor();
   }
-  return schedulerClient as ReturnType<typeof getClient> extends Promise<infer T>
+  return schedulerClient as ReturnType<typeof getClient> extends Promise<
+    infer T
+  >
     ? T
     : never;
 }
 
-function timestampToIso(
-  ts: unknown,
-): string | undefined {
+function timestampToIso(ts: unknown): string | undefined {
   if (!ts || typeof ts !== "object") return undefined;
   const seconds = (ts as { seconds?: number | string }).seconds;
   if (seconds == null) return undefined;
@@ -57,17 +60,18 @@ export function createSchedulerAdminAdapter(config: SchedulerAdminConfig) {
   return {
     async getState(jobName: string): Promise<SchedulerJobState> {
       if (config.localMode) {
-        return { status: "running", live: { state: "ENABLED" } };
+        return { status: "scheduled", live: { state: "ENABLED" } };
       }
       try {
         const client = await getClient();
         const [job] = await client.getJob({ name: jobPath(jobName) });
         const state = job.state as string | undefined;
-        const status: "running" | "paused" | "unknown" =
+        // ENABLED means armed for cron — not currently executing a tick.
+        const status: "scheduled" | "paused" | "unknown" =
           state === "PAUSED"
             ? "paused"
             : state === "ENABLED"
-              ? "running"
+              ? "scheduled"
               : "unknown";
         return {
           status,

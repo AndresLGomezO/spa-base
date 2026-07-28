@@ -106,10 +106,7 @@ export function startLocalGmailPollScheduler(
                 : {}),
             }),
           child: (bindings: Record<string, unknown>) => ({
-            info: (
-              msg: string | Record<string, unknown>,
-              ...args: unknown[]
-            ) =>
+            info: (msg: string | Record<string, unknown>, ...args: unknown[]) =>
               log({
                 message: typeof msg === "string" ? msg : "info",
                 ...bindings,

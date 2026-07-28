@@ -172,7 +172,10 @@ describe("translateShortCategoryId", () => {
   it("maps short ids to real uuids and passes unknowns through", () => {
     const map = new Map([["c1", "aaa-food"]]);
     expect(
-      translateShortCategoryId({ action: "useExisting", categoryId: "c1" }, map),
+      translateShortCategoryId(
+        { action: "useExisting", categoryId: "c1" },
+        map,
+      ),
     ).toEqual({ action: "useExisting", categoryId: "aaa-food" });
     expect(
       translateShortCategoryId(
@@ -229,9 +232,9 @@ describe("filterCategoriesForHint", () => {
   });
 
   it("returns the full catalog when the hint has no signal", () => {
-    expect(filterCategoriesForHint(catalog, "XYZNOMATCH").map((r) => r.id)).toEqual(
-      catalog.map((r) => r.id),
-    );
+    expect(
+      filterCategoriesForHint(catalog, "XYZNOMATCH").map((r) => r.id),
+    ).toEqual(catalog.map((r) => r.id));
     expect(filterCategoriesForHint(catalog, undefined)).toEqual(catalog);
     expect(filterCategoriesForHint(catalog, "   ")).toEqual(catalog);
   });

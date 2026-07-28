@@ -49,6 +49,8 @@ COPY packages/data-view/package.json ./packages/data-view/
 COPY packages/debug-logs/package.json ./packages/debug-logs/
 COPY packages/encryption/package.json ./packages/encryption/
 COPY packages/gmail-ingest/package.json ./packages/gmail-ingest/
+COPY packages/workload-registry/package.json ./packages/workload-registry/
+COPY packages/workload-runs/package.json ./packages/workload-runs/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/ ./packages/typescript-config/
 

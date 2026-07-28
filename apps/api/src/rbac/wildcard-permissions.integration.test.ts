@@ -114,6 +114,20 @@ vi.mock("@repo/gcp-firebase", () => ({
     appendStep: vi.fn(),
     complete: vi.fn(),
   })),
+  createFirestoreAdminWorkloadRunRepository: vi.fn(() => ({
+    getById: vi.fn(async () => null),
+    upsert: vi.fn(),
+    update: vi.fn(),
+    listByWorkloadId: vi.fn(async () => ({ items: [], nextCursor: null })),
+    listByRootRunId: vi.fn(async () => []),
+    countByWorkloadIdSince: vi.fn(async () => ({
+      success: 0,
+      error: 0,
+      timeout: 0,
+      running: 0,
+      cancelled: 0,
+    })),
+  })),
 }));
 
 import { buildServer } from "../server.js";

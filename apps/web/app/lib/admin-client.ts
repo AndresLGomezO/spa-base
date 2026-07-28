@@ -203,7 +203,14 @@ export type WorkloadKind =
   | "inProcessScheduler";
 
 export type WorkloadSource = "system" | "hook" | "integration";
-export type WorkloadStatus = "running" | "paused" | "disabled" | "unknown";
+type WorkloadDomain = "ai" | "email" | "platform" | "metrics" | "tenant";
+export type WorkloadStatus =
+  | "running"
+  | "scheduled"
+  | "ready"
+  | "paused"
+  | "disabled"
+  | "unknown";
 export type WorkloadAction =
   | "pause"
   | "resume"
@@ -211,18 +218,26 @@ export type WorkloadAction =
   | "enable"
   | "disable";
 
-export interface WorkloadRecord {
+interface WorkloadSchedule {
+  readonly cron: string;
+  readonly timezone?: string;
+}
+
+interface WorkloadRecord {
   readonly id: string;
   readonly kind: WorkloadKind;
   readonly source: WorkloadSource;
+  readonly domain: WorkloadDomain;
   readonly displayName: string;
   readonly description?: string;
   readonly actions: readonly WorkloadAction[];
   readonly gcp?: Record<string, unknown>;
+  readonly schedule?: WorkloadSchedule;
   readonly route?: string;
   readonly sourceFile?: string;
   readonly disableHint?: string;
-  readonly controlledBy?: string;
+  readonly controlledBy?: readonly string[];
+  readonly enabled?: boolean;
 }
 
 export interface WorkloadState {
@@ -244,6 +259,18 @@ export interface WorkloadStats24h {
   readonly cancelled: number;
 }
 
+export interface WorkloadRunArtifactRef {
+  readonly kind:
+    | "hookExecution"
+    | "aiJob"
+    | "emailIngestJob"
+    | "tenantDeletionJob"
+    | "workloadRun";
+  readonly id: string;
+  readonly tenantId?: string;
+  readonly status?: string;
+}
+
 export interface WorkloadRunRecord {
   readonly id: string;
   readonly workloadId: string;
@@ -256,27 +283,30 @@ export interface WorkloadRunRecord {
   readonly status: string;
   readonly error?: string;
   readonly metrics?: Record<string, unknown>;
-  readonly artifactRefs?: Record<string, string>;
+  readonly artifactRefs?: readonly WorkloadRunArtifactRef[];
   readonly parentRunId?: string;
   readonly rootRunId?: string;
-  readonly logExcerpt?: string;
+  readonly logExcerpt?: string | readonly string[];
   readonly cloudLoggingUrl?: string;
 }
 
-export interface WorkloadRunLogEntry {
+interface WorkloadRunLogEntry {
   readonly timestamp: string;
   readonly severity?: string;
   readonly message: string;
 }
 
-export interface WorkloadFilters {
-  readonly kind?: WorkloadKind;
-  readonly source?: WorkloadSource;
-  readonly status?: WorkloadStatus;
+interface WorkloadFilters {
+  /** Single kind or comma-separated kinds. */
+  readonly kind?: WorkloadKind | string;
+  /** Single source or comma-separated sources. */
+  readonly source?: WorkloadSource | string;
+  /** Single status or comma-separated statuses. */
+  readonly status?: WorkloadStatus | string;
   readonly q?: string;
 }
 
-export interface WorkloadRunFilters {
+interface WorkloadRunFilters {
   readonly since?: string;
   readonly until?: string;
   readonly status?: string;

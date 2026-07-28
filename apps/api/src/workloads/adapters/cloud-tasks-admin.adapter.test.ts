@@ -13,10 +13,10 @@ describe("createCloudTasksAdminAdapter", () => {
   };
 
   describe("localMode", () => {
-    it("getState returns running", async () => {
+    it("getState returns ready", async () => {
       const adapter = createCloudTasksAdminAdapter(localConfig);
       const state = await adapter.getState("my-queue");
-      expect(state.status).toBe("running");
+      expect(state.status).toBe("ready");
       expect(state.live.state).toBe("RUNNING");
     });
 

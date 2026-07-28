@@ -24,6 +24,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "cron-parser": "catalog:",
     "zod": "catalog:"
   }
 }

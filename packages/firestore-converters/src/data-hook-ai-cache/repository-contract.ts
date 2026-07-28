@@ -8,9 +8,6 @@ export {
 import type { DataHookAiCacheRecord } from "@repo/ai-engine/schemas";
 
 export interface DataHookAiCacheRepository {
-  getById(
-    tenantId: string,
-    id: string,
-  ): Promise<DataHookAiCacheRecord | null>;
+  getById(tenantId: string, id: string): Promise<DataHookAiCacheRecord | null>;
   upsert(record: DataHookAiCacheRecord): Promise<DataHookAiCacheRecord>;
 }

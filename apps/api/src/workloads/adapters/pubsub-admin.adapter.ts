@@ -1,13 +1,13 @@
 import { PubSub } from "@google-cloud/pubsub";
 
-export interface PubSubAdminConfig {
+interface PubSubAdminConfig {
   readonly projectId: string;
   readonly localMode: boolean;
   readonly subscriptionTopicMap?: Record<string, string>;
 }
 
-export interface PubSubSubscriptionState {
-  readonly status: "running" | "paused" | "unknown";
+interface PubSubSubscriptionState {
+  readonly status: "ready" | "paused" | "unknown";
   readonly live: {
     exists?: boolean;
     pushEndpoint?: string;
@@ -29,23 +29,21 @@ export function createPubSubAdminAdapter(config: PubSubAdminConfig) {
   return {
     async getState(subscriptionName: string): Promise<PubSubSubscriptionState> {
       if (config.localMode) {
-        return { status: "running", live: { exists: true } };
+        return { status: "ready", live: { exists: true } };
       }
       try {
         const client = getClient(config.projectId);
         const sub = client.subscription(subscriptionName);
         const [metadata] = await sub.getMetadata();
-        const detached = (metadata as Record<string, unknown>).detached === true;
+        const detached =
+          (metadata as Record<string, unknown>).detached === true;
         const pushEndpoint =
-          (
-            metadata.pushConfig as
-              | { pushEndpoint?: string }
-              | null
-              | undefined
-          )?.pushEndpoint ?? undefined;
-        const status: "running" | "paused" | "unknown" = detached
+          (metadata.pushConfig as { pushEndpoint?: string } | null | undefined)
+            ?.pushEndpoint ?? undefined;
+        // Attached = ready to receive; not proof of active deliveries.
+        const status: "ready" | "paused" | "unknown" = detached
           ? "paused"
-          : "running";
+          : "ready";
         return {
           status,
           live: { exists: true, pushEndpoint, detached },
@@ -75,7 +73,8 @@ export function createPubSubAdminAdapter(config: PubSubAdminConfig) {
       } catch (err) {
         console.log(
           JSON.stringify({
-            message: "Could not detach subscription (may require recreate via Terraform)",
+            message:
+              "Could not detach subscription (may require recreate via Terraform)",
             subscriptionName,
             error: err instanceof Error ? err.message : String(err),
           }),

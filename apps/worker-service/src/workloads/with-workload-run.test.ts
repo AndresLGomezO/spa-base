@@ -48,7 +48,11 @@ describe("withWorkloadRun", () => {
   it("records success when fn completes", async () => {
     const repository = createInMemoryRepository();
     const recorder = createWorkloadRunRecorder({ repository });
-    const logger = { child: vi.fn(() => logger), info: vi.fn(), error: vi.fn() };
+    const logger = {
+      child: vi.fn(() => logger),
+      info: vi.fn(),
+      error: vi.fn(),
+    };
 
     const result = await withWorkloadRun(
       recorder,
@@ -80,7 +84,11 @@ describe("withWorkloadRun", () => {
   it("records error and re-throws when fn throws", async () => {
     const repository = createInMemoryRepository();
     const recorder = createWorkloadRunRecorder({ repository });
-    const logger = { child: vi.fn(() => logger), info: vi.fn(), error: vi.fn() };
+    const logger = {
+      child: vi.fn(() => logger),
+      info: vi.fn(),
+      error: vi.fn(),
+    };
 
     await expect(
       withWorkloadRun(
@@ -99,9 +107,7 @@ describe("withWorkloadRun", () => {
 
     const record = repository.records.get("run-2")!;
     expect(record.status).toBe("error");
-    expect(record.error).toEqual(
-      expect.objectContaining({ message: "boom" }),
-    );
+    expect(record.error).toEqual(expect.objectContaining({ message: "boom" }));
   });
 
   it("works without logger.child (fallback to same logger)", async () => {

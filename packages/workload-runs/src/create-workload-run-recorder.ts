@@ -9,6 +9,7 @@ import type {
   WorkloadRunTrigger,
   WorkloadRunTriggerContext,
 } from "./workload-run.js";
+import { WORKLOAD_RUN_RETENTION_MS } from "./workload-run.js";
 
 export interface WorkloadRunRepository {
   getById(id: string): Promise<WorkloadRunRecord | null>;
@@ -89,6 +90,10 @@ function randomId(): string {
   return `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function retentionExpireAt(from: Date): string {
+  return new Date(from.getTime() + WORKLOAD_RUN_RETENTION_MS).toISOString();
+}
+
 export function buildDeterministicSchedulerRunId(
   jobName: string,
   cronFireTime: Date | string,
@@ -148,6 +153,7 @@ export function createWorkloadRunRecorder(
         metrics: input.metrics ?? {},
         artifactRefs: [],
         cloudLoggingUrl: input.cloudLoggingUrl,
+        expireAt: retentionExpireAt(now()),
       });
 
       let artifactRefs = [...(record.artifactRefs ?? [])];
@@ -171,10 +177,11 @@ export function createWorkloadRunRecorder(
         async succeed(extra) {
           if (finalized) return;
           finalized = true;
-          const completedAt = now().toISOString();
+          const completed = now();
+          const completedAt = completed.toISOString();
           const durationMs = Math.max(
             0,
-            new Date(completedAt).getTime() - new Date(startedAt).getTime(),
+            completed.getTime() - new Date(startedAt).getTime(),
           );
           if (extra?.metrics) {
             metrics = { ...metrics, ...extra.metrics };
@@ -182,20 +189,20 @@ export function createWorkloadRunRecorder(
           await deps.repository.update(id, {
             status: "success",
             completedAt,
+            expireAt: retentionExpireAt(completed),
             durationMs,
             metrics,
-            logExcerpt: extra?.logExcerpt
-              ? [...extra.logExcerpt]
-              : undefined,
+            logExcerpt: extra?.logExcerpt ? [...extra.logExcerpt] : undefined,
           });
         },
         async fail(error, extra) {
           if (finalized) return;
           finalized = true;
-          const completedAt = now().toISOString();
+          const completed = now();
+          const completedAt = completed.toISOString();
           const durationMs = Math.max(
             0,
-            new Date(completedAt).getTime() - new Date(startedAt).getTime(),
+            completed.getTime() - new Date(startedAt).getTime(),
           );
           if (extra?.metrics) {
             metrics = { ...metrics, ...extra.metrics };
@@ -205,12 +212,11 @@ export function createWorkloadRunRecorder(
           await deps.repository.update(id, {
             status: extra?.status ?? "error",
             completedAt,
+            expireAt: retentionExpireAt(completed),
             durationMs,
             error: err,
             metrics,
-            logExcerpt: extra?.logExcerpt
-              ? [...extra.logExcerpt]
-              : undefined,
+            logExcerpt: extra?.logExcerpt ? [...extra.logExcerpt] : undefined,
           });
         },
         async cancel(reason) {
