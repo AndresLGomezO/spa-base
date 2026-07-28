@@ -85,7 +85,7 @@
       "fields": [
         { "fieldPath": "workloadId", "order": "ASCENDING" },
         { "fieldPath": "startedAt", "order": "DESCENDING" },
-        { "fieldPath": "id", "order": "DESCENDING" }
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     },
     {
@@ -120,7 +120,7 @@
         { "fieldPath": "workloadId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "startedAt", "order": "DESCENDING" },
-        { "fieldPath": "id", "order": "DESCENDING" }
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     }
   ],
