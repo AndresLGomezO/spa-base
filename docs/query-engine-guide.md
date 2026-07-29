@@ -124,16 +124,18 @@ HTTP `query` JSON accepts either a **filter tree** root group or a legacy flat `
 
 Queryable system fields: `id`, `createdAt`. `tenantId` and `updatedAt` are rejected on filter/sort/select.
 
-### Firestore constraints (enforced at parse time)
+### Firestore constraints (enforced at parse / execution time)
 
-- At most **one inequality** filter (`!=`, `<`, `<=`, `>`, `>=`) per AND branch (each OR disjunction evaluated separately at execution)
+- At most **one inequality** field (`!=`, `<`, `<=`, `>`, `>=`) per AND branch (each OR disjunction evaluated separately at execution)
 - At most **one sort** field
-- When an inequality is present, the primary sort field must match that field; `id` is appended as tiebreaker at execution time
+- **Period equality rewrite:** a calendar-aligned `date` range (`>=` month/year start and `<=` matching end) is rewritten to companion equality (`month == "YYYY-MM"` or `year == "YYYY"`) when the entity defines a string `month` / `year` field. That removes the inequality so any sort field can use the native Firestore path.
+- When an inequality remains and the primary sort field matches it, execution is native; `id` is appended as tiebreaker
+- When an inequality remains and the primary sort field **differs**, execution uses **range re-sort**: scan by the inequality field (up to `CLIENT_QUERY_FALLBACK_MAX_DOCS`), sort in memory by the requested field, then paginate. Matching more documents than the cap returns `400` with `QUERY_TOO_BROAD`
 - OR groups use Firestore `Filter.or` when the query is index-compatible; otherwise the executor falls back to client-side filtering with `evaluateFilterTree`
 - Max **30** OR disjunctions (Firestore limit)
 - Max filter tree depth **10**
 
-Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED`.
+Invalid queries return `400` with `QUERY_VALIDATION_ERROR`, `QUERY_UNSUPPORTED`, or `QUERY_TOO_BROAD`.
 
 ---
 

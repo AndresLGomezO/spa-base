@@ -146,10 +146,19 @@ function collectInequalityFields(
   return fields;
 }
 
+export type QueryExecutionMode = "native" | "rangeResort";
+
+export interface EnforcedSortConstraints {
+  readonly sort: NormalizedSort;
+  readonly executionMode: QueryExecutionMode;
+  /** Firestore orderBy used when scanning a range before in-memory resort. */
+  readonly scanSort?: NormalizedSort;
+}
+
 export function enforceFirestoreConstraintsOnTree(
   filterTree: NormalizedFilterNode | null,
   sort: NormalizedSort | null,
-): NormalizedSort {
+): EnforcedSortConstraints {
   const inequalityFields = collectInequalityFields(filterTree);
   if (inequalityFields.size > 1) {
     throw new QueryError(
@@ -162,7 +171,10 @@ export function enforceFirestoreConstraintsOnTree(
     inequalityFields.size === 1 ? [...inequalityFields][0] : undefined;
 
   if (!inequalityField) {
-    return sort ?? { field: "id", direction: "asc" };
+    return {
+      sort: sort ?? { field: "id", direction: "asc" },
+      executionMode: "native",
+    };
   }
 
   const primarySort = sort ?? {
@@ -170,14 +182,21 @@ export function enforceFirestoreConstraintsOnTree(
     direction: "asc" as const,
   };
 
-  if (primarySort.field !== inequalityField) {
-    throw new QueryError(
-      QueryErrorCode.QUERY_UNSUPPORTED,
-      "When using an inequality filter, the primary sort field must match the filtered field.",
-    );
+  if (primarySort.field === inequalityField) {
+    return {
+      sort: primarySort,
+      executionMode: "native",
+    };
   }
 
-  return primarySort;
+  return {
+    sort: primarySort,
+    executionMode: "rangeResort",
+    scanSort: {
+      field: inequalityField,
+      direction: "asc",
+    },
+  };
 }
 
 export function treeContainsPostFilters(

@@ -44,6 +44,8 @@ export interface NormalizedSort {
 
 import type { NormalizedFilterNode } from "../filter-tree.js";
 
+export type EntityQueryExecutionMode = "native" | "rangeResort";
+
 export interface NormalizedEntityQuery {
   /** Primary filter representation (AND/OR tree). */
   readonly filterTree: NormalizedFilterNode | null;
@@ -52,6 +54,12 @@ export interface NormalizedEntityQuery {
   readonly postFilters: readonly NormalizedFilter[];
   readonly postFilterTree: NormalizedFilterNode | null;
   readonly sort: NormalizedSort | null;
+  /**
+   * When `executionMode` is `rangeResort`, Firestore scans ordered by this
+   * field (the inequality field), then results are re-sorted by `sort`.
+   */
+  readonly scanSort?: NormalizedSort;
+  readonly executionMode?: EntityQueryExecutionMode;
   readonly limit: number;
   readonly cursor?: string;
   readonly offset?: number;

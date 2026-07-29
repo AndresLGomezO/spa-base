@@ -6,6 +6,7 @@ export {
   type TenantScopedEntityRepository,
 } from "./entity/tenant-scoped-repository-contract.js";
 export {
+  type EntityQueryExecutionMode,
   type EntityQueryExecutor,
   type FilterOperator,
   type FirestoreNativeOperator,

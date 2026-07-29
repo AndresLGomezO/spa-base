@@ -28,6 +28,7 @@ import {
   enforceFirestoreConstraintsOnTree,
   partitionFilterTree,
 } from "./filter-tree.js";
+import { rewritePeriodEqualityInTree } from "./period-equality-rewrite.js";
 import { SEARCH_SOURCE_FIELDS_FILTER_FIELD } from "./post-filters.js";
 import type { Filter, ListQueryInput, QueryConfig, Sort } from "./types.js";
 
@@ -482,9 +483,15 @@ export function normalizeEntityQuery(
     ? validateFilterNode(entity, rawFilterTree)
     : null;
 
-  const { nativeTree, postFilterTree } = validatedTree
+  const partitioned = validatedTree
     ? partitionFilterTree(validatedTree)
     : { nativeTree: null, postFilterTree: null };
+
+  const nativeTree = rewritePeriodEqualityInTree(
+    partitioned.nativeTree,
+    entity,
+  );
+  const postFilterTree = partitioned.postFilterTree;
 
   let searchField: string | undefined;
   let search: string | undefined;
@@ -530,7 +537,7 @@ export function normalizeEntityQuery(
   const sortEntry = config.sort?.[0] ?? null;
   const sort = sortEntry ? validateSort(entity, sortEntry) : null;
 
-  const primarySort = enforceFirestoreConstraintsOnTree(nativeTree, sort);
+  const enforced = enforceFirestoreConstraintsOnTree(nativeTree, sort);
   const select = config.select
     ? validateSelect(entity, config.select)
     : undefined;
@@ -543,7 +550,9 @@ export function normalizeEntityQuery(
     filters: nativeFilters,
     postFilters,
     postFilterTree,
-    sort: primarySort,
+    sort: enforced.sort,
+    ...(enforced.scanSort ? { scanSort: enforced.scanSort } : {}),
+    executionMode: enforced.executionMode,
     limit: normalizeLimit(config.pagination?.limit),
     ...(useOffset
       ? { offset }

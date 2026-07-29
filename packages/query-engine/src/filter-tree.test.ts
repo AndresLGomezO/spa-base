@@ -98,8 +98,35 @@ describe("applyPostFilterTree", () => {
 });
 
 describe("enforceFirestoreConstraintsOnTree", () => {
-  it("rejects multiple inequality fields in one AND branch", () => {
+  it("rejects inequality filters on multiple fields", () => {
+    const tree = and([cond("amount", ">", 10), cond("status", "<", "Z")]);
+    expect(() => enforceFirestoreConstraintsOnTree(tree, null)).toThrow(
+      /multiple fields/,
+    );
+  });
+
+  it("uses native mode when sort matches the inequality field", () => {
     const tree = and([cond("amount", ">", 10), cond("amount", "<", 100)]);
-    expect(() => enforceFirestoreConstraintsOnTree(tree, null)).toThrow();
+    const enforced = enforceFirestoreConstraintsOnTree(tree, {
+      field: "amount",
+      direction: "desc",
+    });
+    expect(enforced).toEqual({
+      sort: { field: "amount", direction: "desc" },
+      executionMode: "native",
+    });
+  });
+
+  it("marks rangeResort when sort differs from the inequality field", () => {
+    const tree = cond("date", ">=", "2026-07-01T00:00:00.000Z");
+    const enforced = enforceFirestoreConstraintsOnTree(tree, {
+      field: "amount",
+      direction: "asc",
+    });
+    expect(enforced).toEqual({
+      sort: { field: "amount", direction: "asc" },
+      executionMode: "rangeResort",
+      scanSort: { field: "date", direction: "asc" },
+    });
   });
 });

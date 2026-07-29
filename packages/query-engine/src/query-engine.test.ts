@@ -144,13 +144,47 @@ describe("normalizeEntityQuery", () => {
     expect(normalized.sort?.field).toBe("budget");
   });
 
-  it("requires sort field to match inequality filter", () => {
-    expect(() =>
-      normalizeEntityQuery(TestItem as unknown as AnyDefinedEntity, {
+  it("marks rangeResort when sort field differs from inequality filter", () => {
+    const normalized = normalizeEntityQuery(
+      TestItem as unknown as AnyDefinedEntity,
+      {
         filter: [{ field: "budget", operator: ">", value: 10 }],
         sort: [{ field: "name", direction: "asc" }],
-      }),
-    ).toThrow(/primary sort field must match/);
+      },
+    );
+    expect(normalized.executionMode).toBe("rangeResort");
+    expect(normalized.sort).toEqual({ field: "name", direction: "asc" });
+    expect(normalized.scanSort).toEqual({ field: "budget", direction: "asc" });
+  });
+
+  it("rewrites calendar month date range to month equality when companion exists", () => {
+    const Txn = defineEntity({
+      name: "txnNormalizePeriod",
+      fields: {
+        date: { type: "date", required: true },
+        month: { type: "string" },
+        amount: { type: "number", required: true },
+        name: { type: "string" },
+      },
+    });
+    registerEntity(Txn as unknown as AnyDefinedEntity);
+
+    const normalized = normalizeEntityQuery(
+      Txn as unknown as AnyDefinedEntity,
+      {
+        filter: [
+          { field: "date", operator: ">=", value: "2026-07-01T00:00:00.000Z" },
+          { field: "date", operator: "<=", value: "2026-07-31T23:59:59.999Z" },
+        ],
+        sort: [{ field: "amount", direction: "asc" }],
+      },
+    );
+
+    expect(normalized.filters).toEqual([
+      { field: "month", operator: "==", value: "2026-07" },
+    ]);
+    expect(normalized.executionMode).toBe("native");
+    expect(normalized.sort).toEqual({ field: "amount", direction: "asc" });
   });
 
   it("defaults sort to id ascending when no sort or inequality", () => {

@@ -205,3 +205,140 @@ describe("createFirestoreEntityQueryExecutor in-memory list pipeline", () => {
     expect(result.items.every((item) => item.status === "UPCOMING")).toBe(true);
   });
 });
+
+describe("createFirestoreEntityQueryExecutor range resort", () => {
+  const rangeRecords = [
+    {
+      id: "t1",
+      tenantId: "tenant_a",
+      date: "2026-07-10",
+      amount: 300,
+      accessUserIds: ["user_1"],
+    },
+    {
+      id: "t2",
+      tenantId: "tenant_a",
+      date: "2026-07-05",
+      amount: 100,
+      accessUserIds: ["user_1"],
+    },
+    {
+      id: "t3",
+      tenantId: "tenant_a",
+      date: "2026-07-20",
+      amount: 200,
+      accessUserIds: ["user_1"],
+    },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWhere.mockImplementation(() => createChainableQuery());
+    mockOrderBy.mockImplementation(() => createChainableQuery());
+    mockLimit.mockImplementation(() => createChainableQuery());
+    mockStartAfter.mockImplementation(() => createChainableQuery());
+    mockGet.mockResolvedValue({
+      empty: false,
+      docs: rangeRecords.map((record) => ({
+        data: () => record,
+      })),
+    });
+  });
+
+  it("scans by inequality field then returns results sorted by requested field", async () => {
+    const executor = createFirestoreEntityQueryExecutor({
+      config: { projectId: "demo" },
+      collection: "transactions",
+      converter: {
+        read: (raw: unknown) => raw as (typeof rangeRecords)[number],
+      },
+      clientFallbackMaxDocs: 1000,
+      tenantWideRead: true,
+    });
+
+    const result = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [
+          {
+            field: "date",
+            operator: ">=",
+            value: "2026-07-01T00:00:00.000Z",
+          },
+          {
+            field: "date",
+            operator: "<=",
+            value: "2026-07-31T23:59:59.999Z",
+          },
+        ],
+        postFilters: [],
+        sort: { field: "amount", direction: "asc" },
+        scanSort: { field: "date", direction: "asc" },
+        executionMode: "rangeResort",
+        limit: 10,
+      }),
+    );
+
+    expect(result.items.map((item) => item.id)).toEqual(["t2", "t3", "t1"]);
+    expect(mockOrderBy).toHaveBeenCalledWith("date", "asc");
+    expect(result.totalCount).toBe(3);
+  });
+
+  it("throws QUERY_TOO_BROAD when the range scan exceeds the doc cap", async () => {
+    const capped = Array.from({ length: 2 }, (_, index) => ({
+      id: `cap_${index}`,
+      tenantId: "tenant_a",
+      date: `2026-07-0${index + 1}`,
+      amount: index * 10,
+    }));
+
+    let getCalls = 0;
+    mockGet.mockImplementation(async () => {
+      getCalls += 1;
+      if (getCalls === 1) {
+        return {
+          empty: false,
+          docs: capped.map((record) => ({ data: () => record })),
+        };
+      }
+      return {
+        empty: false,
+        docs: [
+          { data: () => ({ id: "extra", date: "2026-07-99", amount: 1 }) },
+        ],
+      };
+    });
+
+    const executor = createFirestoreEntityQueryExecutor({
+      config: { projectId: "demo" },
+      collection: "transactions",
+      converter: {
+        read: (raw: unknown) => raw as (typeof capped)[number],
+      },
+      clientFallbackMaxDocs: 2,
+      tenantWideRead: true,
+    });
+
+    await expect(
+      executor.executeQuery(
+        "tenant_a",
+        makeNormalizedEntityQuery({
+          filters: [
+            {
+              field: "date",
+              operator: ">=",
+              value: "2026-07-01T00:00:00.000Z",
+            },
+          ],
+          postFilters: [],
+          sort: { field: "amount", direction: "asc" },
+          scanSort: { field: "date", direction: "asc" },
+          executionMode: "rangeResort",
+          limit: 10,
+        }),
+      ),
+    ).rejects.toMatchObject({
+      code: "QUERY_TOO_BROAD",
+    });
+  });
+});

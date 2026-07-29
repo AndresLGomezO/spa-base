@@ -16,6 +16,11 @@ export {
   partitionFilterTree,
   treeRequiresInMemoryExecution,
 } from "./filter-tree.js";
+export type {
+  EnforcedSortConstraints,
+  QueryExecutionMode,
+} from "./filter-tree.js";
+export { rewritePeriodEqualityInTree } from "./period-equality-rewrite.js";
 export {
   migrateFlatFiltersToTree,
   normalizeLegacyQueryFilter,

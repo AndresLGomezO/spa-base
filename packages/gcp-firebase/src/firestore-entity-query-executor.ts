@@ -134,6 +134,7 @@ function orderEqualityFiltersForCompositeIndex(
 function buildFirestoreQuery(
   collectionRef: CollectionReference<DocumentData>,
   normalizedQuery: NormalizedEntityQuery,
+  options: { readonly orderBy?: NormalizedEntityQuery["sort"] } = {},
 ): Query {
   const equalityFilters = orderEqualityFiltersForCompositeIndex(
     normalizedQuery.filters.filter((filter) =>
@@ -164,7 +165,8 @@ function buildFirestoreQuery(
     }
   }
 
-  const primarySort = normalizedQuery.sort ?? { field: "id", direction: "asc" };
+  const primarySort = options.orderBy ??
+    normalizedQuery.sort ?? { field: "id", direction: "asc" };
   query = query.orderBy(primarySort.field, primarySort.direction);
 
   if (primarySort.field !== "id") {
@@ -255,6 +257,14 @@ class FirestoreEntityQueryExecutor<
       this.executorConfig.clientFallbackMaxDocs ?? 0;
     const inMemoryListQueries =
       this.executorConfig.inMemoryListQueries === true;
+
+    if (query.executionMode === "rangeResort") {
+      return this.executeRangeResort(
+        collectionRef,
+        query,
+        clientFallbackMaxDocs,
+      );
+    }
 
     if (
       usesInMemoryListPipeline({
@@ -419,6 +429,92 @@ class FirestoreEntityQueryExecutor<
       }
       throw error;
     }
+  }
+
+  private async executeRangeResort(
+    collectionRef: CollectionReference<DocumentData>,
+    query: NormalizedEntityQuery,
+    maxDocs: number,
+  ) {
+    if (maxDocs <= 0) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_TOO_BROAD,
+        "Sorting by a field other than the inequality filter field requires an in-memory scan cap (CLIENT_QUERY_FALLBACK_MAX_DOCS).",
+      );
+    }
+
+    const scanSort = query.scanSort ?? {
+      field:
+        query.filters.find(
+          (filter) =>
+            !EQUALITY_OPERATORS.has(filter.operator as FirestoreNativeOperator),
+        )?.field ?? "id",
+      direction: "asc" as const,
+    };
+
+    const baseQuery = buildFirestoreQuery(collectionRef, query, {
+      orderBy: scanSort,
+    });
+
+    const items: Record<string, unknown>[] = [];
+    let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+    let exhausted = false;
+
+    while (items.length < maxDocs) {
+      const remaining = maxDocs - items.length;
+      const pageSize = Math.min(IN_MEMORY_SNAPSHOT_PAGE_SIZE, remaining);
+      let pageQuery = baseQuery.limit(pageSize);
+
+      if (lastDoc) {
+        pageQuery = pageQuery.startAfter(lastDoc);
+      }
+
+      const snapshot = await pageQuery.get();
+      if (snapshot.empty) {
+        exhausted = true;
+        break;
+      }
+
+      items.push(
+        ...snapshot.docs.map(
+          (doc) =>
+            this.executorConfig.converter.read(doc.data()) as Record<
+              string,
+              unknown
+            >,
+        ),
+      );
+
+      lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+      if (snapshot.docs.length < pageSize) {
+        exhausted = true;
+        break;
+      }
+    }
+
+    if (!exhausted && items.length >= maxDocs) {
+      const probe = lastDoc
+        ? await baseQuery.startAfter(lastDoc).limit(1).get()
+        : await baseQuery.limit(1).get();
+      if (!probe.empty) {
+        throw new QueryError(
+          QueryErrorCode.QUERY_TOO_BROAD,
+          `Range re-sort matched more than ${maxDocs} documents. Narrow the filter or sort by the inequality field.`,
+        );
+      }
+    }
+
+    let working = items;
+    if (query.postFilterTree) {
+      working = applyPostFilterTree(working, query.postFilterTree);
+    }
+    if (query.postFilters.length > 0) {
+      working = applyPostFilters(working, query.postFilters);
+    }
+
+    working = sortItemsInMemory(working, query.sort);
+    return this.paginateInMemoryResults(working, query);
   }
 
   private async loadInMemorySnapshot(
