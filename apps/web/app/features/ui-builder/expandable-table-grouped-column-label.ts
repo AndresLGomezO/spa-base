@@ -1,4 +1,4 @@
-import { resolveLayoutRootColumns } from "@repo/ui-builder-core";
+import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
 import type { GroupedTableColumn, UiLayoutDocument } from "@repo/entities";
 
 import {
@@ -6,22 +6,10 @@ import {
   type EntityCatalogEntry,
 } from "../../entities/entity-catalog";
 
-function resolveFirstFieldPathFromCellLayout(
+export function resolveFirstFieldPathFromCellLayout(
   layout: UiLayoutDocument,
 ): string | null {
-  for (const column of resolveLayoutRootColumns(layout)) {
-    for (const row of column.rows) {
-      if (
-        row.type === "component" &&
-        "primary" in row.component &&
-        row.component.primary?.type === "field"
-      ) {
-        return row.component.primary.path;
-      }
-    }
-  }
-
-  return null;
+  return collectLayoutFieldPaths(layout)[0] ?? null;
 }
 
 export function resolveExpandableTableGroupedColumnDisplayLabel(

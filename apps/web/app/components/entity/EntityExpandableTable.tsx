@@ -28,6 +28,7 @@ import {
   Text,
   useThirdRail,
 } from "@repo/ui";
+import type { DataViewSortState } from "@repo/data-view";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
@@ -42,13 +43,17 @@ import {
 } from "../../features/entity-summary/resolve-summary-tabs";
 import { getAiRecordSummary } from "../../lib/api-client";
 import { formatRecordDisplayLabel } from "./format-record-display-label";
+import { SortableTableColumnHeader } from "./SortableTableColumnHeader";
 
 import {
   getEntityLabel,
   tryGetEntityDefinition,
   type EntityName,
 } from "../../entities/entity-catalog";
-import { resolveExpandableTableGroupedColumnDisplayLabel } from "../../features/ui-builder/expandable-table-grouped-column-label";
+import {
+  resolveExpandableTableGroupedColumnDisplayLabel,
+  resolveFirstFieldPathFromCellLayout,
+} from "../../features/ui-builder/expandable-table-grouped-column-label";
 import {
   groupedTableColumnVisibilityClassName,
   shouldRenderGroupedTableColumn,
@@ -85,6 +90,10 @@ interface EntityExpandableTableProps {
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
   readonly onRequestShare?: (id: string) => void;
+  readonly sort?: DataViewSortState;
+  readonly onSortColumnChange?: (columnId: string | null) => void;
+  readonly onSortDirectionToggle?: () => void;
+  readonly sortableColumnIds?: ReadonlySet<string>;
 }
 
 function toggleExpandedId(
@@ -111,6 +120,10 @@ export function EntityExpandableTable({
   onRequestDelete,
   onRequestEdit,
   onRequestShare,
+  sort,
+  onSortColumnChange,
+  onSortDirectionToggle,
+  sortableColumnIds,
 }: EntityExpandableTableProps) {
   const { t, i18n } = useTranslation("common");
   const { navigateToDetail } = useEntityReturnNavigation(entityName);
@@ -334,24 +347,60 @@ export function EntityExpandableTable({
               {imageFieldPath ? (
                 <TableHead className="w-14 px-2" aria-hidden />
               ) : null}
-              {groupedColumns.map((column, columnIndex) =>
-                shouldRenderGroupedTableColumn(column) ? (
+              {groupedColumns.map((column, columnIndex) => {
+                if (!shouldRenderGroupedTableColumn(column)) {
+                  return null;
+                }
+
+                const label = resolveExpandableTableGroupedColumnDisplayLabel(
+                  column,
+                  columnIndex,
+                  definition,
+                  (oneBasedIndex) =>
+                    t("entity.viewSettings.columnTab", {
+                      column: oneBasedIndex,
+                    }),
+                );
+                const fieldPath = resolveFirstFieldPathFromCellLayout(
+                  column.cellLayout,
+                );
+                const canSort =
+                  fieldPath != null &&
+                  sort != null &&
+                  onSortColumnChange != null &&
+                  onSortDirectionToggle != null &&
+                  (sortableColumnIds?.has(fieldPath) ?? false);
+                const ariaSort =
+                  canSort && sort.columnId === fieldPath
+                    ? sort.direction === "asc"
+                      ? "ascending"
+                      : "descending"
+                    : canSort
+                      ? "none"
+                      : undefined;
+
+                return (
                   <TableHead
                     key={column.id}
                     className={groupedTableColumnVisibilityClassName(column)}
+                    aria-sort={ariaSort}
                   >
-                    {resolveExpandableTableGroupedColumnDisplayLabel(
-                      column,
-                      columnIndex,
-                      definition,
-                      (oneBasedIndex) =>
-                        t("entity.viewSettings.columnTab", {
-                          column: oneBasedIndex,
-                        }),
+                    {canSort && fieldPath ? (
+                      <SortableTableColumnHeader
+                        label={label}
+                        fieldPath={fieldPath}
+                        sort={sort}
+                        sortAscendingLabel={t("dataView.sortAscending")}
+                        sortDescendingLabel={t("dataView.sortDescending")}
+                        onSortColumnChange={onSortColumnChange}
+                        onSortDirectionToggle={onSortDirectionToggle}
+                      />
+                    ) : (
+                      label
                     )}
                   </TableHead>
-                ) : null,
-              )}
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>

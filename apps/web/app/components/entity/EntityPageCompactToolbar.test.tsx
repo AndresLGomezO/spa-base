@@ -5,13 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 import { EntityPageCompactToolbar } from "./EntityPageCompactToolbar";
 import type { WebDataViewToolbar } from "../data-view/WebDataViewToolbar";
 
-const mockUseEntityPageScrollCompact = vi.fn();
-
-vi.mock("./entity-page-scroll-compact", () => ({
-  ENTITY_PAGE_CHROME_TRANSITION: "",
-  useEntityPageScrollCompact: () => mockUseEntityPageScrollCompact(),
-}));
-
 vi.mock("../data-view/WebDataViewToolbar", () => ({
   WebDataViewToolbar: ({
     compact,
@@ -43,27 +36,10 @@ const toolbarProps = {
 };
 
 describe("EntityPageCompactToolbar", () => {
-  it("renders only the expanded toolbar when not compact", () => {
-    mockUseEntityPageScrollCompact.mockReturnValue({
-      isCompact: false,
-      compactProgress: 0,
-    });
-
+  it("renders only the expanded toolbar", () => {
     render(<EntityPageCompactToolbar toolbar={toolbarProps} />);
 
     expect(screen.getByTestId("expanded-toolbar")).toBeInTheDocument();
     expect(screen.queryByTestId("compact-toolbar")).not.toBeInTheDocument();
-  });
-
-  it("renders compact badges without duplicating the expanded toolbar when compact", () => {
-    mockUseEntityPageScrollCompact.mockReturnValue({
-      isCompact: true,
-      compactProgress: 1,
-    });
-
-    render(<EntityPageCompactToolbar toolbar={toolbarProps} />);
-
-    expect(screen.getByTestId("expanded-toolbar")).toBeInTheDocument();
-    expect(screen.getByTestId("compact-toolbar")).toBeInTheDocument();
   });
 });
