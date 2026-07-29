@@ -28,8 +28,9 @@ import { useAnyPermission } from "../../auth/useAnyPermission";
 import { useCustomViewByViewId } from "../../custom-views/custom-view-catalog-context";
 import {
   buildCustomViewPageDefinition,
-  getCustomViewLabel,
+  getLocalizedCustomViewLabel,
 } from "../../custom-views/custom-view-definition";
+import { useTenantLabel } from "../../i18n/TenantLocalePacksProvider";
 import { useCustomViewSourceDefinition } from "../../custom-views/use-custom-view-source-definition";
 import type {
   EntityCatalogEntry,
@@ -83,6 +84,7 @@ function serializeFilters(
 
 export function CustomViewPage({ viewId }: CustomViewPageProps) {
   const { t } = useTranslation("common");
+  const tTenant = useTenantLabel();
   const {
     customView,
     isLoading: isCustomViewLoading,
@@ -119,7 +121,7 @@ export function CustomViewPage({ viewId }: CustomViewPageProps) {
         customView={customView}
         sourceDefinition={sourceDefinition}
         entityName={sourceDefinition.name as EntityName}
-        pageLabel={getCustomViewLabel(customView)}
+        pageLabel={getLocalizedCustomViewLabel(customView, tTenant)}
       />
     </EntityDefinitionOverrideProvider>
   );

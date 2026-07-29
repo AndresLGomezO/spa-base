@@ -20,6 +20,7 @@ function makeTenant(
     createdBy: null,
     createdAt: timestamp,
     updatedAt: timestamp,
+    defaultLocale: "en",
   };
 }
 
@@ -84,6 +85,10 @@ export function createInMemoryTenantRepository(
             : input.aiLimits !== undefined
               ? { ...existing.aiLimits, ...input.aiLimits }
               : existing.aiLimits,
+        defaultLocale:
+          input.defaultLocale !== undefined
+            ? input.defaultLocale.trim()
+            : existing.defaultLocale,
         updatedAt: nowIso(),
       };
       if (input.aiLimits === null) {

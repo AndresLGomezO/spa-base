@@ -5,6 +5,8 @@ import type { TenantBundleExportDocument } from "@repo/tenant-bundle/browser";
 import {
   Alert,
   Button,
+  FieldLabel,
+  Input,
   JsonImportTriggerButton,
   JsonViewTriggerButton,
   Modal,
@@ -47,6 +49,8 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [tenantDeleted, setTenantDeleted] = useState(false);
+  const [defaultLocaleDraft, setDefaultLocaleDraft] = useState("en");
+  const [isSavingLocale, setIsSavingLocale] = useState(false);
 
   const bundleLabels = useMemo(() => tenantBundleJsonLabels(t), [t]);
   const triggerLabels = useJsonActionTriggerLabels();
@@ -57,6 +61,7 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
     try {
       const nextTenant = await getAdminTenant(tenantId);
       setTenant(nextTenant);
+      setDefaultLocaleDraft(nextTenant.defaultLocale?.trim() || "en");
     } catch (loadError) {
       toast.error(
         loadError instanceof Error
@@ -94,6 +99,32 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
       );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleSaveDefaultLocale() {
+    if (!tenant) return;
+    const nextLocale = defaultLocaleDraft.trim().toLowerCase();
+    if (!/^[a-z]{2}(-[a-z0-9]+)?$/i.test(nextLocale)) {
+      toast.error(t("platform.currentTenant.defaultLocaleInvalid"));
+      return;
+    }
+    setIsSavingLocale(true);
+    try {
+      const updated = await updateAdminTenant(tenant.id, {
+        defaultLocale: nextLocale,
+      });
+      setTenant(updated);
+      setDefaultLocaleDraft(updated.defaultLocale?.trim() || nextLocale);
+      toast.success(t("platform.currentTenant.defaultLocaleSaved"));
+    } catch (updateError) {
+      toast.error(
+        updateError instanceof Error
+          ? updateError.message
+          : t("admin.tenants.updateFailed"),
+      );
+    } finally {
+      setIsSavingLocale(false);
     }
   }
 
@@ -175,6 +206,40 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
             {t("platform.currentTenant.createdAt")}
           </dt>
           <dd>{new Date(tenant.createdAt).toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt className="text-muted font-medium">
+            {t("platform.currentTenant.defaultLocale")}
+          </dt>
+          <dd className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[8rem] space-y-1">
+              <FieldLabel htmlFor="tenant-default-locale" className="sr-only">
+                {t("platform.currentTenant.defaultLocale")}
+              </FieldLabel>
+              <Input
+                id="tenant-default-locale"
+                value={defaultLocaleDraft}
+                onChange={(event) => setDefaultLocaleDraft(event.target.value)}
+                placeholder="en"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={
+                isSavingLocale ||
+                defaultLocaleDraft.trim().toLowerCase() ===
+                  (tenant.defaultLocale?.trim().toLowerCase() || "en")
+              }
+              onClick={() => void handleSaveDefaultLocale()}
+            >
+              {t("platform.currentTenant.saveDefaultLocale")}
+            </Button>
+          </dd>
+          <Text className="text-muted-foreground mt-1 text-xs">
+            {t("platform.currentTenant.defaultLocaleHint")}
+          </Text>
         </div>
       </dl>
 

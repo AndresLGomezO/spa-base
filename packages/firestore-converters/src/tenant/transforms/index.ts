@@ -9,4 +9,9 @@ export const tenantMigrations: Record<number, SchemaTransform> = {
     ...input,
     _schemaVersion: 3,
   }),
+  3: (input) => ({
+    ...input,
+    defaultLocale: "en",
+    _schemaVersion: 4,
+  }),
 };

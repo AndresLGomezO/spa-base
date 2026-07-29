@@ -37,6 +37,7 @@
     "@repo/entity-categories": "workspace:*",
     "@repo/event-engine": "workspace:*",
     "@repo/formula-definitions": "workspace:*",
+    "@repo/locale-packs": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/custom-views": "workspace:*",
     "@repo/chart-definitions": "workspace:*",

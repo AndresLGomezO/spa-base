@@ -15,6 +15,7 @@ import {
   Gauge,
   Home,
   Layers,
+  Languages,
   LayoutDashboard,
   LayoutTemplate,
   Lightbulb,
@@ -50,6 +51,7 @@ export type NavLabelKey =
   | "metricsNav"
   | "chartsNav"
   | "formulasNav"
+  | "translationsNav"
   | "emailMatchingNav"
   | "queryBuilderNav"
   | "customViewsNav"
@@ -209,6 +211,14 @@ export const SETTINGS_FORMULAS_NAV_ITEM: NavLinkConfig = {
   to: "/settings/formulas",
   matchPath: "/settings/formulas",
   icon: FunctionSquare,
+};
+
+export const SETTINGS_TRANSLATIONS_NAV_ITEM: NavLinkConfig = {
+  id: "translations",
+  labelKey: "translationsNav",
+  to: "/settings/translations",
+  matchPath: "/settings/translations",
+  icon: Languages,
 };
 
 export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {

@@ -2207,6 +2207,114 @@ export async function replaceFormulaDefinitionsCatalog(body: unknown): Promise<{
   });
 }
 
+export interface LocalePackRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly locale: string;
+  readonly messages: Readonly<Record<string, string>>;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listLocalePacks(): Promise<{
+  readonly items: readonly LocalePackRecord[];
+  readonly defaultLocale: string;
+}> {
+  return apiRequest<{
+    readonly items: readonly LocalePackRecord[];
+    readonly defaultLocale: string;
+  }>("/api/locale-packs");
+}
+
+export async function createLocalePack(input: {
+  readonly locale: string;
+  readonly messages: Readonly<Record<string, string>>;
+}): Promise<LocalePackRecord> {
+  return apiRequest<LocalePackRecord>("/api/locale-packs", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function updateLocalePack(
+  id: string,
+  input: Partial<{
+    readonly locale: string;
+    readonly messages: Readonly<Record<string, string>>;
+  }>,
+): Promise<LocalePackRecord> {
+  return apiRequest<LocalePackRecord>(`/api/locale-packs/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function importLocalePacksCatalog(body: unknown): Promise<{
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly items: readonly LocalePackRecord[];
+}> {
+  return apiRequest<{
+    readonly counts: {
+      readonly created: number;
+      readonly updated: number;
+      readonly deleted: number;
+    };
+    readonly items: readonly LocalePackRecord[];
+  }>("/api/locale-packs/catalog", {
+    method: "PUT",
+    body,
+  });
+}
+
+export async function reconcileLocalePacksRequest(input?: {
+  readonly ensureLocales?: readonly string[];
+}): Promise<{
+  readonly counts: {
+    readonly added: number;
+    readonly removed: number;
+    readonly kept: number;
+  };
+  readonly perLocale: Readonly<
+    Record<
+      string,
+      {
+        readonly toAdd: readonly string[];
+        readonly toRemove: readonly string[];
+        readonly toKeep: readonly string[];
+      }
+    >
+  >;
+  readonly harvestedKeyCount: number;
+  readonly items: readonly LocalePackRecord[];
+}> {
+  return apiRequest<{
+    readonly counts: {
+      readonly added: number;
+      readonly removed: number;
+      readonly kept: number;
+    };
+    readonly perLocale: Readonly<
+      Record<
+        string,
+        {
+          readonly toAdd: readonly string[];
+          readonly toRemove: readonly string[];
+          readonly toKeep: readonly string[];
+        }
+      >
+    >;
+    readonly harvestedKeyCount: number;
+    readonly items: readonly LocalePackRecord[];
+  }>("/api/locale-packs/reconcile", {
+    method: "POST",
+    body: input ?? {},
+  });
+}
+
 export type AiContextSectionBlock =
   import("@repo/ai-context/storage").AiContextSectionBlock;
 export type AiContextSectionScope =

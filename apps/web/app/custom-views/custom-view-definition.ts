@@ -54,3 +54,16 @@ export function getCustomViewLabel(customView: CustomViewRecord): string {
     ? customView.nav.label
     : customView.name;
 }
+
+export function getLocalizedCustomViewLabel(
+  customView: CustomViewRecord,
+  resolve: (key: string, fallback: string) => string,
+): string {
+  const fallback = getCustomViewLabel(customView);
+  const fromNav = resolve(
+    `customView.${customView.viewId}.nav.label`,
+    fallback,
+  );
+  if (fromNav !== fallback) return fromNav;
+  return resolve(`customView.${customView.viewId}.name`, fallback);
+}

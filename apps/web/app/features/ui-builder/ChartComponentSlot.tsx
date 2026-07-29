@@ -10,6 +10,7 @@ import {
 import { cn } from "@repo/theme/utils";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog.js";
+import { useTenantLabel } from "../../i18n/TenantLocalePacksProvider.js";
 import { useChartDefinitions } from "../../hooks/useChartDefinitions.js";
 import type { PageFilterContext } from "../../lib/metric-binding-resolution.js";
 import { WidgetLoadingIndicator } from "../../components/loading/WidgetLoadingIndicator.js";
@@ -30,6 +31,7 @@ export function ChartComponentSlot({
   previewMode = false,
 }: ChartComponentSlotProps) {
   const { t } = useTranslation();
+  const tTenant = useTenantLabel();
   const loadingLabel = t("chartComponent.loading");
   const chartDefinitionsQuery = useChartDefinitions(true);
   const definitions = useMemo(
@@ -41,6 +43,19 @@ export function ChartComponentSlot({
     () => resolveChartComponentConfigFromCatalog(config, definitions),
     [config, definitions],
   );
+
+  const chartDefinitionName = useMemo(() => {
+    const id = resolvedConfig?.chartDefinitionId ?? config.chartDefinitionId;
+    if (!id) return null;
+    const match = definitions.find(
+      (definition) => definition.id === id || definition.name === id,
+    );
+    return match?.name ?? (typeof id === "string" ? id : null);
+  }, [
+    config.chartDefinitionId,
+    definitions,
+    resolvedConfig?.chartDefinitionId,
+  ]);
 
   const innerStyles = filterComponentInnerStyleRules(config.styles);
   const { containerClassName } = splitStyleRuleClasses(innerStyles);
@@ -58,12 +73,26 @@ export function ChartComponentSlot({
     previewMode,
   });
 
+  const localizedSeries = useMemo(() => {
+    if (!chartDefinitionName) return series;
+    return series.map((entry) => ({
+      ...entry,
+      label: tTenant(
+        `chart.${chartDefinitionName}.series.${entry.id}.label`,
+        entry.label,
+      ),
+    }));
+  }, [chartDefinitionName, series, tTenant]);
+
   const ariaLabel = useMemo(() => {
     if (config.ariaLabel?.trim()) {
       return config.ariaLabel.trim();
     }
-    return series.map((entry) => entry.label).join(", ");
-  }, [config.ariaLabel, series]);
+    if (chartDefinitionName) {
+      return tTenant(`chart.${chartDefinitionName}.name`, chartDefinitionName);
+    }
+    return localizedSeries.map((entry) => entry.label).join(", ");
+  }, [chartDefinitionName, config.ariaLabel, localizedSeries, tTenant]);
 
   if (!resolvedConfig) {
     if (chartDefinitionsQuery.isLoading) {
@@ -106,7 +135,7 @@ export function ChartComponentSlot({
         resolvedConfig.chartType === "area" ? (
         <LineAreaChart
           chartType={resolvedConfig.chartType}
-          series={series}
+          series={localizedSeries}
           xAxis={resolvedConfig.xAxis}
           yAxis={resolvedConfig.yAxis}
           legend={resolvedConfig.legend}

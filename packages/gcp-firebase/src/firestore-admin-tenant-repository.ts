@@ -6,7 +6,7 @@ import type {
 import { tenantConverter } from "@repo/firestore-converters";
 import {
   TENANTS_COLLECTION,
-  tenantSchemaV3,
+  tenantSchemaV4,
   type Tenant,
 } from "@repo/shared-types";
 
@@ -77,13 +77,14 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
       }
 
       const nowIso = new Date().toISOString();
-      const tenant = tenantSchemaV3.parse({
+      const tenant = tenantSchemaV4.parse({
         id,
         name,
         status: "active",
         createdBy: input.createdBy,
         createdAt: nowIso,
         updatedAt: nowIso,
+        defaultLocale: "en",
       });
 
       transaction.set(docRef, tenantConverter.write(tenant), { merge: false });
@@ -105,7 +106,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
       }
 
       const existing = tenantConverter.read(existingSnapshot.data());
-      const nextTenant = tenantSchemaV3.parse({
+      const nextTenant = tenantSchemaV4.parse({
         ...existing,
         name: input.name !== undefined ? input.name.trim() : existing.name,
         status: input.status ?? existing.status,
@@ -121,6 +122,10 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
             : input.aiLimits !== undefined
               ? { ...existing.aiLimits, ...input.aiLimits }
               : existing.aiLimits,
+        defaultLocale:
+          input.defaultLocale !== undefined
+            ? input.defaultLocale.trim()
+            : existing.defaultLocale,
         updatedAt: new Date().toISOString(),
       });
 
@@ -150,13 +155,14 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
       }
 
       const nowIso = new Date().toISOString();
-      const tenant = tenantSchemaV3.parse({
+      const tenant = tenantSchemaV4.parse({
         id: parsedId,
         name: parsedName,
         status: "active",
         createdBy,
         createdAt: nowIso,
         updatedAt: nowIso,
+        defaultLocale: "en",
       });
 
       transaction.set(docRef, tenantConverter.write(tenant), { merge: false });

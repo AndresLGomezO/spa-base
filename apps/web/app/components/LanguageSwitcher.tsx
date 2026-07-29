@@ -5,12 +5,11 @@ import { SegmentedSwitch } from "@repo/ui";
 
 import { loadLocale } from "../i18n";
 import {
-  LOCALE_LABELS,
   LOCALE_STORAGE_KEY,
-  SUPPORTED_LOCALES,
+  localeDisplayName,
   normalizeLocale,
-  type SupportedLocale,
 } from "../i18n/constants";
+import { useTenantLocalePacks } from "../i18n/TenantLocalePacksProvider";
 
 interface LanguageSwitcherProps {
   readonly className?: string;
@@ -18,17 +17,20 @@ interface LanguageSwitcherProps {
 }
 
 /**
- * Locale switch (EN | ES). Lazy-loads non-default locale on change and persists to localStorage.
+ * Locale switch. Options = platform locales ∪ tenant locale packs ∪ defaultLocale.
+ * Lazy-loads platform common.json when available; otherwise falls back to English
+ * platform strings while tenant packs still resolve labels.
  */
 export function LanguageSwitcher({
   className,
   fullWidth = false,
 }: LanguageSwitcherProps) {
   const { t, i18n } = useTranslation("common");
+  const { availableLocales } = useTenantLocalePacks();
   const effectiveLocale = normalizeLocale(i18n.language);
 
   const selectLocale = useCallback(
-    async (locale: SupportedLocale) => {
+    async (locale: string) => {
       if (locale === effectiveLocale) return;
 
       const previousLocale = effectiveLocale;
@@ -44,6 +46,9 @@ export function LanguageSwitcher({
     [effectiveLocale, i18n],
   );
 
+  const options =
+    availableLocales.length > 0 ? availableLocales : [effectiveLocale];
+
   return (
     <SegmentedSwitch
       value={effectiveLocale}
@@ -51,12 +56,13 @@ export function LanguageSwitcher({
       ariaLabel={t("language.label")}
       fullWidth={fullWidth}
       className={className}
-      options={SUPPORTED_LOCALES.map((code) => {
+      options={options.map((code) => {
         const isActive = effectiveLocale === code;
+        const label = localeDisplayName(code);
 
         return {
           value: code,
-          ariaLabel: LOCALE_LABELS[code],
+          ariaLabel: label,
           label: (
             <span className="flex flex-col items-center leading-tight">
               <span className="text-xs font-semibold tracking-wide uppercase">
@@ -69,7 +75,7 @@ export function LanguageSwitcher({
                     : "text-[10px] font-medium invisible"
                 }
               >
-                {LOCALE_LABELS[code]}
+                {label}
               </span>
             </span>
           ),

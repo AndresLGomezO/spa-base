@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "../auth/AuthContext";
 import { useEntityCatalog } from "../entities/entity-catalog-context";
+import { useTenantLabel } from "../i18n/TenantLocalePacksProvider";
+import { localizeLayoutDocument } from "../i18n/localize-tenant-catalog";
 import { getTenantDashboardLayout } from "../lib/api-client";
 import { createTenantDashboardLayoutRenderContext } from "../features/ui-builder/create-tenant-dashboard-layout-render-context";
 import { dashboardLayoutHasContent } from "../features/ui-builder/dashboard-layout-has-content";
@@ -20,6 +22,7 @@ export function HomePage() {
   const { t, i18n } = useTranslation("common");
   const { user } = useAuth();
   const { getDefinition, items } = useEntityCatalog();
+  const tTenant = useTenantLabel();
   const configQuery = useQuery({
     queryKey: TENANT_DASHBOARD_LAYOUT_QUERY_KEY,
     queryFn: async () => {
@@ -32,12 +35,36 @@ export function HomePage() {
     if (!configQuery.data?.dashboardLayout) {
       return null;
     }
-    return ensureContainerRoot(configQuery.data.dashboardLayout);
-  }, [configQuery.data?.dashboardLayout]);
+    const localized = localizeLayoutDocument(
+      configQuery.data.dashboardLayout,
+      tTenant,
+      "dashboard",
+    );
+    return ensureContainerRoot(
+      localized as typeof configQuery.data.dashboardLayout,
+    );
+  }, [configQuery, tTenant]);
+
+  const localizedSections = useMemo(() => {
+    const sections = configQuery.data?.dashboardSections ?? [];
+    return sections.map((section) => ({
+      ...section,
+      ...(typeof section.name === "string"
+        ? {
+            name: tTenant(`dashboard.section.${section.id}.name`, section.name),
+          }
+        : {}),
+      layout: localizeLayoutDocument(
+        section.layout,
+        tTenant,
+        "dashboard",
+      ) as typeof section.layout,
+    }));
+  }, [configQuery, tTenant]);
 
   const { collected, pageState } = useDashboardViewFilterUrlState({
     dashboardLayout,
-    sections: configQuery.data?.dashboardSections ?? [],
+    sections: localizedSections,
     catalog: items,
   });
 
@@ -62,7 +89,7 @@ export function HomePage() {
     }
 
     return createTenantDashboardLayoutRenderContext({
-      sections: configQuery.data.dashboardSections,
+      sections: localizedSections,
       catalogItems: items,
       locale: i18n.language,
       t,
@@ -83,6 +110,7 @@ export function HomePage() {
     getDefinition,
     i18n.language,
     items,
+    localizedSections,
     pageState.filters,
     t,
     user,

@@ -19,6 +19,7 @@ import {
   tenantStatusSchema,
   tenantAppearanceSchema,
   aiSpendLimitsSchema,
+  tenantDefaultLocaleSchema,
 } from "@repo/shared-types";
 import {
   tenantBundleExportDocumentSchema,
@@ -64,6 +65,7 @@ const updateTenantBodySchema = z.object({
   status: tenantStatusSchema.optional(),
   appearance: tenantAppearanceSchema.nullable().optional(),
   aiLimits: aiSpendLimitsSchema.nullable().optional(),
+  defaultLocale: tenantDefaultLocaleSchema.optional(),
 });
 
 const uploadLogoBodySchema = z.object({
@@ -229,12 +231,13 @@ export const adminRoutes: FastifyPluginAsync<{
         parsedBody.data.name === undefined &&
         parsedBody.data.status === undefined &&
         parsedBody.data.appearance === undefined &&
-        parsedBody.data.aiLimits === undefined
+        parsedBody.data.aiLimits === undefined &&
+        parsedBody.data.defaultLocale === undefined
       ) {
         return reply.status(400).send({
           ok: false,
           message:
-            "Request body must include name, status, appearance, and/or aiLimits.",
+            "Request body must include name, status, appearance, aiLimits, and/or defaultLocale.",
         });
       }
 
@@ -243,6 +246,7 @@ export const adminRoutes: FastifyPluginAsync<{
         status: parsedBody.data.status,
         appearance: parsedBody.data.appearance,
         aiLimits: parsedBody.data.aiLimits,
+        defaultLocale: parsedBody.data.defaultLocale,
       });
 
       if (!updated) {

@@ -31,6 +31,7 @@ import {
   SETTINGS_METRICS_NAV_ITEM,
   SETTINGS_CHARTS_NAV_ITEM,
   SETTINGS_FORMULAS_NAV_ITEM,
+  SETTINGS_TRANSLATIONS_NAV_ITEM,
   SETTINGS_AUTOMATION_NAV_ITEM,
   SETTINGS_AI_CONTEXT_NAV_ITEM,
   SETTINGS_EMAIL_MATCHING_NAV_ITEM,
@@ -229,6 +230,13 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     if (hasPermission("formula.read", permissions, { isSuperAdmin })) {
       analyticsChildren.push(SETTINGS_FORMULAS_NAV_ITEM);
+    }
+
+    if (
+      hasPermission("localePack.read", permissions, { isSuperAdmin }) ||
+      hasPermission("localePack.update", permissions, { isSuperAdmin })
+    ) {
+      analyticsChildren.push(SETTINGS_TRANSLATIONS_NAV_ITEM);
     }
 
     if (

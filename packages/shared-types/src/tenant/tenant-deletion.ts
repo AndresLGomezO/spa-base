@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { tenantSchemaV3 } from "./tenant.js";
+import { tenantSchemaV4 } from "./tenant.js";
 
 export const TENANT_DELETION_JOBS_COLLECTION = "tenant_deletion_jobs" as const;
 export const TENANT_DELETION_ARCHIVES_COLLECTION =
@@ -66,7 +66,7 @@ export const tenantDeletionArchiveRecordSchema = z
     deletedAt: z.string().trim().min(1),
     purgeAfter: z.string().trim().min(1),
     status: tenantDeletionArchiveStatusSchema,
-    tenantSnapshot: tenantSchemaV3,
+    tenantSnapshot: tenantSchemaV4,
     stats: tenantDeletionArchiveStatsSchema,
   })
   .strict();

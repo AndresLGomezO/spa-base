@@ -13,6 +13,7 @@ export const SEED_CATALOG_COMPONENTS = [
   "charts",
   "insight-surfaces",
   "custom-views",
+  "locale-packs",
 ] as const;
 
 const SEED_OTHER_COMPONENTS = [

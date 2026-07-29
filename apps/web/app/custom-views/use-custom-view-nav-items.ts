@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { resolveLucideIcon } from "../lib/resolve-lucide-icon";
+import { useTenantLabel } from "../i18n/TenantLocalePacksProvider";
 import { useCustomViewCatalog } from "./custom-view-catalog-context";
-import { getCustomViewLabel } from "./custom-view-definition";
+import { getLocalizedCustomViewLabel } from "./custom-view-definition";
 
 export interface CustomViewNavItem {
   readonly id: string;
@@ -17,6 +18,7 @@ export interface CustomViewNavItem {
 
 export function useCustomViewNavItems(): readonly CustomViewNavItem[] {
   const { items } = useCustomViewCatalog();
+  const tTenant = useTenantLabel();
 
   return useMemo(
     () =>
@@ -24,7 +26,7 @@ export function useCustomViewNavItems(): readonly CustomViewNavItem[] {
         .filter((view) => view.status === "ACTIVE")
         .map((view) => ({
           id: view.viewId,
-          label: getCustomViewLabel(view),
+          label: getLocalizedCustomViewLabel(view, tTenant),
           to: `/app/views/${view.viewId}`,
           matchPath: `/app/views/${view.viewId}`,
           icon: resolveLucideIcon(view.nav.icon),
@@ -33,6 +35,6 @@ export function useCustomViewNavItems(): readonly CustomViewNavItem[] {
           ...(view.navOrder !== undefined ? { navOrder: view.navOrder } : {}),
           ...(view.hiddenFromNav ? { hiddenFromNav: view.hiddenFromNav } : {}),
         })),
-    [items],
+    [items, tTenant],
   );
 }

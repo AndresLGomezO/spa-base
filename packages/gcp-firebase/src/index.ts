@@ -104,6 +104,7 @@ export { createFirestoreAdminAuditLogRepository } from "./firestore-admin-audit-
 export { createFirestoreAdminPlatformRuntimeSettingsRepository } from "./firestore-admin-platform-runtime-settings-repository.js";
 export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";
 export { createFirestoreAdminFormulaDefinitionRepository } from "./firestore-admin-formula-definition-repository.js";
+export { createFirestoreAdminLocalePackRepository } from "./firestore-admin-locale-pack-repository.js";
 export { createFirestoreAdminEntityQueryDefinitionRepository } from "./firestore-admin-entity-query-definition-repository.js";
 export { createFirestoreAdminChartDefinitionRepository } from "./firestore-admin-chart-definition-repository.js";
 export { createFirestoreAdminInsightSurfaceRepository } from "./firestore-admin-insight-surface-repository.js";

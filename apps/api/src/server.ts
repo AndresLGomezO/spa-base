@@ -36,6 +36,7 @@ import type {
   MetricContributionRepository,
   MetricDefinitionRepository,
   FormulaDefinitionRepository,
+  LocalePackRepository,
   MetricValueRepository,
   EntityQueryDefinitionRepository,
   ChartDefinitionRepository,
@@ -73,6 +74,7 @@ import {
   createInMemoryPlatformRuntimeSettingsRepository,
   createInMemoryMetricDefinitionRepository,
   createInMemoryFormulaDefinitionRepository,
+  createInMemoryLocalePackRepository,
   createInMemoryEntityQueryDefinitionRepository,
   createInMemoryChartDefinitionRepository,
   createInMemoryInsightSurfaceRepository,
@@ -113,6 +115,7 @@ import {
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminFormulaDefinitionRepository,
+  createFirestoreAdminLocalePackRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminChartDefinitionRepository,
   createFirestoreAdminInsightSurfaceRepository,
@@ -179,6 +182,8 @@ import {
 import { createTenantIndexGuard } from "./indexes/create-tenant-index-guard.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createFormulaRuntimeContext } from "./formulas/formula-runtime-context.js";
+import { createLocalePackRuntimeContext } from "./locale-packs/locale-pack-runtime-context.js";
+import { registerLocalePackRoutes } from "./locale-packs/register-locale-pack-routes.js";
 import { loadFormulaAdmin } from "./formulas/load-formula-admin.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { createHookTasksClient } from "./hooks/hook-tasks.client.js";
@@ -260,6 +265,7 @@ interface BuildServerOptions {
   readonly auditLogRepository?: AuditLogRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly formulaDefinitionRepository?: FormulaDefinitionRepository;
+  readonly localePackRepository?: LocalePackRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly chartDefinitionRepository?: ChartDefinitionRepository;
   readonly insightSurfaceRepository?: InsightSurfaceRepository;
@@ -568,6 +574,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     formulaDefinitionRepository,
   );
 
+  const localePackRepository =
+    options.localePackRepository ??
+    (options.repositories
+      ? createInMemoryLocalePackRepository()
+      : createFirestoreAdminLocalePackRepository(firebaseAdminConfig));
+
   const entityQueryDefinitionRepository =
     options.entityQueryDefinitionRepository ??
     (options.repositories
@@ -671,6 +683,22 @@ export async function buildServer(options: BuildServerOptions = {}) {
     options.tenantRepository ??
     tenantRepositoryForAiContext ??
     createInMemoryTenantRepository();
+
+  const localePackRuntime = createLocalePackRuntimeContext({
+    repository: localePackRepository,
+    tenantRepository: tenantRepositoryForSpend,
+    harvestRepositories: {
+      entityDefinition: entityDefinitionRepository,
+      entityCategory: entityCategoryRepository,
+      metricDefinition: metricDefinitionRepository,
+      chartDefinition: chartDefinitionRepository,
+      customView: customViewRepository,
+      entityQueryDefinition: entityQueryDefinitionRepository,
+      entityUiOverride: entityUiOverrideRepository,
+      tenantSidebarLayout: tenantSidebarLayoutRepository,
+      tenantDashboardLayout: tenantDashboardLayoutRepository,
+    },
+  });
 
   const metricContributionRepository =
     options.metricContributionRepository ??
@@ -1281,6 +1309,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     formulaRuntime,
+  });
+
+  await registerLocalePackRoutes(server, {
+    authenticate,
+    permissionDeps,
+    localePackRuntime,
   });
 
   await registerEntityQueryDefinitionRoutes(server, {

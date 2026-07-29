@@ -19,10 +19,28 @@ export const LOCALE_LABELS: Record<SupportedLocale, string> = {
 
 export const LOCALE_STORAGE_KEY = "i18n-locale";
 
-export function normalizeLocale(lng: string | undefined): SupportedLocale {
-  if (!lng) return "en";
-  const base = lng.split("-")[0];
-  return SUPPORTED_LOCALES.includes(base as SupportedLocale)
-    ? (base as SupportedLocale)
-    : "en";
+export function isPlatformSupportedLocale(
+  locale: string,
+): locale is SupportedLocale {
+  return SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+}
+
+export function normalizeLocale(lng: string | undefined): string {
+  if (!lng) return DEFAULT_LOCALE;
+  const base = lng.split("-")[0]?.toLowerCase();
+  return base && /^[a-z]{2}$/.test(base) ? base : DEFAULT_LOCALE;
+}
+
+export function localeDisplayName(locale: string): string {
+  if (isPlatformSupportedLocale(locale)) {
+    return LOCALE_LABELS[locale];
+  }
+  try {
+    return (
+      new Intl.DisplayNames(undefined, { type: "language" }).of(locale) ??
+      locale
+    );
+  } catch {
+    return locale;
+  }
 }

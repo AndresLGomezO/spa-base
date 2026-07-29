@@ -178,6 +178,7 @@ async function seedLocalTenant(
     formulaCounts: { ...EMPTY_COUNTS },
     hookCounts: { ...EMPTY_COUNTS },
     customViewCounts: { ...EMPTY_COUNTS },
+    localePackCounts: { ...EMPTY_COUNTS },
   };
 
   if (needsDefinitions) {
@@ -196,6 +197,7 @@ async function seedLocalTenant(
             charts: selectionIncludes(selection, "charts"),
             insightSurfaces: selectionIncludes(selection, "insight-surfaces"),
             customViews: selectionIncludes(selection, "custom-views"),
+            localePacks: selectionIncludes(selection, "locale-packs"),
           },
     );
   }

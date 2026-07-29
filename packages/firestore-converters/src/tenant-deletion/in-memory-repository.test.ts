@@ -39,6 +39,7 @@ describe("tenant deletion in-memory repositories", () => {
         createdBy: null,
         createdAt: deletedAt.toISOString(),
         updatedAt: deletedAt.toISOString(),
+        defaultLocale: "en",
       },
     });
 

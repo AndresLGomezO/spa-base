@@ -26,6 +26,7 @@
     "@repo/chart-definitions",
     "@repo/metrics-engine",
     "@repo/hooks",
+    "@repo/locale-packs",
     "@repo/modules",
     "@repo/query-engine",
     "@repo/rbac",

@@ -6,6 +6,7 @@ import { ThirdRailHost, ThirdRailProvider } from "@repo/ui";
 
 import { EntityCatalogProvider } from "../entities/entity-catalog-context";
 import { CustomViewCatalogProvider } from "../custom-views/custom-view-catalog-context";
+import { TenantLocalePacksProvider } from "../i18n/TenantLocalePacksProvider";
 import { EntityFormModalProvider } from "../components/entity/entity-form-modal-context";
 import { EntityFormModalHost } from "../components/entity/EntityFormModalHost";
 import { queryClient } from "../query/query-client";
@@ -72,34 +73,36 @@ export default function PrivateLayoutRoute() {
   return (
     <RequireAuth>
       <QueryClientProvider client={queryClient}>
-        <EntityCatalogProvider>
-          <CustomViewCatalogProvider>
-            <NavItemsProvider>
-              <PageTitleProvider>
-                <EntityFormModalProvider>
-                  <NotificationsProvider>
-                    <EntitySaveManagerProvider>
-                      <CreateTenantModalProvider>
-                        <ThirdRailProvider>
-                          <TenantAwareSidebarProvider>
-                            <div className="bg-background fixed inset-0 flex overflow-hidden">
-                              <AppSidebar />
-                              <AppShellColumn />
-                              <ThirdRailHost />
-                            </div>
-                          </TenantAwareSidebarProvider>
-                          <CreateTenantModal />
-                          <IndexProvisioningGlobalBanner />
-                        </ThirdRailProvider>
-                      </CreateTenantModalProvider>
-                      <EntityFormModalHost />
-                    </EntitySaveManagerProvider>
-                  </NotificationsProvider>
-                </EntityFormModalProvider>
-              </PageTitleProvider>
-            </NavItemsProvider>
-          </CustomViewCatalogProvider>
-        </EntityCatalogProvider>
+        <TenantLocalePacksProvider>
+          <EntityCatalogProvider>
+            <CustomViewCatalogProvider>
+              <NavItemsProvider>
+                <PageTitleProvider>
+                  <EntityFormModalProvider>
+                    <NotificationsProvider>
+                      <EntitySaveManagerProvider>
+                        <CreateTenantModalProvider>
+                          <ThirdRailProvider>
+                            <TenantAwareSidebarProvider>
+                              <div className="bg-background fixed inset-0 flex overflow-hidden">
+                                <AppSidebar />
+                                <AppShellColumn />
+                                <ThirdRailHost />
+                              </div>
+                            </TenantAwareSidebarProvider>
+                            <CreateTenantModal />
+                            <IndexProvisioningGlobalBanner />
+                          </ThirdRailProvider>
+                        </CreateTenantModalProvider>
+                        <EntityFormModalHost />
+                      </EntitySaveManagerProvider>
+                    </NotificationsProvider>
+                  </EntityFormModalProvider>
+                </PageTitleProvider>
+              </NavItemsProvider>
+            </CustomViewCatalogProvider>
+          </EntityCatalogProvider>
+        </TenantLocalePacksProvider>
       </QueryClientProvider>
     </RequireAuth>
   );

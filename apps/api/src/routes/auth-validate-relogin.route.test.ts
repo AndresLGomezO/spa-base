@@ -187,6 +187,7 @@ vi.mock("@repo/gcp-firebase", () => ({
         createdBy: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        defaultLocale: "en",
       },
     ]),
   ),

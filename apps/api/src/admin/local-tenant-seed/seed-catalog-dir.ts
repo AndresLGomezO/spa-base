@@ -77,6 +77,14 @@ export function loadCustomViewsCatalogJson(startDir?: string): string {
   });
 }
 
+export function loadLocalePacksCatalogJson(startDir?: string): string {
+  return mergeSingularCatalogDir(dir("locale-packs", startDir), {
+    kind: "locale-packs-catalog",
+    version: 1,
+    itemsKey: "localePacks",
+  });
+}
+
 export function loadEntityUiOverridesCatalogJson(startDir?: string): string {
   return mergeSingularCatalogDir(dir("entity-ui-overrides", startDir), {
     kind: "entity-ui-overrides-catalog",

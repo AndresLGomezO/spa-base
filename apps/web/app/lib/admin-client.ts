@@ -15,6 +15,7 @@ interface AdminTenant {
   readonly createdBy: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly defaultLocale?: string;
   readonly appearance?: TenantAppearance;
   readonly aiLimits?: {
     readonly monthlyInputTokens?: number;
@@ -93,6 +94,7 @@ export async function updateAdminTenant(
     readonly status?: "active" | "suspended";
     readonly appearance?: TenantAppearance | null;
     readonly aiLimits?: AdminTenant["aiLimits"] | null;
+    readonly defaultLocale?: string;
   },
 ): Promise<AdminTenant> {
   const payload = await adminFetch<{ tenant: AdminTenant }>(

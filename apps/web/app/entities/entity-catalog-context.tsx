@@ -8,6 +8,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "../auth/AuthContext";
+import { useTenantLabel } from "../i18n/TenantLocalePacksProvider";
+import { localizeEntityDefinition } from "../i18n/localize-tenant-catalog";
 import { listEntities } from "../lib/api-client";
 import { fetchWithTenantNotResolvedRetry } from "../lib/fetch-with-tenant-not-resolved-retry";
 import {
@@ -58,6 +60,7 @@ function EntityCatalogProviderFromQuery({
   readonly children: ReactNode;
 }) {
   const { tenantId, isSessionResolved } = useAuth();
+  const tTenant = useTenantLabel();
   const catalogQuery = useQuery({
     queryKey: tenantId
       ? entityCatalogQueryKeyForTenant(tenantId)
@@ -82,7 +85,9 @@ function EntityCatalogProviderFromQuery({
   }, []);
 
   const value = useMemo<EntityCatalogContextValue>(() => {
-    const items = catalogQuery.data?.items ?? [];
+    const items = (catalogQuery.data?.items ?? []).map((definition) =>
+      localizeEntityDefinition(definition, tTenant),
+    );
 
     return {
       items,
@@ -92,7 +97,7 @@ function EntityCatalogProviderFromQuery({
       getDefinition: (name) => getEntityDefinition(name, items),
       isKnownEntity: (name): name is EntityName => isEntityName(name, items),
     };
-  }, [catalogQuery.data?.items, error, isLoading, refresh]);
+  }, [catalogQuery.data?.items, error, isLoading, refresh, tTenant]);
 
   return (
     <EntityCatalogContext.Provider value={value}>

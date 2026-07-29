@@ -16,6 +16,7 @@ export interface UpdateTenantInput {
   readonly status?: TenantStatus;
   readonly appearance?: TenantAppearance | null;
   readonly aiLimits?: AiSpendLimits | null;
+  readonly defaultLocale?: string;
 }
 
 export interface TenantRepository {

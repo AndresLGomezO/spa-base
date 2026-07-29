@@ -11,13 +11,18 @@ import {
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminFormulaDefinitionRepository,
+  createFirestoreAdminLocalePackRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminChartDefinitionRepository,
   createFirestoreAdminInsightSurfaceRepository,
   createFirestoreAdminMetricContributionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminMetricValueRepository,
+  createFirestoreAdminTenantDashboardLayoutRepository,
+  createFirestoreAdminTenantRepository,
+  createFirestoreAdminTenantSidebarLayoutRepository,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 
@@ -36,8 +41,11 @@ import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-vie
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
 import { replaceDataHooksCatalog } from "../../hooks/replace-data-hooks-catalog.js";
 import { parseFormulaDefinitionsCatalogJson } from "@repo/formula-definitions";
+import { parseLocalePacksCatalogJson } from "@repo/locale-packs";
 import { createFormulaRuntimeContext } from "../../formulas/formula-runtime-context.js";
 import { replaceFormulasCatalog } from "../../formulas/replace-formulas-catalog.js";
+import { createLocalePackRuntimeContext } from "../../locale-packs/locale-pack-runtime-context.js";
+import { replaceLocalePacksCatalog } from "../../locale-packs/replace-locale-packs-catalog.js";
 import {
   loadChartDefinitionsCatalogJson,
   loadCustomViewsCatalogJson,
@@ -45,6 +53,7 @@ import {
   loadEntityDefinitionsCatalogJson,
   loadFormulaDefinitionsCatalogJson,
   loadInsightSurfacesCatalogJson,
+  loadLocalePacksCatalogJson,
   loadMetricDefinitionsCatalogJson,
   loadQueryDefinitionsCatalogJson,
 } from "./seed-catalog-dir.js";
@@ -90,6 +99,11 @@ interface SeedLocalCatalogsResult {
     readonly updated: number;
     readonly deleted: number;
   };
+  readonly localePackCounts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
   readonly definitionRecords: Awaited<
     ReturnType<typeof replaceEntityDefinitionsCatalog>
   >["items"];
@@ -114,6 +128,7 @@ interface SeedLocalCatalogsOptions {
   readonly charts?: boolean;
   readonly insightSurfaces?: boolean;
   readonly customViews?: boolean;
+  readonly localePacks?: boolean;
 }
 
 export async function seedLocalCatalogs(
@@ -130,6 +145,7 @@ export async function seedLocalCatalogs(
   const includeCharts = options.charts ?? true;
   const includeInsightSurfaces = options.insightSurfaces ?? true;
   const includeCustomViews = options.customViews ?? true;
+  const includeLocalePacks = options.localePacks ?? true;
 
   const entityCategoryRepository =
     createFirestoreAdminEntityCategoryRepository(firebaseAdminConfig);
@@ -147,10 +163,35 @@ export async function seedLocalCatalogs(
     createFirestoreAdminDataHookRepository(firebaseAdminConfig);
   const formulaDefinitionRepository =
     createFirestoreAdminFormulaDefinitionRepository(firebaseAdminConfig);
+  const localePackRepository =
+    createFirestoreAdminLocalePackRepository(firebaseAdminConfig);
+  const entityUiOverrideRepository =
+    createFirestoreAdminEntityUiOverrideRepository(firebaseAdminConfig);
+  const tenantSidebarLayoutRepository =
+    createFirestoreAdminTenantSidebarLayoutRepository(firebaseAdminConfig);
+  const tenantDashboardLayoutRepository =
+    createFirestoreAdminTenantDashboardLayoutRepository(firebaseAdminConfig);
+  const tenantRepository =
+    createFirestoreAdminTenantRepository(firebaseAdminConfig);
   const hookRuntime = createHookRuntimeContext(dataHookRepository);
   const formulaRuntime = createFormulaRuntimeContext(
     formulaDefinitionRepository,
   );
+  const localePackRuntime = createLocalePackRuntimeContext({
+    repository: localePackRepository,
+    tenantRepository,
+    harvestRepositories: {
+      entityDefinition: entityRuntime.entityDefinitionRepository,
+      entityCategory: entityCategoryRepository,
+      metricDefinition: metricDefinitionRepository,
+      chartDefinition: chartDefinitionRepository,
+      customView: customViewRepository,
+      entityQueryDefinition: entityQueryDefinitionRepository,
+      entityUiOverride: entityUiOverrideRepository,
+      tenantSidebarLayout: tenantSidebarLayoutRepository,
+      tenantDashboardLayout: tenantDashboardLayoutRepository,
+    },
+  });
 
   let entityCounts = { ...EMPTY_CATALOG_COUNTS };
   let definitionRecords: SeedLocalCatalogsResult["definitionRecords"] = [];
@@ -349,8 +390,26 @@ export async function seedLocalCatalogs(
     customViewCounts = customViewResult.counts;
   }
 
+  let localePackCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeLocalePacks) {
+    const localePacksParsed = parseLocalePacksCatalogJson(
+      loadLocalePacksCatalogJson(),
+    );
+    if (!localePacksParsed.ok) {
+      throw new Error(
+        `Invalid local tenant locale packs catalog: ${localePacksParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const localePackResult = await replaceLocalePacksCatalog(
+      localePackRuntime,
+      tenantId,
+      localePacksParsed.data,
+    );
+    localePackCounts = localePackResult.counts;
+  }
+
   console.log(
-    `[local-tenant seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, insightSurfaces +${insightSurfaceCounts.created}/~${insightSurfaceCounts.updated}/-${insightSurfaceCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}`,
+    `[local-tenant seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, insightSurfaces +${insightSurfaceCounts.created}/~${insightSurfaceCounts.updated}/-${insightSurfaceCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}, localePacks +${localePackCounts.created}/~${localePackCounts.updated}/-${localePackCounts.deleted}`,
   );
 
   return {
@@ -362,6 +421,7 @@ export async function seedLocalCatalogs(
     formulaCounts,
     hookCounts,
     customViewCounts,
+    localePackCounts,
     definitionRecords,
   };
 }

@@ -1,7 +1,7 @@
 import {
   TENANT_SCHEMA_VERSION,
-  persistedTenantSchemaV3,
-  tenantSchemaV3,
+  persistedTenantSchemaV4,
+  tenantSchemaV4,
   type PersistedTenant,
   type Tenant,
 } from "@repo/shared-types";
@@ -16,8 +16,8 @@ export const tenantConverter = createVersionedConverter<
   PersistedTenant
 >({
   currentVersion: tenantCurrentVersion,
-  domainSchema: tenantSchemaV3,
-  persistedSchema: persistedTenantSchemaV3,
+  domainSchema: tenantSchemaV4,
+  persistedSchema: persistedTenantSchemaV4,
   migrations: tenantMigrations,
   fromPersisted: (persisted) => {
     const domain = { ...persisted };

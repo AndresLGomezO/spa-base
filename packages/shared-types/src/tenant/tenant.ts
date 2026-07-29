@@ -4,7 +4,7 @@ import { tenantAppearanceSchema } from "./tenant-appearance.js";
 import { aiSpendLimitsSchema } from "./ai-spend-limits.js";
 
 export const TENANTS_COLLECTION = "tenants";
-export const TENANT_SCHEMA_VERSION = 3 as const;
+export const TENANT_SCHEMA_VERSION = 4 as const;
 
 const isoDatetimeStringSchema = z
   .string()
@@ -12,6 +12,15 @@ const isoDatetimeStringSchema = z
   .refine((value) => !Number.isNaN(Date.parse(value)), {
     message: "Must be an ISO datetime string.",
   });
+
+/** BCP-47-ish locale code used as the tenant authoring language (en, es, es-CO). */
+export const tenantDefaultLocaleSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(16)
+  .regex(/^[a-z]{2}(-[A-Za-z0-9]+)?$/, "Invalid locale code")
+  .default("en");
 
 export const tenantStatusSchema = z.enum(["active", "suspended"]);
 
@@ -38,6 +47,12 @@ export const tenantSchemaV3 = tenantSchemaV2
   })
   .strict();
 
+export const tenantSchemaV4 = tenantSchemaV3
+  .extend({
+    defaultLocale: tenantDefaultLocaleSchema,
+  })
+  .strict();
+
 export const persistedTenantSchemaV1 = tenantSchemaV1
   .extend({
     _schemaVersion: z.literal(1),
@@ -52,13 +67,19 @@ export const persistedTenantSchemaV2 = tenantSchemaV2
 
 export const persistedTenantSchemaV3 = tenantSchemaV3
   .extend({
+    _schemaVersion: z.literal(3),
+  })
+  .strict();
+
+export const persistedTenantSchemaV4 = tenantSchemaV4
+  .extend({
     _schemaVersion: z.literal(TENANT_SCHEMA_VERSION),
   })
   .strict();
 
 export type TenantStatus = z.infer<typeof tenantStatusSchema>;
-export type Tenant = z.infer<typeof tenantSchemaV3>;
-export type PersistedTenant = z.infer<typeof persistedTenantSchemaV3>;
+export type Tenant = z.infer<typeof tenantSchemaV4>;
+export type PersistedTenant = z.infer<typeof persistedTenantSchemaV4>;
 
 export interface TenantOption {
   readonly id: string;

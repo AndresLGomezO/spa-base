@@ -14,7 +14,7 @@ import {
   DEFAULT_NAMESPACE,
   LOCALE_STORAGE_KEY,
   NAMESPACES,
-  SUPPORTED_LOCALES,
+  isPlatformSupportedLocale,
   type SupportedLocale,
 } from "./constants";
 
@@ -24,7 +24,7 @@ const enResources = {
   common: enCommon,
 };
 
-const loadedLocales = new Set<SupportedLocale>(["en"]);
+const loadedLocales = new Set<string>(["en"]);
 
 const lazyCommonByLocale = {
   es: () => import("./locales/es/common.json"),
@@ -38,7 +38,8 @@ void i18n
   .use(initReactI18next)
   .init({
     fallbackLng: DEFAULT_LOCALE,
-    supportedLngs: [...SUPPORTED_LOCALES],
+    // Do not hard-limit to SUPPORTED_LOCALES — tenant packs may add it, fr, etc.
+    supportedLngs: false,
     defaultNS: DEFAULT_NAMESPACE,
     ns: [...NAMESPACES],
     interpolation: { escapeValue: false },
@@ -54,15 +55,29 @@ void i18n
 export { i18n };
 
 /**
- * Lazy-load a locale's namespace bundles and add to i18n. Idempotent per locale.
+ * Lazy-load a locale's namespace bundles and add to i18n.
+ * Platform-unsupported locales fall back to the English common bundle
+ * so tenant labels can still switch via locale packs.
  */
-export async function loadLocale(locale: SupportedLocale): Promise<void> {
-  if (loadedLocales.has(locale)) return;
-  if (locale === DEFAULT_LOCALE) return;
+export async function loadLocale(locale: string): Promise<void> {
+  const normalized = locale.split("-")[0]?.toLowerCase() || DEFAULT_LOCALE;
+  if (loadedLocales.has(normalized)) return;
+  if (normalized === DEFAULT_LOCALE) {
+    loadedLocales.add(normalized);
+    return;
+  }
 
-  const common = await lazyCommonByLocale[locale]().then((m) => m.default);
+  if (isPlatformSupportedLocale(normalized) && normalized !== DEFAULT_LOCALE) {
+    const loader = lazyCommonByLocale[normalized];
+    if (loader) {
+      const common = await loader().then((m) => m.default);
+      i18n.addResourceBundle(normalized, "common", common, true, true);
+      loadedLocales.add(normalized);
+      return;
+    }
+  }
 
-  i18n.addResourceBundle(locale, "common", common, true, true);
-
-  loadedLocales.add(locale);
+  // Tenant-only locale: re-use English platform strings.
+  i18n.addResourceBundle(normalized, "common", enCommon, true, true);
+  loadedLocales.add(normalized);
 }

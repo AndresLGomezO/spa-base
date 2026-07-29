@@ -123,6 +123,8 @@ export { type MetricDefinitionRepository } from "./metric-definition/repository-
 export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
 export { type FormulaDefinitionRepository } from "./formula-definition/repository-contract.js";
 export { createInMemoryFormulaDefinitionRepository } from "./formula-definition/in-memory-repository.js";
+export { type LocalePackRepository } from "./locale-pack/repository-contract.js";
+export { createInMemoryLocalePackRepository } from "./locale-pack/in-memory-repository.js";
 export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";
 export { createInMemoryEntityQueryDefinitionRepository } from "./entity-query-definition/in-memory-repository.js";
 export { type ChartDefinitionRepository } from "./chart-definition/repository-contract.js";

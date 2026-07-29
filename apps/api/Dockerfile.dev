@@ -34,6 +34,7 @@ COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/hooks/package.json ./packages/hooks/
+COPY packages/locale-packs/package.json ./packages/locale-packs/
 COPY packages/formula-definitions/package.json ./packages/formula-definitions/
 COPY packages/chart-definitions/package.json ./packages/chart-definitions/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
