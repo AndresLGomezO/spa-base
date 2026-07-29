@@ -764,6 +764,43 @@ tenant’s data-hook catalog. Do not encode tenant entity product rules into
 | `pubsub:index-provisioning-worker` | Subscription never in TF; in-process queue is live |
 | `pubsub-index-provisioning.tf` (gated topic/IAM) | Unused scaffolding deleted in System Phase 1; live path remains `inprocess:index-provisioner-queue` |
 
+### Phase 2 catalog reasonability (rates seed)
+
+Tenant-owned; no platform TS changes. Walk entity-by-entity:
+
+- **Phase 2a (`transaction`) done** — 11 hooks KEEP. Cadence: categorize
+  `*/2`→`*/6`; enrich `*/3`→ nightly `0 4 * * *` UTC. Reset NEEDS_MANUAL is
+  manual-force (leap-day cron). Detail:
+  [workload-inventory-by-entity.md](./workload-inventory-by-entity.md)
+  Section B `transaction` + Section D item 8.
+- **Phase 2b (`portfolioSettings`) done** — 4 domain + overall → one combined
+  context hook (`Generate domain portfolio AI summaries`); 0 FI loads;
+  spending/payments/products KEEP. Seed count 64→60. Detail: by-entity
+  Section B `portfolioSettings` + Section D item 7.
+- **Phase 2c (`financialItem`) done** — 12 primary hooks KEEP. Narrowed
+  `Generate product insights` to ACTIVE + 12 domain itemTypes + no
+  installment children. Documented incomplete `cascade-delete-related-
+  records` delete graph as known limitation. Detail: by-entity Section B
+  `financialItem` + Section D items 9–10.
+- **Phase 2d (`loanDetails`) done** — 5 primary event hooks KEEP. Fixed
+  by-entity undercount (was “Event — 1”). Create-chain sequencing +
+  generate/regenerate complementarity documented. Detail: by-entity
+  Section B `loanDetails` + Section D item 11.
+- **Phase 2e (`paymentSchedule` + `spendingPattern`) done** — 6 primary
+  hooks KEEP. Cadence: spending-category-insights nightly → weekly Mon
+  `0 6 * * 1`. Doc undercounts fixed (spendingPattern Scheduled 1→3).
+  Detail: by-entity Section B those entities + Section D item 12.
+- **Phase 2f (satellites + email cluster) done** — 8 satellite hooks + 6
+  email-binding hooks KEEP. INVENTORY.md parity restored (52 → 54 domain
+  entries listed). Phase 2 program closed; further reasonability work is
+  observability-driven. Detail: by-entity Section B those entities +
+  Section D item 13.
+- **Phase 2g (long-hook size cleanup) done** — dropped identical
+  `ragText` from `refresh-account` / `refresh-actor` (−~420 lines).
+  Documented engine constraints (`MAX_CALL_ARGS=32`, no `objectLiteral`/
+  `let`) in INVENTORY "Hook authoring notes". Deferred engine primitives
+  for a future platform phase. Detail: by-entity Section D item 14.
+
 ---
 
 ## 8. Evidence checklist for reviewers

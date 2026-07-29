@@ -93,11 +93,49 @@ catalog — not by platform packages.
 
 ### Phase 2 handoff (tenant catalog)
 
-System is locked. Next pass walks **rates seed** scheduled + event hooks
+System is locked. Phase 2 walks **rates seed** scheduled + event hooks
 entity-by-entity with the same reasonability lens (required process?
 duplicate? stale? cost?). Judgment examples (e.g. “LLM narrative on every
 transaction is not a functional process”) apply to **catalog** keep/remove/
 merge decisions — never as hardcoding into `@repo/*`.
+
+**Phase 2a done (`transaction`):** 11 seed hooks reviewed. Two cadence
+reductions shipped (categorize 2h→6h; enrich 3h→nightly 04:00 UTC). Doc drift
+fixed (LLM fallback on categorize; reset-needs-manual count). See Section B
+`transaction` + Section D item 8.
+
+**Phase 2b done (`portfolioSettings`):** 4 domain portfolio narrative hooks +
+overall merged into `Generate domain portfolio AI summaries` (combined
+context, 0 FI loads, five `enqueueAiRecordNarrative` variants). Spending /
+payments / products narratives + signals + invalidates kept separate. See
+Section B `portfolioSettings` + Section D item 7.
+
+**Phase 2c done (`financialItem`):** 12 primary hooks reviewed. KEEP all
+lifecycle/ledger hooks. Narrowed `Generate product insights` to ACTIVE +
+12 domain itemTypes + no `parentFinancialItemId` (excludes installment
+children). Documented `cascade-delete-related-records` incomplete delete
+graph as known limitation. See Section B `financialItem` + Section D items
+9–10.
+
+**Phase 2d done (`loanDetails`):** 5 primary event hooks KEEP. Fixed Section B
+undercount (was “Event — 1”, mislabeled a `loanMonthlyCost` hook). Create-
+chain sequencing documented. See Section B `loanDetails` + Section D item 11.
+
+**Phase 2e done (`paymentSchedule` + `spendingPattern`):** 6 primary hooks
+KEEP. Cadence: spending-category-insights nightly → weekly Monday (aligned to
+`financialImpact` refresh). Doc undercounts fixed. See Section B those
+entities + Section D item 12.
+
+**Phase 2f done (satellites + email cluster):** 8 satellite hooks + 6
+email-binding hooks KEEP. INVENTORY.md parity restored (`account` /
+`actor` sections added). Phase 2 program complete — further reasonability
+work is observability-driven (no successor phase). See Section B those
+entities + Section D item 13.
+
+**Phase 2g done (long-hook size cleanup):** dropped identical `ragText`
+from `refresh-account` / `refresh-actor` (−~420 lines). Documented engine
+constraints (`MAX_CALL_ARGS=32`, no `objectLiteral`/`let`) in INVENTORY
+"Hook authoring notes". No platform TS. See Section D item 14.
 
 ---
 
@@ -114,18 +152,13 @@ entity). Secondary entities touched by the same hook are noted.
 
 Commitment hub. Most loan/income/service/email cascades hang off this entity.
 
-**Scheduled (`hook:rates:…`) — 8**
+**Scheduled (`hook:rates:…`) — 3** (Phase 2c reasonability walk complete)
 
-| Workload | Also touches |
-| -------- | ------------ |
-| `Extend schedule horizon` | `paymentSchedule` |
-| `Generate domain AI summary text` | `portfolioSettings`, `category` |
-| `Generate incomes portfolio AI summary text` | `portfolioSettings` |
-| `Generate investments portfolio AI summary text` | `portfolioSettings` |
-| `Generate loans portfolio AI summary text` | `portfolioSettings` |
-| `Generate services portfolio AI summary text` | `portfolioSettings`, `category` |
-| `Generate portfolio products signals` | `portfolioSettings` |
-| `Generate product insights` | `portfolioSettings`, `transaction`, `productInsight` |
+| Workload | Also touches | Notes |
+| -------- | ------------ | ----- |
+| `Extend schedule horizon` | `paymentSchedule` | Monthly; DB-only. KEEP. |
+| `Generate domain AI summary text` | `portfolioSettings`, `category` | Nightly; 12 itemTypes; `aiBatchSize=2`. KEEP. |
+| `Generate product insights` | `portfolioSettings`, `productInsight` | Nightly. Scope narrowed (Phase 2c): ACTIVE + 12 domain itemTypes + `parentFinancialItemId` empty (no installment children). |
 
 **Event (CRUD / email / chain) — ~29** (examples): Create initial schedule;
 Generate/regenerate loan payment plan; Cascade delete; Create transaction from
@@ -139,16 +172,22 @@ email-match + loan plan + portfolio AI.
 
 ### `paymentSchedule` — LIVE (CORE for metrics)
 
-**Scheduled — 3**
+**Scheduled — 3** (workload-UI chip attribution; Phase 2e reasonability walk
+complete)
 
-| Workload | Also touches |
-| -------- | ------------ |
-| `Mark overdue schedules` | — |
-| `Generate portfolio payments signals` | `portfolioSettings` |
-| `Generate upcoming payment insights` | `portfolioSettings`, `upcomingPaymentInsight` |
+Primary-entity breakdown: **2 scheduled + 1 event**
+(`Generate portfolio payments signals` is primary `portfolioSettings`, listed
+here for aggregation view).
 
-**Event — 0** as primary (many live under `financialItem` / `transaction`:
-create schedule, mark PAID, roll forward, …).
+| Workload | Also touches | Notes |
+| -------- | ------------ | ----- |
+| `Mark overdue schedules` | — | Daily `0 6 * * *` UTC. Primary. KEEP. |
+| `Generate upcoming payment insights` | `portfolioSettings`, `upcomingPaymentInsight` | Nightly. Primary. KEEP (FLAG: per-row `eachRecord` fan-out vs per-FI insight key; hash-gate suppresses redundant LLM). |
+| `Generate portfolio payments signals` | `portfolioSettings` | Weekly. Primary entity is `portfolioSettings`. |
+
+**Event — 1** as primary: `Roll forward next schedule` (after PAID; idempotent
+`existingNextDue` guard). Many other schedule writers live under
+`financialItem` / `transaction`.
 
 **Also:** System metrics/queries use `paymentSchedule` as `sourceModel` /
 `sourceEntity` (dashboard KPIs) — driven by data changes + schedule-tick hooks
@@ -160,48 +199,59 @@ above, not separate queue workloads.
 
 ### `transaction` — LIVE (CORE for metrics + AI cascade)
 
-**Scheduled — 5**
+**Scheduled — 5** (Phase 2a reasonability walk complete)
 
-| Workload | Also touches |
-| -------- | ------------ |
-| `Categorize transaction` | `category`, `categoryExample` |
-| `Enrich transactions` | `email`, `merchantEnrichment` |
-| `Reconcile monthly spending` | `monthlySpendingSummary` |
-| `Reconcile spending patterns` | `spendingPattern` |
-| `Reset NEEDS_MANUAL to PENDING` | — |
+| Workload | Also touches | Cadence / notes |
+| -------- | ------------ | --------------- |
+| `Categorize transaction` | `category`, `categoryExample` | Every **6h** (`0 */6 * * *` UTC). Path: prior-txn match → embedding → **callAi flash fallback**. |
+| `Enrich transactions` | `merchantEnrichment` | **Nightly 04:00 UTC** (`0 4 * * *`). Vertex on `merchantEnrichment` cache miss only. |
+| `Reconcile monthly spending` | `monthlySpendingSummary` | Nightly (host entity is monthlySpendingSummary; listed here as cascade peer). |
+| `Reconcile spending patterns` | `spendingPattern` | Nightly (host entity is spendingPattern; listed here as cascade peer). |
+| `Reset NEEDS_MANUAL to PENDING` | — | **Manual-force only.** Natural cron = leap-day (`0 0 29 2 *`). Near-zero schedule cost. |
 
 **Event — ~6:** Adjust account balances; Apply monthly spending / spending
-pattern; Learn category example; Mark schedule PAID; Replan loan after payment.
+pattern; Learn category example; Mark schedule PAID; Replan loan after payment;
+Complete one-time item on payment.
 
 **In use?** **Yes.** Insights cascade (`force-insights-cascade.sh`) targets
-these schedules.
+these schedules. Phase 2a kept all 11 seed hooks; reduced categorize + enrich
+cadence only (no merges, no platform code).
 
 ---
 
 ### `portfolioSettings` — LIVE (AI / signals hub)
 
-**Scheduled — 6** (portfolio narratives + spending signals/insights)
+**Scheduled — 7** (Phase 2b: domain+overall merged; signal narratives + signals stay)
 
-| Workload | Also touches |
-| -------- | ------------ |
-| `Generate portfolio AI summary text` | — |
-| `Generate payments portfolio AI summary text` | — |
-| `Generate products portfolio AI summary text` | — |
-| `Generate spending portfolio AI summary text` | — |
-| `Generate portfolio spending signals` | `spendingPattern`, `monthlySpendingSummary` |
-| `Generate spending category insights` | `category`, `spendingCategoryInsight`, `spendingPattern` |
+| Workload | Also touches | Notes |
+| -------- | ------------ | ----- |
+| `Generate domain portfolio AI summaries` | — | Merged: combined context + enqueue loans/investments/incomes/services/default. Cron `0 4 * * *` America/Bogota. **0 FI loads.** |
+| `Generate payments portfolio AI summary text` | — | Signal-sourced; KEEP |
+| `Generate products portfolio AI summary text` | — | Signal-sourced; KEEP |
+| `Generate spending portfolio AI summary text` | — | Signal-sourced; KEEP |
+| `Generate portfolio payments signals` | `paymentSchedule` | Weekly; KEEP |
+| `Generate portfolio products signals` | `financialItem` | Weekly; KEEP |
+| `Generate portfolio spending signals` | `spendingPattern`, `monthlySpendingSummary` | Weekly; KEEP |
 
 **Event — 3:** Invalidate payments/products/spending narrative on signals change.
 
-**In use?** **Yes** for AI insight surfaces. Not a money ledger entity.
+**In use?** **Yes** for AI insight surfaces. Not a money ledger entity. Phase 2b
+removed hardcoded seed FI IDs from portfolio domain narratives (scalability).
 
 ---
 
-### `spendingPattern` — LIVE (thin schedule)
+### `spendingPattern` — LIVE (insight write-model)
 
-**Scheduled — 1:** `Evaluate spending patterns` (+ `monthlySpendingSummary`).
+**Scheduled — 3** (Phase 2e reasonability walk complete)
 
-**Event:** mostly via `transaction` / `portfolioSettings` hooks.
+| Workload | Also touches | Notes |
+| -------- | ------------ | ----- |
+| `Reconcile spending patterns` | — | Nightly `30 2 * * *` America/Bogota. Drift corrector. KEEP. |
+| `Evaluate spending patterns` | `monthlySpendingSummary` | Weekly Mon `0 3 * * 1`. Writes `financialImpact`. KEEP. |
+| `Generate spending category insights` | `spendingCategoryInsight`, `portfolioSettings` | Weekly Mon `0 6 * * 1` (Phase 2e: was nightly; aligned to weekly `financialImpact` refresh). KEEP. |
+
+**Event:** mostly via `transaction` incremental writers (apply spending pattern
+on classification).
 
 **In use?** **Yes**, as insight write-model.
 
@@ -211,7 +261,10 @@ these schedules.
 
 **Scheduled — 0**
 
-**Event — 1:** `Refresh account AI summary JSON` (CRUD).
+**Event — 1:** `Refresh account AI summary JSON` (CRUD create +
+`name`/`accountType`/`actorId`/`currency`/`currentBalance` updates; order 91,
+`execution: deferred`). `upsertAiRecordContext` with `enqueueNarrative:
+false`; no `ragText` (Phase 2g dropped identical copy of `context`). KEEP.
 
 Balances also updated from **transaction** event hooks (not listed here as
 account-primary). Dashboard widgets read **metrics on transaction**, not an
@@ -226,23 +279,37 @@ no account-named schedule.
 
 **Scheduled — 0**
 
-**Event — 1:** `Refresh actor AI summary JSON`.
+**Event — 1:** `Refresh actor AI summary JSON` (CRUD create +
+`name`/`type`/`website` updates; order 90, `execution: deferred`).
+`upsertAiRecordContext` with `enqueueNarrative: false`; no `ragText`
+(Phase 2g dropped identical copy of `context`). KEEP.
 
 **In use?** Entity yes; **workloads** thin (AI summary only).
 
 ---
 
-### `loanDetails` — THIN as primary / LIVE via financialItem
+### `loanDetails` — LIVE as primary event cluster (satellite to financialItem)
 
-**Scheduled — 0** as primary.
+**Scheduled — 0** as primary (Phase 2d reasonability walk complete).
 
-**Event — 1** as primary: `Replan loan on monthly cost change`.
+**Event — 5** as primary:
 
-Most loan plan / utilization / AI work is classified under **`financialItem`**
-(same hooks touch `loanDetails` / `loanMonthlyCost` / `loanUtilization` as
-secondaries).
+| Workload | Trigger | Notes |
+| -------- | ------- | ----- |
+| `Persist inferred loan origination date` | after create (order -1, sync) | NONE/flat plans only. KEEP. |
+| `Generate loan payment plan` | after create (order 0, queued) | Initial `paymentSchedule` for all amortization types. KEEP. |
+| `Initialize card installment loan` | after create (order 1, queued, chainHooks) | Seeds child FI `currentBalance` from `originalPrincipal`. KEEP. |
+| `Regenerate loan payment plan` | after update (order 1, queued) | Amortizing types only (FRENCH/GERMAN/AMERICAN/BULLET); fires on `planRevision` + term fields. KEEP. |
+| `Refresh loan AI summary JSON` | after create/update (order 20, queued) | Context-only (`enqueueNarrative: false`); LLM deferred to `Generate domain AI summary text` at 03:00. KEEP. |
 
-**In use?** **Yes** via financialItem workload cluster — not orphaned.
+Create-chain sequencing (intentional): order `-1` → `0` → `1` → `20`. Generate uses
+`originalPrincipal` + dates, not the balance initialize seeds — not a race.
+
+`loanMonthlyCost` / `loanUtilization` replan bumps land here via `planRevision`
+(regenerate + refresh). FI bump lands via `summaryRevision` (refresh only).
+
+**In use?** **Yes.** Primary event surface for loan plan + AI context; satellited
+under the financialItem commitment hub for inventory grouping.
 
 ---
 
@@ -256,17 +323,33 @@ secondaries).
 
 ### `email` / `attachment` / `statement` / `balanceSnapshot` — LIVE via financialItem email events + System Gmail
 
-**Scheduled — 0** as primary.
+**Scheduled — 0** as primary (Phase 2f email-cluster reasonability walk
+complete).
 
-**Event:** email/statement/attachment/balance hooks are primarily attributed to
-**`financialItem`** above.
+**Event — 6** email-binding hooks (primary entity `financialItem.afterEmail`;
+listed here for the chain view). All KEEP; distinct `emb_*` bindings, no
+dupes, no LLM:
+
+| Hook | Bindings | Purpose |
+| ---- | -------: | ------- |
+| `Statement attachment from email` | 6 | Upsert period statement + link STATEMENT PDF |
+| `Visa statement from email` | 1 | Upsert statement + patch matching open schedule |
+| `Create transaction from email` | 12 | Hub transaction from body extractors (chains) |
+| `Visa statement closing balance` | 1 | Snapshot closingBalance → `balanceSnapshot` + sync card |
+| `Link payment to schedule` | 18 | Match & attach FI + closest open schedule |
+| `Reverse card purchase from email` | 1 | Mark reversed / create reversal txn |
+
+**`balanceSnapshot` primary event — 1:** `Sync item balance from snapshot`
+(copies `balance` → `financialItem.currentBalance` on create/update). KEEP.
+Note: `previous.balance` inside `updateMatching.set` is intentional — the
+engine rebinds `previous` to the trigger record (see Section D item 13).
 
 **System Gmail workloads** (`scheduler:gmail-poll`, `queue:gmail-jobs`,
 `worker:gmail-*`, optional `pubsub:gmail-push-api`) feed the **`email`** ledger
 then those hooks.
 
 **In use?** **Yes** as a chain: System Gmail → `email` → financialItem email
-hooks → `transaction` / `statement` / `attachment`.
+hooks → `transaction` / `statement` / `attachment` / `balanceSnapshot`.
 
 ---
 
@@ -285,20 +368,21 @@ insight entity — correct (writers are the schedules above).
 
 ---
 
-### `incomeDetails` / `investmentDetails` / `serviceDetails` — NONE as primary workload
+### `incomeDetails` / `investmentDetails` / `serviceDetails` / `loanMonthlyCost` / `loanUtilization` — satellite event hooks (Phase 2f)
 
-| Entity | Dedicated hook workload (primary)? | Reality |
-| ------ | ---------------------------------- | ------- |
-| `incomeDetails` | **NONE** | Only appear inside financialItem AI-summary / portfolio income schedule |
-| `investmentDetails` | **NONE** | Same |
-| `serviceDetails` | **NONE** | Same |
-| `loanMonthlyCost` | **NONE** as primary | Used inside financialItem loan-plan event hooks |
-| `loanUtilization` | **NONE** as primary | Used inside financialItem utilization/replan hooks |
+**Scheduled — 0** as primary. No pauseable Scheduler rows; event-only.
 
-**In use as workloads?** **No dedicated `hook:*` rows.** They piggyback on
-`financialItem` schedules/events. If you are hunting “workloads not in use,”
-these entities do **not** add extra Scheduler load — they also don’t justify
-extra pauseable workload rows.
+| Entity | Event hook (primary) | Notes |
+| ------ | -------------------- | ----- |
+| `incomeDetails` | `Refresh income AI summary JSON` (order 20, queued) | Builds FI `aiSummaryJson` / `aiShortSummaryJson`; clears `aiSummaryTextSourceHash` so nightly `Generate domain AI summary text` regenerates. KEEP. |
+| `investmentDetails` | `Refresh investment AI summary JSON` (order 20, queued) | Same pattern for investment DTO. KEEP. |
+| `serviceDetails` | `Refresh service AI summary JSON` (order 20, queued) | Same pattern for service DTO. KEEP. |
+| `loanMonthlyCost` | `Replan loan on monthly cost change` (order 0, queued, chainHooks) | Bumps `loanDetails.planRevision` → Phase 2d regenerate. KEEP. |
+| `loanUtilization` | `Apply utilization to balance and replan` (order 0, queued, chainHooks) | Draw → +`financialItem.currentBalance` + bump `planRevision`. `previous.amount` in `updateMatching.set` is intentional (engine swap; Section D item 13). KEEP. |
+
+**In use as workloads?** Thin — 1 event hook each, no Scheduler load. They
+feed `financialItem` / `loanDetails` cascades rather than justifying their
+own pauseable workload rows.
 
 ---
 
@@ -307,19 +391,19 @@ extra pauseable workload rows.
 | Entity | Scheduled `hook:*` (primary) | Event hooks (primary) | System pipes | Verdict |
 | ------ | ---------------------------- | --------------------- | ------------ | ------- |
 | *(System)* | — | — | All queues/schedulers/gmail/AI | LIVE — required |
-| `financialItem` | 8 | ~29 | gmail-jobs, hook-jobs | LIVE |
+| `financialItem` | 3 | ~29 | gmail-jobs, hook-jobs | LIVE |
 | `transaction` | 5 | ~6 | hook-jobs | LIVE |
 | `paymentSchedule` | 3 | 0 primary | metrics engine | LIVE |
-| `portfolioSettings` | 6 | 3 | ai-jobs (narratives) | LIVE |
-| `spendingPattern` | 1 | 0 primary | — | LIVE |
+| `portfolioSettings` | 7 | 3 | ai-jobs (narratives) | LIVE |
+| `spendingPattern` | 3 | 0 primary | — | LIVE |
 | `account` | 0 | 1 | metrics via transaction | THIN workloads |
 | `actor` | 0 | 1 | — | THIN |
-| `loanDetails` | 0 | 1 | — | via financialItem |
+| `loanDetails` | 0 | 5 | — | LIVE (event cluster; satellite to financialItem) |
 | `category` / `categoryExample` | 0 | via transaction | — | via transaction |
-| `email` / `attachment` / `statement` / `balanceSnapshot` | 0 | via financialItem + Gmail system | gmail-* | via chain |
+| `email` / `attachment` / `statement` / `balanceSnapshot` | 0 | 6 email + 1 balanceSnapshot | gmail-* | via chain (Phase 2f) |
 | Insight entities (5) | 0 primary | writers above | — | outputs |
-| `incomeDetails` / `investmentDetails` / `serviceDetails` | **0** | **0** primary | — | **NO dedicated workloads** |
-| `loanMonthlyCost` / `loanUtilization` | **0** primary | via financialItem | — | secondary only |
+| `incomeDetails` / `investmentDetails` / `serviceDetails` | 0 | 1 each | — | THIN (AI-json refresh; Phase 2f) |
+| `loanMonthlyCost` / `loanUtilization` | 0 | 1 each | — | THIN (replan bumps; Phase 2f) |
 
 ---
 
@@ -351,10 +435,96 @@ extra pauseable workload rows.
 6. **Aggregation pubsub**: off in dev workspace; on in staging/prod —
    environment gate, not unused.
 
-7. **Portfolio narrative fan-out** — 7 nightly hooks writing to the same
-   `portfolioSettings` singleton under different `narrativeVariant`s. Prime
-   merge candidate for rates seed catalog cleanup (reasonability), not a
-   platform code change.
+7. **Phase 2b `portfolioSettings` outcome** — Merged 4 domain portfolio
+   narrative hooks + overall into `Generate domain portfolio AI summaries`
+   (combined AI-doc context, `enqueueNarrative: false`, then five
+   `enqueueAiRecordNarrative` for loans/investments/incomes/services/default).
+   Zero `getOrCreateRecord` FI loads (no hardcoded seed IDs; under
+   `MAX_LOADED_RECORDS=8`). Fixed shared-context overwrite bug (sequential
+   domain upserts were replacing the whole `context`). Spending / payments /
+   products narratives + 3 signals + 3 invalidates **KEEP** (signal-sourced /
+   field-scoped). Seed hook count 64→60.
+
+8. **Phase 2a `transaction` cluster outcome** — 11 seed hooks (INVENTORY was
+   undercounting at 10; `reset-needs-manual-transactions.json` was missing).
+   Verdict: KEEP all. Cadence reductions: categorize `*/2` → `*/6` (4×/day);
+   enrich `*/3` → nightly `0 4 * * *` UTC. Doc drift fixed: categorize JSON
+   already had `callAi` flash fallback (INVENTORY incorrectly said “No LLM”).
+   Follow-up (non-blocking): `learn-category-example-on-manual` may double-work
+   when categorize itself upserts a `categoryExample` — verify engine re-entry
+   in a later pass.
+
+9. **Phase 2c `financialItem` cluster outcome** — 12 primary hooks reviewed.
+   Verdict: KEEP all lifecycle/ledger/sync hooks (`default-active-status`,
+   `derive-balance-sheet-role`, `exclude-card-installment-loans`, schedule
+   create/reseed/skip, `sync-host-card-balance`, `bump-ai-summary-on-…`,
+   `extend-schedule-horizon`, `generate-domain-ai-summary-text`,
+   `cascade-delete-related-records`). Scope narrowing: `generate-product-
+   insights` now filters ACTIVE + same 12 domain itemTypes as domain summary
+   + `parentFinancialItemId isEmpty` (excludes card installment children;
+   host card carries the insight). Order-1 sync+queued mix
+   (`sync-host-card-balance` queued vs sync after-hooks) is intentional
+   eventual consistency — no change.
+
+10. **`cascade-delete-related-records` incomplete delete graph (known
+    limitation).** After FI delete, hook removes `paymentSchedule`,
+    `loanDetails`, `balanceSnapshot`, `statement`. Does **not** cascade
+    `incomeDetails` / `investmentDetails` / `serviceDetails`, `transaction`,
+    `attachment`, `productInsight`, `upcomingPaymentInsight`,
+    `spendingCategoryInsight`, child FIs, `loanMonthlyCost`,
+    `loanUtilization`. Expanding the graph is destructive and needs a
+    product decision — deferred follow-up, not Phase 2c.
+
+11. **Phase 2d `loanDetails` cluster outcome** — 5 primary event hooks
+    reviewed. Verdict: **KEEP all**. Create-chain sequencing intentional
+    (`persist` -1 sync → `generate` 0 queued → `initialize` 1 queued →
+    `refresh` 20 queued). `generate` + `regenerate` are complementary
+    (create-all vs update-amortizing-only) — not a merge candidate.
+    `refresh-loan-ai-summary-json` is context-only (`enqueueNarrative:
+    false`); LLM correctly deferred to `financialItem.generate-domain-ai-
+    summary-text` at 03:00 America/Bogota. Doc bug fixed: Section B
+    previously claimed “Event — 1” and mislabeled `Replan loan on monthly
+    cost change` (that hook is `loanMonthlyCost` entity).
+
+12. **Phase 2e `paymentSchedule` + `spendingPattern` outcome** — 6 primary
+    hooks reviewed. Verdict: KEEP all. Cadence realignment: `Generate
+    spending category insights` `0 6 * * *` → `0 6 * * 1` (Mon 06:00
+    America/Bogota), 3h after weekly `Evaluate spending patterns` refreshes
+    `financialImpact` — stops Tue–Sun LLM re-enqueues driven only by
+    nightly metricsJson drift. Doc fixes: Section B `spendingPattern`
+    Scheduled 1→3; Section C matrix 1→3; `paymentSchedule` primary
+    breakdown clarified (2 scheduled + 1 event; portfolio payments signals
+    is primary `portfolioSettings`). FLAG (non-blocking): `Generate
+    upcoming payment insights` fans out `eachRecord` per open schedule row
+    while insight key is per-FI — hash-gate suppresses redundant LLM.
+
+13. **Phase 2f satellites + email cluster outcome** — 8 satellite hooks + 6
+    email-binding hooks reviewed. Verdict: **KEEP all**; no seed JSON
+    changes. INVENTORY.md parity restored: added missing `account (1)` and
+    `actor (1)` per-entity sections so the listed domain count matches the
+    header (`60 = 6 email + 54 domain`). Engine note: `updateMatching`
+    intentionally rebinds `previous = triggerRecord` and
+    `current = matchCandidate` when evaluating the `set` clause
+    (`packages/hooks/src/update-matching-utils.ts` ~line 106) — so
+    `previous.balance` / `previous.amount` in
+    `sync-item-balance-from-snapshot` and
+    `apply-utilization-to-balance-and-replan` are correct, not bugs.
+    **Phase 2 program complete** — further reasonability work is
+    observability-driven (no successor phase).
+
+14. **Phase 2g long-hook size cleanup** — categorized the 14 largest seed
+    hooks by root cause: (A) concat-tree JSON builders under
+    `MAX_CALL_ARGS=32` with no `objectLiteral` (dominates the 4
+    `refresh-*-ai-summary-json` hooks at 2.7k–3.7k lines); (B) repeated
+    expression subtrees with no `let` (`create-transaction-from-email`);
+    (C) genuine business logic (signals / evaluate / insights — KEEP);
+    (D) identical `ragText`/`context` duplication. Seed wins: dropped
+    identical `ragText` from `refresh-account-ai-summary-json` (540→290)
+    and `refresh-actor-ai-summary-json` (378→208). Documented engine
+    constraints + best practices in INVENTORY.md "Hook authoring notes".
+    Deferred engine primitives (`objectLiteral`, `let`, structured
+    `contextObject` on `upsertAiRecordContext`) for a future platform
+    phase — not Phase 2g.
 
 ---
 
@@ -451,11 +621,11 @@ Complete set of **static registry** workloads plus **scheduled** dynamic
 | 18.2 |  | `email` — Locally ticks the same poll path that fills the email ledger. | `email` |
 | 19 | `inprocess:debounced-user-ai-memory` | In-memory ~5-minute debouncer that refreshes L2 user AI memory after record summary updates. | `system` |
 | 20 | `inprocess:index-provisioner-queue` | In-process FIFO on the API that rate-limits Firestore composite index provisioning. | `system` |
-| 21 | `hook:rates:Categorize transaction` | Every 2 hours: match PENDING txns to prior DONE txns by normalized description, then categoryExample embeddings (minScore 0.82). On miss, callAi (flash) picks a categoryId from the category catalog. | `transaction` `category` `categoryExample` |
-| 21.1 |  | `transaction` — Primary target (actual money movement rows): Every 2 hours: match PENDING txns to prior DONE txns by normalized description, then… | `transaction` |
+| 21 | `hook:rates:Categorize transaction` | Every 6 hours: match PENDING txns to prior DONE txns by normalized description, then categoryExample embeddings (minScore 0.82). On miss, callAi (flash) picks a categoryId from the category catalog. | `transaction` `category` `categoryExample` |
+| 21.1 |  | `transaction` — Primary target (actual money movement rows): Every 6 hours: match PENDING txns to prior DONE txns by normalized description, then… | `transaction` |
 | 21.2 |  | Also reads related catalog entities while running this schedule. | `category` `categoryExample` |
-| 22 | `hook:rates:Enrich transactions` | Every 3 hours: for DONE transactions missing merchantNormalized, look up (or create) a merchantEnrichment cache row keyed by normalizeMatchText(description). On cache miss, call Vertex for merchantNormalized / needType / consumptionType… | `transaction` `merchantEnrichment` |
-| 22.1 |  | `transaction` — Primary target (actual money movement rows): Every 3 hours: for DONE transactions missing merchantNormalized, look up (or create) a… | `transaction` |
+| 22 | `hook:rates:Enrich transactions` | Nightly (04:00 UTC): for DONE transactions missing merchantNormalized, look up (or create) a merchantEnrichment cache row keyed by normalizeMatchText(description). On cache miss, call Vertex for merchantNormalized / needType / consumptionType… | `transaction` `merchantEnrichment` |
+| 22.1 |  | `transaction` — Primary target (actual money movement rows): Nightly (04:00 UTC): for DONE transactions missing merchantNormalized, look up (or create) a… | `transaction` |
 | 22.2 |  | `merchantEnrichment` — Also writes/updates related entities as part of this schedule. | `merchantEnrichment` |
 | 23 | `hook:rates:Evaluate spending patterns` | Weekly (Monday 03:00 America/Bogota): for every active spendingPattern, compute expenseRatio / incomeRatio / categoryShare from monthlySpendingSummary + sibling patterns, then derive financialImpact / impactScore / optimizationPotential… | `spendingPattern` `monthlySpendingSummary` |
 | 23.1 |  | `spendingPattern` — Primary target (spending pattern aggregates): Weekly (Monday 03:00 America/Bogota): for every active spendingPattern, compute expenseRatio /… | `spendingPattern` |
@@ -466,52 +636,41 @@ Complete set of **static registry** workloads plus **scheduled** dynamic
 | 25 | `hook:rates:Generate domain AI summary text` | Nightly (03:00 America/Bogota): scheduled catch-up that enqueues a default recordNarrativeRefresh job (enqueueAiRecordNarrative) for ACTIVE income/investment/loan/service financial items, using the matching portfolioSettings.*AiPrompt… | `financialItem` `portfolioSettings` |
 | 25.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (03:00 America/Bogota): scheduled catch-up that enqueues a default recordNarrativeRefresh… | `financialItem` |
 | 25.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 26 | `hook:rates:Generate incomes portfolio AI summary text` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the incomes rollup context (from the seeded income financialItems + settings) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `financialItem` `portfolioSettings` |
-| 26.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the incomes rollup… | `financialItem` |
-| 26.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 27 | `hook:rates:Generate investments portfolio AI summary text` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the investments rollup context (from the seeded investment financialItems + settings) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `financialItem` `portfolioSettings` |
-| 27.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the investments… | `financialItem` |
-| 27.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 28 | `hook:rates:Generate loans portfolio AI summary text` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the loans rollup context (from the seeded loan financialItems + settings) and upsert it into ai_record_summaries/{portfolioSettings__id} under narrativeVariant… | `financialItem` `portfolioSettings` |
-| 28.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the loans rollup… | `financialItem` |
+| 26 | `hook:rates:Generate domain portfolio AI summaries` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, upsert one combined AI-doc context (settings + loans/investments/incomes/services from virtual *AiSummaryJson + metricsRollup + relationships), then enqueue five recordNarrativeRefresh jobs (loans, investments, incomes, services, default). Zero financialItem loads. | `portfolioSettings` |
+| 26.1 |  | `portfolioSettings` — Primary target (portfolio AI settings and insight signal singleton): combined-context domain+overall narratives. | `portfolioSettings` |
+| 27 | `hook:rates:Generate payments portfolio AI summary text` | Nightly (04:30 America/Bogota): for the portfolioSettings singleton, rebuild the payments rollup context from paymentsSignalsJson (+ settings / relationships) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `portfolioSettings` |
+| 28 | `hook:rates:Generate portfolio payments signals` | Weekly (Monday 03:00 America/Bogota): for the portfolioSettings singleton, aggregate open paymentSchedule rows (UPCOMING/OVERDUE) into paymentsSignalsJson — dueNext7d, dueNext30d, overdueAmount, overdueCount, upcomingCount,… | `paymentSchedule` `portfolioSettings` |
+| 28.1 |  | `paymentSchedule` — Primary target (installment / due-date schedule rows): Weekly (Monday 03:00 America/Bogota): for the portfolioSettings singleton, aggregate open… | `paymentSchedule` |
 | 28.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 29 | `hook:rates:Generate payments portfolio AI summary text` | Nightly (04:30 America/Bogota): for the portfolioSettings singleton, rebuild the payments rollup context from paymentsSignalsJson (+ settings / relationships) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `portfolioSettings` |
-| 30 | `hook:rates:Generate portfolio AI summary text` | Nightly (05:00 America/Bogota): for the portfolioSettings singleton, rebuild the overall cross-domain context (metricsRollup composed from the four domain *AiSummaryJson blobs + relationships) and upsert it into… | `portfolioSettings` |
-| 31 | `hook:rates:Generate portfolio payments signals` | Weekly (Monday 03:00 America/Bogota): for the portfolioSettings singleton, aggregate open paymentSchedule rows (UPCOMING/OVERDUE) into paymentsSignalsJson — dueNext7d, dueNext30d, overdueAmount, overdueCount, upcomingCount,… | `paymentSchedule` `portfolioSettings` |
-| 31.1 |  | `paymentSchedule` — Primary target (installment / due-date schedule rows): Weekly (Monday 03:00 America/Bogota): for the portfolioSettings singleton, aggregate open… | `paymentSchedule` |
+| 29 | `hook:rates:Generate portfolio products signals` | Weekly (Monday 03:15 America/Bogota): for the portfolioSettings singleton, aggregate ACTIVE financialItem rows into productsSignalsJson — totalAssets, totalLiabilities, netWorth, activeCount, dormantCount, highUtilizationCount. Zero LLM. | `financialItem` `portfolioSettings` |
+| 29.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Weekly (Monday 03:15 America/Bogota): for the portfolioSettings singleton, aggregate ACTIVE… | `financialItem` |
+| 29.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
+| 30 | `hook:rates:Generate portfolio spending signals` | Weekly (Monday 03:30 America/Bogota): for the portfolioSettings singleton, aggregate active spendingPattern rows for the current month (substring(now(), 0, 7)) plus monthlySpendingSummary totals into spendingSignalsJson —… | `portfolioSettings` `monthlySpendingSummary` `spendingPattern` |
+| 30.1 |  | `portfolioSettings` — Primary target (portfolio AI settings and insight signal singleton): Weekly (Monday 03:30 America/Bogota): for the portfolioSettings singleton, aggregate active… | `portfolioSettings` |
+| 30.2 |  | Also writes/updates related entities as part of this schedule. | `monthlySpendingSummary` `spendingPattern` |
+| 31 | `hook:rates:Generate product insights` | Nightly (06:30 America/Bogota): for every ACTIVE domain financialItem (same 12 itemTypes as Generate domain AI summary text) with no parentFinancialItemId (excludes card installment children), upsert one productInsight keyed by (month, financialItemId), write compressed metricsJson / impactScore / rank, then upsertAiRecordContext with narrativeVariant "insights"… | `financialItem` `portfolioSettings` `productInsight` |
+| 31.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (06:30 America/Bogota): for every ACTIVE financialItem, upsert one productInsight keyed by… | `financialItem` |
 | 31.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 32 | `hook:rates:Generate portfolio products signals` | Weekly (Monday 03:15 America/Bogota): for the portfolioSettings singleton, aggregate ACTIVE financialItem rows into productsSignalsJson — totalAssets, totalLiabilities, netWorth, activeCount, dormantCount, highUtilizationCount. Zero LLM. | `financialItem` `portfolioSettings` |
-| 32.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Weekly (Monday 03:15 America/Bogota): for the portfolioSettings singleton, aggregate ACTIVE… | `financialItem` |
-| 32.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 33 | `hook:rates:Generate portfolio spending signals` | Weekly (Monday 03:30 America/Bogota): for the portfolioSettings singleton, aggregate active spendingPattern rows for the current month (substring(now(), 0, 7)) plus monthlySpendingSummary totals into spendingSignalsJson —… | `portfolioSettings` `monthlySpendingSummary` `spendingPattern` |
-| 33.1 |  | `portfolioSettings` — Primary target (portfolio AI settings and insight signal singleton): Weekly (Monday 03:30 America/Bogota): for the portfolioSettings singleton, aggregate active… | `portfolioSettings` |
-| 33.2 |  | Also writes/updates related entities as part of this schedule. | `monthlySpendingSummary` `spendingPattern` |
-| 34 | `hook:rates:Generate product insights` | Nightly (06:30 America/Bogota): for every ACTIVE financialItem, upsert one productInsight keyed by (month, financialItemId), write compressed metricsJson / impactScore / rank, then upsertAiRecordContext with narrativeVariant "insights"… | `financialItem` `portfolioSettings` `productInsight` |
-| 34.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (06:30 America/Bogota): for every ACTIVE financialItem, upsert one productInsight keyed by… | `financialItem` |
-| 34.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 34.3 |  | `productInsight` — Also writes/updates related entities as part of this schedule. | `productInsight` |
-| 35 | `hook:rates:Generate products portfolio AI summary text` | Nightly (04:45 America/Bogota): for the portfolioSettings singleton, rebuild the products rollup context from productsSignalsJson (+ settings / relationships) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `portfolioSettings` |
-| 36 | `hook:rates:Generate services portfolio AI summary text` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the services rollup context (from the seeded service financialItems + settings) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `financialItem` `portfolioSettings` |
-| 36.1 |  | `financialItem` — Primary target (financial commitments (loans, income, investments, services)): Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the services rollup… | `financialItem` |
-| 36.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 37 | `hook:rates:Generate spending category insights` | Nightly (06:00 America/Bogota): for every active spendingPattern of the current month (substring(now(), 0, 7)) with financialImpact HIGH, upsert one spendingCategoryInsight keyed by (month, categoryId), write compressed metricsJson /… | `portfolioSettings` `spendingCategoryInsight` `spendingPattern` |
-| 37.1 |  | `portfolioSettings` — Primary target (portfolio AI settings and insight signal singleton): Nightly (06:00 America/Bogota): for every active spendingPattern of the current month… | `portfolioSettings` |
-| 37.2 |  | Also writes/updates related entities as part of this schedule. | `spendingCategoryInsight` `spendingPattern` |
-| 38 | `hook:rates:Generate spending portfolio AI summary text` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the spending rollup context from spendingSignalsJson (+ settings / relationships) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `portfolioSettings` |
-| 39 | `hook:rates:Generate upcoming payment insights` | Nightly (06:15 America/Bogota): for every UPCOMING/OVERDUE paymentSchedule in the current month window, upsert one upcomingPaymentInsight keyed by (windowKey, financialItemId), write compressed metricsJson / impactScore / rank, then… | `paymentSchedule` `portfolioSettings` `upcomingPaymentInsight` |
-| 39.1 |  | `paymentSchedule` — Primary target (installment / due-date schedule rows): Nightly (06:15 America/Bogota): for every UPCOMING/OVERDUE paymentSchedule in the current month… | `paymentSchedule` |
-| 39.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
-| 39.3 |  | `upcomingPaymentInsight` — Also writes/updates related entities as part of this schedule. | `upcomingPaymentInsight` |
-| 40 | `hook:rates:Mark overdue schedules` | Daily sweep — UPCOMING rows with dueDate before today become OVERDUE. | `paymentSchedule` |
-| 41 | `hook:rates:Reconcile monthly spending` | Nightly (02:00 America/Bogota): for every active monthlySpendingSummary, recompute totalIncome / totalExpenses / transactionCount / incomeCount / expenseCount from transactions with matching month. Absorbs drift from updates/deletes… | `transaction` `monthlySpendingSummary` |
-| 41.1 |  | `transaction` — Primary target (actual money movement rows): Nightly (02:00 America/Bogota): for every active monthlySpendingSummary, recompute totalIncome /… | `transaction` |
-| 41.2 |  | `monthlySpendingSummary` — Also writes/updates related entities as part of this schedule. | `monthlySpendingSummary` |
-| 42 | `hook:rates:Reconcile spending patterns` | Nightly (02:30 America/Bogota): for every active spendingPattern, recompute totalAmount / transactionCount / avgTicket from transactions with matching patternId. Absorbs drift from recategorization/re-enrichment that the incremental… | `transaction` `spendingPattern` |
-| 42.1 |  | `transaction` — Primary target (actual money movement rows): Nightly (02:30 America/Bogota): for every active spendingPattern, recompute totalAmount /… | `transaction` |
-| 42.2 |  | `spendingPattern` — Also writes/updates related entities as part of this schedule. | `spendingPattern` |
-| 43 | `hook:rates:Reset NEEDS_MANUAL to PENDING` | One-shot (force only): flip all NEEDS_MANUAL transactions back to PENDING so Categorize can re-run after hook/catalog changes. Natural cron is leap-day only (29 Feb). | `transaction` |
+| 31.3 |  | `productInsight` — Also writes/updates related entities as part of this schedule. | `productInsight` |
+| 32 | `hook:rates:Generate products portfolio AI summary text` | Nightly (04:45 America/Bogota): for the portfolioSettings singleton, rebuild the products rollup context from productsSignalsJson (+ settings / relationships) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `portfolioSettings` |
+| 33 | `hook:rates:Generate spending category insights` | Weekly (Mon 06:00 America/Bogota), 3h after Evaluate spending patterns refreshes financialImpact: for every active spendingPattern of the current month with financialImpact HIGH, upsert one spendingCategoryInsight keyed by (month, categoryId), write compressed metricsJson /… | `portfolioSettings` `spendingCategoryInsight` `spendingPattern` |
+| 33.1 |  | `spendingPattern` — Primary target (spending pattern aggregates): Weekly (Mon 06:00 America/Bogota) HIGH-impact patterns only… | `spendingPattern` |
+| 33.2 |  | Also writes/updates related entities as part of this schedule. | `spendingCategoryInsight` `portfolioSettings` |
+| 34 | `hook:rates:Generate spending portfolio AI summary text` | Nightly (04:00 America/Bogota): for the portfolioSettings singleton, rebuild the spending rollup context from spendingSignalsJson (+ settings / relationships) and upsert it into ai_record_summaries/{portfolioSettings__id} under… | `portfolioSettings` |
+| 35 | `hook:rates:Generate upcoming payment insights` | Nightly (06:15 America/Bogota): for every UPCOMING/OVERDUE paymentSchedule in the current month window, upsert one upcomingPaymentInsight keyed by (windowKey, financialItemId), write compressed metricsJson / impactScore / rank, then… | `paymentSchedule` `portfolioSettings` `upcomingPaymentInsight` |
+| 35.1 |  | `paymentSchedule` — Primary target (installment / due-date schedule rows): Nightly (06:15 America/Bogota): for every UPCOMING/OVERDUE paymentSchedule in the current month… | `paymentSchedule` |
+| 35.2 |  | `portfolioSettings` — Also uses related settings/signals context while running this schedule. | `portfolioSettings` |
+| 35.3 |  | `upcomingPaymentInsight` — Also writes/updates related entities as part of this schedule. | `upcomingPaymentInsight` |
+| 36 | `hook:rates:Mark overdue schedules` | Daily sweep — UPCOMING rows with dueDate before today become OVERDUE. | `paymentSchedule` |
+| 37 | `hook:rates:Reconcile monthly spending` | Nightly (02:00 America/Bogota): for every active monthlySpendingSummary, recompute totalIncome / totalExpenses / transactionCount / incomeCount / expenseCount from transactions with matching month. Absorbs drift from updates/deletes… | `transaction` `monthlySpendingSummary` |
+| 37.1 |  | `transaction` — Primary target (actual money movement rows): Nightly (02:00 America/Bogota): for every active monthlySpendingSummary, recompute totalIncome /… | `transaction` |
+| 37.2 |  | `monthlySpendingSummary` — Also writes/updates related entities as part of this schedule. | `monthlySpendingSummary` |
+| 38 | `hook:rates:Reconcile spending patterns` | Nightly (02:30 America/Bogota): for every active spendingPattern, recompute totalAmount / transactionCount / avgTicket from transactions with matching patternId. Absorbs drift from recategorization/re-enrichment that the incremental… | `transaction` `spendingPattern` |
+| 38.1 |  | `transaction` — Primary target (actual money movement rows): Nightly (02:30 America/Bogota): for every active spendingPattern, recompute totalAmount /… | `transaction` |
+| 38.2 |  | `spendingPattern` — Also writes/updates related entities as part of this schedule. | `spendingPattern` |
+| 39 | `hook:rates:Reset NEEDS_MANUAL to PENDING` | One-shot (force only): flip all NEEDS_MANUAL transactions back to PENDING so Categorize can re-run after hook/catalog changes. Natural cron is leap-day only (29 Feb). | `transaction` |
 
-_Total: 43 parent workloads (20 static + 23 scheduled hooks) and 78 entity/system child rows (siblings with the same role merged)._
+_Total: 39 parent workloads (20 static + 19 scheduled hooks) and entity/system child rows (siblings with the same role merged)._
 
 **Chip legend:** `` `system` `` = platform control-plane / shared pipe;
 `` `entityName` `` = tenant entity catalog model (**attribution** for who
