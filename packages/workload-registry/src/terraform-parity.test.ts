@@ -34,6 +34,7 @@ describe("terraform-parity", () => {
   it("every Cloud Tasks queue has a registry entry", () => {
     const expected: Record<string, string> = {
       ai_jobs: "queue:ai-jobs",
+      document_extraction: "queue:document-extraction",
       hook_jobs: "queue:hook-jobs",
       gmail_jobs: "queue:gmail-jobs",
     };

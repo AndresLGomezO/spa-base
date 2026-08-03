@@ -2,10 +2,12 @@ import { VertexAI } from "@google-cloud/vertexai";
 
 import {
   buildMockChatAnswer,
+  buildMockDocumentExtractAnswer,
   buildMockGroundedChatAnswer,
   buildMockGroundedChatSynthesisAnswer,
   buildMockRecordNarrativeAnswer,
   buildMockUiBuilderStepAnswer,
+  looksLikeDocumentExtractPrompt,
   looksLikeRecordNarrativePrompt,
 } from "../../vertex-mock-responses.js";
 import { getStepTemperature } from "../../ui-builder-orchestrator/limits.js";
@@ -164,6 +166,18 @@ export async function generateChatAnswer(
   });
 }
 
+export type GenerateModelFilePart =
+  | {
+      readonly fileUri: string;
+      readonly mimeType: string;
+    }
+  | {
+      readonly inlineData: {
+        readonly data: string;
+        readonly mimeType: string;
+      };
+    };
+
 export interface GenerateModelAnswerInput {
   readonly systemInstruction: string;
   readonly userText: string;
@@ -171,10 +185,16 @@ export interface GenerateModelAnswerInput {
     readonly id: string;
     readonly content: string;
   }[];
+  /** @deprecated Prefer `fileParts` with inlineData; kept for existing callers. */
   readonly inlineImage?: {
     readonly mimeType: string;
     readonly base64Data: string;
   };
+  /**
+   * Multimodal parts (GCS `fileData` URIs or inline base64). Prefer GCS URIs
+   * so raw document bytes never sit in `ai_jobs.input`.
+   */
+  readonly fileParts?: readonly GenerateModelFilePart[];
 }
 
 export interface GenerateModelAnswerOptions {
@@ -232,10 +252,16 @@ function resolveMockModelAnswer(
     options?.responseMimeType === "application/json" ||
     looksLikeRecordNarrativePrompt(input.userText)
   ) {
+    if (looksLikeDocumentExtractPrompt(input.userText)) {
+      return buildMockDocumentExtractAnswer(input.userText);
+    }
     // Prefer chart-capable narrative JSON for recordNarrativeRefresh / callAi narratives.
     return looksLikeRecordNarrativePrompt(input.userText)
       ? buildMockRecordNarrativeAnswer(input.userText)
       : buildMockChatAnswer(input.userText);
+  }
+  if (looksLikeDocumentExtractPrompt(input.userText)) {
+    return buildMockDocumentExtractAnswer(input.userText);
   }
   return buildMockChatAnswer(input.userText);
 }
@@ -268,22 +294,40 @@ function buildGenerationConfig(
   return generationConfig;
 }
 
-function buildUserParts(
+export type VertexUserPart =
+  | { text: string }
+  | { inlineData: { mimeType: string; data: string } }
+  | { fileData: { fileUri: string; mimeType: string } };
+
+export function buildUserParts(
   userText: string,
-  inlineImage?: GenerateModelAnswerInput["inlineImage"],
-): Array<
-  { text: string } | { inlineData: { mimeType: string; data: string } }
-> {
-  const userParts: Array<
-    { text: string } | { inlineData: { mimeType: string; data: string } }
-  > = [{ text: userText }];
-  if (inlineImage) {
+  options?: {
+    readonly inlineImage?: GenerateModelAnswerInput["inlineImage"];
+    readonly fileParts?: readonly GenerateModelFilePart[];
+  },
+): VertexUserPart[] {
+  const userParts: VertexUserPart[] = [{ text: userText }];
+  if (options?.inlineImage) {
     userParts.push({
       inlineData: {
-        mimeType: inlineImage.mimeType,
-        data: inlineImage.base64Data,
+        mimeType: options.inlineImage.mimeType,
+        data: options.inlineImage.base64Data,
       },
     });
+  }
+  for (const part of options?.fileParts ?? []) {
+    if ("fileUri" in part) {
+      userParts.push({
+        fileData: { fileUri: part.fileUri, mimeType: part.mimeType },
+      });
+    } else {
+      userParts.push({
+        inlineData: {
+          mimeType: part.inlineData.mimeType,
+          data: part.inlineData.data,
+        },
+      });
+    }
   }
   return userParts;
 }
@@ -349,7 +393,10 @@ export async function generateModelAnswer(
         contents: [
           {
             role: "user",
-            parts: buildUserParts(userText, input.inlineImage),
+            parts: buildUserParts(userText, {
+              inlineImage: input.inlineImage,
+              fileParts: input.fileParts,
+            }),
           },
         ],
         generationConfig: buildGenerationConfig(options),
@@ -434,7 +481,10 @@ export async function generateModelAnswerStream(
         contents: [
           {
             role: "user",
-            parts: buildUserParts(userText, input.inlineImage),
+            parts: buildUserParts(userText, {
+              inlineImage: input.inlineImage,
+              fileParts: input.fileParts,
+            }),
           },
         ],
         generationConfig: buildGenerationConfig(options),

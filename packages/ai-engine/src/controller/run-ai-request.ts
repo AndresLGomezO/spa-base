@@ -110,6 +110,9 @@ export function createAiController(deps: AiControllerDeps) {
           ...(params.contextBlocks
             ? { contextBlocks: [...params.contextBlocks] }
             : {}),
+          ...(params.fileParts && params.fileParts.length > 0
+            ? { fileParts: [...params.fileParts] }
+            : {}),
         };
         const result =
           request.onTextChunk && deps.clients.generateModelAnswerStream

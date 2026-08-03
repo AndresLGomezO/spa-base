@@ -9,7 +9,7 @@ describe("resolveModelForPurpose", () => {
     embeddingModelId: "text-embedding-005",
   };
 
-  it("routes planner to flash and synthesis/memory to pro", () => {
+  it("routes planner to flash and synthesis/memory/documentExtract to pro", () => {
     expect(
       resolveModelForPurpose({
         purpose: "planner",
@@ -27,6 +27,13 @@ describe("resolveModelForPurpose", () => {
     expect(
       resolveModelForPurpose({
         purpose: "memoryRefresh",
+        tenantId: "t1",
+        defaults,
+      }).modelId,
+    ).toBe("gemini-2.5-pro");
+    expect(
+      resolveModelForPurpose({
+        purpose: "documentExtract",
         tenantId: "t1",
         defaults,
       }).modelId,

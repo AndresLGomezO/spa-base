@@ -61,6 +61,19 @@ export function loadInsightSurfacesCatalogJson(startDir?: string): string {
   });
 }
 
+export function loadDocumentExtractionTemplatesCatalogJson(
+  startDir?: string,
+): string {
+  return mergeSingularCatalogDir(
+    dir("document-extraction-templates", startDir),
+    {
+      kind: "document-extraction-templates-catalog",
+      version: 1,
+      itemsKey: "documentExtractionTemplates",
+    },
+  );
+}
+
 export function loadFormulaDefinitionsCatalogJson(startDir?: string): string {
   return mergeSingularCatalogDir(dir("formula-definitions", startDir), {
     kind: "formula-definitions-catalog",

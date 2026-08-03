@@ -67,6 +67,7 @@ function buildDeps(
       CLOUD_TASKS_QUEUE_NAME: "ai-jobs",
       HOOK_TASKS_QUEUE_NAME: "hook-jobs",
       GMAIL_TASKS_QUEUE_NAME: "gmail-jobs",
+      DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME: "document-extraction",
     },
     schedulerJobNameByResource: {
       "schedule-tick": "schedule-tick",

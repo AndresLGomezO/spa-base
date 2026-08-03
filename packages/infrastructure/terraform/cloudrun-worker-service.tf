@@ -12,6 +12,7 @@ resource "google_cloud_run_v2_service" "worker_service" {
     google_project_service.run_api,
     google_cloud_tasks_queue.ai_jobs,
     google_cloud_tasks_queue.gmail_jobs,
+    google_cloud_tasks_queue.document_extraction,
     google_secret_manager_secret.tenant_encryption_master_key,
     google_secret_manager_secret.gmail_oauth_client_id,
     google_secret_manager_secret.gmail_oauth_client_secret,
@@ -147,6 +148,14 @@ resource "google_cloud_run_v2_service" "worker_service" {
       }
       env {
         name  = "GMAIL_TASKS_LOCAL_DISPATCH"
+        value = "false"
+      }
+      env {
+        name  = "DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME"
+        value = google_cloud_tasks_queue.document_extraction[0].name
+      }
+      env {
+        name  = "DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH"
         value = "false"
       }
       env {

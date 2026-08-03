@@ -1,3 +1,4 @@
+export type { GenerateModelFilePart } from "./ai-request.types.js";
 export {
   AiDisabledError,
   type AiControllerClients,

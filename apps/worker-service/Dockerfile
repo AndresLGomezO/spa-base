@@ -38,7 +38,7 @@ RUN pnpm --filter=worker-service deploy --prod --legacy /app/worker-deploy
 FROM node:22-slim AS runner
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends dumb-init \
+  && apt-get install -y --no-install-recommends dumb-init qpdf \
   && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production

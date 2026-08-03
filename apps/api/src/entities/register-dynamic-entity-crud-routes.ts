@@ -35,6 +35,12 @@ export async function registerDynamicEntityCrudRoutes(
   recordReadEnricher?: RecordReadEnricher,
   firebaseAdminConfig?: FirebaseAdminConfig,
   aggregation?: AggregationEmitterDeps,
+  onRecordCreated?: (input: {
+    readonly tenantId: string;
+    readonly entityName: string;
+    readonly record: Record<string, unknown>;
+    readonly requestedBy?: string;
+  }) => void | Promise<void>,
 ): Promise<void> {
   if (registeredContexts.get(entityRuntime)) {
     return;
@@ -86,6 +92,7 @@ export async function registerDynamicEntityCrudRoutes(
     ...(crudHooks ? { crudHooks } : {}),
     ...(recordReadEnricher ? { recordReadEnricher } : {}),
     ...(aggregation ? { aggregation } : {}),
+    ...(onRecordCreated ? { onRecordCreated } : {}),
     onRecordMutated: (tenantId, entityName) => {
       entityRuntime.invalidateInMemoryListSnapshot(tenantId, entityName);
     },

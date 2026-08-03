@@ -108,6 +108,7 @@ export { createFirestoreAdminLocalePackRepository } from "./firestore-admin-loca
 export { createFirestoreAdminEntityQueryDefinitionRepository } from "./firestore-admin-entity-query-definition-repository.js";
 export { createFirestoreAdminChartDefinitionRepository } from "./firestore-admin-chart-definition-repository.js";
 export { createFirestoreAdminInsightSurfaceRepository } from "./firestore-admin-insight-surface-repository.js";
+export { createFirestoreAdminDocumentExtractionTemplateRepository } from "./firestore-admin-document-extraction-template-repository.js";
 export { createFirestoreAdminCustomViewRepository } from "./firestore-admin-custom-view-repository.js";
 export { createFirestoreAdminAggregationEventRepository } from "./firestore-admin-aggregation-event-repository.js";
 export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-metric-value-repository.js";
@@ -144,6 +145,7 @@ export { createFirestoreAdminWorkloadRunRepository } from "./firestore-admin-wor
 export { createFirestoreAdminAiChatSessionRepository } from "./firestore-admin-ai-chat-session-repository.js";
 export { createFirestoreAdminAiContextSectionRepository } from "./firestore-admin-ai-context-section-repository.js";
 export { createFirestoreAdminAiRecordSummaryRepository } from "./firestore-admin-ai-record-summary-repository.js";
+export { createFirestoreAdminStatementExtractionRepository } from "./firestore-admin-statement-extraction-repository.js";
 export {
   AGGREGATION_EVENTS_TOPIC,
   ensureAggregationEventsTopic,
@@ -194,6 +196,7 @@ export {
   buildFieldDefaultEntityFileObjectId,
   createEntityFileDownloadUrl,
   createStableEntityFileObjectId,
+  downloadEntityFileBytes,
   generateEntityFileObjectId,
   uploadEntityFile,
   validateEntityFileContentType,

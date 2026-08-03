@@ -21,6 +21,7 @@ import {
   Lightbulb,
   LineChart,
   BookText,
+  FileText,
   Mail,
   Palette,
   Rows3,
@@ -68,6 +69,7 @@ export type NavLabelKey =
   | "designLayoutAppShell"
   | "aiChat"
   | "insights"
+  | "statementExtractions"
   | "debugger"
   | "debuggerAiJobs"
   | "debuggerHookExecutions"
@@ -174,6 +176,14 @@ export const SETTINGS_AI_INSIGHTS_NAV_ITEM: NavLinkConfig = {
   to: "/ai/insights",
   matchPath: "/ai/insights",
   icon: Lightbulb,
+};
+
+export const SETTINGS_AI_STATEMENT_EXTRACTIONS_NAV_ITEM: NavLinkConfig = {
+  id: "ai-statement-extractions",
+  labelKey: "statementExtractions",
+  to: "/ai/statement-extractions",
+  matchPath: "/ai/statement-extractions",
+  icon: FileText,
 };
 
 export const DEBUGGER_GROUP_ICON = ScanSearch;

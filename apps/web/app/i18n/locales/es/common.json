@@ -86,6 +86,7 @@
     "designLayoutAppShell": "Shell de la app",
     "aiChat": "Chat de IA",
     "insights": "Insights de IA",
+    "statementExtractions": "Extracciones de extractos",
     "debugger": "Depurador",
     "debuggerAiJobs": "Trabajos de IA",
     "debuggerHookExecutions": "Ejecuciones de hooks",
@@ -441,6 +442,76 @@
       "ariaLabel": "Pestañas de insights IA"
     },
     "portfolioNarrativeFallback": "Narrativa del portafolio"
+  },
+  "statementExtractions": {
+    "title": "Extracciones de extractos",
+    "description": "Revisa los datos de extractos extraídos por IA antes de aplicarlos.",
+    "empty": "No hay extracciones de extractos pendientes de revisión.",
+    "forbidden": "No tienes permiso para ver las extracciones de extractos.",
+    "runForbidden": "No tienes permiso para aplicar, rechazar o volver a ejecutar extracciones.",
+    "loadFailed": "No se pudieron cargar las extracciones. Inténtalo de nuevo.",
+    "selectPrompt": "Selecciona una extracción para revisar.",
+    "awaitingReviewList": "{{count}} pendientes de revisión",
+    "untitledExtraction": "Extracción de extracto",
+    "attachmentId": "Adjunto",
+    "apply": "Aplicar",
+    "reject": "Rechazar",
+    "rerun": "Volver a ejecutar",
+    "applySuccess": "Extracción aplicada.",
+    "applyFailed": "No se pudo aplicar la extracción.",
+    "rejectSuccess": "Extracción rechazada.",
+    "rejectFailed": "No se pudo rechazar la extracción.",
+    "rerunSuccess": "Reejecución de extracción en cola.",
+    "rerunFailed": "No se pudo volver a ejecutar la extracción.",
+    "notAwaitingReview": "Esta extracción no está pendiente de revisión.",
+    "transactions": "Transacciones",
+    "transactionsEmpty": "No hay transacciones en la vista previa de esta extracción.",
+    "dlpFindings": "Hallazgos DLP",
+    "dlpFindingsEmpty": "No se encontraron datos sensibles.",
+    "confidence": "Confianza del modelo {{value}}%",
+    "txnCountShort": "{{count}} txn",
+    "status": {
+      "awaitingReview": "Pendiente de revisión",
+      "applied": "Aplicada",
+      "rejected": "Rechazada",
+      "failed": "Fallida",
+      "processing": "Procesando"
+    },
+    "dlpAction": {
+      "redacted": "Redactado",
+      "masked": "Enmascarado",
+      "kept": "Conservado"
+    },
+    "fields": {
+      "statementDate": "Fecha del extracto",
+      "openingBalance": "Saldo inicial",
+      "closingBalance": "Saldo final",
+      "transactionCount": "Transacciones",
+      "date": "Fecha",
+      "amount": "Monto",
+      "description": "Descripción"
+    }
+  },
+  "financialItems": {
+    "documentPasswords": {
+      "title": "Contraseñas de documentos",
+      "description": "Configúralas una vez por tipo de documento. Se usan para desbloquear PDFs protegidos durante la extracción de extractos. Las contraseñas se guardan cifradas y nunca se vuelven a mostrar.",
+      "loadFailed": "No se pudo cargar el estado de las contraseñas de documentos.",
+      "statusSet": "Configurada",
+      "statusNotSet": "Sin configurar",
+      "set": "Configurar",
+      "update": "Actualizar",
+      "remove": "Eliminar",
+      "save": "Guardar",
+      "saveSuccess": "Contraseña de documento guardada.",
+      "saveFailed": "No se pudo guardar la contraseña de documento.",
+      "removeSuccess": "Contraseña de documento eliminada.",
+      "removeFailed": "No se pudo eliminar la contraseña de documento.",
+      "modalTitle": "Contraseña para {{documentType}}",
+      "modalHint": "Introduce la contraseña del PDF. No se mostrará de nuevo después de guardar.",
+      "passwordPlaceholder": "Contraseña del PDF",
+      "cancel": "Cancelar"
+    }
   },
   "aiChat": {
     "title": "Chat IA",

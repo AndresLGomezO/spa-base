@@ -98,6 +98,8 @@ services:
       - CLOUD_TASKS_QUEUE_NAME=ai-jobs
       - GMAIL_TASKS_LOCAL_DISPATCH=true
       - GMAIL_TASKS_QUEUE_NAME=gmail-jobs
+      - DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH=true
+      - DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME=document-extraction
       - GMAIL_OAUTH_REDIRECT_URI=http://127.0.0.1:3000/api/gmail/oauth/callback
       - WEB_APP_ORIGIN=http://127.0.0.1:5173
     healthcheck:
@@ -181,6 +183,8 @@ services:
       - TASKS_SA_EMAIL=local-tasks-sa@demo-project-base.iam.gserviceaccount.com
       - WORKER_SERVICE_URL=http://worker-service:3001
       - GMAIL_TASKS_LOCAL_DISPATCH=true
+      - DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH=true
+      - DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME=document-extraction
       # Hook/email writes process metrics in-process. Do not rely on the flaky
       # Pub/Sub emulator + worker-aggregation path for ingest KPIs.
       - AGGREGATION_EVENTS_PUBSUB=false

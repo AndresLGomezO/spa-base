@@ -23,6 +23,20 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
     },
   },
   {
+    id: "queue:document-extraction",
+    kind: "cloudTasksQueue",
+    source: "system",
+    domain: "ai",
+    displayName: "Document Extraction Queue",
+    description: "Statement / document AI extraction tasks",
+    actions: ["pause", "resume"],
+    gcp: {
+      resource: "queue",
+      envKey: "DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME",
+      terraformFile: "cloudtasks-document-extraction.tf",
+    },
+  },
+  {
     id: "queue:hook-jobs",
     kind: "cloudTasksQueue",
     source: "system",
@@ -203,6 +217,20 @@ export const WORKLOAD_REGISTRY: readonly WorkloadRecord[] = [
       "apps/worker-service/src/routes/record-narrative-refresh-task.route.ts",
     controlledBy: ["queue:ai-jobs"],
     disableHint: "Pause the ai-jobs queue",
+  },
+  {
+    id: "worker:process-document-extraction",
+    kind: "workerRoute",
+    source: "system",
+    domain: "ai",
+    displayName: "Process Document Extraction",
+    description: "Statement / document AI extraction processor",
+    actions: [],
+    route: "/tasks/process-document-extraction",
+    sourceFile:
+      "apps/worker-service/src/routes/document-extraction-task.route.ts",
+    controlledBy: ["queue:document-extraction"],
+    disableHint: "Pause the document-extraction queue or disable AI",
   },
   {
     id: "worker:gmail-poll",

@@ -12,6 +12,7 @@ export const SEED_CATALOG_COMPONENTS = [
   "formulas",
   "charts",
   "insight-surfaces",
+  "document-extraction-templates",
   "custom-views",
   "locale-packs",
 ] as const;

@@ -7,6 +7,11 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
+# qpdf unlocks password-protected statement PDFs during document extraction.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends qpdf \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -18,6 +23,7 @@ COPY packages/ai-context/package.json ./packages/ai-context/
 COPY packages/ai-retrieval/package.json ./packages/ai-retrieval/
 COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
+COPY packages/document-extraction-dlp/package.json ./packages/document-extraction-dlp/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
 COPY packages/custom-views/package.json ./packages/custom-views/
@@ -35,6 +41,7 @@ COPY packages/formula-definitions/package.json ./packages/formula-definitions/
 COPY packages/chart-definitions/package.json ./packages/chart-definitions/
 COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/modules/package.json ./packages/modules/
+COPY packages/pdf-unlock/package.json ./packages/pdf-unlock/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/shared-types/package.json ./packages/shared-types/
@@ -54,6 +61,8 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared-types ./packages/shared-types
 COPY packages/firestore-indexes ./packages/firestore-indexes
 COPY packages/dynamic-entities ./packages/dynamic-entities
+COPY packages/document-extraction-dlp ./packages/document-extraction-dlp
+COPY packages/pdf-unlock ./packages/pdf-unlock
 COPY packages/entities ./packages/entities
 COPY packages/entity-categories ./packages/entity-categories
 COPY packages/event-engine ./packages/event-engine

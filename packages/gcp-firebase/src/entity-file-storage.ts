@@ -209,3 +209,17 @@ export async function createEntityFileDownloadUrl(params: {
     downloadToken,
   );
 }
+
+/** Download raw object bytes from the tenant storage bucket (in-memory only). */
+export async function downloadEntityFileBytes(params: {
+  readonly config: FirebaseAdminConfig;
+  readonly storagePath: string;
+}): Promise<Buffer> {
+  const bucketName = resolveStorageBucket(params.config);
+  const app = getFirebaseAdminApp(params.config);
+  const bucket = getStorage(app).bucket(bucketName);
+  const objectPath = params.storagePath.replace(/^\/+/, "");
+  const file = bucket.file(objectPath);
+  const [buffer] = await file.download();
+  return buffer;
+}

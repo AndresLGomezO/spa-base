@@ -4,6 +4,7 @@
   "ignoreUnresolved": ["./formula-admin.js"],
   "ignoreDependencies": [
     "@google-cloud/firestore",
+    "@google-cloud/kms",
     "@app/platform",
     "@repo/dynamic-entities",
     "@repo/encryption",

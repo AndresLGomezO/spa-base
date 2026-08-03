@@ -119,6 +119,13 @@ export interface GmailIngestProcessorDeps extends DataHookProcessorDeps {
     readonly tenantId?: string;
     readonly scheduleTime: Date;
   }) => Promise<void>;
+  /** Enqueue statement AI extraction after STATEMENT attachment import. */
+  readonly enqueueDocumentExtraction?: (payload: {
+    readonly tenantId: string;
+    readonly attachmentId: string;
+    readonly templateId?: string;
+    readonly requestedBy?: string;
+  }) => Promise<void>;
 }
 
 function step(
@@ -727,6 +734,9 @@ export async function processGmailProcessMessage(
             tenantId,
             uploadedBy: userId,
             emailId: emailLedgerId,
+            ...(deps.enqueueDocumentExtraction
+              ? { enqueueDocumentExtraction: deps.enqueueDocumentExtraction }
+              : {}),
           });
           await appendMessageJobStep(
             deps,
@@ -1557,6 +1567,7 @@ export function createGmailIngestProcessorDeps(
     readonly enqueueProcessMessage: GmailIngestProcessorDeps["enqueueProcessMessage"];
     readonly enqueueWindowSync?: GmailIngestProcessorDeps["enqueueWindowSync"];
     readonly scheduleWatchRenew?: GmailIngestProcessorDeps["scheduleWatchRenew"];
+    readonly enqueueDocumentExtraction?: GmailIngestProcessorDeps["enqueueDocumentExtraction"];
   },
 ): GmailIngestProcessorDeps {
   return {
@@ -1587,6 +1598,9 @@ export function createGmailIngestProcessorDeps(
       : {}),
     ...(options.scheduleWatchRenew
       ? { scheduleWatchRenew: options.scheduleWatchRenew }
+      : {}),
+    ...(options.enqueueDocumentExtraction
+      ? { enqueueDocumentExtraction: options.enqueueDocumentExtraction }
       : {}),
   };
 }

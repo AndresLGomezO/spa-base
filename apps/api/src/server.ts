@@ -21,6 +21,7 @@ import type {
   AiChatSessionRepository,
   AiContextSectionRepository,
   AiRecordSummaryRepository,
+  StatementExtractionRepository,
   AiSpendRepository,
   TenantAiContextRepository,
   UserAiMemoryRepository,
@@ -55,6 +56,8 @@ import {
   createInMemoryAiChatSessionRepository,
   createInMemoryAiContextSectionRepository,
   createInMemoryAiRecordSummaryRepository,
+  createInMemoryStatementExtractionRepository,
+  createInMemoryDocumentExtractionTemplateRepository,
   createInMemoryUserAiMemoryRepository,
   createInMemoryUiBuilderAiSuggestionRepository,
   createInMemoryEntityCategoryRepository,
@@ -95,6 +98,8 @@ import {
   createFirestoreAdminAiChatSessionRepository,
   createFirestoreAdminAiContextSectionRepository,
   createFirestoreAdminAiRecordSummaryRepository,
+  createFirestoreAdminStatementExtractionRepository,
+  createFirestoreAdminDocumentExtractionTemplateRepository,
   createFirestoreAdminUserAiMemoryRepository,
   createFirestoreAdminUiBuilderAiSuggestionRepository,
   createFirestoreAdminEntityCategoryRepository,
@@ -197,6 +202,13 @@ import { registerAiContextSectionRoutes } from "./ai-context-sections/register-a
 import { registerAiRecordSummaryTemplateRoutes } from "./ai-record-summary-templates/register-ai-record-summary-template-routes.js";
 import { registerAiRecordSummaryRoutes } from "./ai-record-summaries/register-ai-record-summary-routes.js";
 import { registerAiInsightsRoutes } from "./ai/register-ai-insights-routes.js";
+import { registerStatementExtractionRoutes } from "./statement-extractions/register-statement-extraction-routes.js";
+import { registerDocumentPasswordRoutes } from "./statement-extractions/register-document-password-routes.js";
+import { createApplyStatementExtraction } from "./statement-extractions/apply-statement-extraction.js";
+import {
+  createEnqueueDocumentExtraction,
+  maybeEnqueueStatementExtraction,
+} from "./statement-extractions/enqueue-document-extraction.js";
 import { registerDebugRoutes } from "./debug/register-debug-routes.js";
 import { registerNotificationRoutes } from "./notifications/register-notification-routes.js";
 import { registerPushTokenRoutes } from "./notifications/register-push-token-routes.js";
@@ -280,6 +292,7 @@ interface BuildServerOptions {
   readonly aiChatSessionRepository?: AiChatSessionRepository;
   readonly aiContextSectionRepository?: AiContextSectionRepository;
   readonly aiRecordSummaryRepository?: AiRecordSummaryRepository;
+  readonly statementExtractionRepository?: StatementExtractionRepository;
   readonly userAiMemoryRepository?: UserAiMemoryRepository;
   readonly tenantAiContextRepository?: TenantAiContextRepository;
   readonly uiBuilderAiSuggestionRepository?: UiBuilderAiSuggestionRepository;
@@ -660,6 +673,18 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createInMemoryAiRecordSummaryRepository()
       : createFirestoreAdminAiRecordSummaryRepository(firebaseAdminConfig));
 
+  const statementExtractionRepository =
+    options.statementExtractionRepository ??
+    (options.repositories
+      ? createInMemoryStatementExtractionRepository()
+      : createFirestoreAdminStatementExtractionRepository(firebaseAdminConfig));
+
+  const documentExtractionTemplateRepository = options.repositories
+    ? createInMemoryDocumentExtractionTemplateRepository()
+    : createFirestoreAdminDocumentExtractionTemplateRepository(
+        firebaseAdminConfig,
+      );
+
   const uiBuilderAiSuggestionRepository =
     options.uiBuilderAiSuggestionRepository ??
     (options.repositories
@@ -1013,6 +1038,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
       CLOUD_TASKS_QUEUE_NAME: apiEnv.CLOUD_TASKS_QUEUE_NAME,
       HOOK_TASKS_QUEUE_NAME: apiEnv.HOOK_TASKS_QUEUE_NAME,
       GMAIL_TASKS_QUEUE_NAME: apiEnv.GMAIL_TASKS_QUEUE_NAME,
+      DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME:
+        apiEnv.DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME,
     },
     schedulerJobNameByResource: {
       "schedule-tick": scheduleTickJobName,
@@ -1199,6 +1226,66 @@ export async function buildServer(options: BuildServerOptions = {}) {
       serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
       localDispatch: apiEnv.AI_TASKS_LOCAL_DISPATCH,
     },
+  });
+
+  const documentExtractionCloudTasksConfig = {
+    projectId: apiEnv.GCP_PROJECT_ID,
+    region: apiEnv.GCP_REGION,
+    queueName: apiEnv.DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME,
+    workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+    serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+    localDispatch: apiEnv.DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH,
+  };
+  const enqueueDocumentExtraction = createEnqueueDocumentExtraction(
+    documentExtractionCloudTasksConfig,
+  );
+
+  // Soft-wire: local KMS when master key present; routes still register with a
+  // stub client that fails decrypt clearly if misconfigured.
+  const statementExtractionKmsClient =
+    apiEnv.TENANT_ENCRYPTION_MASTER_KEY?.trim()
+      ? (await import("@repo/encryption")).createLocalKmsEnvelopeClient(
+          apiEnv.TENANT_ENCRYPTION_MASTER_KEY.trim(),
+        )
+      : {
+          async wrapDek() {
+            throw new Error(
+              "TENANT_ENCRYPTION_MASTER_KEY is required for KMS.",
+            );
+          },
+          async unwrapDek() {
+            throw new Error(
+              "TENANT_ENCRYPTION_MASTER_KEY is required for KMS.",
+            );
+          },
+        };
+
+  await registerStatementExtractionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    statementExtractionRepository,
+    kmsClient: statementExtractionKmsClient,
+    cloudTasksConfig: documentExtractionCloudTasksConfig,
+    enqueueDocumentExtraction,
+    applyExtraction: createApplyStatementExtraction({
+      entityRuntime,
+      documentExtractionTemplateRepository,
+      hookRuntime,
+      logger: {
+        info(message, meta) {
+          server.log.info(meta ?? {}, message);
+        },
+        error(message, meta) {
+          server.log.error(meta ?? {}, message);
+        },
+      },
+    }),
+  });
+
+  await registerDocumentPasswordRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
   });
 
   const gmailConnectionRepository =
@@ -1426,6 +1513,21 @@ export async function buildServer(options: BuildServerOptions = {}) {
     recordReadEnricher,
     firebaseAdminConfig,
     aggregationEmitter,
+    async ({ tenantId, entityName, record, requestedBy }) => {
+      if (entityName !== "attachment") return;
+      await maybeEnqueueStatementExtraction({
+        enqueue: enqueueDocumentExtraction,
+        tenantId,
+        attachment: record,
+        ...(requestedBy ? { requestedBy } : {}),
+        onError: (error) => {
+          server.log.error(
+            { err: error, tenantId, attachmentId: record.id },
+            "Failed to enqueue document extraction after attachment create",
+          );
+        },
+      });
+    },
   );
 
   await registerEntityRelationRoutes(server, {

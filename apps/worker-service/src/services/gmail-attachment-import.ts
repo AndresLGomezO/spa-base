@@ -26,6 +26,12 @@ export async function importGmailAttachmentsForBinding(options: {
   readonly uploadedBy: string;
   /** Domain email ledger id; set on created attachment rows when present. */
   readonly emailId?: string | null;
+  /** Platform auto-enqueue for STATEMENT attachments. */
+  readonly enqueueDocumentExtraction?: (payload: {
+    readonly tenantId: string;
+    readonly attachmentId: string;
+    readonly requestedBy?: string;
+  }) => Promise<void>;
 }): Promise<{ readonly created: number; readonly skipped: number }> {
   const importConfig = options.binding.attachmentImport;
   if (!importConfig?.enabled) {
@@ -90,7 +96,7 @@ export async function importGmailAttachmentsForBinding(options: {
       typeof documentDate === "string"
         ? documentDate.slice(0, 10)
         : "statement";
-    await options.entities.create("attachment", {
+    const createdAttachment = await options.entities.create("attachment", {
       name: `${importConfig.documentType} ${dateSuffix}`,
       documentType: importConfig.documentType,
       ...(documentDate ? { documentDate } : {}),
@@ -100,6 +106,32 @@ export async function importGmailAttachmentsForBinding(options: {
       ...(options.emailId ? { emailId: options.emailId } : {}),
     });
     created += 1;
+
+    // Auto-enqueue: STATEMENT attachments from Gmail → document extraction queue
+    if (
+      options.enqueueDocumentExtraction &&
+      typeof importConfig.documentType === "string" &&
+      importConfig.documentType.trim().toUpperCase() === "STATEMENT" &&
+      createdAttachment &&
+      typeof createdAttachment === "object" &&
+      typeof (createdAttachment as { id?: unknown }).id === "string"
+    ) {
+      try {
+        await options.enqueueDocumentExtraction({
+          tenantId: options.tenantId,
+          attachmentId: (createdAttachment as { id: string }).id,
+          requestedBy: options.uploadedBy,
+        });
+      } catch (error) {
+        console.error(
+          JSON.stringify({
+            message: "Failed to enqueue document extraction after Gmail import",
+            attachmentId: (createdAttachment as { id: string }).id,
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      }
+    }
   }
 
   return { created, skipped: 0 };

@@ -149,6 +149,13 @@ interface RegisterCrudRoutesOptions<
   readonly recordReadEnricher?: import("../entity-files/create-entity-file-read-enricher.js").RecordReadEnricher;
   readonly aggregation?: AggregationEmitterDeps;
   readonly onRecordMutated?: (tenantId: string, entityName: string) => void;
+  /** Called after a successful create (after after-hooks). Soft failures should be handled by the callback. */
+  readonly onRecordCreated?: (input: {
+    readonly tenantId: string;
+    readonly entityName: string;
+    readonly record: Record<string, unknown>;
+    readonly requestedBy?: string;
+  }) => void | Promise<void>;
 }
 
 function notifyRecordMutated<
@@ -263,16 +270,34 @@ function filterRecordForRead<T extends Record<string, unknown>>(
   entity: CrudEntityDefinition,
   record: T,
 ): T {
+  const writeOnlyStripped = stripWriteOnlyFields(entity.name, record);
+
   if (!request.ctx) {
-    return record;
+    return writeOnlyStripped;
   }
 
   return applyReadFieldFilter(
-    record,
+    writeOnlyStripped,
     request.ctx,
     entity.name,
     entity.businessFieldNames,
   );
+}
+
+/** Defense-in-depth: never return write-only secrets via generic CRUD reads. */
+function stripWriteOnlyFields<T extends Record<string, unknown>>(
+  entityName: string,
+  record: T,
+): T {
+  if (entityName !== "financialItem") {
+    return record;
+  }
+  if (!("documentPasswords" in record)) {
+    return record;
+  }
+  const rest = { ...record };
+  Reflect.deleteProperty(rest, "documentPasswords");
+  return rest;
 }
 
 function filterPaginatedItemsForRead(
@@ -957,6 +982,22 @@ export async function registerCrudRoutes<
           current: created as unknown as Record<string, unknown>,
           ...(entityServices ? { entityServices } : {}),
         });
+
+        if (options.onRecordCreated) {
+          try {
+            await options.onRecordCreated({
+              tenantId,
+              entityName: activeEntity.name,
+              record: created as unknown as Record<string, unknown>,
+              ...(request.ctx?.uid ? { requestedBy: request.ctx.uid } : {}),
+            });
+          } catch (error) {
+            app.log.error(
+              { err: error, entityName: activeEntity.name, tenantId },
+              "onRecordCreated callback failed",
+            );
+          }
+        }
 
         await tryEmitAggregationEvent(
           options.aggregation,

@@ -131,6 +131,13 @@ export { type ChartDefinitionRepository } from "./chart-definition/repository-co
 export { createInMemoryChartDefinitionRepository } from "./chart-definition/in-memory-repository.js";
 export { type InsightSurfaceRepository } from "./insight-surface/repository-contract.js";
 export { createInMemoryInsightSurfaceRepository } from "./insight-surface/in-memory-repository.js";
+export {
+  type CreateDocumentExtractionTemplateInput,
+  type DocumentExtractionTemplateRecord,
+  type DocumentExtractionTemplateRepository,
+  type PatchDocumentExtractionTemplateInput,
+} from "./document-extraction-template/repository-contract.js";
+export { createInMemoryDocumentExtractionTemplateRepository } from "./document-extraction-template/in-memory-repository.js";
 export { type CustomViewRepository } from "./custom-view/repository-contract.js";
 export { createInMemoryCustomViewRepository } from "./custom-view/in-memory-repository.js";
 export { type AggregationEventRepository } from "./aggregation-event/repository-contract.js";
@@ -233,6 +240,18 @@ export {
   type AiRecordSummaryRepository,
 } from "./ai-record-summary/repository-contract.js";
 export { createInMemoryAiRecordSummaryRepository } from "./ai-record-summary/in-memory-repository.js";
+export {
+  STATEMENT_EXTRACTIONS_COLLECTION,
+  type StatementExtractionStatus,
+  type StatementExtractionEncryptedPayload,
+  type StatementExtractionDlpFinding,
+  type StatementExtractionModelUsage,
+  type StatementExtractionRecord,
+  type StatementExtractionListOptions,
+  type StatementExtractionPatch,
+  type StatementExtractionRepository,
+} from "./statement-extraction/repository-contract.js";
+export { createInMemoryStatementExtractionRepository } from "./statement-extraction/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

@@ -23,10 +23,16 @@ import {
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminPlatformRuntimeSettingsRepository,
   createFirestoreAdminRegisteredUserRepository,
+  createFirestoreAdminStatementExtractionRepository,
+  createFirestoreAdminDocumentExtractionTemplateRepository,
   createFirestoreAdminTenantRepository,
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminUserAiMemoryRepository,
+  downloadEntityFileBytes,
 } from "@repo/gcp-firebase";
+import { createMockDlpClient } from "@repo/document-extraction-dlp";
+import { createLocalKmsEnvelopeClient } from "@repo/encryption";
+import { unlockPdf } from "@repo/pdf-unlock";
 import { createRestVertexCachedContentClient } from "@repo/ai-engine/grounded-chat";
 import { buildTenantRoleCatalog } from "@repo/rbac";
 
@@ -35,8 +41,10 @@ import { createGroundedChatDataPorts } from "./ai/create-grounded-chat-data-port
 import { createDebouncedUserAiMemoryRefreshScheduler } from "./ai/debounced-user-ai-memory-refresh.js";
 import { vertexAiConfig, vertexVectorConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
+import { createDocumentExtractionProcessor } from "./services/document-extraction-processor.js";
 import { createGmailIngestProcessorDeps } from "./services/gmail-ingest-processor.js";
 import { startLocalGmailPollScheduler } from "./services/local-gmail-poll-scheduler.js";
+import { createWorkerDocumentExtractionEnqueuer } from "./services/worker-document-extraction-enqueuer.js";
 import { createWorkerGmailTaskEnqueuer } from "./services/worker-gmail-task-enqueuer.js";
 import { processUserAiMemoryRefresh } from "./services/user-ai-memory-refresh-processor.js";
 import { buildWorkerServer } from "./server.js";
@@ -229,6 +237,82 @@ const gmailTaskEnqueuer = createWorkerGmailTaskEnqueuer({
   localDispatch: workerEnv.GMAIL_TASKS_LOCAL_DISPATCH,
 });
 
+const documentExtractionEnqueuer = createWorkerDocumentExtractionEnqueuer({
+  projectId: workerEnv.GCP_PROJECT_ID,
+  region: workerEnv.GCP_REGION,
+  queueName: workerEnv.DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME,
+  workerBaseUrl: workerEnv.WORKER_SERVICE_URL,
+  ...(workerEnv.TASKS_SA_EMAIL
+    ? { serviceAccountEmail: workerEnv.TASKS_SA_EMAIL }
+    : {}),
+  localDispatch: workerEnv.DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH,
+});
+
+const statementExtractionRepository =
+  createFirestoreAdminStatementExtractionRepository(firebaseAdminConfig);
+
+const documentExtractionTemplateRepository =
+  createFirestoreAdminDocumentExtractionTemplateRepository(firebaseAdminConfig);
+
+const storageBucket =
+  workerEnv.GCP_STORAGE_BUCKET?.trim() ||
+  `${workerEnv.GCP_PROJECT_ID}.appspot.com`;
+
+const processDocumentExtraction = workerEnv.TENANT_ENCRYPTION_MASTER_KEY
+  ? createDocumentExtractionProcessor({
+      aiController,
+      statementExtractionRepository,
+      getAttachment: async (tenantId, id) => {
+        await dataHookProcessorDeps.entityRuntime.ensureTenantEntitiesLoaded(
+          tenantId,
+        );
+        const repo = dataHookProcessorDeps.entityRuntime.getRepository(
+          tenantId,
+          "attachment",
+        );
+        if (!repo) return null;
+        const record = await repo.findById(id, tenantId);
+        return (record as Record<string, unknown> | null) ?? null;
+      },
+      getFinancialItem: async (tenantId, id) => {
+        await dataHookProcessorDeps.entityRuntime.ensureTenantEntitiesLoaded(
+          tenantId,
+        );
+        const repo = dataHookProcessorDeps.entityRuntime.getRepository(
+          tenantId,
+          "financialItem",
+        );
+        if (!repo) return null;
+        const record = await repo.findById(id, tenantId);
+        return (record as Record<string, unknown> | null) ?? null;
+      },
+      listTemplates: (tenantId) =>
+        documentExtractionTemplateRepository.list(tenantId),
+      dlpClient: createMockDlpClient(),
+      kmsClient: createLocalKmsEnvelopeClient(
+        workerEnv.TENANT_ENCRYPTION_MASTER_KEY,
+      ),
+      kmsKeyName:
+        workerEnv.DOCUMENT_EXTRACTION_KMS_KEY_NAME?.trim() ||
+        "local/kms-envelope-mock",
+      flashModelId: workerEnv.VERTEX_MODEL_ID,
+      reasoningModelId:
+        workerEnv.VERTEX_REASONING_MODEL_ID || workerEnv.VERTEX_MODEL_ID,
+      resolveGcsUri: (storagePath) => {
+        if (storagePath.startsWith("gs://")) return storagePath;
+        return `gs://${storageBucket}/${storagePath.replace(/^\/+/, "")}`;
+      },
+      downloadFromGcs: (storagePath) =>
+        downloadEntityFileBytes({
+          config: firebaseAdminConfig,
+          storagePath: storagePath
+            .replace(/^\/+/, "")
+            .replace(/^gs:\/\/[^/]+\//, ""),
+        }),
+      unlockPdf,
+    })
+  : undefined;
+
 const gmailIngest =
   workerEnv.TENANT_ENCRYPTION_MASTER_KEY &&
   workerEnv.GMAIL_OAUTH_CLIENT_ID &&
@@ -250,6 +334,8 @@ const gmailIngest =
           enqueueProcessMessage: gmailTaskEnqueuer.enqueueProcessMessage,
           enqueueWindowSync: gmailTaskEnqueuer.enqueueWindowSync,
           scheduleWatchRenew: gmailTaskEnqueuer.scheduleWatchRenew,
+          enqueueDocumentExtraction:
+            documentExtractionEnqueuer.enqueueDocumentExtraction,
         },
       )
     : undefined;
@@ -273,6 +359,7 @@ const server = await buildWorkerServer({
   isAiStepTraceEnabled: () => runtimeSettingsCache.isAiTraceEnabled(),
   isAiTraceEnabled: () => runtimeSettingsCache.isAiTraceEnabled(),
   workloadRunRecorder,
+  ...(processDocumentExtraction ? { processDocumentExtraction } : {}),
   ...(gmailIngest ? { gmailIngest } : {}),
 });
 

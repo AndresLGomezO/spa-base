@@ -1,4 +1,7 @@
-import { parseInsightSurfacesCatalogJson } from "@repo/ai-context";
+import {
+  parseDocumentExtractionTemplatesCatalogJson,
+  parseInsightSurfacesCatalogJson,
+} from "@repo/ai-context";
 import { parseEntityDefinitionsCatalogJson } from "@repo/dynamic-entities";
 import { parseCustomViewsCatalogJson } from "@repo/custom-views";
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
@@ -10,6 +13,7 @@ import {
   createFirestoreAdminBackfillJobRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminDataHookRepository,
+  createFirestoreAdminDocumentExtractionTemplateRepository,
   createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminLocalePackRepository,
   createFirestoreAdminEntityCategoryRepository,
@@ -37,6 +41,7 @@ import {
 import { replaceEntityQueryDefinitionsCatalog } from "../../entity-queries/replace-entity-query-definitions-catalog.js";
 import { replaceChartDefinitionsCatalog } from "../../chart-definitions/replace-chart-definitions-catalog.js";
 import { replaceInsightSurfacesCatalog } from "../../ai/replace-insight-surfaces-catalog.js";
+import { replaceDocumentExtractionTemplatesCatalog } from "../../ai/replace-document-extraction-templates-catalog.js";
 import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-views-catalog.js";
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
 import { replaceDataHooksCatalog } from "../../hooks/replace-data-hooks-catalog.js";
@@ -50,6 +55,7 @@ import {
   loadChartDefinitionsCatalogJson,
   loadCustomViewsCatalogJson,
   loadDataHooksCatalogJson,
+  loadDocumentExtractionTemplatesCatalogJson,
   loadEntityDefinitionsCatalogJson,
   loadFormulaDefinitionsCatalogJson,
   loadInsightSurfacesCatalogJson,
@@ -80,6 +86,11 @@ interface SeedLocalCatalogsResult {
     readonly deleted: number;
   };
   readonly insightSurfaceCounts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly documentExtractionTemplateCounts: {
     readonly created: number;
     readonly updated: number;
     readonly deleted: number;
@@ -127,6 +138,7 @@ interface SeedLocalCatalogsOptions {
   readonly formulas?: boolean;
   readonly charts?: boolean;
   readonly insightSurfaces?: boolean;
+  readonly documentExtractionTemplates?: boolean;
   readonly customViews?: boolean;
   readonly localePacks?: boolean;
 }
@@ -144,6 +156,8 @@ export async function seedLocalCatalogs(
   const includeFormulas = options.formulas ?? true;
   const includeCharts = options.charts ?? true;
   const includeInsightSurfaces = options.insightSurfaces ?? true;
+  const includeDocumentExtractionTemplates =
+    options.documentExtractionTemplates ?? true;
   const includeCustomViews = options.customViews ?? true;
   const includeLocalePacks = options.localePacks ?? true;
 
@@ -157,6 +171,10 @@ export async function seedLocalCatalogs(
     createFirestoreAdminChartDefinitionRepository(firebaseAdminConfig);
   const insightSurfaceRepository =
     createFirestoreAdminInsightSurfaceRepository(firebaseAdminConfig);
+  const documentExtractionTemplateRepository =
+    createFirestoreAdminDocumentExtractionTemplateRepository(
+      firebaseAdminConfig,
+    );
   const customViewRepository =
     createFirestoreAdminCustomViewRepository(firebaseAdminConfig);
   const dataHookRepository =
@@ -326,6 +344,28 @@ export async function seedLocalCatalogs(
     insightSurfaceCounts = insightSurfaceResult.counts;
   }
 
+  let documentExtractionTemplateCounts = { ...EMPTY_CATALOG_COUNTS };
+  if (includeDocumentExtractionTemplates) {
+    const documentExtractionTemplateParsed =
+      parseDocumentExtractionTemplatesCatalogJson(
+        loadDocumentExtractionTemplatesCatalogJson(),
+      );
+    if (!documentExtractionTemplateParsed.ok) {
+      throw new Error(
+        `Invalid local tenant document extraction templates catalog: ${documentExtractionTemplateParsed.errors.map((error) => error.message).join("; ")}`,
+      );
+    }
+    const documentExtractionTemplateResult =
+      await replaceDocumentExtractionTemplatesCatalog(
+        {
+          documentExtractionTemplateRepository,
+        },
+        tenantId,
+        documentExtractionTemplateParsed.data,
+      );
+    documentExtractionTemplateCounts = documentExtractionTemplateResult.counts;
+  }
+
   let formulaCounts = { ...EMPTY_CATALOG_COUNTS };
   if (includeFormulas) {
     const formulasParsed = parseFormulaDefinitionsCatalogJson(
@@ -409,7 +449,7 @@ export async function seedLocalCatalogs(
   }
 
   console.log(
-    `[local-tenant seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, insightSurfaces +${insightSurfaceCounts.created}/~${insightSurfaceCounts.updated}/-${insightSurfaceCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}, localePacks +${localePackCounts.created}/~${localePackCounts.updated}/-${localePackCounts.deleted}`,
+    `[local-tenant seed] Catalogs: entities +${entityCounts.created}/~${entityCounts.updated}/-${entityCounts.deleted}, metrics +${metricCounts.created}/~${metricCounts.updated}/-${metricCounts.deleted}, queries +${queryCounts.created}/~${queryCounts.updated}/-${queryCounts.deleted}, charts +${chartCounts.created}/~${chartCounts.updated}/-${chartCounts.deleted}, insightSurfaces +${insightSurfaceCounts.created}/~${insightSurfaceCounts.updated}/-${insightSurfaceCounts.deleted}, documentExtractionTemplates +${documentExtractionTemplateCounts.created}/~${documentExtractionTemplateCounts.updated}/-${documentExtractionTemplateCounts.deleted}, formulas +${formulaCounts.created}/~${formulaCounts.updated}/-${formulaCounts.deleted}, hooks +${hookCounts.created}/~${hookCounts.updated}/-${hookCounts.deleted}, customViews +${customViewCounts.created}/~${customViewCounts.updated}/-${customViewCounts.deleted}, localePacks +${localePackCounts.created}/~${localePackCounts.updated}/-${localePackCounts.deleted}`,
   );
 
   return {
@@ -418,6 +458,7 @@ export async function seedLocalCatalogs(
     queryCounts,
     chartCounts,
     insightSurfaceCounts,
+    documentExtractionTemplateCounts,
     formulaCounts,
     hookCounts,
     customViewCounts,

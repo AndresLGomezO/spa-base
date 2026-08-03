@@ -15,8 +15,10 @@ import { scheduleTickRoute } from "./schedule-tick.route.js";
 import { tenantDeletionTaskRoute } from "./tenant-deletion-task.route.js";
 import { gmailIngestTaskRoute } from "./gmail-ingest-task.route.js";
 import { recordNarrativeRefreshTaskRoute } from "./record-narrative-refresh-task.route.js";
+import { documentExtractionTaskRoute } from "./document-extraction-task.route.js";
 import type { GmailIngestProcessorDeps } from "../services/gmail-ingest-processor.js";
 import type { RecordNarrativeRefreshProcessor } from "../services/record-narrative-refresh-processor.js";
+import type { DocumentExtractionProcessor } from "../services/document-extraction-processor.js";
 
 export type WorkerTaskScopeDeps = AiChatProcessorDeps &
   AiUiBuilderProcessorDeps &
@@ -25,6 +27,7 @@ export type WorkerTaskScopeDeps = AiChatProcessorDeps &
   TenantDeletionTaskRouteDeps & {
     readonly gmailIngest?: GmailIngestProcessorDeps;
     readonly refreshNarrative?: RecordNarrativeRefreshProcessor;
+    readonly processDocumentExtraction?: DocumentExtractionProcessor;
     readonly workloadRunRecorder?: WorkloadRunRecorder;
   };
 
@@ -41,6 +44,12 @@ export async function taskScope(
   if (deps.refreshNarrative) {
     await app.register(recordNarrativeRefreshTaskRoute, {
       refreshNarrative: deps.refreshNarrative,
+      workloadRunRecorder: deps.workloadRunRecorder,
+    });
+  }
+  if (deps.processDocumentExtraction) {
+    await app.register(documentExtractionTaskRoute, {
+      processDocumentExtraction: deps.processDocumentExtraction,
       workloadRunRecorder: deps.workloadRunRecorder,
     });
   }

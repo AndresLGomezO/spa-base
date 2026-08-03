@@ -68,6 +68,11 @@ output "hook_jobs_queue_name" {
   value       = local.enable_ai_worker ? google_cloud_tasks_queue.hook_jobs[0].name : ""
 }
 
+output "document_extraction_queue_name" {
+  description = "Cloud Tasks queue for document extraction jobs (empty when disabled)"
+  value       = local.enable_ai_worker ? google_cloud_tasks_queue.document_extraction[0].name : ""
+}
+
 output "gmail_jobs_queue_name" {
   description = "Cloud Tasks queue for Gmail ingest jobs (empty when disabled)"
   value       = local.enable_ai_worker ? google_cloud_tasks_queue.gmail_jobs[0].name : ""

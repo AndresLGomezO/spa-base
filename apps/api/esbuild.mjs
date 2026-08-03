@@ -8,6 +8,7 @@ import { assertDirectRuntimeDependencies } from "@repo/esbuild-runtime-deps";
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
 const npmExternals = [
   "@google-cloud/firestore",
+  "@google-cloud/kms",
   "@google-cloud/pubsub",
   "@google-cloud/vertexai",
   "@google/genai",
@@ -77,7 +78,7 @@ assertDirectRuntimeDependencies({
 
 const { size } = await stat(join(rootDir, "dist/index.js"));
 // Soft cap on bundled workspace code. The GCP guard below catches accidental client inlining.
-const maxBundleBytes = 2_200_000;
+const maxBundleBytes = 2_300_000;
 if (size > maxBundleBytes) {
   throw new Error(
     `api dist/index.js is ${size} bytes (max ${maxBundleBytes}). ` +

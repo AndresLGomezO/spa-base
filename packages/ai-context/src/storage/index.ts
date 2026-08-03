@@ -81,3 +81,20 @@ export {
   type CreateAiContextSectionInput,
   type PatchAiContextSectionInput,
 } from "./ai-context-section.schema.js";
+
+export {
+  STATEMENT_EXTRACTIONS_COLLECTION,
+  statementExtractionStatusSchema,
+  statementExtractionEncryptedPayloadSchema,
+  statementExtractionDlpFindingSchema,
+  statementExtractionModelUsageSchema,
+  statementExtractionRecordSchema,
+  type StatementExtractionStatus,
+  type StatementExtractionEncryptedPayload,
+  type StatementExtractionDlpFinding,
+  type StatementExtractionModelUsage,
+  type StatementExtractionRecord,
+  type StatementExtractionListOptions,
+  type StatementExtractionPatch,
+  type StatementExtractionRepository,
+} from "./statement-extraction.schema.js";

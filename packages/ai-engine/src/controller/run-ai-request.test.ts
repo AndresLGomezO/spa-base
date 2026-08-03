@@ -317,4 +317,48 @@ describe("createAiController", () => {
     expect(chunks).toEqual(['{"ok":', '{"ok":true}']);
     expect(result.output).toEqual({ text: '{"ok":true}' });
   });
+
+  it("forwards fileParts to generateModelAnswer without putting URIs on unsafe paths", async () => {
+    const { controller, generateModelAnswer } = createDeps();
+
+    await controller.runAiRequest({
+      tenantId: "t1",
+      feature: "documentExtract",
+      operation: "generateText",
+      requestedBy: "user_1",
+      permission: "ai.documentExtract.run",
+      input: {
+        kind: "documentExtract",
+        attachmentId: "att_1",
+        entityName: "attachment",
+        templateId: "davivienda-visa-statement",
+        phase: "extract",
+      },
+      params: {
+        operation: "generateText",
+        systemInstruction: "Extract statement JSON.",
+        userText: "Document extraction — extract statement fields as JSON.",
+        fileParts: [
+          {
+            fileUri: "gs://bucket/tenants/t1/entity-files/attachment/x.pdf",
+            mimeType: "application/pdf",
+          },
+        ],
+        modelOptions: { responseMimeType: "application/json" },
+      },
+    });
+
+    expect(generateModelAnswer).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        fileParts: [
+          {
+            fileUri: "gs://bucket/tenants/t1/entity-files/attachment/x.pdf",
+            mimeType: "application/pdf",
+          },
+        ],
+      }),
+      expect.anything(),
+    );
+  });
 });

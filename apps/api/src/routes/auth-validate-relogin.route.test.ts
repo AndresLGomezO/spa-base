@@ -117,6 +117,8 @@ vi.mock("../config/env.js", () => ({
     CLOUD_TASKS_QUEUE_NAME: "ai-jobs",
     HOOK_TASKS_QUEUE_NAME: "hook-jobs",
     GMAIL_TASKS_QUEUE_NAME: "gmail-jobs",
+    DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME: "document-extraction",
+    DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH: true,
     WORKLOAD_CLOUD_LOGGING_TAIL: false,
   },
 }));

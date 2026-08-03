@@ -14,8 +14,11 @@ import type {
   GenerateModelAnswerOptions,
   GenerateModelAnswerResult,
   GenerateModelAnswerStreamOptions,
+  GenerateModelFilePart,
   VertexAiConfig,
 } from "../clients/internal/vertex-ai.client.js";
+
+export type { GenerateModelFilePart };
 
 export class AiDisabledError extends Error {
   readonly code = "ai.disabled" as const;
@@ -113,6 +116,11 @@ export type AiGenerateTextParams = {
   readonly outputInstruction?: string;
   readonly modelOptions?: GenerateModelAnswerOptions;
   readonly stepId?: string;
+  /**
+   * Multimodal file/image parts. Prefer GCS `fileUri` so document bytes are
+   * never stored on `ai_jobs.input`.
+   */
+  readonly fileParts?: readonly GenerateModelFilePart[];
 };
 
 export type AiGenerateChatParams = {

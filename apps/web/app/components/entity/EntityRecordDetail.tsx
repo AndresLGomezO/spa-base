@@ -61,6 +61,7 @@ import {
   narrativeVariantFromSummaryField,
   resolveSummaryFieldText,
 } from "../../features/entity-summary/resolve-summary-tabs";
+import { DocumentPasswordsPanel } from "../../features/financial-items/DocumentPasswordsPanel";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -407,6 +408,10 @@ export function EntityRecordDetail({
           </dl>
         </div>
       )}
+
+      {entityName === "financialItem" ? (
+        <DocumentPasswordsPanel financialItemId={recordId} />
+      ) : null}
 
       {reverseRelations.length > 0 ? (
         <div className="space-y-4">

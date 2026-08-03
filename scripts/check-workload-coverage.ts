@@ -79,6 +79,7 @@ function scanTerraform(): TfResource[] {
 
 const QUEUE_MAP: Record<string, string> = {
   ai_jobs: "queue:ai-jobs",
+  document_extraction: "queue:document-extraction",
   hook_jobs: "queue:hook-jobs",
   gmail_jobs: "queue:gmail-jobs",
 };
@@ -115,6 +116,7 @@ function checkInstrumentation(): string[] {
     "routes/tenant-deletion-task.route.ts",
     "routes/gmail-ingest-task.route.ts",
     "routes/ai-chat-task.route.ts",
+    "routes/document-extraction-task.route.ts",
     "services/local-gmail-poll-scheduler.ts",
     "ai/debounced-user-ai-memory-refresh.ts",
   ];

@@ -24,6 +24,7 @@ describe("WORKLOAD_REGISTRY", () => {
     expect(queues.map((q) => q.id)).toEqual(
       expect.arrayContaining([
         "queue:ai-jobs",
+        "queue:document-extraction",
         "queue:hook-jobs",
         "queue:gmail-jobs",
       ]),

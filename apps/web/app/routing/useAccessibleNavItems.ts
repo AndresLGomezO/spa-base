@@ -27,6 +27,7 @@ import {
   DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM,
   SETTINGS_AI_CHAT_NAV_ITEM,
   SETTINGS_AI_INSIGHTS_NAV_ITEM,
+  SETTINGS_AI_STATEMENT_EXTRACTIONS_NAV_ITEM,
   DEBUGGER_GROUP_ICON,
   SETTINGS_METRICS_NAV_ITEM,
   SETTINGS_CHARTS_NAV_ITEM,
@@ -191,6 +192,11 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     if (hasPermission("ai.chat.run", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_AI_CHAT_NAV_ITEM);
       settingsChildren.push(SETTINGS_AI_INSIGHTS_NAV_ITEM);
+    }
+    if (
+      hasPermission("ai.documentExtract.read", permissions, { isSuperAdmin })
+    ) {
+      settingsChildren.push(SETTINGS_AI_STATEMENT_EXTRACTIONS_NAV_ITEM);
     }
 
     if (settingsChildren.length > 0) {

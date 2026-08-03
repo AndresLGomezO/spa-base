@@ -16,6 +16,7 @@ Local E2E smoke steps for the current tenant seed live in `.local/ToDos List/AI-
 | Sections, memory refresh, record summaries, vectors | [04-context-memory-rag.md](./04-context-memory-rag.md) |
 | HTTP routes, workers, UI surfaces, env, Terraform | [05-api-worker-ui.md](./05-api-worker-ui.md) |
 | **How to ship the next feature safely** | [06-integrating-new-features.md](./06-integrating-new-features.md) |
+| Statement / document AI extraction (DLP + KMS + review) | [07-document-extraction.md](./07-document-extraction.md) |
 
 ---
 

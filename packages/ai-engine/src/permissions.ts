@@ -14,11 +14,17 @@ export const AI_DATA_HOOK_PERMISSIONS = [
   "ai.dataHook.read",
 ] as const;
 
+export const AI_DOCUMENT_EXTRACT_PERMISSIONS = [
+  "ai.documentExtract.run",
+  "ai.documentExtract.read",
+] as const;
+
 export const AI_PERMISSIONS = [
   ...AI_CHAT_PERMISSIONS,
   ...AI_UI_BUILDER_PERMISSIONS,
   ...AI_DATA_MODEL_BUILDER_PERMISSIONS,
   ...AI_DATA_HOOK_PERMISSIONS,
+  ...AI_DOCUMENT_EXTRACT_PERMISSIONS,
 ] as const;
 
 export type AiFeature =
@@ -30,7 +36,8 @@ export type AiFeature =
   | "dataHookEmbedding"
   | "gmailExtract"
   | "userAiMemoryRefresh"
-  | "recordNarrativeRefresh";
+  | "recordNarrativeRefresh"
+  | "documentExtract";
 
 export const AI_FEATURE_PERMISSIONS: Record<
   AiFeature,
@@ -45,6 +52,7 @@ export const AI_FEATURE_PERMISSIONS: Record<
   gmailExtract: AI_DATA_HOOK_PERMISSIONS,
   userAiMemoryRefresh: AI_CHAT_PERMISSIONS,
   recordNarrativeRefresh: AI_DATA_HOOK_PERMISSIONS,
+  documentExtract: AI_DOCUMENT_EXTRACT_PERMISSIONS,
 };
 
 export const AI_FEATURE_RUN_PERMISSION: Record<AiFeature, string> = {
@@ -57,4 +65,5 @@ export const AI_FEATURE_RUN_PERMISSION: Record<AiFeature, string> = {
   gmailExtract: "ai.dataHook.run",
   userAiMemoryRefresh: "ai.chat.run",
   recordNarrativeRefresh: "ai.dataHook.run",
+  documentExtract: "ai.documentExtract.run",
 };

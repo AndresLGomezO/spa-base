@@ -67,6 +67,16 @@ const workerEnvSchema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((value) => value === "true"),
+  DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME: z
+    .string()
+    .trim()
+    .default("document-extraction"),
+  DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
+  /** Cloud KMS key resource name (optional; local uses master-key envelope). */
+  DOCUMENT_EXTRACTION_KMS_KEY_NAME: z.string().trim().optional(),
   AGGREGATION_EVENTS_PUBSUB: z
     .enum(["true", "false"])
     .default("false")

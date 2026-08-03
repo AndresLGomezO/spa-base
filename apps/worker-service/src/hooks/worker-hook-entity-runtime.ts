@@ -7,7 +7,9 @@ import {
   registerDynamicEntity,
   resolveEntity as resolveDynamicEntity,
 } from "@repo/dynamic-entities";
+import { deriveKey, encryptFields, decryptFields } from "@repo/encryption";
 import type {
+  EntityConverterEncryptionConfig,
   EntityDefinitionRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
@@ -28,6 +30,25 @@ export interface WorkerEntityRuntimeForCrudHooks {
   ): TenantScopedEntityRepository<GenericRecord, unknown> | undefined;
 }
 
+function buildEncryptionConfig(
+  fields: Readonly<Record<string, { readonly sensitive?: boolean }>>,
+  tenantId: string,
+  masterKey: string,
+): EntityConverterEncryptionConfig | undefined {
+  const sensitiveFieldNames = Object.entries(fields)
+    .filter(([, meta]) => meta.sensitive)
+    .map(([name]) => name);
+  if (sensitiveFieldNames.length === 0) {
+    return undefined;
+  }
+  const key = deriveKey(masterKey, tenantId);
+  return {
+    sensitiveFieldNames,
+    encrypt: (data, fieldNames) => encryptFields(data, fieldNames, key),
+    decrypt: (data, fieldNames) => decryptFields(data, fieldNames, key),
+  };
+}
+
 export class WorkerHookEntityRuntime implements WorkerEntityRuntimeForCrudHooks {
   private readonly loadedTenants = new Set<string>();
   private readonly repositoryCache = new Map<
@@ -38,6 +59,7 @@ export class WorkerHookEntityRuntime implements WorkerEntityRuntimeForCrudHooks 
   constructor(
     private readonly firebaseAdminConfig: FirebaseAdminConfig,
     private readonly entityDefinitionRepository: EntityDefinitionRepository,
+    private readonly encryptionMasterKey?: string,
   ) {}
 
   async ensureTenantEntitiesLoaded(tenantId: string): Promise<void> {
@@ -97,7 +119,16 @@ export class WorkerHookEntityRuntime implements WorkerEntityRuntimeForCrudHooks 
       return undefined;
     }
 
-    const converter = createEntityConverter(entity);
+    const encryption =
+      this.encryptionMasterKey != null && this.encryptionMasterKey.length > 0
+        ? buildEncryptionConfig(
+            entity.metadata.fields,
+            tenantId,
+            this.encryptionMasterKey,
+          )
+        : undefined;
+
+    const converter = createEntityConverter(entity, encryption);
     const repository = createFirestoreAdminEntityRepository({
       config: this.firebaseAdminConfig,
       collection: entity.metadata.collection,

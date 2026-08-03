@@ -2,7 +2,8 @@ export type AiModelPurpose =
   | "planner"
   | "synthesis"
   | "memoryRefresh"
-  | "embedding";
+  | "embedding"
+  | "documentExtract";
 
 export interface ModelRouterDefaults {
   readonly flashModelId: string;
@@ -42,6 +43,7 @@ export function resolveModelForPurpose(
       return { modelId: input.defaults.flashModelId, purpose: input.purpose };
     case "synthesis":
     case "memoryRefresh":
+    case "documentExtract":
       return { modelId: input.defaults.proModelId, purpose: input.purpose };
     case "embedding":
       return {

@@ -1,0 +1,46 @@
+export {
+  DOCUMENT_EXTRACTION_TEMPLATES_COLLECTION,
+  DOCUMENT_EXTRACTION_TEMPLATE_DEFINITION_JSON_KIND,
+  DOCUMENT_EXTRACTION_TEMPLATES_CATALOG_JSON_KIND,
+  DOCUMENT_EXTRACTION_TEMPLATE_JSON_VERSION,
+  documentExtractionMatchHintsSchema,
+  documentExtractionTemplateBodySchema,
+  documentExtractionTemplateRecordSchema,
+  createDocumentExtractionTemplateInputSchema,
+  patchDocumentExtractionTemplateInputSchema,
+  documentExtractionTemplateEnvelopeSchema,
+  type DocumentExtractionMatchHints,
+  type DocumentExtractionTemplateBody,
+  type DocumentExtractionTemplateRecord,
+  type CreateDocumentExtractionTemplateInput,
+  type PatchDocumentExtractionTemplateInput,
+  type DocumentExtractionTemplateEnvelope,
+  type DocumentExtractionTemplateRepository,
+} from "./document-extraction-template.schema.js";
+
+export {
+  documentExtractionTemplatesCatalogEnvelopeSchema,
+  parseDocumentExtractionTemplateDefinitionJson,
+  parseDocumentExtractionTemplatesCatalogJson,
+  validateDocumentExtractionTemplatesCatalogEnvelope,
+  createDocumentExtractionTemplateEnvelope,
+  createDocumentExtractionTemplatesCatalogEnvelope,
+  toPortableDocumentExtractionTemplate,
+  computeDocumentExtractionTemplateCatalogReplacePlan,
+  type DocumentExtractionTemplateJsonError,
+  type DocumentExtractionTemplateFormData,
+  type DocumentExtractionTemplatesCatalogEnvelope,
+  type PortableDocumentExtractionTemplate,
+  type DocumentExtractionTemplateCatalogReplacePlan,
+} from "./document-extraction-template-json.js";
+
+export {
+  DOCUMENT_PASSWORDS_PREFIX,
+  ATTACHMENT_DOCUMENT_TYPES,
+  encodeDocumentPasswords,
+  decodeDocumentPasswords,
+  getDocumentPassword,
+  listDocumentTypesWithPassword,
+  type AttachmentDocumentType,
+  type DocumentPasswordsMap,
+} from "./document-passwords.js";

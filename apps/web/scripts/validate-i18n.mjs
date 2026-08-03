@@ -385,6 +385,33 @@ function extractEmailExtractorFieldHelpDynamicKeys(corpus) {
   return keys;
 }
 
+/** statementExtractions.status.* / dlpAction.* via template keys */
+function extractStatementExtractionDynamicKeys(corpus) {
+  if (!corpus.includes("statementExtractions.")) return [];
+
+  const ref = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).statementExtractions;
+
+  if (!ref || typeof ref !== "object") return [];
+
+  const keys = [];
+
+  if (corpus.includes("statementExtractions.status.${")) {
+    for (const key of Object.keys(ref.status ?? {})) {
+      keys.push(`${DEFAULT_NAMESPACE}:statementExtractions.status.${key}`);
+    }
+  }
+
+  if (corpus.includes("statementExtractions.dlpAction.${")) {
+    for (const key of Object.keys(ref.dlpAction ?? {})) {
+      keys.push(`${DEFAULT_NAMESPACE}:statementExtractions.dlpAction.${key}`);
+    }
+  }
+
+  return keys;
+}
+
 /** dataHooks.preview.* dynamic template keys in hook preview UI */
 function extractDataHookPreviewDynamicKeys(corpus) {
   if (!corpus.includes("dataHooks.preview.")) return [];
@@ -1481,6 +1508,14 @@ mergeUsedKeys(
   usedKeys,
   extractDataHookPreviewDynamicKeys(corpus),
   path.join(SRC_DIR, "features/data-hooks/preview/DataHookPreviewPanel.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractStatementExtractionDynamicKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "features/statement-extractions/StatementExtractionDetail.tsx",
+  ),
 );
 mergeUsedKeys(
   usedKeys,

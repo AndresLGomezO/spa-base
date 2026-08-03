@@ -177,6 +177,7 @@ export function createDataHookProcessorDeps(
   const entityRuntime = new WorkerHookEntityRuntime(
     firebaseAdminConfig,
     entityDefinitionRepository,
+    workerEnv.TENANT_ENCRYPTION_MASTER_KEY?.trim() || undefined,
   );
 
   return {

@@ -13,6 +13,7 @@ vi.mock("@google-cloud/vertexai", () => ({
 }));
 
 import {
+  buildUserParts,
   generateModelAnswer,
   generateModelAnswerStream,
   resetVertexClientsForTests,
@@ -49,6 +50,36 @@ function successResponse(text: string) {
     },
   };
 }
+
+describe("buildUserParts", () => {
+  it("emits fileData for GCS URIs and inlineData for base64 parts", () => {
+    expect(
+      buildUserParts("extract this", {
+        fileParts: [
+          {
+            fileUri: "gs://bucket/doc.pdf",
+            mimeType: "application/pdf",
+          },
+          {
+            inlineData: {
+              data: "abc",
+              mimeType: "image/png",
+            },
+          },
+        ],
+      }),
+    ).toEqual([
+      { text: "extract this" },
+      {
+        fileData: {
+          fileUri: "gs://bucket/doc.pdf",
+          mimeType: "application/pdf",
+        },
+      },
+      { inlineData: { data: "abc", mimeType: "image/png" } },
+    ]);
+  });
+});
 
 describe("Gemini location helpers", () => {
   it("defaults gemini location to global and uses the global api host", () => {

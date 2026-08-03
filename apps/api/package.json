@@ -20,6 +20,7 @@
     "@fastify/cors": "catalog:",
     "@fastify/rate-limit": "catalog:",
     "@google-cloud/firestore": "catalog:",
+    "@google-cloud/kms": "catalog:",
     "@google-cloud/pubsub": "catalog:",
     "@google-cloud/tasks": "catalog:",
     "@app/platform": "workspace:*",

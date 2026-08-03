@@ -175,6 +175,7 @@ async function seedLocalTenant(
     queryCounts: { ...EMPTY_COUNTS },
     chartCounts: { ...EMPTY_COUNTS },
     insightSurfaceCounts: { ...EMPTY_COUNTS },
+    documentExtractionTemplateCounts: { ...EMPTY_COUNTS },
     formulaCounts: { ...EMPTY_COUNTS },
     hookCounts: { ...EMPTY_COUNTS },
     customViewCounts: { ...EMPTY_COUNTS },
@@ -196,6 +197,10 @@ async function seedLocalTenant(
             formulas: selectionIncludes(selection, "formulas"),
             charts: selectionIncludes(selection, "charts"),
             insightSurfaces: selectionIncludes(selection, "insight-surfaces"),
+            documentExtractionTemplates: selectionIncludes(
+              selection,
+              "document-extraction-templates",
+            ),
             customViews: selectionIncludes(selection, "custom-views"),
             localePacks: selectionIncludes(selection, "locale-packs"),
           },

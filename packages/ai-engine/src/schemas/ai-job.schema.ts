@@ -24,6 +24,7 @@ export const aiJobFeatureSchema = z.enum([
   "gmailExtract",
   "userAiMemoryRefresh",
   "recordNarrativeRefresh",
+  "documentExtract",
 ]);
 
 export type AiJobFeature = z.infer<typeof aiJobFeatureSchema>;
@@ -234,6 +235,22 @@ export const aiGmailExtractInputSchema = z.object({
 
 export type AiGmailExtractInput = z.infer<typeof aiGmailExtractInputSchema>;
 
+/** Pointers only — never raw document bytes or extracted PII. */
+export const aiDocumentExtractInputSchema = z.object({
+  kind: z.literal("documentExtract"),
+  attachmentId: z.string().trim().min(1),
+  entityName: z.literal("attachment").default("attachment"),
+  templateId: z.string().trim().min(1).optional(),
+  documentType: z.string().trim().min(1).optional(),
+  financialItemId: z.string().trim().min(1).optional(),
+  accountId: z.string().trim().min(1).optional(),
+  phase: z.enum(["classify", "extract"]).default("extract"),
+});
+
+export type AiDocumentExtractInput = z.infer<
+  typeof aiDocumentExtractInputSchema
+>;
+
 export const aiUiBuilderStepInputSchema = z.object({
   kind: z.literal("uiBuilderStep"),
   stepId: z.string().trim().min(1),
@@ -252,6 +269,7 @@ export const aiJobInputSchema = z.union([
   aiDataHookEmbeddingInputSchema,
   aiRecordNarrativeRefreshInputSchema,
   aiGmailExtractInputSchema,
+  aiDocumentExtractInputSchema,
   aiUiBuilderStepInputSchema,
 ]);
 

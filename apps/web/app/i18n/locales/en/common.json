@@ -87,6 +87,7 @@
     "designLayoutAppShell": "App shell",
     "aiChat": "AI Chat",
     "insights": "AI Insights",
+    "statementExtractions": "Statement Extractions",
     "debugger": "Debugger",
     "debuggerAiJobs": "AI Jobs",
     "debuggerHookExecutions": "Hook Executions",
@@ -441,6 +442,76 @@
       "ariaLabel": "AI insights tabs"
     },
     "portfolioNarrativeFallback": "Portfolio narrative"
+  },
+  "statementExtractions": {
+    "title": "Statement Extractions",
+    "description": "Review AI-extracted statement data before applying it.",
+    "empty": "No statement extractions awaiting review.",
+    "forbidden": "You do not have permission to view statement extractions.",
+    "runForbidden": "You do not have permission to apply, reject, or rerun extractions.",
+    "loadFailed": "Could not load statement extractions. Try again.",
+    "selectPrompt": "Select an extraction to review.",
+    "awaitingReviewList": "{{count}} awaiting review",
+    "untitledExtraction": "Statement extraction",
+    "attachmentId": "Attachment",
+    "apply": "Apply",
+    "reject": "Reject",
+    "rerun": "Rerun",
+    "applySuccess": "Extraction applied.",
+    "applyFailed": "Could not apply extraction.",
+    "rejectSuccess": "Extraction rejected.",
+    "rejectFailed": "Could not reject extraction.",
+    "rerunSuccess": "Extraction rerun queued.",
+    "rerunFailed": "Could not rerun extraction.",
+    "notAwaitingReview": "This extraction is not awaiting review.",
+    "transactions": "Transactions",
+    "transactionsEmpty": "No transactions in this extraction preview.",
+    "dlpFindings": "DLP findings",
+    "dlpFindingsEmpty": "No sensitive data findings.",
+    "confidence": "Model confidence {{value}}%",
+    "txnCountShort": "{{count}} txn",
+    "status": {
+      "awaitingReview": "Awaiting review",
+      "applied": "Applied",
+      "rejected": "Rejected",
+      "failed": "Failed",
+      "processing": "Processing"
+    },
+    "dlpAction": {
+      "redacted": "Redacted",
+      "masked": "Masked",
+      "kept": "Kept"
+    },
+    "fields": {
+      "statementDate": "Statement date",
+      "openingBalance": "Opening balance",
+      "closingBalance": "Closing balance",
+      "transactionCount": "Transactions",
+      "date": "Date",
+      "amount": "Amount",
+      "description": "Description"
+    }
+  },
+  "financialItems": {
+    "documentPasswords": {
+      "title": "Document passwords",
+      "description": "Set once per document type. Used to unlock password-protected PDFs during statement extraction. Passwords are stored encrypted and never shown again.",
+      "loadFailed": "Could not load document password status.",
+      "statusSet": "Set",
+      "statusNotSet": "Not set",
+      "set": "Set",
+      "update": "Update",
+      "remove": "Remove",
+      "save": "Save",
+      "saveSuccess": "Document password saved.",
+      "saveFailed": "Could not save document password.",
+      "removeSuccess": "Document password removed.",
+      "removeFailed": "Could not remove document password.",
+      "modalTitle": "Password for {{documentType}}",
+      "modalHint": "Enter the PDF password. It will not be shown again after saving.",
+      "passwordPlaceholder": "PDF password",
+      "cancel": "Cancel"
+    }
   },
   "aiChat": {
     "title": "AI Chat",

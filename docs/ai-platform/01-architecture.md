@@ -131,6 +131,7 @@ Defined in `packages/ai-engine/src/permissions.ts`:
 | `gmailExtract` | `ai.dataHook.run` | Gmail ingest |
 | `userAiMemoryRefresh` | `ai.chat.run` | Memory refresh processor |
 | `recordNarrativeRefresh` | `ai.dataHook.run` | Narrative processor |
+| `documentExtract` | `ai.documentExtract.run` | Statement / document extraction |
 
 Adding a feature **requires** updating: `AiFeature`, `AI_FEATURE_PERMISSIONS`, `AI_FEATURE_RUN_PERMISSION`, and `aiJobFeatureSchema` in `schemas/ai-job.schema.ts`.
 
@@ -236,6 +237,7 @@ Task paths:
 - `/tasks/process-ai-chat`
 - `/tasks/process-ai-ui-builder`
 - `/tasks/refresh-record-narrative`
+- `/tasks/process-document-extraction`
 
 User AI memory refresh runs in-process via `inprocess:debounced-user-ai-memory` (no HTTP task route).
 

@@ -99,6 +99,15 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
+  DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME: z
+    .string()
+    .trim()
+    .default("document-extraction"),
+  DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH: z
+    .enum(["true", "false"])
+    .default(process.env.NODE_ENV === "production" ? "false" : "true")
+    .transform((value) => value === "true"),
+  DOCUMENT_EXTRACTION_KMS_KEY_NAME: z.string().trim().optional(),
   WEB_APP_ORIGIN: z.string().trim().url().default("http://127.0.0.1:5173"),
   SCHEDULER_SCHEDULE_TICK_JOB_NAME: z.string().trim().optional(),
   SCHEDULER_GMAIL_POLL_JOB_NAME: z.string().trim().optional(),

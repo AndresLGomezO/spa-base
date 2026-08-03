@@ -266,6 +266,22 @@ resource "google_cloud_run_v2_service" "backend" {
       dynamic "env" {
         for_each = local.enable_ai_worker ? [1] : []
         content {
+          name  = "DOCUMENT_EXTRACTION_TASKS_QUEUE_NAME"
+          value = google_cloud_tasks_queue.document_extraction[0].name
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "DOCUMENT_EXTRACTION_TASKS_LOCAL_DISPATCH"
+          value = "false"
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
           name  = "SCHEDULER_SCHEDULE_TICK_JOB_NAME"
           value = "${local.app_name}-schedule-tick-${local.prefix}"
         }

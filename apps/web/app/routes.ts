@@ -61,6 +61,7 @@ export default [
     route("debugger/:sourceSlug", "./routes/debugger.tsx"),
     route("ai/chat", "./routes/ai/chat.tsx"),
     route("ai/insights", "./routes/ai/insights.tsx"),
+    route("ai/statement-extractions", "./routes/ai/statement-extractions.tsx"),
     route(
       "settings/design-layout/main/custom-view/:viewId",
       "./routes/settings/design-layout/main-custom-view.tsx",

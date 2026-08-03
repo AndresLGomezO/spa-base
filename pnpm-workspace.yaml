@@ -14,6 +14,8 @@ catalog:
   "@google-cloud/tasks": ^4.0.0
   "@google-cloud/scheduler": ^4.3.0
   "@google-cloud/logging": ^11.2.0
+  "@google-cloud/kms": ^5.0.0
+  "@google-cloud/dlp": ^6.0.0
   "@google-cloud/vertexai": ^1.9.0
   "@google-cloud/aiplatform": ^3.35.0
   "@google/genai": ^1.52.0

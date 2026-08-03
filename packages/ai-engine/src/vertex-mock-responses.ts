@@ -107,6 +107,61 @@ export function buildMockRecordNarrativeAnswer(userText: string): string {
   });
 }
 
+export function looksLikeDocumentExtractPrompt(userText: string): boolean {
+  const lower = userText.toLowerCase();
+  return (
+    lower.includes("document extraction") ||
+    lower.includes("extract statement") ||
+    lower.includes("classify this statement") ||
+    lower.includes('"closingbalance"') ||
+    lower.includes("statementdate")
+  );
+}
+
+export function buildMockDocumentExtractAnswer(userText: string): string {
+  if (
+    userText.toLowerCase().includes("classify") ||
+    userText.toLowerCase().includes("templateid")
+  ) {
+    return JSON.stringify({
+      templateId: "davivienda-visa-statement",
+      confidence: 0.92,
+      documentType: "creditCardStatement",
+    });
+  }
+  return JSON.stringify({
+    statementDate: "2026-06-15",
+    periodStart: "2026-05-16",
+    periodEnd: "2026-06-15",
+    closingBalance: 1_250_000,
+    minPayment: 85_000,
+    paymentDueDate: "2026-07-05",
+    interestCharged: 42_000,
+    feesCharged: 0,
+    purchasesTotal: 980_000,
+    paymentsTotal: 500_000,
+    currency: "COP",
+    productNumberLast4: "4242",
+    productNumberEncrypted: "4111111111114242",
+    transactions: [
+      {
+        date: "2026-05-20",
+        description: "Mock merchant purchase",
+        amount: 120_000,
+        installmentIndex: 1,
+        installmentTotal: 3,
+        interestPortion: 0,
+        principalPortion: 120_000,
+      },
+      {
+        date: "2026-06-01",
+        description: "Mock payment received",
+        amount: -500_000,
+      },
+    ],
+  });
+}
+
 function looksLikeRecordNarrativePrompt(userText: string): boolean {
   const text = userText.trim();
   return (
