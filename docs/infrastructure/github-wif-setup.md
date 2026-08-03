@@ -97,7 +97,8 @@ for ROLE in \
   roles/secretmanager.admin \
   roles/pubsub.admin \
   roles/cloudtasks.admin \
-  roles/cloudscheduler.admin
+  roles/cloudscheduler.admin \
+  roles/cloudkms.admin
 do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${DEPLOYER_EMAIL}" \
@@ -182,6 +183,7 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | `pubsub.topics.create` / `google_pubsub_topic` 403 | Grant `roles/pubsub.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
 | `cloudtasks.queues.create` 403 | Grant `roles/cloudtasks.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
 | `cloudscheduler.jobs.create` 403 | Grant `roles/cloudscheduler.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
+| `cloudkms.keyRings.create` 403 | Grant `roles/cloudkms.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
 | Cloud Run worker-aggregation startup probe failed | Check logs; often caused by bundling `@google-cloud/vertexai` into the worker image — rebuild after pulling latest worker-aggregation esbuild fix |
 | `iam.serviceAccounts.create` denied    | Same — `serviceAccountAdmin` on `github-deployer`                          |
 | Terraform 409 (AR / Firestore / rules / secrets) | Run `scripts/terraform-import-brownfield.sh` before plan/apply |

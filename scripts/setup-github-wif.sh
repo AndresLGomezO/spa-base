@@ -95,6 +95,7 @@ BOOTSTRAP_APIS=(
   cloudtasks.googleapis.com
   cloudscheduler.googleapis.com
   aiplatform.googleapis.com
+  cloudkms.googleapis.com
 )
 
 DEPLOYER_ROLES=(
@@ -111,6 +112,7 @@ DEPLOYER_ROLES=(
   roles/pubsub.admin
   roles/cloudtasks.admin
   roles/cloudscheduler.admin
+  roles/cloudkms.admin
 )
 
 github_secret_names() {
