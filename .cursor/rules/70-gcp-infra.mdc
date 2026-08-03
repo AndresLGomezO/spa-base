@@ -1,0 +1,57 @@
+---
+description: Terraform SSOT, WIF, Secret Manager, per-env GCP projects, deploy surfaces
+globs:
+  - packages/infrastructure/terraform/**
+  - .github/workflows/**
+  - docs/infrastructure/**
+alwaysApply: false
+---
+
+# GCP infrastructure
+
+## Source of truth
+
+- Terraform under `packages/infrastructure/terraform`
+- State layout: `docs/infrastructure/terraform-state.md`
+- Format: `pnpm terraform:fmt` / `pnpm terraform:fmt:check`
+
+## Environments
+
+Per-env GCP projects (fixed ids in bootstrap docs):
+
+- `entitysystem-development`
+- `entitysystem-staging`
+- `entitysystem-production`
+
+See `docs/infrastructure/bootstrap-new-gcp-account.md`, `docs/infrastructure/per-environment.md`, `docs/infrastructure/deployment.md`.
+
+## CI / identity
+
+- GitHub Actions authenticates with **Workload Identity Federation** — no long-lived SA JSON keys.
+- Setup: `docs/infrastructure/github-wif-setup.md`
+- Secrets checklist: `docs/infrastructure/github-secrets-checklist.md`
+- Env var inventory: `docs/infrastructure/environment-variables.md`
+
+## Runtime
+
+- Cloud Run services with tuned min/max instances per workload
+- Deploy `firestore.indexes.json` and `firestore.rules` with the release process
+- Secrets from **Secret Manager**, not plaintext in images
+
+## Do not
+
+- Commit service account keys
+- Hand-wave production changes only in the Console without Terraform (except documented one-time bootstrap steps)
+- Share one GCP project across prod and non-prod
+
+## Enforcement
+
+- `pnpm terraform:fmt:check`
+- CI deploy workflows
+- `pnpm check:docker-workspace`, `pnpm check:prod-runtime` when images change
+
+## References
+
+- `docs/infrastructure/bootstrap-new-gcp-account.md`
+- [Terraform on GCP](https://cloud.google.com/docs/terraform)
+- [Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation)

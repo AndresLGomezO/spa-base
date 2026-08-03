@@ -1,0 +1,54 @@
+---
+description: Workers — idempotent /tasks handlers, withWorkloadRun, AI controller only
+globs:
+  - apps/worker-service/**
+  - apps/worker-aggregation/**
+  - apps/worker-indexer/**
+alwaysApply: false
+---
+
+# Apps — Workers
+
+Applies to `worker-service`, `worker-aggregation`, and `worker-indexer`.
+
+## `/tasks/*` handlers
+
+Every Cloud Tasks / HTTP task handler must be:
+
+1. **Idempotent** and **retry-safe** (safe on at-least-once delivery)
+2. Wrapped with **`withWorkloadRun`** / recorder from `@repo/workload-runs`
+3. Registered in `@repo/workload-registry` (see `AGENTS.md` and rule `60-workload-registry`)
+
+Propagate lineage headers when enqueueing further work:
+
+- `X-Workload-Run-Parent-Id`
+- `X-Workload-Run-Root-Id`
+
+## AI
+
+- Use `createWorkerAiController` / `runAiRequest` only — never call Vertex clients directly.
+- Re-assert spend limits in the worker (authoritative). See `docs/ai-platform/03-cost-guards.md`.
+- Surfaces and routes: `docs/ai-platform/05-api-worker-ui.md`.
+
+## Aggregation / indexing
+
+- Follow `docs/guides/aggregations.md` for aggregation workers.
+- Inventory: `docs/infrastructure/workload-inventory.md`.
+
+## Do not
+
+- Perform long unbounded Firestore scans without pagination/cursors
+- Swallow errors without failing the task when retry is required
+- Skip workload run instrumentation “just for local”
+
+## Enforcement
+
+- `pnpm check:workload-coverage`
+- Worker package tests / typecheck / lint
+- `pnpm check:prod-runtime` when changing deploy bundles
+
+## References
+
+- [Cloud Tasks best practices](https://cloud.google.com/tasks/docs/advanced)
+- `AGENTS.md`
+- `docs/ai-platform/05-api-worker-ui.md`

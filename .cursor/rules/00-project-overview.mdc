@@ -1,0 +1,71 @@
+---
+description: Monorepo mental model — apps, packages, docs index, request lifecycle
+alwaysApply: true
+---
+
+# Project overview
+
+Multi-tenant ecosystem builder (Entity System / ESP): schema-driven entities, auto-generated CRUD, RBAC, dynamic UI, optional modules, hooks, and a Vertex AI stack.
+
+## Monorepo layout
+
+```
+apps/
+  api/                 Fastify HTTP API
+  web/                 React Router 7 SPA
+  platform/            defineApp bootstrap (modules: [] by default)
+  worker-service/      AI jobs, hooks, Gmail, document extraction
+  worker-aggregation/  Aggregation pipeline
+  worker-indexer/      Search / index worker
+packages/              Shared libraries (@repo/*)
+modules/               Optional compile-time extension modules
+docs/                  guides/, reference/, ai-platform/, infrastructure/, ui-design-manual/
+.local/                Tenant data only (not main codebase)
+```
+
+## Stack (short)
+
+| Layer | Tech |
+|-------|------|
+| Web | React 19, React Router 7, TanStack Query, Tailwind 4, `@repo/ui` |
+| API | Fastify 5, Zod 4, Firebase Auth + App Check |
+| Data | Firestore Native, GCS, `@repo/firestore-converters` + `@repo/gcp-firebase` |
+| Async | Cloud Tasks, Cloud Scheduler, Pub/Sub, `@repo/workload-registry` |
+| AI | Vertex AI via `@repo/ai-engine` (`runAiRequest` only) |
+| Infra | Cloud Run, Terraform, WIF, Secret Manager |
+| Tooling | pnpm catalog:strict, turbo, Vitest, Cypress |
+
+## Request lifecycle (typical)
+
+```text
+Web (RR7 + TanStack Query)
+  → HTTP + Bearer + App Check
+API (auth → RBAC → CRUD / enqueue)
+  → Firestore under tenants/{tenantId}/…
+  → Cloud Tasks (or localDispatch) → worker-service
+```
+
+All generative / embedding model calls go through `runAiRequest` in `@repo/ai-engine` and are recorded on `ai_jobs`.
+
+## Start here
+
+| Need | Read |
+|------|------|
+| Full docs index | `docs/README.md` |
+| Where to change X | `docs/guides/codebase-map.md` |
+| AI stack + invariants | `docs/ai-platform/README.md` |
+| Workload Manager | `AGENTS.md`, `docs/infrastructure/workload-inventory.md` |
+| Quick start | `README.md` |
+| App contracts | `apps/api/README.md`, `apps/web/README.md` |
+
+## Non-negotiables (pointers)
+
+- Tenant **data** lives under `.local/` only — see `03-tenant-isolation`.
+- Docs live under the taxonomy in `04-docs-taxonomy`; enforced by `pnpm check:docs-layout`.
+- Async work must register in `@repo/workload-registry` — see `60-workload-registry` and `AGENTS.md`.
+- Before merge, keep `pnpm validate:local` green — see `02-validation-gate`.
+
+## References
+
+- [Twelve-Factor App](https://12factor.net/) — config, backing services, disposability
+- [Google SRE Book](https://sre.google/sre-book/table-of-contents/) — reliability mindset

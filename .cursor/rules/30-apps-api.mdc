@@ -1,0 +1,59 @@
+---
+description: Fastify API — envelope, Zod, RBAC, tenant claim, repositories
+globs: apps/api/**
+alwaysApply: false
+---
+
+# Apps — API (`apps/api`)
+
+## Conventions
+
+- Fastify plugins/routes; keep bootstrap wiring in `src/server.ts`.
+- Response envelope: `{ data, error }` (`src/crud/response.ts`). Errors use stable codes.
+- Validate inputs/outputs with Zod (`fastify-type-provider-zod`) where routes are typed.
+- Auth: Bearer + App Check. RBAC via `createRequirePermission` / entity permissions.
+- **Never trust `tenantId` from the body.** Use JWT custom claim; inject tenant on writes.
+- Query lists through the query engine with security filter injection (`@repo/query-engine` / `apply-query-security`).
+- Persistence only via repository ports → `@repo/gcp-firebase` adapters (no direct Firestore SDK in route files).
+
+## Domain guides
+
+| Topic | Doc |
+|-------|-----|
+| Routes / auth / seed | `apps/api/README.md` |
+| Entities | `docs/guides/entity-system.md` |
+| Queries | `docs/guides/query-engine.md` |
+| Relations | `docs/guides/relational-data-system.md` |
+| Hooks | `docs/guides/hooks-system.md`, `docs/guides/data-hooks.md` |
+| Dynamic models | `docs/guides/dynamic-entity-builder.md` |
+| Modules | `docs/guides/module-extension.md` |
+| Admin | `docs/guides/admin-dashboard.md` |
+| GCS | `docs/guides/gcs-storage.md` |
+
+## Catalog JSON contracts
+
+Tenant authors import catalogs that must match:
+
+- `docs/reference/entity-definition.md`
+- `docs/reference/entity-query-definition.md`
+- `docs/reference/metric-definition.md`
+- `docs/reference/data-hook-definition.md`
+- `docs/reference/custom-view-definition.md`
+
+Platform code validates against shared Zod schemas — do not invent parallel shapes.
+
+## AI / async
+
+- Enqueue AI jobs only after spend guards; use Cloud Tasks clients / local dispatch as documented in `docs/ai-platform/05-api-worker-ui.md`.
+- New async triggers: register in workload registry (`AGENTS.md`).
+
+## Enforcement
+
+- `pnpm --filter api test` / `typecheck` / `lint`
+- ESLint: no `firebase-admin/firestore` in apps
+- `pnpm check:prod-runtime` when changing esbuild externals / Dockerfile
+
+## References
+
+- [Fastify documentation](https://fastify.dev/docs/latest/)
+- `apps/api/README.md`

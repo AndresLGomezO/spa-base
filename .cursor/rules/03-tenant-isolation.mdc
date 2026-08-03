@@ -1,0 +1,60 @@
+---
+description: Tenant data lives in .local/ only — never hardcode tenant specifics in main codebase
+alwaysApply: true
+---
+
+# Tenant isolation
+
+This is a **multi-tenant platform**. Shared code is generic; tenant-specific **data** lives outside the main tree.
+
+## Where tenant data belongs
+
+All tenant seed/import data, catalogs, UI JSON, logos, assets, and generated fixtures belong under **`.local/`** (typically `.local/tenant-import/`). Layout and seed usage are documented in `apps/api/README.md`.
+
+Examples of what belongs only under `.local/`:
+
+- `tenant.json` and import metadata
+- Catalogs (entity definitions, hooks, metrics, queries, charts, custom views, UI catalogs)
+- Records, generated schedules/transactions, history, email-match bindings
+- UI overlays (`ui/query-definitions/`, `ui/entity-ui-overrides/`)
+- Logos / chart assets
+
+## Forbidden in main codebase
+
+Do **not** put any of the following in `apps/**`, `packages/**`, or `modules/**`:
+
+- Concrete tenant ids or names
+- Tenant-specific business domain copy, seed payloads, or fixture dumps of real catalogs
+- Tenant widget layouts, metric bindings, or query names as static app assets
+- Hardcoded branding hex / copy that belongs in Appearance / catalog import
+
+## Allowed patterns in main
+
+| Pattern | OK |
+|---------|----|
+| Dynamic entities via Model Builder / runtime definitions | Yes |
+| Generic entity/hook/metric **engines** and JSON **schemas** | Yes |
+| `docs/reference/*` contract specs (no tenant payloads) | Yes |
+| Inline mocks or minimal stubs under `apps/web/app/test/` | Yes |
+| Optional compile-time `modules/` that stay tenant-agnostic | Yes |
+
+## UI layouts
+
+Tenant layout JSON belongs only under `.local/tenant-import/catalogs/` (or tenant bundle import JSON). Do not add tenant widget layouts under `apps/web`. See also `.cursor/rules/ui-design-manual.mdc`.
+
+## Adding a tenant
+
+1. Author data under `.local/` (and import via `pnpm seed:database` as documented).
+2. Optionally add a generic platform capability in packages/apps.
+3. Never fork shared packages for one tenant’s data.
+
+## Enforcement
+
+- Code review + agent discipline
+- Existing UI Design Manual rule for layout JSON
+- Docs that mention local paths may link to `.local/`; unit tests must not import real tenant catalogs
+
+## References
+
+- [GCP multi-tenancy guidance](https://cloud.google.com/architecture/framework) — isolate customer data by design
+- Seed / import contract: `apps/api/README.md` (Local tenant import)

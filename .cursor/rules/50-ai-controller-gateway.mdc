@@ -1,0 +1,50 @@
+---
+description: AI I1 — all Vertex/embedding/Imagen via runAiRequest; feature registration
+globs:
+  - packages/ai-engine/**
+  - packages/ai-context/**
+  - packages/ai-retrieval/**
+  - apps/api/src/ai/**
+  - apps/worker-service/src/ai/**
+alwaysApply: false
+---
+
+# AI controller gateway (I1)
+
+**All** generative, embedding, and Imagen calls go through `createAiController` → `runAiRequest` from `@repo/ai-engine`.
+
+## Import rules
+
+| Allowed | Forbidden |
+|---------|-----------|
+| `@repo/ai-engine` public entrypoints (`controller`, `spend`, `grounded-chat`, `schemas`, …) | Apps/packages importing `packages/ai-engine/src/clients/internal/**` outside allowlisted files |
+| Worker `createWorkerAiController` | Calling Vertex / `generateModelAnswer` from processors directly |
+
+ESLint in `packages/ai-engine` enforces internal-client restrictions.
+
+## New `AiFeature`
+
+Updating a feature requires **all** of:
+
+1. `AiFeature` type / union
+2. `AI_FEATURE_PERMISSIONS`
+3. `AI_FEATURE_RUN_PERMISSION`
+4. `aiJobFeatureSchema` in `schemas/ai-job.schema.ts`
+
+Cookbook: `docs/ai-platform/06-integrating-new-features.md`. Architecture: `docs/ai-platform/01-architecture.md`. Chat: `docs/ai-platform/02-grounded-chat.md`.
+
+## External data
+
+Bank rates, FX, and other non-Vertex HTTP belong in **worker data ports / services**, then enter prompts as `contextBlocks` or tool results — not as parallel Vertex clients.
+
+## Enforcement
+
+- `packages/ai-engine` ESLint
+- AI package / API / worker tests
+- `pnpm check:ai-context` when UI/schema fragments change
+
+## References
+
+- `docs/ai-platform/README.md`
+- `docs/ai-platform/01-architecture.md`
+- [Vertex AI generative AI](https://cloud.google.com/vertex-ai/generative-ai/docs)

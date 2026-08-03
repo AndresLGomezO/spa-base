@@ -1,0 +1,52 @@
+---
+description: Auth, RBAC, App Check, secrets, tenant claim, PII — defense in depth
+globs:
+  - apps/**
+  - packages/**
+alwaysApply: false
+---
+
+# Security
+
+## Authentication and authorization
+
+- Every `/api/*` and `/admin/*` route requires Firebase **Bearer** + **App Check** (`apps/api/src/auth/authenticate-request.ts`).
+- Guard handlers with RBAC (`createRequirePermission` / entity `{name}.{action}`). Field-level rules via advanced RBAC — see `docs/guides/advanced-rbac.md`.
+- **`tenantId` comes from the JWT custom claim only.** Never trust `tenantId` (or cross-tenant ids) from request body/query except documented superadmin overrides.
+- Inject tenant filters on reads/writes (query engine `apply-query-security`); clients must not scope other tenants’ data.
+- Grounded-chat / AI live tools must filter by the **requesting user’s** permissions.
+
+## Secrets and config
+
+- Production secrets: **Secret Manager** (and GitHub Environment secrets for CI). Never commit credentials.
+- Do not rely on checked-in `.env` for prod. See `docs/infrastructure/environment-variables.md`.
+- No long-lived GCP SA keys for CI — use **Workload Identity Federation** (`docs/infrastructure/github-wif-setup.md`).
+
+## Data plane
+
+- Firestore security rules are **deny-by-default**; the web app must not talk to Firestore directly for business data (API-only). See `firestore.rules` and `docs/guides/firestore-collections.md`.
+- Regulated / document PII: **DLP + KMS** patterns in `docs/ai-platform/07-document-extraction.md`.
+- Storage paths stay under tenant prefixes (`docs/guides/gcs-storage.md`).
+
+## Logging and prompts
+
+- Do not `console.log` tokens, App Check tokens, ID tokens, raw PII, or full model prompts/outputs in production paths.
+- Respect `AI_TRACE_ENABLED` / platform observability flags for AI tracing.
+
+## Do not
+
+- Bypass App Check in production builds
+- Expose superadmin routes without `platformRole` checks
+- Store secrets in Terraform state plaintext or client bundles (`VITE_*` is public)
+
+## Enforcement
+
+- Fastify auth hooks + RBAC guards
+- ESLint / architecture rules (no Firestore SDK in apps)
+- `pnpm typecheck`, `pnpm lint`, security review on auth/RBAC changes
+
+## References
+
+- [OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/)
+- [GCP security best practices](https://cloud.google.com/docs/security/best-practices)
+- Guide: `docs/guides/advanced-rbac.md`

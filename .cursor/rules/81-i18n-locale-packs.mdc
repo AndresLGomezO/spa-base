@@ -1,0 +1,36 @@
+---
+description: i18n — English reference locale; strict key parity via locale-packs
+globs:
+  - apps/web/**
+  - packages/locale-packs/**
+alwaysApply: false
+---
+
+# i18n and locale packs
+
+## Rules
+
+- English (`en`) is the **reference** locale.
+- All user-visible web strings go through i18n — no stray hardcoded copy in UI for shipped languages.
+- Locales live under `apps/web/app/i18n/locales/{en,es}/` (and additional locales as added).
+- Shared extraction / validation uses `@repo/locale-packs`:
+  - `pnpm locale-packs:extract`
+  - `pnpm locale-packs:validate`
+- Strict parity: `pnpm i18n:validate -- --strict` (also in precommit / validate:ci).
+
+## Do not
+
+- Add a key to one locale and skip others
+- Merge with failing i18n validation
+- Hardcode tenant-specific product names as if they were platform chrome (tenant content belongs in data / catalogs)
+
+## Enforcement
+
+- `pnpm i18n:validate -- --strict`
+- `pnpm locale-packs:validate`
+- Precommit hook runs strict i18n
+
+## References
+
+- [i18next](https://www.i18next.com/)
+- `apps/web/README.md` (i18n section)

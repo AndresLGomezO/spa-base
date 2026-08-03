@@ -1,0 +1,48 @@
+---
+description: GCP 2026 practices — Cloud Run, Firestore Native, Vertex cache, DLP/KMS, Artifact Registry
+globs:
+  - packages/infrastructure/terraform/**
+  - .github/workflows/**
+  - docs/infrastructure/**
+  - apps/**
+alwaysApply: false
+---
+
+# GCP best practices (2026)
+
+Align new infra and service config with current Google Cloud guidance:
+
+| Area | Practice |
+|------|----------|
+| Compute | Cloud Run (prefer gen2), request-scoped concurrency tuning, CPU boost where justified |
+| Data | Firestore **Native** mode only; composite indexes as code |
+| AI | Vertex AI via platform controller; use **cached content** patterns already used by grounded chat |
+| Security | Secret Manager; WIF for CI; DLP + Cloud KMS for regulated document flows |
+| Network | Prefer VPC Service Controls / private paths where org policy requires |
+| Artifacts | **Artifact Registry** (not legacy GCR) |
+| Observability | Structured logs to Cloud Logging; metrics for SLIs on API/workers |
+| Cost | Budgets/alerts; tenant AI spend caps (`tenant.aiLimits`) |
+
+## Product-specific docs
+
+- Document extraction + DLP/KMS: `docs/ai-platform/07-document-extraction.md`
+- Deploy / env: `docs/infrastructure/deployment.md`, `docs/infrastructure/environment-variables.md`
+- AI surfaces: `docs/ai-platform/05-api-worker-ui.md`
+
+## Do not
+
+- Introduce GCE VMs or unmanaged GKE for default app hosting without an explicit decision
+- Call Vertex from ad-hoc scripts in production paths outside `runAiRequest`
+- Log prompts containing PII when DLP redaction is required
+
+## Enforcement
+
+- Terraform + CI
+- AI controller / spend rules
+- Security review on new GCP APIs
+
+## References
+
+- [Google Cloud Architecture Framework](https://cloud.google.com/architecture/framework)
+- [Cloud Run docs](https://cloud.google.com/run/docs)
+- [Vertex AI](https://cloud.google.com/vertex-ai/docs)

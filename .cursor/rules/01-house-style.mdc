@@ -1,0 +1,53 @@
+---
+description: SOLID, Big-O awareness, DRY/KISS/YAGNI, structured errors, DI
+alwaysApply: true
+---
+
+# House style
+
+## Principles
+
+| Principle | Expectation |
+|-----------|-------------|
+| **S**ingle responsibility | One reason to change per module/function |
+| **O**pen/closed | Extend via packages/modules/hooks; avoid editing core paths for tenant features |
+| **L**iskov | Adapters (Firestore / in-memory) honor the same repository contracts |
+| **I**nterface segregation | Prefer narrow ports over god repositories |
+| **D**ependency inversion | Apps depend on `@repo/*` contracts; wire concrete adapters in `server.ts` / worker entrypoints |
+
+Also: **DRY** (extract only after 2+ real uses), **KISS**, **YAGNI** (no speculative abstractions).
+
+## Complexity (Big-O)
+
+Flag and fix in hot paths (API handlers, list queries, workers, UI list renders):
+
+- N+1 Firestore / HTTP (prefer `getAll`, batch, or join/query redesign)
+- Unbounded scans / missing pagination
+- Sync `await` inside tight loops when batch/parallel is safe
+- Accidental `O(n²)` over large collections
+
+Prefer cursor pagination (default limit 20, max 100). See `docs/guides/performance-scaling.md`.
+
+## Code shape
+
+- Small pure functions; inject dependencies instead of module-scoped singletons
+- Discriminated unions + exhaustive `switch` (`never` default) for variants
+- Structured errors with stable codes (API `{ data, error }` envelope)
+- No dead code; no comments that restate the obvious
+- Prefer editing existing patterns over inventing parallel stacks
+
+## Do not
+
+- Add tenant-specific business logic into shared packages (use dynamic entities, hooks, or `.local/` data)
+- Bypass package boundaries (e.g. apps importing Firestore SDK directly)
+- Ship unbounded list endpoints or unpaginated admin dumps
+
+## Enforcement
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm lint:duplicates`, `pnpm lint:circular`
+- Reviewers and agents: refuse N+1 / unbounded patterns in new code
+
+## References
+
+- [SOLID (Refactoring Guru)](https://refactoring.guru/design-patterns/solid)
+- [Designing Data-Intensive Applications](https://dataintensive.net/) — data models, queries, scalability

@@ -1,0 +1,50 @@
+---
+description: React Router 7 web — TanStack Query, @repo/ui, semantic theme, no Firestore
+globs: apps/web/**
+alwaysApply: false
+---
+
+# Apps — Web (`apps/web`)
+
+## Architecture
+
+- React Router 7 SPA; route modules for code splitting.
+- Auth / tenant / permission guards in `app/routing/`.
+- Data via HTTP API clients + **TanStack Query** (keys, `staleTime`, mutation invalidation) — see `apps/web/README.md`.
+- **No direct Firestore** for business data. No importing Firestore SDKs in app UI.
+
+## UI
+
+- Primitives from `@repo/ui` only for overlays/toasts/base components.
+- Follow existing rules: `ui-overlays.mdc`, `ui-toasts.mdc`, `ui-design-manual.mdc`.
+- Semantic Tailwind: `bg-primary`, `text-muted-foreground`, `bg-card` — not raw scale steps like `bg-primary-600`.
+- Tenant branding via Appearance / `TenantBrandingProvider` — `docs/guides/theme-and-tenant-branding.md`.
+- Layout JSON / presets: `docs/ui-design-manual/README.md`, `docs/guides/advanced-ui-builder.md`.
+
+## i18n and content
+
+- Locales under `app/i18n/`; English is reference. `pnpm i18n:validate -- --strict`.
+- No hardcoded tenant-specific strings or catalog names in shared components.
+
+## Other
+
+- Browser push: `docs/guides/browser-push-notifications.md`.
+- AI context in browser: `@repo/ai-context/storage` only (not bare `@repo/ai-context`).
+
+## Do not
+
+- Import `sonner`, `@radix-ui/react-dialog`, or custom portal dialogs (use `@repo/ui`)
+- Mount a second `<Toaster />`
+- Embed tenant seed/layout JSON under `apps/web` (use `.local/` + API)
+
+## Enforcement
+
+- `@repo/eslint-config` ui-overlays / ui-toasts / ui-primitives
+- `pnpm --filter web test` / `typecheck` / `lint` / Cypress
+- `pnpm i18n:validate -- --strict`
+
+## References
+
+- [React Router 7](https://reactrouter.com/)
+- [TanStack Query](https://tanstack.com/query/latest)
+- `apps/web/README.md`

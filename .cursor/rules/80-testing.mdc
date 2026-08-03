@@ -1,0 +1,45 @@
+---
+description: Vitest, in-memory repos, emulator, Cypress, mock Vertex — test expectations
+globs:
+  - "**/*.{test,spec}.{ts,tsx}"
+  - apps/web/cypress/**
+  - packages/ui/**
+alwaysApply: false
+---
+
+# Testing
+
+## Layers
+
+| Layer | Approach |
+|-------|----------|
+| Unit | Vitest per package under `src/**/*.test.ts(x)` |
+| API / worker | Prefer **in-memory** repositories from `@repo/firestore-converters`; wire via `buildServer({ repositories })` patterns |
+| Integration | Firestore / Auth emulators when Admin SDK behavior matters |
+| E2E | Cypress (`pnpm --filter web cypress`) |
+| Visual | Playwright under `@repo/ui` (`pnpm test:visual`) |
+| Manual | `docs/guides/e2e-validation-runbook.md` |
+
+## AI
+
+- Mock Vertex locally (e.g. `--mock-vertex` / documented test doubles) — do not burn quota in unit tests.
+- New AI features: include spend-limit coverage and controller / orchestrator unit tests.
+- In-memory vector indexes are process-local — do not assume persistence across restarts.
+
+## Habits
+
+- Colocate tests with code; mirror existing naming (`*.integration.test.ts` when needed).
+- Prefer deterministic clocks / injected `now` where jobs depend on time.
+- Keep fixtures minimal — no real tenant catalogs from `.local/` in main-tree tests.
+
+## Enforcement
+
+- `pnpm test` / `test:coverage` in `validate:ci`
+- Cypress step in validate pipeline
+- Package-level `pnpm --filter <pkg> test` while iterating
+
+## References
+
+- [Vitest](https://vitest.dev/)
+- [Testing Library](https://testing-library.com/)
+- `docs/guides/e2e-validation-runbook.md`

@@ -1,0 +1,52 @@
+---
+description: pnpm workspaces, catalog:strict, turbo, package placement
+alwaysApply: true
+---
+
+# Monorepo
+
+## Workspace layout
+
+| Path | Role |
+|------|------|
+| `apps/*` | Deployable apps (api, web, workers, platform) |
+| `packages/*` | Shared `@repo/*` libraries |
+| `modules/*` | Optional compile-time extension modules |
+
+Declared in `pnpm-workspace.yaml` with **`catalogMode: strict`**.
+
+## Dependencies
+
+- Shared third-party versions: use **`catalog:`** in package.json — not raw version literals for catalogued packages.
+- Internal packages: **`workspace:*`**.
+- After dep changes: `pnpm run lint:deps` (syncpack) must pass; fix with `pnpm run lint:deps:fix` when appropriate.
+- Prefer adding a small `@repo/*` package over deep cross-app imports.
+
+## Tooling
+
+- Task runner: **turbo** (`turbo.json`). Root scripts orchestrate build/lint/typecheck/test.
+- Package manager: **pnpm** (see root `packageManager` field). Do not introduce npm/yarn lockfiles.
+- Format: Prettier + `pnpm terraform:fmt` for Terraform.
+
+## Adding packages
+
+1. Create under `packages/<name>` or `apps/<name>` with standard `package.json`, tsconfig extending `@repo/typescript-config`.
+2. Wire exports; add to Docker/workspace COPY lists if the package ships in images (`pnpm check:docker-workspace`).
+3. Keep catalogs aligned; run `pnpm lint:deps`.
+
+## Do not
+
+- Duplicate dependency versions outside the catalog
+- Put application HTTP servers under `packages/`
+- Commit `node_modules` or alternate lockfiles
+
+## Enforcement
+
+- `pnpm run lint:deps`
+- `pnpm check:docker-workspace` (when Docker layout changes)
+- `pnpm validate:ci`
+
+## References
+
+- [pnpm workspaces](https://pnpm.io/workspaces)
+- [pnpm catalogs](https://pnpm.io/catalogs)

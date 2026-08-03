@@ -1,0 +1,61 @@
+---
+description: Markdown taxonomy — docs/guides|reference|ai-platform|infrastructure|ui-design-manual or README.md only
+alwaysApply: true
+---
+
+# Docs taxonomy
+
+Platform markdown is centralized. New `.md` files must follow the path policy enforced by `pnpm check:docs-layout` (`scripts/check-docs-layout.ts`), which runs in `validate:ci`.
+
+## Allowed locations
+
+| Location | Purpose |
+|----------|---------|
+| `docs/guides/*.md` | Cross-cutting behavior guides (kebab-case, **no** `-guide` suffix) |
+| `docs/reference/*.md` | JSON contract SSOTs (entity, metric, query, data-hook, custom-view) |
+| `docs/ai-platform/**/*.md` | AI stack architecture and integration |
+| `docs/infrastructure/**/*.md` | GCP, CI/CD, WIF, workloads |
+| `docs/ui-design-manual/**/*.md` | Layout JSON handoff / recipes / SYNC |
+| `docs/README.md` | Index |
+| Root `README.md`, `AGENTS.md` | Monorepo overview / agent workload policy |
+| `.github/**/*.md` | GitHub docs |
+| `apps/**/README.md`, `packages/**/README.md`, `scripts/**/README.md` | Local package/app contracts only |
+
+Anywhere else: **only** `README.md` under apps/packages/scripts — not free-form guides.
+
+## Naming
+
+- Guides: `firestore-collections.md`, not `firestore-collections-guide.md`
+- Reference: contract name + `-definition.md` where applicable
+- Prefer linking from `docs/README.md` when adding a top-level guide/reference
+
+## Choosing a folder
+
+| If the doc is… | Put it in… |
+|----------------|------------|
+| How a subsystem works across apps | `docs/guides/` |
+| Import/export JSON shape for catalogs | `docs/reference/` |
+| AI controller, spend, RAG, chat | `docs/ai-platform/` |
+| Deploy, secrets, Terraform, workloads | `docs/infrastructure/` |
+| Layout/component JSON for designers/AI | `docs/ui-design-manual/` |
+| Package-local API surface | that package’s `README.md` |
+
+## Exceptions
+
+One-off paths must be added to `EXTRA_ALLOWLIST` in `scripts/check-docs-layout.ts` (rare). Do not invent new top-level doc folders without updating the checker and `docs/README.md`.
+
+## Do not
+
+- Leave planning / handoff markdown at repo root (except `README.md` / `AGENTS.md`)
+- Duplicate long guides inside packages (link to `docs/` instead)
+- Put tenant-specific docs in `docs/` — tenant notes stay under `.local/`
+
+## Enforcement
+
+- `pnpm check:docs-layout`
+- `pnpm validate:ci` / `pnpm validate:local`
+
+## References
+
+- Index: `docs/README.md`
+- Checker: `scripts/check-docs-layout.ts`

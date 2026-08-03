@@ -1,0 +1,43 @@
+---
+description: Composite indexes — generate, check, prune; no silent missing-index debt
+globs:
+  - packages/firestore-indexes/**
+  - firestore.indexes.json
+  - apps/api/**
+  - packages/query-engine/**
+alwaysApply: false
+---
+
+# Firestore indexes
+
+## Workflow
+
+1. Add or change queries (query engine, CRUD list filters/sorts, worker queries).
+2. Run `pnpm generate:firestore-indexes`.
+3. Commit updated `firestore.indexes.json`.
+4. Ensure `pnpm check:firestore-indexes` passes (generate + `git diff --exit-code`).
+5. Before large deploys, consider `pnpm prune:firestore-indexes` when documented as safe.
+
+Dynamic/runtime provisioning notes: `docs/guides/dynamic-firestore-indexes.md`.
+
+## Runtime
+
+- Missing-index errors should surface structured hints (collection, filters, sort, suggested fields) — do not swallow them silently.
+- Prefer designs that stay within composite-index limits; avoid arbitrary multi-field sorts without an index plan.
+
+## Do not
+
+- Hand-edit `firestore.indexes.json` inconsistently with the generator SSOT
+- Ship queries that only “work in emulator” without indexes
+- Disable index checks to green CI
+
+## Enforcement
+
+- `pnpm check:firestore-indexes`
+- `pnpm generate:firestore-indexes`
+- Query / API tests
+
+## References
+
+- [Firestore composite indexes](https://firebase.google.com/docs/firestore/query-data/indexing)
+- `docs/guides/dynamic-firestore-indexes.md`

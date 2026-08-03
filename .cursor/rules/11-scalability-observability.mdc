@@ -1,0 +1,48 @@
+---
+description: Pagination, indexes, caches, TanStack Query, structured timing — scale for production
+globs:
+  - apps/**
+  - packages/**
+alwaysApply: false
+---
+
+# Scalability and observability
+
+## Backend (Firestore / API)
+
+- Use **cursor pagination** (default limit 20, max 100). Honor `STRICT_QUERY_PAGINATION` where enabled.
+- After new list/query shapes: `pnpm generate:firestore-indexes` and keep `pnpm check:firestore-indexes` green. See `docs/guides/dynamic-firestore-indexes.md`.
+- No unbounded collection scans in handlers/workers. Prefer indexed queries.
+- Eliminate N+1: batch with `getAll` / multi-get / redesign joins. See `docs/guides/relational-data-system.md`.
+- In-process TTL caches via `@repo/shared-types` `createTtlCache` (roles, user access, entity definitions). Invalidate on writes. Env: `CACHE_TTL_MS`.
+- Rate limit via `@fastify/rate-limit` (`API_RATE_LIMIT_*`). Compress JSON responses.
+- Aggregations and metrics: follow `docs/guides/aggregations.md` and `docs/guides/metrics-consumption.md` — do not recompute expensive rollups on every request.
+
+## Frontend
+
+- TanStack Query: sensible `staleTime`, invalidate on mutations; catalog refresh patterns in `apps/web` / `docs/guides/performance-scaling.md`.
+- Virtualize long lists (`@tanstack/react-virtual`); debounce filter inputs (~300ms).
+- Rely on RR7 route-module code splitting; avoid shipping huge eager charts/entity trees.
+
+## Observability
+
+- Structured request timing (`ENABLE_PERF_LOGS`: `rbacMs`, `queryMs`, `hooksMs`, `totalMs`).
+- Prefer structured logs suitable for Cloud Logging; avoid noisy debug in hot loops.
+- AI jobs: inspect `/debugger/ai-jobs`; use workload run lineage for async work.
+
+## Do not
+
+- Add Redis / new distributed infra without an explicit platform decision (Phase B items stay deferred unless planned)
+- Ship admin APIs that return entire tenants without pagination
+- Ignore missing-index hints in logs
+
+## Enforcement
+
+- `docs/guides/performance-scaling.md`
+- `pnpm check:firestore-indexes`, API/web tests
+- `pnpm --filter api test`, `pnpm --filter web test`
+
+## References
+
+- [Firestore best practices](https://firebase.google.com/docs/firestore/best-practices)
+- [Google SRE — Monitoring distributed systems](https://sre.google/sre-book/monitoring-distributed-systems/)

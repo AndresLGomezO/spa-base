@@ -1,0 +1,43 @@
+---
+description: Strict TypeScript — no any, Zod at boundaries, exhaustive switches
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+## Defaults
+
+- Strict TypeScript across the monorepo (`@repo/typescript-config`).
+- Prefer **`unknown`** over `any`; narrow with Zod or type guards.
+- **Zod-first** at trust boundaries (HTTP body/query, env, Firestore converters, hook payloads).
+- Prefer `const` assertions, `readonly`, and immutable patterns where practical.
+
+## Control flow and types
+
+- Discriminated unions for variants; exhaustive `switch` with a `never` default.
+- Branded / opaque ids where they prevent mix-ups (job ids, tenant-scoped ids) — follow existing package patterns.
+- Named exports for shared utilities; avoid default exports for libraries.
+- Avoid barrel files that hurt tree-shaking or create cycles (`pnpm lint:circular`).
+
+## React / Fastify
+
+- Components and hooks: explicit props types; no implicit `any` in callbacks.
+- Fastify routes: `fastify-type-provider-zod` schemas for inputs/outputs where used.
+
+## Do not
+
+- Use `@ts-ignore` / `@ts-expect-error` without a short justification on the next line
+- Widen types to `any` to “make CI pass”
+- Duplicate Zod schemas in apps when `@repo/shared-types` / package schemas already exist
+
+## Enforcement
+
+- `pnpm typecheck`
+- `pnpm lint` (typescript-eslint)
+- `pnpm validate:ci`
+
+## References
+
+- [TypeScript Handbook — Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+- [Zod](https://zod.dev/)

@@ -1,0 +1,66 @@
+---
+description: Workload Manager — register every async trigger; withWorkloadRun; coverage check
+globs:
+  - apps/**
+  - packages/**
+  - .github/**
+  - "**/*.tf"
+alwaysApply: false
+---
+
+# Workload registry
+
+Policy source: `AGENTS.md`. Catalog: `packages/workload-registry/src/workload-registry.ts`.
+
+Every **Cloud Tasks queue**, **Cloud Scheduler job**, **Pub/Sub subscription**, **worker `/tasks/*` route**, and **in-process scheduler** MUST be:
+
+1. Registered in `packages/workload-registry/src/workload-registry.ts`
+2. Instrumented with `createWorkloadRunRecorder` / `withWorkloadRun` (`@repo/workload-runs`) at the async entry point
+
+## Lineage
+
+When enqueueing Cloud Tasks, propagate:
+
+- `X-Workload-Run-Parent-Id`
+- `X-Workload-Run-Root-Id`
+
+## Coverage
+
+Run before merging changes that add background work:
+
+```bash
+pnpm check:workload-coverage
+```
+
+(or `pnpm exec tsx scripts/check-workload-coverage.ts`)
+
+## Opt-out
+
+Only with an explicit comment next to the trigger:
+
+```ts
+// workload-registry:ignore reason=...
+```
+
+## Docs
+
+- `docs/infrastructure/workload-inventory.md`
+- `docs/infrastructure/workload-inventory-by-entity.md`
+- `docs/infrastructure/workload-system-catalog.md`
+
+## Do not
+
+- Add Terraform queues/schedulers without registry entries
+- Add worker routes that skip run recording
+- Use ignore comments to avoid inventory without a real reason
+
+## Enforcement
+
+- `pnpm check:workload-coverage`
+- Code review against `AGENTS.md`
+
+## References
+
+- `AGENTS.md`
+- [Cloud Scheduler](https://cloud.google.com/scheduler/docs)
+- [Pub/Sub](https://cloud.google.com/pubsub/docs)

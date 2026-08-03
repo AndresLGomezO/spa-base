@@ -1,0 +1,57 @@
+---
+description: AI I4–I7 — hash gates, ai_record_summaries, RBAC tools, browser-safe imports
+globs:
+  - packages/ai-engine/**
+  - packages/ai-context/**
+  - packages/ai-retrieval/**
+  - apps/worker-service/**
+  - packages/hooks/**
+alwaysApply: false
+---
+
+# AI context, memory, RAG (I4–I7)
+
+Guides: `docs/ai-platform/04-context-memory-rag.md`, `docs/ai-platform/07-document-extraction.md`.
+
+## I4 — Hash gating
+
+| Surface | Gate |
+|---------|------|
+| User memory | Content hash before upsert; clear Vertex cache names on change |
+| Record narrative | Regenerate only if `narratives[v].sourceHash !== contextHash` |
+| Section / template mutations | Invalidate tenant user memory caches |
+
+Do not rewrite docs or burn tokens when content is unchanged.
+
+## I5 — AI docs ≠ business docs
+
+Persist narratives / RAG / insights in **`ai_record_summaries`** (and related AI collections), not as first-class business entity fields. Reserved `aiSummary*` keys are aliases/helpers only.
+
+## I6 — RBAC on live reads
+
+Grounded-chat tools and section assembly filter by the **requesting user’s** permissions / field access. Job/spend read APIs need matching `*.read` / `*.run` permissions.
+
+## I7 — Browser-safe imports
+
+Web may import `@repo/ai-context/storage` only. Covered by web browser-safe import tests.
+
+## Generators
+
+- After UI builder / preset / schema changes: `pnpm generate:ai-context`
+- Keep `pnpm check:ai-context` green before merge
+- Document extraction: DLP + KMS + review flows in `07-document-extraction.md`
+
+## Vectors
+
+Use `@repo/ai-retrieval` `VectorIndexService` with tenant + access metadata on upsert/search.
+
+## Enforcement
+
+- `pnpm check:ai-context`
+- `pnpm --filter @repo/ai-context test`, grounded-chat / summary tests
+- `apps/web` browser-safe AI context import test
+
+## References
+
+- `docs/ai-platform/04-context-memory-rag.md`
+- `docs/ai-platform/README.md` (invariants)

@@ -1,0 +1,51 @@
+---
+description: pnpm validate:local gate — run relevant steps; keep the pipeline green
+alwaysApply: true
+---
+
+# Validation gate
+
+`pnpm validate:local` = `pnpm format && pnpm validate:ci`. Agents must not leave the tree in a state that would fail validation.
+
+## Policy
+
+1. Run the **inner step(s)** that cover the files you changed (table below).
+2. You do **not** need the full `validate:local` on every tiny edit — but those steps must still pass when run.
+3. Before declaring a code task done: ensure nothing you touched would fail `validate:ci` / `validate:local`.
+4. Prefer `pnpm --filter <pkg> test` / `typecheck` / `lint` while iterating; widen when changes cross packages.
+
+## `validate:ci` steps (from `scripts/validate.ts`)
+
+| Step | Command | Run when you change… |
+|------|---------|----------------------|
+| Build, typecheck, test:coverage, format check, lint | `turbo run build typecheck test:coverage format:check && turbo run lint -- --max-warnings 0` | Almost any TS/TSX/source |
+| Cypress E2E | `pnpm --filter web cypress` | Web routes, auth, critical UI flows |
+| Unused code | `pnpm run lint:unused` | Exports, packages, dead modules |
+| Circular deps | `pnpm run lint:circular` | Import graphs across packages |
+| i18n | `pnpm run i18n:validate -- --strict` | `apps/web` strings / locale files |
+| Duplicates | `pnpm run lint:duplicates` | Copied logic / large refactors |
+| Dep catalog | `pnpm run lint:deps` | `package.json` / workspace versions |
+| Docker workspace | `pnpm run check:docker-workspace` | Dockerfiles, workspace package layout |
+| Prod runtime | `pnpm run check:prod-runtime` | API/worker `esbuild` externals / deploy layout |
+| AI context | `pnpm run check:ai-context` | UI builder schema, presets, ai-context generators |
+| Docs path policy | `pnpm run check:docs-layout` | New/moved `.md` files |
+
+`validate:local` also runs `pnpm format` first.
+
+## Related checks (not always in validate, but required for those domains)
+
+| Check | When |
+|-------|------|
+| `pnpm check:workload-coverage` | New Cloud Tasks / Scheduler / Pub/Sub / `/tasks/*` / in-process schedulers |
+| `pnpm check:firestore-indexes` | New queries / composite index needs |
+| `pnpm terraform:fmt:check` | Terraform under `packages/infrastructure/terraform` |
+
+## Enforcement
+
+- CI runs `validate:ci` (includes `check:docs-layout`).
+- Precommit: `pnpm i18n:validate -- --strict` + terraform fmt check + `validate:ci`.
+
+## References
+
+- [Google Testing Blog — Troubleshoot a failing test](https://testing.googleblog.com/) — keep green builds sacred
+- Pipeline source: `scripts/validate.ts`

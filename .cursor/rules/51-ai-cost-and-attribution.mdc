@@ -1,0 +1,55 @@
+---
+description: AI I2/I3 — spend assert before model, record after success, attribution
+globs:
+  - packages/ai-engine/**
+  - packages/ai-context/**
+  - packages/ai-retrieval/**
+  - apps/api/src/ai/**
+  - apps/worker-service/src/ai/**
+alwaysApply: false
+---
+
+# AI cost and attribution (I2 / I3)
+
+Guide: `docs/ai-platform/03-cost-guards.md`.
+
+## Spend gate
+
+1. **API**: `assertAiSpendAllowed` (or equivalent) **before** enqueue — fast fail UX.
+2. **Worker controller**: assert again — authoritative.
+3. Run the model via `runAiRequest`.
+4. **`recordSpendUsage` only after success.** Ledger write failures must not fail a completed job (errors swallowed after success).
+
+If AI is disabled: failed job + `AiDisabledError` (do not call the model).
+
+## Attribution
+
+| Caller | `requestedBy` | Tenant ledger | User ledger | Role meters |
+|--------|---------------|---------------|-------------|-------------|
+| Interactive UI | Firebase UID | Yes | Yes | Yes |
+| System / nightly | `"system"` or empty | Yes | No | No |
+
+Use `isAttributableAiUserId` semantics — do not attribute system jobs to a fake user.
+
+## Limits
+
+- Tenant: `tenant.aiLimits` / spend collections under `tenants/{tenantId}/…`
+- Roles: `aiSpendLimits` on role catalog entries
+- Permissions gate features (`ai.chat.run`, etc.)
+
+## Do not
+
+- Call Vertex outside the controller “to save a round trip”
+- Record spend on failed model calls
+- Skip API-side guard because the worker will check
+
+## Enforcement
+
+- Spend unit tests in `@repo/ai-engine`
+- API route tests for 403 spend limits
+- Debugger: `/debugger/ai-jobs`
+
+## References
+
+- `docs/ai-platform/03-cost-guards.md`
+- [FinOps Foundation](https://www.finops.org/) — cost visibility for cloud AI

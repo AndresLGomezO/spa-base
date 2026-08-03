@@ -1,0 +1,51 @@
+---
+description: Firestore layering — Zod, converters, repository ports, Admin adapters
+globs:
+  - packages/firestore-converters/**
+  - packages/gcp-firebase/**
+  - packages/shared-types/**
+  - apps/api/**
+alwaysApply: false
+---
+
+# Firestore repository layer
+
+Canonical guide: `docs/guides/firestore-collections.md`.
+
+## Layering (required for new collections)
+
+1. **Zod schema** + collection name / version constants (`@repo/shared-types` or feature package)
+2. **Converter** + domain mapping (`@repo/firestore-converters`)
+3. **Repository interface** (same package; no Firestore SDK)
+4. **Adapters**: Firestore Admin in `@repo/gcp-firebase` + in-memory for tests
+5. **Wire** in `apps/api/src/server.ts` and worker entrypoints (`apps/worker-service/src/index.ts`, etc.)
+
+Tenant business data paths:
+
+```text
+tenants/{tenantId}/{collection}/{docId}
+```
+
+## Rules
+
+- Web never accesses Firestore for business documents (API-only).
+- Converters package must not import Firestore SDK.
+- New `packages/gcp-firebase/src/*repository*.ts` files must be added to the ESLint override that allows SDK imports in adapters.
+- Prefer versioned schemas + migrations in converters when documents evolve.
+
+## Do not
+
+- Skip the in-memory adapter (tests and production diverge)
+- Put repository implementations in apps
+- Mix AI narrative fields into business entity schemas (use `ai_record_summaries`)
+
+## Enforcement
+
+- Package ESLint configs
+- `pnpm --filter @repo/firestore-converters test`, `pnpm --filter @repo/gcp-firebase test`
+- Guide PR checklist in `docs/guides/firestore-collections.md`
+
+## References
+
+- [Firestore data model](https://firebase.google.com/docs/firestore/data-model)
+- `docs/guides/firestore-collections.md`

@@ -1,0 +1,52 @@
+---
+description: Package dependency direction, HTTP-only web, restricted imports
+globs:
+  - apps/**
+  - packages/**
+alwaysApply: false
+---
+
+# Package layering
+
+Dependencies flow **downward**. Lower layers never import apps.
+
+```text
+apps/web  --HTTP only-->  apps/api
+apps/api / workers  -->  @repo/gcp-firebase
+                         -->  @repo/firestore-converters
+                              -->  @repo/shared-types / @repo/entities / …
+```
+
+See `docs/guides/firestore-collections.md`.
+
+## Rules
+
+| Allowed | Forbidden |
+|---------|-----------|
+| Apps import `@repo/*` | Packages import `apps/*` |
+| Web → API over HTTP | Web reading/writing Firestore business docs |
+| `@repo/gcp-firebase` for Admin Firestore | `firebase-admin/firestore` / `firebase/firestore` in apps (use adapters) |
+| `@repo/ai-engine` public entrypoints | Apps importing `packages/ai-engine/src/clients/internal/**` |
+| Web: `@repo/ai-context/storage` | Bare `@repo/ai-context` in web (Node `fs` risk) |
+
+AI import matrix: `docs/ai-platform/01-architecture.md` (Import rules).
+
+## Persistence
+
+- Repository **interfaces** in `@repo/firestore-converters`
+- Firestore **implementations** in `@repo/gcp-firebase`
+- Wire in `apps/api/src/server.ts` and worker entrypoints
+
+When adding a Firestore repository file under `packages/gcp-firebase/src/`, update the ESLint allowlist override that permits SDK usage in adapter files.
+
+## Enforcement
+
+- Package ESLint configs (`apps/api`, `firestore-converters`, `gcp-firebase`, `ai-engine`)
+- `pnpm lint`, `pnpm lint:circular`
+- Browser-safe AI import tests in web
+
+## References
+
+- [Clean Architecture dependency rule](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- Guide: `docs/guides/firestore-collections.md`
+- AI: `docs/ai-platform/01-architecture.md`
