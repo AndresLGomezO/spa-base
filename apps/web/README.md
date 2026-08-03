@@ -108,7 +108,7 @@ Tenant colors and typography are applied at runtime from Firestore `appearance` 
 
 | Topic                                | Location                                                                                              |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| Full guide (palette → semantic → UI) | [docs/guides/theme-and-tenant-branding.md](../../docs/guides/theme-and-tenant-branding.md)              |
+| Full guide (palette → semantic → UI) | [docs/guides/theme-and-tenant-branding.md](../../docs/guides/theme-and-tenant-branding.md)            |
 | Theme package API                    | [packages/theme/README.md](../../packages/theme/README.md)                                            |
 | Appearance editor                    | `/settings/appearance` — [TenantAppearanceEditor](app/components/platform/TenantAppearanceEditor.tsx) |
 | Light / dark mode                    | `ThemeProvider` in [app/root.tsx](app/root.tsx), toggle in sidebar                                    |
