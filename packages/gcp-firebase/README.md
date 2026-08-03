@@ -39,6 +39,6 @@ Requires Firestore emulator for integration tests. Storage integration tests req
 
 ## Guides
 
-- [docs/firestore-collections-guide.md](../../docs/firestore-collections-guide.md)
-- [docs/gcs-storage-guide.md](../../docs/gcs-storage-guide.md)
-- [master-plans.md](../../docs/master-plans.md)
+- [docs/guides/firestore-collections.md](../../docs/guides/firestore-collections.md)
+- [docs/guides/gcs-storage.md](../../docs/guides/gcs-storage.md)
+-

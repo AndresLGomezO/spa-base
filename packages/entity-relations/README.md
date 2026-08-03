@@ -26,4 +26,4 @@ pnpm --filter @repo/entity-relations typecheck
 
 ## Guide
 
-[docs/relational-data-system-guide.md](../../docs/relational-data-system-guide.md) · [master-plans.md](../../docs/master-plans.md)
+[docs/guides/relational-data-system.md](../../docs/guides/relational-data-system.md)

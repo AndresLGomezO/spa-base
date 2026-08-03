@@ -1,6 +1,6 @@
 /**
  * Ensures layouts have a canonical root for their composition scope.
- * @see docs/UI-Builder-unification-master-plan.md
+ * @see docs/guides/advanced-ui-builder.md
  */
 import type { CompositionScope } from "../types/composition.js";
 import { resolveRootNodeKind } from "../types/composition.js";

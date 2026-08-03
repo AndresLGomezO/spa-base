@@ -2,8 +2,6 @@
 
 React Router 7 SPA with Firebase Auth, schema-driven entity UI, tenant settings, and TanStack Query caching.
 
-**Handoff:** [docs/phase-2-platform-handoff.md](../../docs/phase-2-platform-handoff.md)
-
 ---
 
 ## Local development
@@ -89,7 +87,7 @@ Components in [app/components/entity/](app/components/entity/README.md):
 
 Permissions via `useEntityPermissions` and `useFieldAccess`. No hardcoded entity imports — catalog from API.
 
-Guide: [docs/advanced-ui-builder-guide.md](../../docs/advanced-ui-builder-guide.md)
+Guide: [docs/guides/advanced-ui-builder.md](../../docs/guides/advanced-ui-builder.md)
 
 ---
 
@@ -110,7 +108,7 @@ Tenant colors and typography are applied at runtime from Firestore `appearance` 
 
 | Topic                                | Location                                                                                              |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| Full guide (palette → semantic → UI) | [docs/theme-and-tenant-branding-guide.md](../../docs/theme-and-tenant-branding-guide.md)              |
+| Full guide (palette → semantic → UI) | [docs/guides/theme-and-tenant-branding.md](../../docs/guides/theme-and-tenant-branding.md)              |
 | Theme package API                    | [packages/theme/README.md](../../packages/theme/README.md)                                            |
 | Appearance editor                    | `/settings/appearance` — [TenantAppearanceEditor](app/components/platform/TenantAppearanceEditor.tsx) |
 | Light / dark mode                    | `ThemeProvider` in [app/root.tsx](app/root.tsx), toggle in sidebar                                    |
@@ -165,6 +163,6 @@ pnpm --filter web typecheck
 ## Related docs
 
 - [apps/api/README.md](../api/README.md)
-- [docs/theme-and-tenant-branding-guide.md](../../docs/theme-and-tenant-branding-guide.md)
-- [docs/e2e-validation-runbook.md](../../docs/e2e-validation-runbook.md)
-- [docs/codebase-map.md](../../docs/codebase-map.md)
+- [docs/guides/theme-and-tenant-branding.md](../../docs/guides/theme-and-tenant-branding.md)
+- [docs/guides/e2e-validation-runbook.md](../../docs/guides/e2e-validation-runbook.md)
+- [docs/guides/codebase-map.md](../../docs/guides/codebase-map.md)

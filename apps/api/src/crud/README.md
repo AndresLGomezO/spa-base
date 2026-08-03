@@ -94,7 +94,7 @@ GET /api/workItem?query={"filter":[{"field":"batchId","operator":"==","value":"b
 GET /api/workItem?query={"sort":[{"field":"createdAt","direction":"desc"}]}
 ```
 
-Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED`. See [Query Engine Guide](../../../docs/query-engine-guide.md).
+Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED`. See [Query Engine Guide](../../../docs/guides/query-engine.md).
 
 ### Firestore (production)
 
@@ -108,7 +108,7 @@ Port: [`TenantScopedEntityRepository`](../../../../packages/firestore-converters
 
 ### Lifecycle hooks (10.4)
 
-CRUD handlers run six lifecycle hook points per operation. See [Hooks System Guide](../../../docs/hooks-system-guide.md).
+CRUD handlers run six lifecycle hook points per operation. See [Hooks System Guide](../../../docs/guides/hooks-system.md).
 
 | Event                   | When                |
 | ----------------------- | ------------------- |

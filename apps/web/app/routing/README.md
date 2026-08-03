@@ -50,4 +50,4 @@ Entity routes call `useRefreshEntityCatalogOnMount` so Model Builder changes app
 
 When no tenants exist, the sidebar shows **Home** only and the main area shows a create-tenant prompt (superadmin) or a contact-admin message (members).
 
-Branding from `tenantAppearance` is applied globally by [`TenantBrandingProvider`](../theme/TenantBrandingProvider.tsx). See [theme-and-tenant-branding-guide.md](../../../docs/theme-and-tenant-branding-guide.md).
+Branding from `tenantAppearance` is applied globally by [`TenantBrandingProvider`](../theme/TenantBrandingProvider.tsx). See [theme-and-tenant-branding.md](../../../docs/guides/theme-and-tenant-branding.md).

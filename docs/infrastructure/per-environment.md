@@ -26,7 +26,7 @@ pnpm --filter api dev
 pnpm --filter web dev
 ```
 
-Or: `pnpm dev:docker` (see [firestore-collections-guide.md](../firestore-collections-guide.md) for Docker networking).
+Or: `pnpm dev:docker` (see [firestore-collections.md](../guides/firestore-collections.md) for Docker networking).
 
 ### API (`apps/api/.env.dev`)
 
@@ -103,4 +103,4 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 - [bootstrap-new-gcp-account.md](./bootstrap-new-gcp-account.md)
 - [environment-variables.md](./environment-variables.md)
 - [deployment.md](./deployment.md)
-- [gcs-storage-guide.md](../gcs-storage-guide.md)
+- [gcs-storage.md](../guides/gcs-storage.md)

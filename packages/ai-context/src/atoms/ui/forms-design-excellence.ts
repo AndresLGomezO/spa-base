@@ -47,12 +47,12 @@ Reference patterns for rich wizard forms — adapt to the current entity fields.
 { "kind": "wizard-progress", "variant": "steps", "stepLabel": { "show": true, "position": "right", "bold": true } }
 \`\`\`
 
-**Progress bar (\`bar\`)**:
+
 \`\`\`json
 { "kind": "wizard-progress", "variant": "bar", "barTrackColor": "muted", "barFillColor": "primary" }
 \`\`\`
 
-**Numbered stepper (\`stepper\`)**:
+
 \`\`\`json
 {
   "kind": "wizard-progress",

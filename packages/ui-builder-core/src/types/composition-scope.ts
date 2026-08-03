@@ -1,6 +1,6 @@
 /**
  * Maps fine-grained design surfaces to composition scopes.
- * @see docs/UI-Builder-unification-master-plan.md §6
+ * @see docs/guides/advanced-ui-builder.md §6
  */
 import type { CompositionScope } from "./composition.js";
 import type { DesignSurface } from "./design-surface.js";

@@ -24,8 +24,8 @@ See [`tenant-scoped-repository-contract.ts`](./tenant-scoped-repository-contract
 
 Firestore path: `tenants/{tenantId}/{collection}/{documentId}`.
 
-Converters use `createVersionedConverter` with `_schemaVersion` on records (see [entity-system-guide.md](../../../../docs/entity-system-guide.md)).
+Converters use `createVersionedConverter` with `_schemaVersion` on records (see [entity-system.md](../../../../docs/guides/entity-system.md)).
 
 ## Guide
 
-[firestore-collections-guide.md](../../../../docs/firestore-collections-guide.md)
+[firestore-collections.md](../../../../docs/guides/firestore-collections.md)

@@ -31,7 +31,7 @@ For query-backed metrics, `sourceModel` must equal the query's `sourceEntity`. M
 2. **Query-backed metrics** — create or import the query first (Settings → Query Builder), then create metric → source type **Custom query** → pick an ACTIVE `limitMode: "all"` query. `sourceModel` is set from the query's entity.
 3. **Wire layouts** — bind `metricDefinitionId` in Design layout ([metric bindings](./metric-bindings.md)). Query-backed and entity-backed definitions use the same binding shapes at runtime.
 
-Portable JSON: [metric-definition-json.md](../../metric-definition-json.md) (`sourceQueryDefinitionId`). Query catalog: [entity-query-definition-json.md](../../entity-query-definition-json.md).
+Portable JSON: [metric-definition.md](../../reference/metric-definition.md) (`sourceQueryDefinitionId`). Query catalog: [entity-query-definition.md](../../reference/entity-query-definition.md).
 
 ---
 

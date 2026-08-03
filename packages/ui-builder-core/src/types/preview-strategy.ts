@@ -1,6 +1,6 @@
 /**
  * Preview strategy: how a builder instance simulates constraints (decoupled from composition scope).
- * @see docs/UI-Builder-unification-master-plan.md §15.4, §15.11
+ * @see docs/guides/advanced-ui-builder.md §15.4, §15.11
  */
 
 export type PreviewDevice = "mobile" | "tablet" | "desktop";

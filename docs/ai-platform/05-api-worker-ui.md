@@ -78,6 +78,21 @@ Dockerfile.dev must `COPY packages/ai-retrieval/package.json` (and other workspa
 
 ---
 
+## UI Builder AI (list surface — as-built)
+
+Stepped UI-builder generation is live for the **list** designer (table / card / expandable). Other surfaces still use legacy single-shot or have no AI controls yet.
+
+| Feature | Stepped orchestrator | Suggestion persistence | Web AI controls | Apply to editor |
+|---|---|---|---|---|
+| **List** | ✅ | ✅ `sliceData` | ✅ `ItemListDesignerAiControls` | ✅ `mergeListSliceForApply` |
+| Forms / main / detail / metrics / data model | ❌ | ❌ | ❌ / scaffold | ❌ |
+
+**Flow:** Web `POST /api/ai/ui-builder` → sync `tenant_ai_contexts` → `ai_jobs` → Cloud Tasks `process-ai-ui-builder` → worker orchestrator (`packages/ai-engine/src/ui-builder-orchestrator/`) multi-step Vertex → `ui_builder_ai_suggestions` → web poll + validate + apply.
+
+**Key packages:** `ai-engine` (orchestrator), `ai-context` (fragments), `ui-builder-core` (Zod layouts), `entities` (`DesignLayoutSliceData` / `validateDesignLayoutSlice`). Context doc IDs: `theme`, `entityCatalog`, `entity__{entityName}`.
+
+---
+
 ## Web UI map
 
 | Surface | Path | Gate |

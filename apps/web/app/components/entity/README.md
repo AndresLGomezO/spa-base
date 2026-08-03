@@ -2,7 +2,7 @@
 
 Registry-driven CRUD UI built from `GET /api/entities` catalog metadata and `@repo/ui-builder`.
 
-See [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md).
+See [Advanced UI Builder Guide](../../../../docs/guides/advanced-ui-builder.md).
 
 ## Components
 
@@ -44,6 +44,6 @@ Per-entity list layout is configured on **Settings → Design layout → Item li
 
 ## Related
 
-- [relational-data-system-guide.md](../../../../docs/relational-data-system-guide.md)
-- [Advanced RBAC Guide](../../../../docs/advanced-rbac-guide.md)
+- [relational-data-system.md](../../../../docs/guides/relational-data-system.md)
+- [Advanced RBAC Guide](../../../../docs/guides/advanced-rbac.md)
 - [Web app README](../../../README.md)

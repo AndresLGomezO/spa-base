@@ -1,6 +1,6 @@
 /**
  * Separates layout-affecting properties from visual style properties.
- * @see docs/UI-Builder-unification-master-plan.md §8
+ * @see docs/guides/advanced-ui-builder.md §8
  */
 import type { StylePropertyKey, StyleRule } from "../styles/style-types.js";
 import type { LayoutAlign, ColumnStackDirection } from "./layout.js";

@@ -41,6 +41,7 @@
     "check:ai-context": "tsx scripts/generate-ai-context.ts && git diff --exit-code packages/ai-context/src/generated/",
     "check:workload-coverage": "tsx scripts/check-workload-coverage.ts",
     "check:docker-workspace": "tsx scripts/check-docker-workspace.ts",
+    "check:docs-layout": "tsx scripts/check-docs-layout.ts",
     "check:prod-runtime": "node scripts/check-prod-runtime.mjs",
     "validate": "tsx scripts/validate.ts",
     "validate:ci": "tsx scripts/validate.ts --ci",

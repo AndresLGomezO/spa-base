@@ -199,4 +199,4 @@ Run verification on each environment before promoting traffic.
 - Custom domain on Firebase Hosting
 - Secret Manager for all sensitive API configuration
 
-See [deployment.md](./deployment.md) and root [docs/next-phase-backlog.md](../next-phase-backlog.md).
+See [deployment.md](./deployment.md).

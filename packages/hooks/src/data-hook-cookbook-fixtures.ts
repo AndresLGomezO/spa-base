@@ -1,7 +1,7 @@
 import type { PortableDataHookDefinition } from "./data-hook-definition-json.js";
 
 /**
- * Cookbook hook definitions from docs/data-hook-definition-json.md §11.
+ * Cookbook hook definitions from docs/reference/data-hook-definition.md §11.
  * Used by tests to keep the spec and Zod schemas in sync.
  */
 export const DATA_HOOK_COOKBOOK_FIXTURES: readonly PortableDataHookDefinition[] =

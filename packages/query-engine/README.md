@@ -30,4 +30,4 @@ pnpm --filter @repo/query-engine typecheck
 
 ## Guide
 
-[docs/query-engine-guide.md](../../docs/query-engine-guide.md) · [master-plans.md](../../docs/master-plans.md)
+[docs/guides/query-engine.md](../../docs/guides/query-engine.md)

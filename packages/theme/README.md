@@ -2,7 +2,7 @@
 
 Design tokens, semantic color system, tenant branding helpers, and light/dark color scheme for the platform.
 
-**Full guide:** [docs/theme-and-tenant-branding-guide.md](../../docs/theme-and-tenant-branding-guide.md)
+**Full guide:** [docs/guides/theme-and-tenant-branding.md](../../docs/guides/theme-and-tenant-branding.md)
 
 ---
 

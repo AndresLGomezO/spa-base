@@ -2,8 +2,6 @@
 
 Fastify HTTP API for the multi-tenant platform. Handles auth validation, auto-generated CRUD, query engine, entity definitions, hooks, roles, modules, and platform admin.
 
-**Handoff:** [docs/phase-2-platform-handoff.md](../../docs/phase-2-platform-handoff.md)
-
 ---
 
 ## Routes overview
@@ -184,7 +182,7 @@ Seed user roles on Firestore `users/{uid}`:
 
 Superadmin: `"platformRole": "superadmin"`.
 
-See [packages/rbac/README.md](../../packages/rbac/README.md) and [docs/advanced-rbac-guide.md](../../docs/advanced-rbac-guide.md).
+See [packages/rbac/README.md](../../packages/rbac/README.md) and [docs/guides/advanced-rbac.md](../../docs/guides/advanced-rbac.md).
 
 User access profiles cached 60s (`CACHE_TTL_MS`); invalidated on admin user PATCH.
 
@@ -200,7 +198,7 @@ User access profiles cached 60s (`CACHE_TTL_MS`); invalidated on admin user PATC
 | Strict pagination | `STRICT_QUERY_PAGINATION` (default `true` in test)                                  |
 | Cache TTL         | `CACHE_TTL_MS` (default 60000)                                                      |
 
-See [docs/performance-scaling-guide.md](../../docs/performance-scaling-guide.md).
+See [docs/guides/performance-scaling.md](../../docs/guides/performance-scaling.md).
 
 ---
 
@@ -403,6 +401,6 @@ pnpm --filter api typecheck
 ## Related docs
 
 - [src/crud/README.md](./src/crud/README.md)
-- [docs/entity-system-guide.md](../../docs/entity-system-guide.md)
-- [docs/query-engine-guide.md](../../docs/query-engine-guide.md)
-- [docs/e2e-validation-runbook.md](../../docs/e2e-validation-runbook.md)
+- [docs/guides/entity-system.md](../../docs/guides/entity-system.md)
+- [docs/guides/query-engine.md](../../docs/guides/query-engine.md)
+- [docs/guides/e2e-validation-runbook.md](../../docs/guides/e2e-validation-runbook.md)

@@ -4,7 +4,7 @@ Pure **entity definition layer** for the platform. Declares business data models
 
 This package has **no dependencies on Firestore, Fastify, or React**. Downstream layers (CRUD API, DAL, RBAC, dynamic UI) consume its outputs without this package knowing about them.
 
-See also: [Entity System Guide](../../docs/entity-system-guide.md) · [master-plans.md](../../docs/master-plans.md)
+See also: [Entity System Guide](../../docs/guides/entity-system.md)
 
 ---
 
@@ -27,7 +27,7 @@ Loan.metadata.collection; // "loans"
 Loan.metadata.permissions; // ["loan.read", "loan.create", ...]
 ```
 
-**Static entities** are defined in optional compile-time modules (`defineModule()`). **Dynamic entities** are created per tenant via Model Builder — see [Dynamic Entity Builder Guide](../../docs/dynamic-entity-builder-guide.md). Default bootstrap uses `modules: []` in `apps/platform/app.config.ts`.
+**Static entities** are defined in optional compile-time modules (`defineModule()`). **Dynamic entities** are created per tenant via Model Builder — see [Dynamic Entity Builder Guide](../../docs/guides/dynamic-entity-builder.md). Default bootstrap uses `modules: []` in `apps/platform/app.config.ts`.
 
 ---
 
@@ -87,7 +87,7 @@ Developers must **not** define these in `fields`. TypeScript rejects configs tha
 
 Scalar fields (`string`, `number`, `boolean`, `date`, `enum`) and file fields (`image`, `document`) may set `isArray: true` to store `T[]` (for example tags or multiple attachments). Relation fields cannot be arrays. Array fields use Firestore `array-contains` for filters; `string[]` and `enum[]` support normalized token search mirrors.
 
-See [Relational Data System Guide](../../docs/relational-data-system-guide.md) for relation config (`target`, `type`, `onDelete`, join collections).
+See [Relational Data System Guide](../../docs/guides/relational-data-system.md) for relation config (`target`, `type`, `onDelete`, join collections).
 
 **Date convention:** `type: "date"` stores ISO strings, not `Date` objects. This matches the User model and Firestore serialization. See [workaround](#dates-are-iso-strings-not-date-objects) below.
 
@@ -110,13 +110,13 @@ Exposed on `entity.metadata.permissions` as a typed `as const` tuple for RBAC.
 
 ### Entity registry
 
-`registerEntity(entity)` / `getEntity(name)` / `getAllEntities()` hold defined entities. Modules register entities via `loadApp()` from `@repo/modules` at platform bootstrap — see [Module Extension Guide](../../docs/module-extension-guide.md). Registry values are intentionally widened to `AnyDefinedEntity` — see [registry workaround](#entity-registry-type-widening).
+`registerEntity(entity)` / `getEntity(name)` / `getAllEntities()` hold defined entities. Modules register entities via `loadApp()` from `@repo/modules` at platform bootstrap — see [Module Extension Guide](../../docs/guides/module-extension.md). Registry values are intentionally widened to `AnyDefinedEntity` — see [registry workaround](#entity-registry-type-widening).
 
 ---
 
 ## Integration (delivered)
 
-CRUD, Firestore DAL, RBAC, Query Engine, relations, and dynamic UI all consume this package today. See [entity-system-guide.md](../../docs/entity-system-guide.md) and [master-plans.md](../../docs/master-plans.md).
+CRUD, Firestore DAL, RBAC, Query Engine, relations, and dynamic UI all consume this package today. See [entity-system.md](../../docs/guides/entity-system.md).
 
 ```ts
 // POST — validate with createSchema; inject system fields before persist
@@ -129,7 +129,7 @@ entity.updateSchema.safeParse(request.body);
 entity.metadata.permissions;
 ```
 
-Persisted records add `_schemaVersion` in `@repo/firestore-converters` (see [firestore-collections-guide.md](../../docs/firestore-collections-guide.md)).
+Persisted records add `_schemaVersion` in `@repo/firestore-converters` (see [firestore-collections.md](../../docs/guides/firestore-collections.md)).
 
 ---
 

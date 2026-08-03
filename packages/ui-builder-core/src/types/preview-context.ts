@@ -1,6 +1,6 @@
 /**
  * Preview context configuration for unified builder instances.
- * @see docs/UI-Builder-refactor-enhancement.md
+ * @see docs/guides/advanced-ui-builder.md
  */
 import type { CompositionScope } from "./composition.js";
 import type { DesignSurface } from "./design-surface.js";

@@ -11,7 +11,7 @@ Permission-based role access control for the platform.
 | **Platform role** | Global role (e.g. superadmin bypass)                |
 | **Tenant role**   | Role scoped to one tenant via `users/{uid}.tenants` |
 
-Tenant role **definitions** live at `tenants/{tenantId}/roles/{roleId}`. Global templates at `roles/{name}` (`tenantId: null`) are seed-only. See [docs/advanced-rbac-guide.md](../../docs/advanced-rbac-guide.md).
+Tenant role **definitions** live at `tenants/{tenantId}/roles/{roleId}`. Global templates at `roles/{name}` (`tenantId: null`) are seed-only. See [docs/guides/advanced-rbac.md](../../docs/guides/advanced-rbac.md).
 
 Permissions are generated automatically per entity in `@repo/entities` / `@repo/shared-types`.
 
@@ -103,7 +103,7 @@ The API returns **expanded** permissions from `GET /auth/validate`. The web app 
 
 ## Related
 
-- [Advanced RBAC guide](../../docs/advanced-rbac-guide.md)
-- [Entity system guide](../../docs/entity-system-guide.md)
+- [Advanced RBAC guide](../../docs/guides/advanced-rbac.md)
+- [Entity system guide](../../docs/guides/entity-system.md)
 - [API RBAC wiring](../../apps/api/src/rbac/)
-- [master-plans.md](../../docs/master-plans.md)
+-

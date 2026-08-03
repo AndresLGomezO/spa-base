@@ -24,4 +24,4 @@ pnpm --filter @repo/modules typecheck
 
 ## Guide
 
-[docs/module-extension-guide.md](../../docs/module-extension-guide.md) · [master-plans.md](../../docs/master-plans.md)
+[docs/guides/module-extension.md](../../docs/guides/module-extension.md)

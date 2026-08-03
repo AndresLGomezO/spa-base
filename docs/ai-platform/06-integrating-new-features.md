@@ -84,8 +84,7 @@ Tools themselves are free; planner/synthesis tokens still meter under `chat`. He
 
 The insights platform is **domain-agnostic**. Finance vocabulary (spending, payments, products), healthcare, legal, etc. live only in **tenant catalog JSON** — never hardcoded in `apps/` or `packages/`.
 
-Adding a new surface requires **only**:
-
+Adding a new surface requires 
 1. **Entity JSON** (existing pattern) — insight entity + any signal/summary entities.
 2. **Data-hooks** (existing pattern) — signals, insight generation, portfolio narrative, invalidate-on-change.
 3. **New `insight-surface-definition` JSON** under `catalogs/insight-surfaces/` (id, labels, insight entity, scope, summary fields, chat blurb, refresh targets).
@@ -177,7 +176,7 @@ If the cache is a new collection: schema → converter contract → Admin repo �
 
 Reuse existing relational stack:
 
-1. Entity relations / joins already in platform (`docs/relational-data-system-guide.md`).
+1. Entity relations / joins already in platform (`docs/guides/relational-data-system.md`).
 2. Hook walks parent + children → single `context` object (`relations.products[]`, etc.).
 3. Portfolio-level doc (e.g. `portfolioSettings__{id}`) for rollups (already used for loans/incomes variants).
 4. Chat: `getRecord` + semantic search on rollup RAG text.

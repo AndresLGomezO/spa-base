@@ -98,6 +98,10 @@ const VALIDATE_CI_STEPS: ValidateStep[] = [
     label: "AI context fragments",
     command: "pnpm run check:ai-context",
   },
+  {
+    label: "Docs path policy",
+    command: "pnpm run check:docs-layout",
+  },
 ];
 
 function runStep(step: ValidateStep): Promise<{ ok: boolean; output: string }> {

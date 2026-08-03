@@ -210,8 +210,7 @@ Embeddings run synchronously on the worker (no dedicated Cloud Tasks embed queue
 
 ## Recommended pipeline for new “insight” domains
 
-Example: **transaction insights** or **rate vs benchmark**:
-
+Example: **transaction insights** or 
 ```text
 Domain hook / scheduled job
   → assemble relational + external snapshot into context (JSON)

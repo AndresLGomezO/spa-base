@@ -2,19 +2,19 @@
 
 Tenant-scoped business models defined with `defineEntity()` from `@repo/entities`. Each file exports one entity plus its schemas, types, collection constant, permissions, and optional `ui` metadata for the Advanced UI Builder.
 
-See: [@repo/entities README](../../../entities/README.md) · [Entity System Guide](../../../../docs/entity-system-guide.md) · [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md)
+See: [@repo/entities README](../../../entities/README.md) · [Entity System Guide](../../../../docs/guides/entity-system.md) · [Advanced UI Builder Guide](../../../../docs/guides/advanced-ui-builder.md)
 
 ---
 
 ## Adding a new static entity (optional module path)
 
-For tenant-defined models, use **Model Builder** — [dynamic-entity-builder-guide.md](../../../../docs/dynamic-entity-builder-guide.md).
+For tenant-defined models, use **Model Builder** — [dynamic-entity-builder.md](../../../../docs/guides/dynamic-entity-builder.md).
 
 For compile-time entities:
 
 1. Create entity in `modules/{name}/src/entities/{entity}.ts` (or legacy `shared-types` path).
 2. Register via module in `apps/platform/app.config.ts`.
-3. Wire Firestore converter — [firestore-collections-guide.md](../../../../docs/firestore-collections-guide.md).
+3. Wire Firestore converter — [firestore-collections.md](../../../../docs/guides/firestore-collections.md).
 4. Add composite indexes for FK fields if needed.
 
 ### Relation field example

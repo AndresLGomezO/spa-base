@@ -1,6 +1,6 @@
 /**
  * Composition scopes for the unified UI builder.
- * @see docs/UI-Builder-unification-master-plan.md
+ * @see docs/guides/advanced-ui-builder.md
  */
 export type CompositionScope = "component" | "block" | "section" | "screen";
 

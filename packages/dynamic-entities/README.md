@@ -27,4 +27,4 @@ pnpm --filter @repo/dynamic-entities typecheck
 
 ## Guide
 
-[docs/dynamic-entity-builder-guide.md](../../docs/dynamic-entity-builder-guide.md) · [master-plans.md](../../docs/master-plans.md)
+[docs/guides/dynamic-entity-builder.md](../../docs/guides/dynamic-entity-builder.md)
