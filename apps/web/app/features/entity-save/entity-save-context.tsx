@@ -189,6 +189,7 @@ export function EntitySaveManagerProvider({
                   createPrefillPopulated: request.createPrefillPopulated,
                   draftValues: request.draftValues,
                   draftFieldErrors: fieldErrors,
+                  skipRecordLoad: true,
                 });
               },
             },

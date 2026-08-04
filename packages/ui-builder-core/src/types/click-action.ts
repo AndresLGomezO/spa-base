@@ -85,6 +85,8 @@ export type ResolvedComponentClickTarget =
       readonly createPrefillPopulated?: Readonly<
         Record<string, Record<string, unknown> | null>
       >;
+      /** Optimistic edit values (e.g. clicked query/list row) shown before getById hydrates. */
+      readonly draftValues?: Readonly<Record<string, unknown>>;
       readonly formDesignId?: string;
     };
 

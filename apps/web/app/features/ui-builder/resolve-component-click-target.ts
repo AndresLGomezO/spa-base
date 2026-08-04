@@ -261,6 +261,7 @@ function resolveRecordDetailHref(
 function resolveRecordEditModal(
   scope: ResolvedEntityNavigationScope,
   formDesignId?: string,
+  draftValues?: Readonly<Record<string, unknown>>,
 ): ResolvedComponentClickTarget | null {
   if (!scope.recordId) {
     return null;
@@ -271,6 +272,7 @@ function resolveRecordEditModal(
     entityName: scope.entityName,
     mode: "edit",
     recordId: scope.recordId,
+    ...(draftValues ? { draftValues } : {}),
     ...(formDesignId ? { formDesignId } : {}),
   };
 }
@@ -317,6 +319,7 @@ function resolveEntityViewTarget(
   scope: ResolvedEntityNavigationScope | null,
   linkState: EntityReturnToState | undefined,
   formDesignId?: string,
+  draftValues?: Readonly<Record<string, unknown>>,
 ): ResolvedComponentClickTarget | null {
   if (!scope) {
     return null;
@@ -326,7 +329,7 @@ function resolveEntityViewTarget(
     case "recordDetail":
       return resolveRecordDetailHref(scope, linkState);
     case "recordEditForm":
-      return resolveRecordEditModal(scope, formDesignId);
+      return resolveRecordEditModal(scope, formDesignId, draftValues);
     case "entityList":
       return resolveEntityListHref(scope, linkState);
   }
@@ -384,6 +387,7 @@ export function resolveComponentClickTarget(options: {
       options.action.view === "recordEditForm"
         ? options.action.formDesignId
         : undefined,
+      options.action.view === "recordEditForm" ? options.item : undefined,
     );
   }
 

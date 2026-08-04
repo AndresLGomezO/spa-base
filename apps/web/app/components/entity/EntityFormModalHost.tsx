@@ -172,6 +172,7 @@ function EntityFormModalHostInner({
               recordId={request.recordId ?? ""}
               draftValues={request.draftValues}
               draftFieldErrors={request.draftFieldErrors}
+              skipRecordLoad={request.skipRecordLoad}
               formDesignId={formDesignId}
               {...formModalSharedProps}
             />

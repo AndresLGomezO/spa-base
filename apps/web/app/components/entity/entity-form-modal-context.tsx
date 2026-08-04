@@ -20,6 +20,12 @@ export interface EntityFormModalRequest {
   readonly formDesignId?: string;
   readonly draftValues?: Readonly<Record<string, unknown>>;
   readonly draftFieldErrors?: Readonly<Record<string, string>>;
+  /**
+   * When true with edit + draftValues, skip getById (used for failed-save review
+   * so user edits are preserved). Click-to-edit passes draftValues without this
+   * so the row can paint immediately while the record still hydrates.
+   */
+  readonly skipRecordLoad?: boolean;
   readonly onClose?: () => void;
 }
 

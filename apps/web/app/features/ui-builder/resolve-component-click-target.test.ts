@@ -221,6 +221,7 @@ describe("resolveComponentClickTarget", () => {
       entityName: "order",
       mode: "edit",
       recordId: "order-1",
+      draftValues: { id: "order-1" },
     });
   });
 

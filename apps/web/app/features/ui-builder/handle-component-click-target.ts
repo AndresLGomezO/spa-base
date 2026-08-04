@@ -23,6 +23,7 @@ function toEntityFormModalRequest(
     ...(target.createPrefillPopulated
       ? { createPrefillPopulated: target.createPrefillPopulated }
       : {}),
+    ...(target.draftValues ? { draftValues: target.draftValues } : {}),
     formDesignId: target.formDesignId,
   };
 }

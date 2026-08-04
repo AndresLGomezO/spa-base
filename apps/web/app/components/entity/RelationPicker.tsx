@@ -6,7 +6,7 @@ import {
   type EntityName,
 } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
-import { listEntity } from "../../lib/api-client";
+import { getEntity, listEntity } from "../../lib/api-client";
 
 interface RelationPickerProps {
   readonly entityName: EntityName;
@@ -31,6 +31,14 @@ interface RelationOption {
   readonly record: Record<string, unknown>;
 }
 
+function toRelationOption(item: Record<string, unknown>): RelationOption {
+  return {
+    id: String(item.id),
+    label: typeof item.name === "string" ? item.name : String(item.id),
+    record: item,
+  };
+}
+
 export function RelationPicker({
   entityName,
   fieldName,
@@ -47,6 +55,7 @@ export function RelationPicker({
   const [options, setOptions] = useState<readonly RelationOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const inputId = `${entityName}-${fieldName}`;
+  const selectedId = typeof value === "string" ? value : "";
 
   useEffect(() => {
     let cancelled = false;
@@ -57,13 +66,36 @@ export function RelationPicker({
           limit: 100,
         });
         if (cancelled) return;
-        setOptions(
-          result.items.map((item) => ({
-            id: String(item.id),
-            label: typeof item.name === "string" ? item.name : String(item.id),
-            record: item,
-          })),
-        );
+
+        const listed = result.items.map(toRelationOption);
+        const hasSelected =
+          selectedId.length === 0 ||
+          listed.some((option) => option.id === selectedId);
+
+        if (hasSelected) {
+          setOptions(listed);
+          return;
+        }
+
+        try {
+          const selected = await getEntity<Record<string, unknown>>(
+            targetEntity,
+            selectedId,
+          );
+          if (cancelled) return;
+          setOptions([toRelationOption(selected), ...listed]);
+        } catch {
+          if (cancelled) return;
+          // Keep the raw id selectable even if the target record cannot be loaded.
+          setOptions([
+            {
+              id: selectedId,
+              label: selectedId,
+              record: { id: selectedId },
+            },
+            ...listed,
+          ]);
+        }
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -74,7 +106,7 @@ export function RelationPicker({
     return () => {
       cancelled = true;
     };
-  }, [targetEntity]);
+  }, [selectedId, targetEntity]);
 
   return (
     <div className="flex flex-col gap-1">
@@ -92,7 +124,7 @@ export function RelationPicker({
         }
         className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm"
         disabled={isLoading || readOnly}
-        value={typeof value === "string" ? value : ""}
+        value={selectedId}
         onChange={(event) => {
           const nextValue = event.target.value;
           if (!nextValue) {

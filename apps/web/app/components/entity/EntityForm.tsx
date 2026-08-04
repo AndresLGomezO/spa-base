@@ -68,6 +68,8 @@ interface EntityFormProps {
   >;
   readonly draftValues?: Readonly<Record<string, unknown>>;
   readonly draftFieldErrors?: Readonly<Record<string, string>>;
+  /** When true, keep draftValues and do not fetch the edit record. */
+  readonly skipRecordLoad?: boolean;
   readonly formDesignId?: string;
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
@@ -85,6 +87,7 @@ export function EntityForm({
   createPrefillPopulated,
   draftValues,
   draftFieldErrors,
+  skipRecordLoad = false,
   formDesignId,
   onCancel,
   onSuccess,
@@ -116,7 +119,12 @@ export function EntityForm({
   );
   const [values, setValues] = useState<Record<string, unknown>>(() => {
     if (draftValues) {
-      return { ...draftValues };
+      return buildInitialValuesFromLayout(
+        definition,
+        mode,
+        { ...draftValues },
+        formDesignId,
+      );
     }
     let initial = buildInitialValuesFromLayout(
       definition,
@@ -168,7 +176,9 @@ export function EntityForm({
     },
     [definition],
   );
-  const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
+  const [isLoadingRecord, setIsLoadingRecord] = useState(
+    mode === "edit" && !draftValues && !skipRecordLoad,
+  );
   const [isHydratingPrefill, setIsHydratingPrefill] = useState(false);
   const lastToastedError = useRef<string | null>(null);
 
@@ -210,11 +220,14 @@ export function EntityForm({
   }, [createPrefill, createPrefillPopulated, definition, getDefinition, mode]);
 
   useEffect(() => {
-    if (mode !== "edit" || !recordId || draftValues) return;
+    if (mode !== "edit" || !recordId || skipRecordLoad) return;
 
     let cancelled = false;
     void (async () => {
-      setIsLoadingRecord(true);
+      // Keep optimistic row values visible; only skeleton when nothing to show yet.
+      if (!draftValues) {
+        setIsLoadingRecord(true);
+      }
       const record = await getById(recordId);
       if (cancelled) return;
 
@@ -223,7 +236,7 @@ export function EntityForm({
         : buildInitialValuesFromLayout(
             definition,
             "edit",
-            undefined,
+            draftValues ?? undefined,
             formDesignId,
           );
 
@@ -253,13 +266,14 @@ export function EntityForm({
     };
   }, [
     definition,
+    draftValues,
     entityName,
     formDesignId,
     getById,
     joinRelationFieldNames,
     mode,
     recordId,
-    draftValues,
+    skipRecordLoad,
   ]);
 
   useEffect(() => {
